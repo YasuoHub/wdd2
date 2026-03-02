@@ -1,0 +1,9 @@
+{
+  "name": "wdd-take-need",
+  "version": "1.0.0",
+  "description": "问当地小程序接单云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

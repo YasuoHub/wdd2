@@ -1,0 +1,299 @@
+// 任务详情页
+const app = getApp()
+
+Page({
+  data: {
+    needId: '',
+    task: null,
+    userInfo: null,
+    isSeeker: false,
+    isTaker: false,
+    canTake: false,
+    canChat: false,
+    canComplete: false,
+    canCancel: false,
+    loading: true
+  },
+
+  onLoad(options) {
+    const { id } = options
+    if (!id) {
+      wx.showToast({ title: '任务ID错误', icon: 'none' })
+      wx.navigateBack()
+      return
+    }
+
+    this.setData({
+      needId: id,
+      userInfo: app.globalData.userInfo
+    })
+
+    this.loadTaskDetail()
+  },
+
+  onShow() {
+    if (this.data.needId) {
+      this.loadTaskDetail()
+    }
+  },
+
+  // 加载任务详情
+  async loadTaskDetail() {
+    this.setData({ loading: true })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-get-needs',
+        data: {
+          action: 'getNeedDetail',
+          needId: this.data.needId
+        }
+      })
+
+      if (result.code === 0) {
+        const task = result.data
+        const userInfo = this.data.userInfo
+
+        // 判断身份
+        const isSeeker = userInfo && task.user_id === userInfo._id
+        const isTaker = userInfo && task.taker_id === userInfo._id
+
+        // 判断可操作权限
+        const canTake = userInfo &&
+                         task.status === 'pending' &&
+                         !isSeeker &&
+                         task.user_id !== userInfo._id
+
+        const canChat = (isSeeker || isTaker) &&
+                        task.status === 'ongoing'
+
+        const canComplete = isSeeker &&
+                            task.status === 'ongoing'
+
+        const canCancel = isSeeker &&
+                          (task.status === 'pending' || task.status === 'ongoing')
+
+        // 状态文本映射
+        const statusTextMap = {
+          'pending': '待匹配',
+          'ongoing': '进行中',
+          'completed': '已完成',
+          'cancelled': '已取消'
+        }
+        task.statusText = statusTextMap[task.status] || task.status
+
+        this.setData({
+          task,
+          isSeeker,
+          isTaker,
+          canTake,
+          canChat,
+          canComplete,
+          canCancel,
+          loading: false
+        })
+      } else {
+        throw new Error(result.message)
+      }
+    } catch (err) {
+      console.error('加载任务详情失败:', err)
+      wx.showToast({
+        title: '加载失败',
+        icon: 'none'
+      })
+      this.setData({ loading: false })
+    }
+  },
+
+  // 接单
+  async takeTask() {
+    if (!this.data.canTake) return
+
+    wx.showModal({
+      title: '确认接单',
+      content: `承接此任务可获得 ${this.data.task.points} 积分，确定要接单吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '处理中...' })
+
+          try {
+            const { result } = await wx.cloud.callFunction({
+              name: 'wdd-take-need',
+              data: {
+                needId: this.data.needId
+              }
+            })
+
+            wx.hideLoading()
+
+            if (result.code === 0) {
+              wx.showToast({
+                title: '接单成功',
+                icon: 'success'
+              })
+
+              // 进入聊天页
+              setTimeout(() => {
+                wx.navigateTo({
+                  url: `/pages/chat/chat?needId=${this.data.needId}&isSeeker=false`
+                })
+              }, 1500)
+            } else {
+              throw new Error(result.message)
+            }
+          } catch (err) {
+            wx.hideLoading()
+            wx.showToast({
+              title: err.message || '接单失败',
+              icon: 'none'
+            })
+          }
+        }
+      }
+    })
+  },
+
+  // 进入聊天
+  goToChat() {
+    if (!this.data.canChat) return
+
+    wx.navigateTo({
+      url: `/pages/chat/chat?needId=${this.data.needId}&isSeeker=${this.data.isSeeker}`
+    })
+  },
+
+  // 确认完成
+  completeTask() {
+    if (!this.data.canComplete) return
+
+    wx.showModal({
+      title: '确认完成',
+      content: '确认帮助者已完成任务？积分将转给对方',
+      success: (res) => {
+        if (res.confirm) {
+          this.doCompleteTask()
+        }
+      }
+    })
+  },
+
+  async doCompleteTask() {
+    wx.showLoading({ title: '处理中...' })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-settlement',
+        data: {
+          action: 'completeTask',
+          needId: this.data.needId
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.code === 0) {
+        wx.showToast({
+          title: '任务已完成',
+          icon: 'success'
+        })
+
+        // 跳转到评价页
+        setTimeout(() => {
+          wx.navigateTo({
+            url: `/pages/rating/rating?needId=${this.data.needId}`
+          })
+        }, 1500)
+      } else {
+        throw new Error(result.message)
+      }
+    } catch (err) {
+      wx.hideLoading()
+      wx.showToast({
+        title: err.message || '操作失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 取消任务
+  cancelTask() {
+    if (!this.data.canCancel) return
+
+    wx.showModal({
+      title: '确认取消',
+      content: this.data.task.status === 'pending'
+        ? '取消后积分将退还，确定要取消吗？'
+        : '任务已有人接单，取消会影响对方，确定要取消吗？',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (res.confirm) {
+          this.doCancelTask()
+        }
+      }
+    })
+  },
+
+  async doCancelTask() {
+    wx.showLoading({ title: '处理中...' })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-settlement',
+        data: {
+          action: 'cancelTask',
+          needId: this.data.needId
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.code === 0) {
+        wx.showToast({
+          title: '已取消',
+          icon: 'success'
+        })
+        this.loadTaskDetail()
+      } else {
+        throw new Error(result.message)
+      }
+    } catch (err) {
+      wx.hideLoading()
+      wx.showToast({
+        title: err.message || '取消失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 预览位置
+  previewLocation() {
+    const { location } = this.data.task
+    if (!location || !location.latitude || !location.longitude) {
+      wx.showToast({ title: '位置信息不完整', icon: 'none' })
+      return
+    }
+
+    wx.openLocation({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      name: location.name || '求助位置',
+      address: location.name || ''
+    })
+  },
+
+  // 复制位置
+  copyLocation() {
+    const { location } = this.data.task
+    if (!location || !location.name) {
+      wx.showToast({ title: '暂无位置信息', icon: 'none' })
+      return
+    }
+
+    wx.setClipboardData({
+      data: location.name,
+      success: () => {
+        wx.showToast({ title: '已复制地址', icon: 'none' })
+      }
+    })
+  }
+})

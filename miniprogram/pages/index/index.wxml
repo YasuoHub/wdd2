@@ -1,0 +1,157 @@
+<!-- 首页 - 城市绿洲风格 -->
+<view class="container">
+
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="brand">
+      <view class="brand-icon">🌿</view>
+      <text class="brand-text">问当地</text>
+    </view>
+    <view class="notification-btn" bindtap="goToMessages">
+      <text class="notification-icon">🔔</text>
+      <text wx:if="{{unreadCount > 0}}" class="notification-badge">{{unreadCount}}</text>
+    </view>
+  </view>
+
+  <!-- 用户信息卡片 -->
+  <view class="user-card">
+    <block wx:if="{{isLoggedIn}}">
+      <view class="welcome-section">
+        <view class="avatar">
+          <text>{{userInfo.avatar ? '' : '😊'}}</text>
+          <image wx:if="{{userInfo.avatar}}" src="{{userInfo.avatar}}" mode="aspectFill"/>
+        </view>
+        <view class="welcome-text">
+          <view class="welcome-label">欢迎回来</view>
+          <view class="welcome-name">{{userInfo.nickname || '朋友'}}</view>
+        </view>
+        <view class="sign-in-btn {{hasSignedToday ? 'signed' : ''}}" bindtap="handleSignIn">
+          {{hasSignedToday ? '已签到' : '签到'}}
+        </view>
+      </view>
+
+      <!-- 积分展示 -->
+      <view class="points-display">
+        <view class="points-item">
+          <text class="points-value">{{userInfo.total_points || 0}}</text>
+          <text class="points-label">总积分</text>
+        </view>
+        <view class="points-item">
+          <text class="points-value available">{{userInfo.available_points || 0}}</text>
+          <text class="points-label">可用</text>
+        </view>
+        <view class="points-item">
+          <text class="points-value frozen">{{userInfo.frozen_points || 0}}</text>
+          <text class="points-label">冻结中</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="login-section">
+        <view class="login-illustration">🗺️</view>
+        <view class="login-title">欢迎来到问当地</view>
+        <view class="login-subtitle">登录后即可发布求助或帮助他人</view>
+        <button class="login-btn" bindtap="handleLogin">
+          <text class="wechat-icon">💬</text>
+          <text>微信一键登录</text>
+        </button>
+      </view>
+    </block>
+  </view>
+
+  <!-- 发布求助入口 -->
+  <view class="publish-section" bindtap="goToPublish">
+    <view class="publish-card">
+      <view class="publish-content">
+        <view class="publish-header">
+          <view class="publish-icon">✨</view>
+          <text class="publish-title">发布求助</text>
+        </view>
+        <view class="publish-desc">想问什么，当地人帮你解答</view>
+        <view class="publish-features">
+          <text class="feature-tag">📍 实时位置</text>
+          <text class="feature-tag">🎯 多种类型</text>
+          <text class="feature-tag">⚡ 快速响应</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{isLoggedIn && userInfo.available_points < 10}}" class="points-tip">
+      积分不足？去<text class="link" bindtap="goToSignIn">签到</text>获取积分
+    </view>
+  </view>
+
+  <!-- 附近任务 -->
+  <view class="nearby-section">
+    <view class="section-header">
+      <view class="section-title-wrapper">
+        <view class="section-icon">📍</view>
+        <text class="section-title">附近求助</text>
+      </view>
+      <text class="section-more" bindtap="goToTaskHall">查看全部 →</text>
+    </view>
+
+    <!-- 未登录状态 -->
+    <view wx:if="{{!isLoggedIn}}" class="login-tip-card">
+      <view class="lock-icon">🔒</view>
+      <view class="empty-text">登录后查看附近任务</view>
+      <view class="empty-hint">成都地区的实时求助信息</view>
+    </view>
+
+    <!-- 加载中 -->
+    <view wx:elif="{{nearbyLoading}}" class="loading-card">
+      <view class="loading-spinner"></view>
+      <view class="loading-text">正在搜索附近任务...</view>
+    </view>
+
+    <!-- 加载失败 -->
+    <view wx:elif="{{nearbyError}}" class="error-card">
+      <view class="error-icon">⚠️</view>
+      <view class="error-text">加载失败，请重试</view>
+      <view class="retry-btn" bindtap="reloadNearbyNeeds">重新加载</view>
+    </view>
+
+    <!-- 任务列表 -->
+    <view wx:elif="{{nearbyNeeds.length > 0}}" class="need-list">
+      <view
+        wx:for="{{nearbyNeeds}}"
+        wx:key="_id"
+        class="need-card type-{{item.type}}"
+        bindtap="goToNeedDetail"
+        data-id="{{item._id}}"
+      >
+        <view class="need-header">
+          <view class="need-type">
+            <view class="type-icon">{{item.typeIcon}}</view>
+            <text class="type-name">{{item.typeName}}</text>
+          </view>
+          <text class="need-points">+{{item.points}}积分</text>
+        </view>
+        <view class="need-content">{{item.description || '暂无详细描述'}}</view>
+        <view class="need-footer">
+          <view class="need-meta">
+            <view class="meta-item">
+              <text class="meta-icon">📍</text>
+              <text>{{item.distanceText}}</text>
+            </view>
+            <view class="meta-item">
+              <text class="meta-icon">⏱️</text>
+              <text>{{item.remainTime}}</text>
+            </view>
+          </view>
+          <view wx:if="{{item.is_urgent}}" class="need-status urgent">急</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{nearbyEmpty}}" class="empty-state">
+      <view class="empty-icon">🌸</view>
+      <view class="empty-text">附近暂无求助任务</view>
+      <view class="empty-hint" bindtap="goToTaskHall">去大厅看看其他地区的求助 →</view>
+    </view>
+  </view>
+
+  <!-- 底部装饰 -->
+  <view class="bottom-decoration"></view>
+</view>

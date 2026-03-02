@@ -1,0 +1,231 @@
+/* ============================================
+   问当地小程序 - 全局样式
+   风格：亲和力 / 现代 / ins风
+   ============================================ */
+
+/* 页面基础样式 */
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #2D3436;
+  background-color: #FDF8F3;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 重置默认样式 */
+view, text, image, button {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button::after {
+  border: none;
+}
+
+/* 隐藏滚动条 */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+/* 通用动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 工具类 */
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* 文字截断 */
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 阴影 */
+.shadow-soft {
+  box-shadow: 0 4rpx 20rpx rgba(45, 52, 54, 0.06);
+}
+
+.shadow-medium {
+  box-shadow: 0 8rpx 32rpx rgba(45, 52, 54, 0.1);
+}
+
+/* 毛玻璃效果 */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(40rpx);
+  -webkit-backdrop-filter: blur(40rpx);
+}
+
+/* 按钮基础样式 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx 48rpx;
+  border-radius: 9999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #A8E6CF 0%, #88D8C0 100%);
+  color: white;
+  box-shadow: 0 8rpx 32rpx rgba(168, 230, 207, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #2D3436;
+  border: 1rpx solid rgba(45, 52, 54, 0.1);
+}
+
+.btn-dark {
+  background: linear-gradient(135deg, #2D3436 0%, #636E72 100%);
+  color: white;
+  box-shadow: 0 8rpx 32rpx rgba(45, 52, 54, 0.3);
+}
+
+/* 卡片基础样式 */
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(45, 52, 54, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.5);
+}
+
+/* 标签样式 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  border-radius: 9999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.tag-mint {
+  background: rgba(168, 230, 207, 0.2);
+  color: #2D9C7A;
+}
+
+.tag-coral {
+  background: rgba(255, 183, 178, 0.2);
+  color: #E76B6B;
+}
+
+.tag-lavender {
+  background: rgba(199, 206, 234, 0.3);
+  color: #6B7BD4;
+}
+
+/* 加载状态 */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8rpx;
+}
+
+/* 页面切换动画 */
+.page-enter {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* TabBar 样式微调 */
+.tab-bar-item {
+  transition: all 0.3s ease;
+}
+
+.tab-bar-item-active {
+  transform: scale(1.1);
+}

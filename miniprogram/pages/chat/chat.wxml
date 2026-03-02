@@ -1,0 +1,145 @@
+<!-- 聊天页面 -->
+<view class="chat-container">
+  <!-- 任务信息卡片 -->
+  <view class="task-card">
+    <view class="task-header">
+      <view class="task-type">
+        <text class="type-icon">{{task.typeIcon}}</text>
+        <text class="type-name">{{task.typeName}}</text>
+      </view>
+      <view class="task-status {{task.status}}">{{task.statusText}}</view>
+    </view>
+    <view class="task-content">{{task.description}}</view>
+    <view class="task-footer">
+      <view class="countdown" wx:if="{{task.status === 'ongoing'}}">
+        <text class="countdown-label">剩余时间：</text>
+        <text class="countdown-time">{{countdownText}}</text>
+      </view>
+      <view class="task-points">{{task.points}}积分</view>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view
+    class="message-list"
+    scroll-y
+    scroll-into-view="{{lastMessageId}}"
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMoreMessages}}">
+      <text bindtap="loadMoreMessages">加载更多消息</text>
+    </view>
+
+    <!-- 消息项 -->
+    <view
+      wx:for="{{messages}}"
+      wx:key="_id"
+      id="msg-{{item._id}}"
+      class="message-item {{item.isSelf ? 'self' : 'other'}}"
+    >
+      <!-- 时间分隔线 -->
+      <view class="time-divider" wx:if="{{item.showTime}}">
+        <text>{{item.timeText}}</text>
+      </view>
+
+      <!-- 消息内容 -->
+      <view class="message-content">
+        <!-- 对方头像 -->
+        <view wx:if="{{!item.isSelf}}" class="avatar">
+          <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
+          <text wx:else>{{item.senderName ? item.senderName[0] : '?'}}</text>
+        </view>
+
+        <!-- 消息气泡 -->
+        <view class="message-bubble {{item.type}}">
+          <!-- 文字消息 -->
+          <block wx:if="{{item.type === 'text'}}">
+            <text class="message-text" selectable>{{item.content}}</text>
+          </block>
+
+          <!-- 图片消息 -->
+          <block wx:if="{{item.type === 'image'}}">
+            <image
+              class="message-image"
+              src="{{item.imageUrl}}"
+              mode="widthFix"
+              bindtap="previewImage"
+              data-url="{{item.imageUrl}}"
+            />
+          </block>
+        </view>
+
+        <!-- 自己头像 -->
+        <view wx:if="{{item.isSelf}}" class="avatar">
+          <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
+          <text wx:else>我</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view id="bottom-anchor" style="height: 20rpx;"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="input-area">
+    <!-- 输入框区域 -->
+    <view class="input-row">
+      <view class="input-wrapper">
+        <input
+          class="message-input"
+          type="text"
+          value="{{inputValue}}"
+          placeholder="{{task.status === 'ongoing' ? '输入消息...' : '任务已结束'}}"
+          disabled="{{task.status !== 'ongoing'}}"
+          confirm-type="send"
+          bindinput="onInput"
+          bindconfirm="sendTextMessage"
+          focus="{{inputFocus}}"
+        />
+      </view>
+
+      <!-- 发送按钮 -->
+      <button
+        class="send-btn {{inputValue ? 'active' : ''}}"
+        bindtap="sendTextMessage"
+        disabled="{{!inputValue || task.status !== 'ongoing'}}"
+      >
+        发送
+      </button>
+    </view>
+
+    <!-- 工具栏 -->
+    <view class="toolbar">
+      <view class="tool-item" bindtap="chooseImage" data-source="album">
+        <text class="tool-icon">📷</text>
+        <text class="tool-text">相册</text>
+      </view>
+      <view class="tool-item" bindtap="chooseImage" data-source="camera">
+        <text class="tool-icon">📸</text>
+        <text class="tool-text">拍照</text>
+      </view>
+      <view class="tool-item" bindtap="showCompleteConfirm" wx:if="{{isSeeker && task.status === 'ongoing'}}">
+        <text class="tool-icon">✅</text>
+        <text class="tool-text">完成</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 完成任务确认弹窗 -->
+  <view class="modal {{showCompleteModal ? 'show' : ''}}" wx:if="{{showCompleteModal}}">
+    <view class="modal-mask" bindtap="hideCompleteModal"></view>
+    <view class="modal-content">
+      <view class="modal-title">确认完成任务</view>
+      <view class="modal-body">
+        <text>确认已获得所需信息？确认后任务将完成，积分将转给帮助者。</text>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn cancel" bindtap="hideCompleteModal">取消</button>
+        <button class="modal-btn confirm" bindtap="completeTask">确认</button>
+      </view>
+    </view>
+  </view>
+</view>

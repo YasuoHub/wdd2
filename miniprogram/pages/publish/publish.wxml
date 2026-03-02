@@ -1,0 +1,228 @@
+<!-- 发布求助页面 - 城市绿洲风格 -->
+<view class="container">
+
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="back-btn" bindtap="goBack">
+      <text class="back-icon">←</text>
+    </view>
+    <text class="header-title">发布求助</text>
+    <view class="header-right"></view>
+  </view>
+
+  <!-- 主内容区 -->
+  <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
+
+    <!-- 地图选址卡片 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon location">📍</view>
+        <view class="section-info">
+          <text class="section-title">求助地点</text>
+          <text class="section-subtitle">选择你想了解的位置</text>
+        </view>
+      </view>
+
+      <view class="map-container">
+        <map
+          id="locationMap"
+          class="location-map"
+          longitude="{{longitude}}"
+          latitude="{{latitude}}"
+          scale="16"
+          show-location
+          bindtap="onMapTap"
+        ></map>
+        <view class="map-center-pin">
+          <text class="pin-icon">📍</text>
+        </view>
+      </view>
+
+      <view class="location-input-wrapper">
+        <input
+          class="location-input"
+          placeholder="搜索地点或直接输入地址"
+          placeholder-class="input-placeholder"
+          value="{{locationName}}"
+          bindinput="onLocationInput"
+        />
+        <view class="location-btn" bindtap="getCurrentLocation">
+          <text class="location-btn-icon">🎯</text>
+          <text class="location-btn-text">定位</text>
+        </view>
+      </view>
+
+      <!-- 常用地点快捷选择 -->
+      <view class="quick-locations">
+        <text class="quick-label">常用地点：</text>
+        <view class="quick-tags">
+          <text
+            wx:for="{{quickLocations}}"
+            wx:key="*this"
+            class="quick-tag {{selectedLocation === item ? 'active' : ''}}"
+            bindtap="selectQuickLocation"
+            data-location="{{item}}"
+          >{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 求助类型选择 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon type">🎯</view>
+        <view class="section-info">
+          <text class="section-title">求助类型</text>
+          <text class="section-subtitle">选择你想了解的信息类型</text>
+        </view>
+      </view>
+
+      <view class="type-grid">
+        <view
+          wx:for="{{needTypes}}"
+          wx:key="id"
+          class="type-item {{selectedType === item.id ? 'active' : ''}}"
+          bindtap="selectType"
+          data-type="{{item.id}}"
+          style="--type-color: {{item.color}}; --type-bg: {{item.bgColor}}"
+        >
+          <view class="type-icon-wrapper" style="background: {{item.bgColor}}">
+            <text class="type-icon">{{item.icon}}</text>
+          </view>
+          <text class="type-name">{{item.name}}</text>
+          <view wx:if="{{selectedType === item.id}}" class="type-check">✓</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 问题描述 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon desc">📝</view>
+        <view class="section-info">
+          <text class="section-title">详细描述</text>
+          <text class="section-subtitle">选填，让帮助者更了解你的需求</text>
+        </view>
+      </view>
+
+      <textarea
+        class="desc-textarea"
+        placeholder="例如：想确认春熙路的XX餐厅今天是否营业，排队人多吗？大概要等多久？"
+        placeholder-class="textarea-placeholder"
+        maxlength="500"
+        bindinput="onDescriptionInput"
+        value="{{description}}"
+      ></textarea>
+      <text class="char-count">{{description.length}}/500</text>
+    </view>
+
+    <!-- 有效期选择 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon time">⏱️</view>
+        <view class="section-info">
+          <text class="section-title">有效时间</text>
+          <text class="section-subtitle">超时自动取消，积分退还</text>
+        </view>
+      </view>
+
+      <view class="time-options">
+        <view
+          wx:for="{{timeOptions}}"
+          wx:key="value"
+          class="time-option {{selectedTime === item.value ? 'active' : ''}}"
+          bindtap="selectTime"
+          data-time="{{item.value}}"
+        >
+          <text class="time-value">{{item.label}}</text>
+          <text wx:if="{{item.recommended}}" class="time-recommend">推荐</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 悬赏积分 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon points">💎</view>
+        <view class="section-info">
+          <text class="section-title">悬赏积分</text>
+          <text class="section-subtitle">设置悬赏，吸引更多帮助者</text>
+        </view>
+      </view>
+
+      <view class="points-setting">
+        <view class="points-slider-wrapper">
+          <slider
+            class="points-slider"
+            min="10"
+            max="100"
+            step="5"
+            value="{{rewardPoints}}"
+            activeColor="#A8E6CF"
+            backgroundColor="#F5EDE4"
+            block-size="28"
+            bindchange="onPointsChange"
+          />
+          <view class="points-range">
+            <text>10</text>
+            <text class="points-current">
+              <text class="points-number">{{rewardPoints}}</text>
+              <text class="points-unit">积分</text>
+            </text>
+            <text>100</text>
+          </view>
+        </view>
+
+        <!-- 快捷积分选择 -->
+        <view class="quick-points">
+          <view
+            wx:for="{{quickPoints}}"
+            wx:key="*this"
+            class="quick-point {{rewardPoints === item ? 'active' : ''}}"
+            bindtap="selectQuickPoints"
+            data-points="{{item}}"
+          >
+            {{item}}
+          </view>
+        </view>
+      </view>
+
+      <!-- 积分提示 -->
+      <view class="points-tip-wrapper">
+        <view class="points-balance">
+          <text class="balance-label">可用积分</text>
+          <text class="balance-value {{availablePoints < rewardPoints ? 'insufficient' : ''}}">{{availablePoints}}</text>
+        </view>
+        <view wx:if="{{availablePoints < rewardPoints}}" class="points-warning">
+          <text class="warning-icon">⚠️</text>
+          <text class="warning-text">积分不足，去签到获取</text>
+        </view>
+        <view wx:else class="points-estimate">
+          <text class="estimate-label">约等于</text>
+          <text class="estimate-value">{{estimateValue}}元</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- 底部发布按钮 -->
+  <view class="footer">
+    <view class="footer-content">
+      <view class="publish-info">
+        <text class="publish-label">悬赏</text>
+        <text class="publish-points">{{rewardPoints}}积分</text>
+      </view>
+      <button
+        class="publish-btn {{!canPublish ? 'disabled' : ''}}"
+        bindtap="handlePublish"
+        disabled="{{!canPublish || isPublishing}}"
+      >
+        <text wx:if="{{isPublishing}}" class="loading">发布中...</text>
+        <text wx:else>立即发布</text>
+      </button>
+    </view>
+  </view>
+</view>

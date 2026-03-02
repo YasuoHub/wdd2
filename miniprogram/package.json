@@ -1,0 +1,12 @@
+{
+  "name": "miniprogram",
+  "version": "1.0.0",
+  "description": "问当地小程序",
+  "main": "app.js",
+  "scripts": {
+    "dev": "echo \"请在微信开发者工具中运行\"",
+    "build": "echo \"请在微信开发者工具中运行\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

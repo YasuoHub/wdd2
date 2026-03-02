@@ -1,0 +1,313 @@
+// 云函数入口文件
+const cloud = require('wx-server-sdk')
+
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+})
+
+const db = cloud.database()
+const _ = db.command
+
+// 消息类型
+const MSG_TYPE = {
+  TEXT: 'text',
+  IMAGE: 'image'
+}
+
+// 主入口
+exports.main = async (event, context) => {
+  const { action } = event
+  const wxContext = cloud.getWXContext()
+  const OPENID = wxContext.OPENID
+
+  try {
+    switch (action) {
+      case 'getTaskInfo':
+        return await getTaskInfo(event, OPENID)
+      case 'getMessages':
+        return await getMessages(event, OPENID)
+      case 'sendMessage':
+        return await sendMessage(event, OPENID)
+      default:
+        return { code: -1, message: '未知操作' }
+    }
+  } catch (err) {
+    console.error('操作失败:', err)
+    return { code: -1, message: err.message }
+  }
+}
+
+// 获取任务信息
+async function getTaskInfo(event, OPENID) {
+  const { needId } = event
+
+  // 获取当前用户
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  if (userRes.data.length === 0) {
+    return { code: -1, message: '用户不存在' }
+  }
+  const currentUserId = userRes.data[0]._id
+
+  // 获取任务详情
+  const needRes = await db.collection('wdd-needs').doc(needId).get()
+  const need = needRes.data
+
+  if (!need) {
+    return { code: -1, message: '任务不存在' }
+  }
+
+  // 检查权限（只有求助者或接单者可以查看）
+  const isSeeker = need.user_id === currentUserId
+
+  // 获取接单记录
+  const takerRes = await db.collection('wdd-need-takers').where({
+    need_id: needId
+  }).get()
+  const taker = takerRes.data[0]
+
+  const isTaker = taker && taker.taker_id === currentUserId
+
+  if (!isSeeker && !isTaker) {
+    return { code: -1, message: '无权查看此任务' }
+  }
+
+  // 获取对方用户信息
+  const otherUserId = isSeeker ? taker?.taker_id : need.user_id
+  let otherUser = null
+
+  if (otherUserId) {
+    const otherUserRes = await db.collection('wdd-users').doc(otherUserId).get()
+    otherUser = otherUserRes.data || null
+  }
+
+  return {
+    code: 0,
+    data: {
+      ...need,
+      otherUser: otherUser ? {
+        _id: otherUser._id,
+        nickname: otherUser.nickname,
+        avatar: otherUser.avatar
+      } : null
+    }
+  }
+}
+
+// 获取历史消息
+async function getMessages(event, OPENID) {
+  const { needId, limit = 20, beforeTime } = event
+
+  // 获取当前用户
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  if (userRes.data.length === 0) {
+    return { code: -1, message: '用户不存在' }
+  }
+  const currentUserId = userRes.data[0]._id
+
+  // 验证权限
+  const needRes = await db.collection('wdd-needs').doc(needId).get().catch(() => null)
+  if (!needRes || !needRes.data) {
+    return { code: -1, message: '任务不存在' }
+  }
+
+  const need = needRes.data
+  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).get()
+  const taker = takerRes.data[0]
+
+  const isSeeker = need.user_id === currentUserId
+  const isTaker = taker && taker.taker_id === currentUserId
+
+  if (!isSeeker && !isTaker) {
+    return { code: -1, message: '无权查看消息' }
+  }
+
+  // 构建查询条件
+  let query = db.collection('wdd-messages').where({
+    need_id: needId
+  })
+
+  // 分页查询
+  if (beforeTime) {
+    query = query.where({
+      create_time: _.lt(new Date(beforeTime))
+    })
+  }
+
+  // 执行查询
+  const msgRes = await query
+    .orderBy('create_time', 'desc')
+    .limit(limit)
+    .get()
+
+  // 反转顺序（按时间正序排列）
+  const messages = msgRes.data.reverse()
+
+  // 标记消息为已读
+  await markMessagesAsRead(needId, currentUserId)
+
+  return {
+    code: 0,
+    data: {
+      list: messages,
+      total: messages.length
+    }
+  }
+}
+
+// 发送消息
+async function sendMessage(event, OPENID) {
+  const { needId, type, content, imageUrl } = event
+
+  // 验证参数
+  if (!needId || !type) {
+    return { code: -1, message: '参数错误' }
+  }
+
+  if (type === MSG_TYPE.TEXT && !content) {
+    return { code: -1, message: '消息内容不能为空' }
+  }
+
+  if (type === MSG_TYPE.IMAGE && !imageUrl) {
+    return { code: -1, message: '图片不能为空' }
+  }
+
+  // 获取当前用户
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  if (userRes.data.length === 0) {
+    return { code: -1, message: '用户不存在' }
+  }
+  const currentUserId = userRes.data[0]._id
+
+  // 验证任务状态和权限
+  const needRes = await db.collection('wdd-needs').doc(needId).get().catch(() => null)
+  if (!needRes || !needRes.data) {
+    return { code: -1, message: '任务不存在' }
+  }
+
+  const need = needRes.data
+
+  // 检查任务状态
+  if (need.status !== 'ongoing') {
+    return { code: -1, message: '任务已结束，无法发送消息' }
+  }
+
+  // 获取接单记录
+  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).get()
+  const taker = takerRes.data[0]
+
+  const isSeeker = need.user_id === currentUserId
+  const isTaker = taker && taker.taker_id === currentUserId
+
+  if (!isSeeker && !isTaker) {
+    return { code: -1, message: '无权发送消息' }
+  }
+
+  // 确定接收者
+  const receiverId = isSeeker ? taker.taker_id : need.user_id
+
+  // 文字消息内容安全检测
+  if (type === MSG_TYPE.TEXT) {
+    try {
+      const checkRes = await cloud.openapi.security.msgSecCheck({
+        content: content
+      })
+      if (checkRes.errCode !== 0) {
+        return { code: -1, message: '消息包含敏感内容，无法发送' }
+      }
+    } catch (err) {
+      console.error('内容安全检测失败:', err)
+      // 检测失败时继续发送，避免阻塞正常消息
+    }
+  }
+
+  // 创建消息记录
+  const message = {
+    need_id: needId,
+    sender_id: currentUserId,
+    receiver_id: receiverId,
+    type: type,
+    content: type === MSG_TYPE.TEXT ? content : '',
+    image_url: type === MSG_TYPE.IMAGE ? imageUrl : '',
+    is_read: false,
+    create_time: new Date()
+  }
+
+  const msgRes = await db.collection('wdd-messages').add({
+    data: message
+  })
+
+  // 更新最后消息时间
+  await db.collection('wdd-need-takers').doc(taker._id).update({
+    data: {
+      last_message_time: new Date()
+    }
+  })
+
+  // 发送消息通知（异步执行，不阻塞返回）
+  sendNotification(receiverId, currentUserId, need, type, content, imageUrl).catch(console.error)
+
+  return {
+    code: 0,
+    data: {
+      messageId: msgRes._id,
+      createTime: message.create_time
+    }
+  }
+}
+
+// 标记消息为已读
+async function markMessagesAsRead(needId, userId) {
+  try {
+    const unreadMessages = await db.collection('wdd-messages').where({
+      need_id: needId,
+      receiver_id: userId,
+      is_read: false
+    }).get()
+
+    const updatePromises = unreadMessages.data.map(msg => {
+      return db.collection('wdd-messages').doc(msg._id).update({
+        data: { is_read: true }
+      })
+    })
+
+    await Promise.all(updatePromises)
+  } catch (err) {
+    console.error('标记已读失败:', err)
+  }
+}
+
+// 发送消息通知
+async function sendNotification(receiverId, senderId, need, msgType, content, imageUrl) {
+  try {
+    // 获取发送者信息
+    const senderRes = await db.collection('wdd-users').doc(senderId).get()
+    const sender = senderRes.data
+
+    // 构建通知内容
+    let messageContent = ''
+    if (msgType === MSG_TYPE.TEXT) {
+      messageContent = content.length > 20 ? content.substring(0, 20) + '...' : content
+    } else {
+      messageContent = '[图片]'
+    }
+
+    // 创建系统通知记录
+    await db.collection('wdd-notifications').add({
+      data: {
+        user_id: receiverId,
+        type: 'chat_message',
+        title: `${sender?.nickname || '有人'}发来新消息`,
+        content: messageContent,
+        need_id: need._id,
+        is_read: false,
+        create_time: new Date()
+      }
+    })
+
+    // 这里可以集成微信订阅消息通知
+    // 需要用户授权后才能发送
+
+  } catch (err) {
+    console.error('发送通知失败:', err)
+  }
+}

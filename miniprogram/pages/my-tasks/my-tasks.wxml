@@ -1,0 +1,119 @@
+<!-- 我的接单列表页面 -->
+<view class="container">
+  <!-- 状态筛选标签 -->
+  <view class="filter-tabs">
+    <view
+      class="tab {{currentFilter === 'all' ? 'active' : ''}}"
+      bindtap="switchFilter"
+      data-filter="all"
+    >
+      全部
+    </view>
+    <view
+      class="tab {{currentFilter === 'ongoing' ? 'active' : ''}}"
+      bindtap="switchFilter"
+      data-filter="ongoing"
+    >
+      进行中
+    </view>
+    <view
+      class="tab {{currentFilter === 'completed' ? 'active' : ''}}"
+      bindtap="switchFilter"
+      data-filter="completed"
+    >
+      已完成
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stats-bar">
+    <view class="stat-item">
+      <text class="stat-value">{{stats.total}}</text>
+      <text class="stat-label">总接单</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-value">{{stats.ongoing}}</text>
+      <text class="stat-label">进行中</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-value">{{stats.points}}</text>
+      <text class="stat-label">累计获得</text>
+    </view>
+  </view>
+
+  <!-- 任务列表 -->
+  <scroll-view class="task-list" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMore">
+    <view wx:if="{{tasks.length === 0}}" class="empty-state">
+      <view class="empty-icon">🤗</view>
+      <view class="empty-text">暂无{{filterText}}任务</view>
+      <view class="empty-hint">去任务大厅接单赚取积分吧</view>
+      <view class="empty-btn" bindtap="goToHall">去大厅</view>
+    </view>
+
+    <view wx:else class="task-list">
+      <view
+        wx:for="{{tasks}}"
+        wx:key="_id"
+        class="task-card"
+        bindtap="goToDetail"
+        data-id="{{item.need_id}}"
+      >
+        <!-- 卡片头部 -->
+        <view class="card-header">
+          <view class="type-tag" style="background: {{item.bgColor}}; color: {{item.color}};">
+            <text class="type-icon">{{item.typeIcon}}</text>
+            <text>{{item.typeName}}</text>
+          </view>
+          <view class="status-badge {{item.status}}">{{item.statusText}}</view>
+        </view>
+
+        <!-- 求助者信息 -->
+        <view class="seeker-info">
+          <text class="seeker-label">求助者：</text>
+          <text class="seeker-name">{{item.seekerNickname}}</text>
+        </view>
+
+        <!-- 任务内容 -->
+        <view class="card-content">
+          <text class="description">{{item.description}}</text>
+        </view>
+
+        <!-- 位置信息 -->
+        <view class="location-info">
+          <text class="location-icon">📍</text>
+          <text class="location-name">{{item.locationName}}</text>
+        </view>
+
+        <!-- 卡片底部 -->
+        <view class="card-footer">
+          <view class="meta-left">
+            <view class="points-tag">+{{item.points}}积分</view>
+            <view wx:if="{{item.status === 'ongoing'}}" class="countdown">
+              剩余{{item.remainTime}}
+            </view>
+          </view>
+          <view class="time-text">{{item.createTime}}</view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view wx:if="{{item.status === 'ongoing'}}" class="card-actions">
+          <view class="action-btn primary" catchtap="goToChat" data-id="{{item.need_id}}">
+            继续帮助
+          </view>
+        </view>
+
+        <!-- 评价按钮 -->
+        <view wx:if="{{item.status === 'completed' && !item.hasRated}}" class="card-actions">
+          <view class="action-btn primary" catchtap="goToRate" data-id="{{item.need_id}}">
+            去评价
+          </view>
+        </view>
+      </view>
+
+      <!-- 加载更多 -->
+      <view wx:if="{{hasMore}}" class="load-more">
+        <text>加载更多...</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

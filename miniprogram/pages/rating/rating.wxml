@@ -1,0 +1,88 @@
+<!-- 星级评价页面 -->
+<view class="container">
+  <!-- 评价对象信息 -->
+  <view class="target-card">
+    <view class="target-avatar">
+      <text wx:if="{{!targetUser.avatar}}">{{targetUser.nickname ? targetUser.nickname[0] : '👤'}}</text>
+      <image wx:else src="{{targetUser.avatar}}" mode="aspectFill"/>
+    </view>
+    <view class="target-info">
+      <text class="target-label">{{ratingType === 'seeker' ? '帮助者' : '求助者'}}</text>
+      <text class="target-name">{{targetUser.nickname || '未知用户'}}</text>
+    </view>
+  </view>
+
+  <!-- 任务信息 -->
+  <view class="task-card">
+    <view class="task-header">
+      <text class="task-type">{{task.typeName}}</text>
+      <text class="task-points">{{task.points}}积分</text>
+    </view>
+    <text class="task-desc">{{task.description}}</text>
+  </view>
+
+  <!-- 星级评分 -->
+  <view class="rating-section">
+    <text class="rating-title">请对本次{{ratingType === 'seeker' ? '帮助' : '求助'}}进行评价</text>
+    <view class="stars-wrapper">
+      <view
+        wx:for="{{[1,2,3,4,5]}}"
+        wx:key="*this"
+        class="star {{rating >= item ? 'active' : ''}}"
+        bindtap="setRating"
+        data-score="{{item}}"
+      >
+        <text class="star-icon">{{rating >= item ? '★' : '☆'}}</text>
+      </view>
+    </view>
+    <text class="rating-text">{{ratingText}}</text>
+  </view>
+
+  <!-- 评价标签 -->
+  <view class="tags-section" wx:if="{{rating > 0}}">
+    <text class="section-title">选择标签（可多选）</text>
+    <view class="tags-wrapper">
+      <view
+        wx:for="{{ratingTags}}"
+        wx:key="*this"
+        class="tag {{item.selected ? 'active' : ''}}"
+        bindtap="toggleTag"
+        data-index="{{index}}"
+      >
+        {{item.text}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 评价内容 -->
+  <view class="comment-section">
+    <text class="section-title">详细评价（选填）</text>
+    <textarea
+      class="comment-input"
+      placeholder="说说你的感受，帮助其他用户了解TA..."
+      maxlength="200"
+      bindinput="onCommentInput"
+      value="{{comment}}"
+    />
+    <text class="char-count">{{comment.length}}/200</text>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-section">
+    <button
+      class="submit-btn {{rating > 0 ? 'active' : ''}}"
+      bindtap="submitRating"
+      disabled="{{rating === 0 || submitting}}"
+    >
+      {{submitting ? '提交中...' : '提交评价'}}
+    </button>
+  </view>
+
+  <!-- 评价说明 -->
+  <view class="tips-section">
+    <text class="tips-title">💡 评价说明</text>
+    <text class="tips-item">• 评价后无法修改，请认真填写</text>
+    <text class="tips-item">• 好的评价会帮助TA获得更多机会</text>
+    <text class="tips-item">• 恶意评价将被平台处理</text>
+  </view>
+</view>

@@ -1,0 +1,155 @@
+<!-- 任务详情页 -->
+<view class="container">
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading">
+    <view class="loading-spinner"></view>
+    <text>加载中...</text>
+  </view>
+
+  <!-- 任务内容 -->
+  <block wx:elif="{{task}}">
+    <!-- 任务状态卡片 -->
+    <view class="status-card {{task.status}}">
+      <view class="status-icon">
+        <text wx:if="{{task.status === 'pending'}}">⏳</text>
+        <text wx:elif="{{task.status === 'ongoing'}}">🤝</text>
+        <text wx:elif="{{task.status === 'completed'}}">✅</text>
+        <text wx:elif="{{task.status === 'cancelled'}}">❌</text>
+      </view>
+      <view class="status-info">
+        <text class="status-text">{{task.statusText}}</text>
+        <text wx:if="{{task.remainTime}}" class="remain-time">剩余 {{task.remainTime}}</text>
+      </view>
+    </view>
+
+    <!-- 任务信息卡片 -->
+    <view class="info-card">
+      <!-- 类型标签 -->
+      <view class="type-tag" style="background: {{task.bgColor}}; color: {{task.color}};">
+        <text class="type-icon">{{task.typeIcon}}</text>
+        <text>{{task.typeName}}</text>
+      </view>
+
+      <!-- 积分 -->
+      <view class="points-badge">
+        <text class="points-value">{{task.points}}</text>
+        <text class="points-label">积分</text>
+      </view>
+
+      <!-- 描述 -->
+      <view class="description-section">
+        <text class="section-title">求助内容</text>
+        <text class="description-text">{{task.description || '暂无描述'}}</text>
+      </view>
+
+      <!-- 位置 -->
+      <view class="location-section">
+        <text class="section-title">求助位置</text>
+        <view class="location-box" bindtap="previewLocation">
+          <text class="location-icon">📍</text>
+          <text class="location-name">{{task.location.name || '未知位置'}}</text>
+          <text class="location-arrow">›</text>
+        </view>
+        <view class="location-actions">
+          <button class="action-btn small" bindtap="copyLocation">复制地址</button>
+          <button class="action-btn small primary" bindtap="previewLocation">查看地图</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 用户信息卡片 -->
+    <view class="user-card">
+      <!-- 求助者信息 -->
+      <view class="user-section">
+        <text class="section-title">🙏 求助者</text>
+        <view class="user-info">
+          <image class="user-avatar" src="{{task.user_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
+          <view class="user-meta">
+            <text class="user-name">{{task.user_nickname || '匿名用户'}}</text>
+            <text wx:if="{{isSeeker}}" class="user-tag">我自己</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 帮助者信息（如果有） -->
+      <view wx:if="{{task.taker_id}}" class="user-section">
+        <text class="section-title">🤗 帮助者</text>
+        <view class="user-info">
+          <image class="user-avatar" src="{{task.taker_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
+          <view class="user-meta">
+            <text class="user-name">{{task.taker_nickname || '匿名用户'}}</text>
+            <text wx:if="{{isTaker}}" class="user-tag">我自己</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 等待接单提示 -->
+      <view wx:if="{{task.status === 'pending' && !isSeeker}}" class="waiting-tip">
+        <text>⏳ 等待有缘人接单...</text>
+      </view>
+    </view>
+
+    <!-- 时间信息 -->
+    <view class="time-card">
+      <view class="time-row">
+        <text class="time-label">发布时间</text>
+        <text class="time-value">{{task.createTime}}</text>
+      </view>
+      <view wx:if="{{task.matchTime}}" class="time-row">
+        <text class="time-label">接单时间</text>
+        <text class="time-value">{{task.matchTime}}</text>
+      </view>
+      <view wx:if="{{task.completeTime}}" class="time-row">
+        <text class="time-label">完成时间</text>
+        <text class="time-value">{{task.completeTime}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{!loading && task}}" class="action-bar">
+    <!-- 待匹配状态：帮助者可以接单 -->
+    <button
+      wx:if="{{canTake}}"
+      class="action-btn primary large"
+      bindtap="takeTask"
+    >
+      立即接单 (+{{task.points}}积分)
+    </button>
+
+    <!-- 已接单状态：可以聊天 -->
+    <button
+      wx:if="{{canChat}}"
+      class="action-btn primary large"
+      bindtap="goToChat"
+    >
+      {{isSeeker ? '与帮助者聊天' : '与求助者聊天'}}
+    </button>
+
+    <!-- 求助者专属操作 -->
+    <view wx:if="{{isSeeker}}" class="seeker-actions">
+      <button
+        wx:if="{{canComplete}}"
+        class="action-btn success"
+        bindtap="completeTask"
+      >
+        确认完成
+      </button>
+      <button
+        wx:if="{{canCancel}}"
+        class="action-btn danger"
+        bindtap="cancelTask"
+      >
+        取消任务
+      </button>
+    </view>
+
+    <!-- 已完成/已取消提示 -->
+    <view wx:if="{{task.status === 'completed'}}" class="status-tip success">
+      <text>✅ 任务已完成</text>
+    </view>
+    <view wx:if="{{task.status === 'cancelled'}}" class="status-tip danger">
+      <text>❌ 任务已取消</text>
+    </view>
+  </view>
+</view>

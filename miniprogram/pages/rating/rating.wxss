@@ -1,0 +1,424 @@
+/* ============================================
+   问当地 - 星级评价 - 梦幻渐变风格
+   风格：柔和粉彩 / 毛玻璃 / 精致优雅
+   ============================================ */
+
+/* CSS变量 - 设计令牌 */
+:root {
+  /* 主色调 - 梦幻渐变 */
+  --gradient-dream: linear-gradient(135deg, #FFE6FA 0%, #E6F4FF 50%, #F0FFFA 100%);
+  --gradient-primary: linear-gradient(135deg, #8093F1 0%, #B388EB 100%);
+  --gradient-accent: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%);
+  --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  --gradient-success: linear-gradient(135deg, #A1C4FD 0%, #C2E9FB 100%);
+
+  /* 文字颜色 */
+  --text-primary: #2A2D43;
+  --text-secondary: #6C6F8B;
+  --text-tertiary: #A0A3BD;
+  --text-light: #FFFFFF;
+
+  /* 阴影 */
+  --shadow-soft: 0 4rpx 20rpx rgba(42, 45, 67, 0.08);
+  --shadow-medium: 0 8rpx 32rpx rgba(42, 45, 67, 0.12);
+
+  /* 圆角 */
+  --radius-sm: 16rpx;
+  --radius-md: 24rpx;
+  --radius-lg: 32rpx;
+  --radius-full: 9999rpx;
+
+  /* 间距 */
+  --space-sm: 20rpx;
+  --space-md: 32rpx;
+  --space-lg: 48rpx;
+}
+
+/* 页面容器 - 梦幻渐变背景 */
+.container {
+  min-height: 100vh;
+  background: var(--gradient-dream);
+  padding: var(--space-md);
+  padding-bottom: 80rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 背景装饰 */
+.container::before {
+  content: '';
+  position: absolute;
+  top: -150rpx;
+  right: -100rpx;
+  width: 350rpx;
+  height: 350rpx;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.06) 0%, rgba(255, 165, 0, 0.06) 100%);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+/* 评价对象信息卡片 */
+.target-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20rpx);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 1;
+}
+
+.target-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: white;
+  overflow: hidden;
+  border: 4rpx solid white;
+  box-shadow: 0 4rpx 16rpx rgba(128, 147, 241, 0.3);
+  position: relative;
+}
+
+.target-avatar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+}
+
+.target-avatar image {
+  width: 100%;
+  height: 100%;
+}
+
+.target-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.target-label {
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.target-name {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* 任务信息卡片 */
+.task-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20rpx);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 1;
+}
+
+.task-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3rpx;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.task-type {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.task-points {
+  font-size: 26rpx;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+.task-desc {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 星级评分区域 - 精致卡片 */
+.rating-section {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20rpx);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg) var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.rating-title {
+  font-size: 30rpx;
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 32rpx;
+  display: block;
+}
+
+/* 星星容器 */
+.stars-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.star {
+  padding: 8rpx;
+  transition: all 0.2s ease;
+}
+
+.star:active {
+  transform: scale(0.9);
+}
+
+.star-icon {
+  font-size: 72rpx;
+  color: #E8E8F0;
+  transition: all 0.3s ease;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 激活状态的星星 - 金色渐变 */
+.star.active .star-icon {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.4);
+  animation: starPop 0.3s ease-out;
+}
+
+@keyframes starPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 评分文字 */
+.rating-text {
+  font-size: 32rpx;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  padding: 8rpx 24rpx;
+  background-color: rgba(255, 215, 0, 0.1);
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+/* 评价标签区域 */
+.tags-section {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20rpx);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 1;
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 24rpx;
+  display: block;
+}
+
+.tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+/* 评价标签 - 精致胶囊 */
+.tag {
+  padding: 16rpx 32rpx;
+  background: rgba(128, 147, 241, 0.08);
+  border-radius: var(--radius-full);
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.tag:active {
+  transform: scale(0.95);
+}
+
+/* 选中状态的标签 */
+.tag.active {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba(128, 147, 241, 0.4);
+}
+
+/* 评价内容输入 */
+.comment-section {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20rpx);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 1;
+}
+
+.comment-input {
+  width: 100%;
+  min-height: 200rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding-bottom: 40rpx;
+}
+
+.comment-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.char-count {
+  position: absolute;
+  bottom: 16rpx;
+  right: 24rpx;
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* 提交按钮 */
+.submit-section {
+  margin-bottom: var(--space-md);
+  position: relative;
+  z-index: 1;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 32rpx 0;
+  background: linear-gradient(135deg, #C8C9D4 0%, #D8D9E3 100%);
+  color: white;
+  font-size: 32rpx;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4rpx 16rpx rgba(200, 201, 212, 0.3);
+}
+
+.submit-btn.active {
+  background: var(--gradient-primary);
+  box-shadow: 0 8rpx 32rpx rgba(128, 147, 241, 0.4);
+  transform: translateY(-2rpx);
+}
+
+.submit-btn.active:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 4rpx 20rpx rgba(128, 147, 241, 0.3);
+}
+
+.submit-btn::after {
+  border: none;
+}
+
+/* 评价说明 - 提示卡片 */
+.tips-section {
+  background: rgba(255, 215, 0, 0.08);
+  backdrop-filter: blur(10rpx);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  border: 1rpx solid rgba(255, 215, 0, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.tips-title {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 16rpx;
+  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.tips-title::before {
+  content: '💡';
+  font-size: 32rpx;
+}
+
+.tips-item {
+  display: block;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  padding-left: 44rpx;
+  position: relative;
+}
+
+.tips-item::before {
+  content: '•';
+  position: absolute;
+  left: 20rpx;
+  color: #FFD700;
+  font-weight: 700;
+}

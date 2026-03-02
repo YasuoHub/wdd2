@@ -1,0 +1,65 @@
+{
+  "requiredBackgroundModes": [],
+  "lazyCodeLoading": "requiredComponents",
+  "useExtendedLib": {
+    "weui": false
+  },
+  "libVersion": "2.30.0",
+  "pages": [
+    "pages/index/index",
+    "pages/publish/publish",
+    "pages/task-hall/task-hall",
+    "pages/chat/chat",
+    "pages/messages/messages",
+    "pages/my/my",
+    "pages/my-needs/my-needs",
+    "pages/my-tasks/my-tasks",
+    "pages/task-detail/task-detail",
+    "pages/rating/rating"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "问当地",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#999",
+    "selectedColor": "#07c160",
+    "backgroundColor": "#fff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/home.png",
+        "selectedIconPath": "images/home-active.png"
+      },
+      {
+        "pagePath": "pages/task-hall/task-hall",
+        "text": "大厅",
+        "iconPath": "images/hall.png",
+        "selectedIconPath": "images/hall-active.png"
+      },
+      {
+        "pagePath": "pages/messages/messages",
+        "text": "消息",
+        "iconPath": "images/message.png",
+        "selectedIconPath": "images/message-active.png"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "我的",
+        "iconPath": "images/my.png",
+        "selectedIconPath": "images/my-active.png"
+      }
+    ]
+  },
+  "cloud": true,
+  "requiredBackgroundModes": ["audio"],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "您的位置信息将用于匹配附近的帮助者"
+    }
+  }
+}

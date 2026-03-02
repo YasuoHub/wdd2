@@ -1,0 +1,94 @@
+<!-- 消息中心页面 -->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">消息</text>
+    <view wx:if="{{unreadCount > 0}}" class="unread-badge">{{unreadCount}}条未读</view>
+  </view>
+
+  <!-- 消息类型标签 -->
+  <view class="message-tabs">
+    <view
+      class="tab {{currentTab === 'chat' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="chat"
+    >
+      <text>💬 聊天记录</text>
+      <view wx:if="{{chatUnread > 0}}" class="tab-badge">{{chatUnread}}</view>
+    </view>
+    <view
+      class="tab {{currentTab === 'system' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="system"
+    >
+      <text>🔔 系统通知</text>
+      <view wx:if="{{systemUnread > 0}}" class="tab-badge">{{systemUnread}}</view>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- 聊天记录 -->
+    <block wx:if="{{currentTab === 'chat'}}">
+      <view wx:if="{{chatList.length === 0}}" class="empty-state">
+        <view class="empty-icon">💬</view>
+        <view class="empty-text">暂无聊天记录</view>
+        <view class="empty-hint">去任务大厅接单开始聊天吧</view>
+      </view>
+
+      <view wx:else class="chat-list">
+        <view
+          wx:for="{{chatList}}"
+          wx:key="needId"
+          class="message-card {{item.unread > 0 ? 'unread' : ''}}"
+          bindtap="goToChat"
+          data-needid="{{item.needId}}"
+          data-isseeker="{{item.isSeeker}}"
+        >
+          <view class="message-avatar">{{item.avatar || item.typeIcon}}</view>
+          <view class="message-info">
+            <view class="message-top">
+              <view class="message-title">{{item.title}}</view>
+              <view class="message-time">{{item.lastTime}}</view>
+            </view>
+            <view class="message-content">{{item.lastMessage}}</view>
+            <view class="message-bottom">
+              <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
+              <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 系统通知 -->
+    <block wx:if="{{currentTab === 'system'}}">
+      <view wx:if="{{systemList.length === 0}}" class="empty-state">
+        <view class="empty-icon">🔔</view>
+        <view class="empty-text">暂无系统通知</view>
+        <view class="empty-hint">重要消息会在这里显示</view>
+      </view>
+
+      <view wx:else class="system-list">
+        <view
+          wx:for="{{systemList}}"
+          wx:key="_id"
+          class="system-card {{!item.is_read ? 'unread' : ''}}"
+          bindtap="readNotification"
+          data-id="{{item._id}}"
+        >
+          <view class="system-icon-wrapper">
+            <view class="system-icon">{{item.icon}}</view>
+          </view>
+          <view class="system-info">
+            <view class="system-top">
+              <view class="system-title">{{item.title}}</view>
+              <view class="system-time">{{item.timeText}}</view>
+            </view>
+            <view class="system-content">{{item.content}}</view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "wdd-sign-in",
+  "version": "1.0.0",
+  "description": "问当地小程序签到云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

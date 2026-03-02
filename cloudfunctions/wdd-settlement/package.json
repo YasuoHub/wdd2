@@ -1,0 +1,9 @@
+{
+  "name": "wdd-settlement",
+  "version": "1.0.0",
+  "description": "问当地-任务结算云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

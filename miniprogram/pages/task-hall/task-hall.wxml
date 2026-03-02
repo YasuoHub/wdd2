@@ -1,0 +1,211 @@
+<!-- 任务大厅 - 城市绿洲风格 -->
+<view class="container">
+
+  <!-- 顶部导航栏 -->
+  <view class="header">
+    <view class="header-content">
+      <view class="location-bar" bindtap="changeLocation">
+        <text class="location-icon">📍</text>
+        <text class="location-name">{{currentCity}}</text>
+        <text class="location-arrow">▼</text>
+      </view>
+      <view class="help-btn" bindtap="showHelp">
+        <text class="help-icon">?</text>
+      </view>
+    </view>
+
+    <!-- 筛选标签栏 -->
+    <view class="filter-bar">
+      <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="filter-list">
+          <view
+            wx:for="{{filters}}"
+            wx:key="id"
+            class="filter-item {{activeFilter === item.id ? 'active' : ''}}"
+            bindtap="selectFilter"
+            data-filter="{{item.id}}"
+          >
+            <text class="filter-icon">{{item.icon}}</text>
+            <text class="filter-name">{{item.name}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 排序和距离筛选 -->
+    <view class="sub-filter-bar">
+      <view class="sort-section" bindtap="showSortOptions">
+        <text class="sort-label">{{currentSort.label}}</text>
+        <text class="sort-arrow">▼</text>
+      </view>
+      <view class="distance-section" bindtap="showDistanceOptions">
+        <text class="distance-label">{{currentDistance.label}}</text>
+        <text class="distance-arrow">▼</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 任务列表内容区 -->
+  <scroll-view
+    class="content"
+    scroll-y
+    refresher-enabled
+    refresher-triggered="{{isRefreshing}}"
+    bindrefresherrefresh="onRefresh"
+    bindscrolltolower="onLoadMore"
+    bindscroll="onScroll"
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <!-- 统计信息 -->
+    <view class="stats-bar">
+      <text class="stats-text">{{taskList.length > 0 ? '附近共有 ' + totalCount + ' 个求助' : '正在搜索附近求助...'}}</text>
+      <view wx:if="{{isLocating}}" class="locating-indicator">
+        <view class="locating-dot"></view>
+        <view class="locating-dot"></view>
+        <view class="locating-dot"></view>
+      </view>
+    </view>
+
+    <!-- 任务列表 -->
+    <view wx:if="{{taskList.length > 0}}" class="task-list">
+      <view
+        wx:for="{{taskList}}"
+        wx:key="_id"
+        class="task-card"
+        bindtap="goToTaskDetail"
+        data-id="{{item._id}}"
+      >
+        <!-- 左侧色带 -->
+        <view class="type-strip type-{{item.type}}"></view>
+
+        <!-- 卡片内容 -->
+        <view class="card-content">
+          <!-- 头部：类型和积分 -->
+          <view class="card-header">
+            <view class="type-badge" style="background: {{item.bgColor}}">
+              <text class="type-icon">{{item.typeIcon}}</text>
+              <text class="type-name">{{item.typeName}}</text>
+            </view>
+            <view class="points-badge">
+              <text class="points-icon">💎</text>
+              <text class="points-value">+{{item.points}}</text>
+            </view>
+          </view>
+
+          <!-- 描述内容 -->
+          <view class="card-desc">{{item.description || '暂无详细描述，点击接单后沟通详情'}}</view>
+
+          <!-- 位置信息 -->
+          <view class="card-location">
+            <text class="location-icon">📍</text>
+            <text class="location-text">{{item.locationName}}</text>
+            <text class="distance-tag">{{item.distanceText}}</text>
+          </view>
+
+          <!-- 底部信息 -->
+          <view class="card-footer">
+            <view class="publisher-info">
+              <view class="publisher-avatar">{{item.userNickname ? item.userNickname[0] : '?'}}</view>
+              <text class="publisher-name">{{item.userNickname || '匿名用户'}}</text>
+            </view>
+            <view class="time-info">
+              <text class="time-icon">⏱️</text>
+              <text class="time-text">{{item.remainTime}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 接单按钮 -->
+        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}">
+          <text class="take-text">接单</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{!isRefreshing && !isLoading}}" class="empty-state">
+      <view class="empty-illustration">
+        <view class="empty-circle"></view>
+        <text class="empty-icon">🌸</text>
+      </view>
+      <text class="empty-title">附近暂无求助任务</text>
+      <text class="empty-desc">稍后再来看看，或者去其他区域逛逛</text>
+      <view class="empty-actions">
+        <view class="empty-btn primary" bindtap="selectFilter" data-filter="all">
+          <text>查看全部类型</text>
+        </view>
+        <view class="empty-btn secondary" bindtap="onRefresh">
+          <text>刷新试试</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{isLoadingMore}}" class="loading-more">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">正在加载更多...</text>
+    </view>
+
+    <!-- 到底提示 -->
+    <view wx:if="{{!hasMore && taskList.length > 0}}" class="no-more">
+      <text class="no-more-line"></text>
+      <text class="no-more-text">已经到底了</text>
+      <text class="no-more-line"></text>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- 快速回到顶部 -->
+  <view wx:if="{{showBackToTop}}" class="back-to-top" bindtap="scrollToTop">
+    <text class="back-icon">↑</text>
+  </view>
+
+  <!-- 排序选项弹窗 -->
+  <view wx:if="{{showSortPopup}}" class="popup-overlay" bindtap="hidePopups">
+    <view class="popup-content sort-popup" catchtap="preventBubble">
+      <view class="popup-header">
+        <text class="popup-title">排序方式</text>
+        <view class="popup-close" bindtap="hidePopups">✕</view>
+      </view>
+      <view class="popup-options">
+        <view
+          wx:for="{{sortOptions}}"
+          wx:key="value"
+          class="popup-option {{currentSort.value === item.value ? 'active' : ''}}"
+          bindtap="selectSort"
+          data-sort="{{item}}"
+        >
+          <text class="option-icon">{{item.icon}}</text>
+          <text class="option-label">{{item.label}}</text>
+          <text wx:if="{{currentSort.value === item.value}}" class="option-check">✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 距离选项弹窗 -->
+  <view wx:if="{{showDistancePopup}}" class="popup-overlay" bindtap="hidePopups">
+    <view class="popup-content distance-popup" catchtap="preventBubble">
+      <view class="popup-header">
+        <text class="popup-title">距离范围</text>
+        <view class="popup-close" bindtap="hidePopups">✕</view>
+      </view>
+      <view class="popup-options">
+        <view
+          wx:for="{{distanceOptions}}"
+          wx:key="value"
+          class="popup-option {{currentDistance.value === item.value ? 'active' : ''}}"
+          bindtap="selectDistance"
+          data-distance="{{item}}"
+        >
+          <text class="option-icon">{{item.icon}}</text>
+          <text class="option-label">{{item.label}}</text>
+          <text wx:if="{{currentDistance.value === item.value}}" class="option-check">✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
