@@ -124,7 +124,7 @@
     </view>
 
     <!-- 空状态 -->
-    <view wx:elif="{{!isRefreshing && !isLoading}}" class="empty-state">
+    <view wx:if="{{taskList.length === 0 && !isRefreshing && !isLoading}}" class="empty-state">
       <view class="empty-illustration">
         <view class="empty-circle"></view>
         <text class="empty-icon">🌸</text>

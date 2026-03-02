@@ -1,4 +1,4 @@
-<!-- 首页 - 城市绿洲风格 -->
+<!-- 首页 - 问当地 -->
 <view class="container">
 
   <!-- 顶部导航 -->
@@ -13,56 +13,20 @@
     </view>
   </view>
 
-  <!-- 用户信息卡片 -->
-  <view class="user-card">
-    <block wx:if="{{isLoggedIn}}">
-      <view class="welcome-section">
-        <view class="avatar">
-          <text>{{userInfo.avatar ? '' : '😊'}}</text>
-          <image wx:if="{{userInfo.avatar}}" src="{{userInfo.avatar}}" mode="aspectFill"/>
-        </view>
-        <view class="welcome-text">
-          <view class="welcome-label">欢迎回来</view>
-          <view class="welcome-name">{{userInfo.nickname || '朋友'}}</view>
-        </view>
-        <view class="sign-in-btn {{hasSignedToday ? 'signed' : ''}}" bindtap="handleSignIn">
-          {{hasSignedToday ? '已签到' : '签到'}}
-        </view>
-      </view>
-
-      <!-- 积分展示 -->
-      <view class="points-display">
-        <view class="points-item">
-          <text class="points-value">{{userInfo.total_points || 0}}</text>
-          <text class="points-label">总积分</text>
-        </view>
-        <view class="points-item">
-          <text class="points-value available">{{userInfo.available_points || 0}}</text>
-          <text class="points-label">可用</text>
-        </view>
-        <view class="points-item">
-          <text class="points-value frozen">{{userInfo.frozen_points || 0}}</text>
-          <text class="points-label">冻结中</text>
-        </view>
-      </view>
-    </block>
-
-    <block wx:else>
-      <view class="login-section">
-        <view class="login-illustration">🗺️</view>
-        <view class="login-title">欢迎来到问当地</view>
-        <view class="login-subtitle">登录后即可发布求助或帮助他人</view>
-        <button class="login-btn" bindtap="handleLogin">
-          <text class="wechat-icon">💬</text>
-          <text>微信一键登录</text>
-        </button>
-      </view>
-    </block>
+  <!-- 未登录提示卡片 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-card">
+    <view class="login-illustration">🗺️</view>
+    <view class="login-title">欢迎来到问当地</view>
+    <view class="login-subtitle">登录后即可发布求助或帮助他人</view>
+    <button class="login-btn" bindtap="handleLogin">
+      <text class="wechat-icon">💬</text>
+      <text>微信一键登录</text>
+    </button>
   </view>
 
   <!-- 发布求助入口 -->
-  <view class="publish-section" bindtap="goToPublish">
-    <view class="publish-card">
+  <view class="publish-section">
+    <view class="publish-card" bindtap="goToPublish">
       <view class="publish-content">
         <view class="publish-header">
           <view class="publish-icon">✨</view>
@@ -76,6 +40,22 @@
         </view>
       </view>
     </view>
+
+    <!-- 快捷类型入口 -->
+    <view wx:if="{{isLoggedIn}}" class="quick-types">
+      <view
+        wx:for="{{quickTypes}}"
+        wx:key="type"
+        class="quick-type-item"
+        bindtap="goToPublishWithType"
+        data-type="{{item.type}}"
+        style="--type-color: {{item.color}}"
+      >
+        <view class="quick-type-icon" style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.lightColor}} 100%);">{{item.icon}}</view>
+        <text class="quick-type-name">{{item.name}}</text>
+      </view>
+    </view>
+
     <view wx:if="{{isLoggedIn && userInfo.available_points < 10}}" class="points-tip">
       积分不足？去<text class="link" bindtap="goToSignIn">签到</text>获取积分
     </view>

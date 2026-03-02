@@ -29,8 +29,15 @@ Page({
     locationName: '',
     selectedLocation: '',
 
-    // 常用地点（成都）
-    quickLocations: ['春熙路', '太古里', '天府广场', '宽窄巷子', '锦里', '成都东站'],
+    // 常用地点（成都）- 包含名称和经纬度
+    quickLocations: [
+      { name: '春熙路', longitude: 104.0784, latitude: 30.6574 },
+      { name: '太古里', longitude: 104.0779, latitude: 30.6566 },
+      { name: '天府广场', longitude: 104.0668, latitude: 30.5728 },
+      { name: '宽窄巷子', longitude: 104.0556, latitude: 30.6633 },
+      { name: '锦里', longitude: 104.0486, latitude: 30.6424 },
+      { name: '成都东站', longitude: 104.1396, latitude: 30.6304 }
+    ],
 
     // 求助类型
     needTypes: NEED_TYPES,
@@ -41,7 +48,7 @@ Page({
 
     // 有效期
     timeOptions: TIME_OPTIONS,
-    selectedTime: 1440,  // 默认24小时
+    selectedTime: 60,  // 默认1小时（与推荐一致）
 
     // 悬赏积分
     rewardPoints: 20,
@@ -51,12 +58,37 @@ Page({
 
     // 发布状态
     isPublishing: false,
-    canPublish: false
+    canPublish: false,
+
+    // 图片上传
+    images: [], // 已选择的图片列表
+    maxImageCount: 3,
+    maxImageSize: 10 * 1024 * 1024 // 10MB
   },
 
-  onLoad() {
+  onLoad(options) {
     this.initUserInfo()
     this.getCurrentLocation()
+
+    // 如果传入了类型参数，自动选择对应类型
+    if (options.type) {
+      this.autoSelectType(options.type)
+    }
+  },
+
+  // 自动选择类型（从首页快捷入口进入）
+  autoSelectType(type) {
+    const typeItem = NEED_TYPES.find(item => item.id === type)
+    if (typeItem) {
+      this.setData({
+        selectedType: type
+      })
+      // 设置CSS变量用于类型颜色
+      const query = wx.createSelectorQuery()
+      query.select('.type-item.active').fields({ dataset: true }, () => {
+        // 类型已选中
+      }).exec()
+    }
   },
 
   // 初始化用户信息
@@ -70,9 +102,33 @@ Page({
     }
   },
 
-  // 返回上一页
-  goBack() {
-    wx.navigateBack()
+  // 选择地点
+  goToLocationPicker() {
+    wx.chooseLocation({
+      latitude: this.data.latitude,
+      longitude: this.data.longitude,
+      success: (res) => {
+        this.setData({
+          longitude: res.longitude,
+          latitude: res.latitude,
+          locationName: res.name || res.address || '选定位置',
+          addressDetail: res.address
+        })
+        this.checkCanPublish()
+      },
+      fail: (err) => {
+        // 用户取消选择或其他错误
+        if (err.errMsg && err.errMsg.includes('cancel')) {
+          console.log('用户取消选择地点')
+        } else {
+          console.error('选择地点失败:', err)
+          wx.showToast({
+            title: '选择地点失败',
+            icon: 'none'
+          })
+        }
+      }
+    })
   },
 
   // 获取当前位置
@@ -126,8 +182,10 @@ Page({
   selectQuickLocation(e) {
     const location = e.currentTarget.dataset.location
     this.setData({
-      locationName: location,
-      selectedLocation: location
+      locationName: location.name,
+      selectedLocation: location.name,
+      longitude: location.longitude,
+      latitude: location.latitude
     })
     this.checkCanPublish()
   },
@@ -183,6 +241,76 @@ Page({
     this.setData({ canPublish })
   },
 
+  // 选择图片
+  chooseImage() {
+    const { images, maxImageCount } = this.data
+    const remainCount = maxImageCount - images.length
+
+    if (remainCount <= 0) {
+      wx.showToast({ title: '最多上传3张图片', icon: 'none' })
+      return
+    }
+
+    wx.chooseMedia({
+      count: remainCount,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: (res) => {
+        const newImages = res.tempFiles.map(file => ({
+          path: file.tempFilePath,
+          size: file.size
+        }))
+
+        // 检查每张图片大小
+        const oversizedImages = newImages.filter(img => img.size > this.data.maxImageSize)
+        if (oversizedImages.length > 0) {
+          wx.showToast({ title: '单张图片不能超过10MB', icon: 'none' })
+          return
+        }
+
+        this.setData({
+          images: [...images, ...newImages]
+        })
+      }
+    })
+  },
+
+  // 预览图片
+  previewImage(e) {
+    const { index } = e.currentTarget.dataset
+    const urls = this.data.images.map(img => img.path)
+    wx.previewImage({
+      current: urls[index],
+      urls
+    })
+  },
+
+  // 删除图片
+  deleteImage(e) {
+    const { index } = e.currentTarget.dataset
+    const images = [...this.data.images]
+    images.splice(index, 1)
+    this.setData({ images })
+  },
+
+  // 上传图片到云存储
+  async uploadImages() {
+    const { images } = this.data
+    if (images.length === 0) return []
+
+    const uploadTasks = images.map((img, index) => {
+      const cloudPath = `need-images/${Date.now()}-${index}-${Math.random().toString(36).substr(2, 6)}.jpg`
+      return wx.cloud.uploadFile({
+        cloudPath,
+        filePath: img.path
+      })
+    })
+
+    const results = await Promise.all(uploadTasks)
+    return results.map(res => res.fileID)
+  },
+
   // 发布求助
   async handlePublish() {
     if (!this.data.canPublish || this.data.isPublishing) return
@@ -205,6 +333,12 @@ Page({
     try {
       wx.showLoading({ title: '发布中...' })
 
+      // 先上传图片
+      let imageUrls = []
+      if (this.data.images.length > 0) {
+        imageUrls = await this.uploadImages()
+      }
+
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-publish',
         data: {
@@ -217,7 +351,8 @@ Page({
           typeName: typeInfo.name,
           description: description,
           expireMinutes: selectedTime,
-          points: rewardPoints
+          points: rewardPoints,
+          images: imageUrls
         }
       })
 
@@ -236,10 +371,13 @@ Page({
           duration: 2000
         })
 
-        // 跳转到聊天页
+        // 设置刷新标记，返回时刷新"我的求助"页面
+        wx.setStorageSync('refreshMyNeeds', true)
+
+        // 跳转到任务详情页
         setTimeout(() => {
           wx.navigateTo({
-            url: `/pages/chat/chat?needId=${result.data.needId}`
+            url: `/pages/task-detail/task-detail?id=${result.data.needId}`
           })
         }, 1500)
       } else {

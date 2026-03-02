@@ -9,7 +9,7 @@
       </view>
       <view class="user-info">
         <text class="nickname">{{userInfo.nickname || '微信用户'}}</text>
-        <text class="user-id">ID: {{userInfo._id || '未知'}}</text>
+        <text class="user-id">ID: {{userInfo.displayId || '未知'}}</text>
       </view>
     </view>
 
@@ -119,6 +119,11 @@
     </view>
   </view>
 
+  <!-- 退出登录 -->
+  <view class="logout-section" bindtap="handleLogout">
+    <text class="logout-text">退出登录</text>
+  </view>
+
   <!-- 底部信息 -->
   <view class="footer">
     <text>问当地 v1.0.0</text>
@@ -134,7 +139,7 @@
     <view class="modal-title">邀请好友</view>
     <view class="invite-content">
       <view class="invite-icon">🎉</view>
-      <view class="invite-text">邀请好友注册，双方各得20积分！</view>
+      <view class="invite-text">邀请好友注册，双方各得50积分！</view>
       <view class="invite-tip">好友通过你的分享注册后，积分自动到账</view>
     </view>
     <button class="invite-btn" open-type="share">分享给好友</button>

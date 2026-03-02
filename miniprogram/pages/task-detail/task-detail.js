@@ -197,6 +197,10 @@ Page({
           icon: 'success'
         })
 
+        // 设置刷新标记
+        wx.setStorageSync('refreshMyNeeds', true)
+        wx.setStorageSync('refreshMyTasks', true)
+
         // 跳转到评价页
         setTimeout(() => {
           wx.navigateTo({
@@ -252,6 +256,8 @@ Page({
           title: '已取消',
           icon: 'success'
         })
+        // 设置刷新标记
+        wx.setStorageSync('refreshMyNeeds', true)
         this.loadTaskDetail()
       } else {
         throw new Error(result.message)
@@ -294,6 +300,16 @@ Page({
       success: () => {
         wx.showToast({ title: '已复制地址', icon: 'none' })
       }
+    })
+  },
+
+  // 预览任务图片
+  previewTaskImages(e) {
+    const { index } = e.currentTarget.dataset
+    const { images } = this.data.task
+    wx.previewImage({
+      current: images[index],
+      urls: images
     })
   }
 })

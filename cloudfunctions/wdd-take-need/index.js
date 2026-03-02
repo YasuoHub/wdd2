@@ -101,33 +101,41 @@ exports.main = async (event, context) => {
         }
       })
 
-      // 3. 给求助者发送通知
-      await transaction.collection('wdd-notifications').add({
-        data: {
-          user_id: need.user_id,
-          type: 'task_matched',
-          title: '有帮助者接单了！',
-          content: `${taker.nickname} 已承接您的"${need.type_name}"求助，快去看看吧`,
-          need_id: needId,
-          is_read: false,
-          create_time: db.serverDate()
-        }
-      })
-
-      // 4. 给帮助者发送通知
-      await transaction.collection('wdd-notifications').add({
-        data: {
-          user_id: takerId,
-          type: 'system',
-          title: '接单成功',
-          content: `您已成功承接"${need.type_name}"任务，请及时提供帮助`,
-          need_id: needId,
-          is_read: false,
-          create_time: db.serverDate()
-        }
-      })
-
       await transaction.commit()
+
+      // 发送通知（移出事务，使用普通操作）
+      // 失败不影响主业务流程
+      try {
+        await Promise.all([
+          // 给求助者发送通知
+          db.collection('wdd-notifications').add({
+            data: {
+              user_id: need.user_id,
+              type: 'task_matched',
+              title: '有帮助者接单了！',
+              content: `${taker.nickname} 已承接您的"${need.type_name}"求助，快去看看吧`,
+              need_id: needId,
+              is_read: false,
+              create_time: db.serverDate()
+            }
+          }),
+          // 给帮助者发送通知
+          db.collection('wdd-notifications').add({
+            data: {
+              user_id: takerId,
+              type: 'system',
+              title: '接单成功',
+              content: `您已成功承接"${need.type_name}"任务，请及时提供帮助`,
+              need_id: needId,
+              is_read: false,
+              create_time: db.serverDate()
+            }
+          })
+        ])
+      } catch (notifyErr) {
+        // 通知失败不影响主业务，只记录日志
+        console.error('发送通知失败:', notifyErr)
+      }
 
       return {
         code: 0,

@@ -1,0 +1,9 @@
+{
+  "name": "wdd-get-point-records",
+  "version": "1.0.0",
+  "description": "获取用户积分记录",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

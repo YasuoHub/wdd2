@@ -1,47 +1,16 @@
 /* ============================================
-   问当地 - 星级评价 - 梦幻渐变风格
-   风格：柔和粉彩 / 毛玻璃 / 精致优雅
+   问当地 - 星级评价 - 天蓝色青春活力风格
    ============================================ */
 
-/* CSS变量 - 设计令牌 */
-:root {
-  /* 主色调 - 梦幻渐变 */
-  --gradient-dream: linear-gradient(135deg, #FFE6FA 0%, #E6F4FF 50%, #F0FFFA 100%);
-  --gradient-primary: linear-gradient(135deg, #8093F1 0%, #B388EB 100%);
-  --gradient-accent: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%);
-  --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  --gradient-success: linear-gradient(135deg, #A1C4FD 0%, #C2E9FB 100%);
-
-  /* 文字颜色 */
-  --text-primary: #2A2D43;
-  --text-secondary: #6C6F8B;
-  --text-tertiary: #A0A3BD;
-  --text-light: #FFFFFF;
-
-  /* 阴影 */
-  --shadow-soft: 0 4rpx 20rpx rgba(42, 45, 67, 0.08);
-  --shadow-medium: 0 8rpx 32rpx rgba(42, 45, 67, 0.12);
-
-  /* 圆角 */
-  --radius-sm: 16rpx;
-  --radius-md: 24rpx;
-  --radius-lg: 32rpx;
-  --radius-full: 9999rpx;
-
-  /* 间距 */
-  --space-sm: 20rpx;
-  --space-md: 32rpx;
-  --space-lg: 48rpx;
-}
-
-/* 页面容器 - 梦幻渐变背景 */
 .container {
   min-height: 100vh;
-  background: var(--gradient-dream);
-  padding: var(--space-md);
+  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
+  padding: 32rpx;
   padding-bottom: 80rpx;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* 背景装饰 */
@@ -52,7 +21,19 @@
   right: -100rpx;
   width: 350rpx;
   height: 350rpx;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.06) 0%, rgba(255, 165, 0, 0.06) 100%);
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.container::after {
+  content: '';
+  position: absolute;
+  bottom: 100rpx;
+  left: -100rpx;
+  width: 300rpx;
+  height: 300rpx;
+  background: radial-gradient(circle, rgba(93, 184, 230, 0.1) 0%, transparent 70%);
   border-radius: 50%;
   z-index: 0;
 }
@@ -62,13 +43,13 @@
   display: flex;
   align-items: center;
   gap: 24rpx;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20rpx);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  box-shadow: var(--shadow-soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -76,8 +57,8 @@
 .target-avatar {
   width: 100rpx;
   height: 100rpx;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +66,7 @@
   color: white;
   overflow: hidden;
   border: 4rpx solid white;
-  box-shadow: 0 4rpx 16rpx rgba(128, 147, 241, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
   position: relative;
 }
 
@@ -112,25 +93,25 @@
 
 .target-label {
   font-size: 24rpx;
-  color: var(--text-tertiary);
+  color: #8FA8B8;
   font-weight: 500;
 }
 
 .target-name {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #2C3E50;
 }
 
 /* 任务信息卡片 */
 .task-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20rpx);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  box-shadow: var(--shadow-soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -141,9 +122,9 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3rpx;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  height: 6rpx;
+  background: linear-gradient(90deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  border-radius: 32rpx 32rpx 0 0;
 }
 
 .task-header {
@@ -154,45 +135,44 @@
 }
 
 .task-type {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #2C3E50;
 }
 
 .task-points {
-  font-size: 26rpx;
-  background: var(--gradient-accent);
+  font-size: 28rpx;
+  background: linear-gradient(135deg, #FF8C69 0%, #FF9A8B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   font-weight: 800;
 }
 
 .task-desc {
   font-size: 28rpx;
-  color: var(--text-secondary);
+  color: #6B8BA4;
   line-height: 1.5;
 }
 
 /* 星级评分区域 - 精致卡片 */
 .rating-section {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20rpx);
-  border-radius: var(--radius-md);
-  padding: var(--space-lg) var(--space-md);
-  margin-bottom: var(--space-md);
-  box-shadow: var(--shadow-soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  border-radius: 32rpx;
+  padding: 48rpx 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
   text-align: center;
   position: relative;
   z-index: 1;
 }
 
 .rating-title {
-  font-size: 30rpx;
-  color: var(--text-primary);
+  font-size: 32rpx;
+  color: #2C3E50;
   font-weight: 700;
-  margin-bottom: 32rpx;
+  margin-bottom: 36rpx;
   display: block;
 }
 
@@ -200,12 +180,12 @@
 .stars-wrapper {
   display: flex;
   justify-content: center;
-  gap: 16rpx;
-  margin-bottom: 24rpx;
+  gap: 20rpx;
+  margin-bottom: 28rpx;
 }
 
 .star {
-  padding: 8rpx;
+  padding: 10rpx;
   transition: all 0.2s ease;
 }
 
@@ -215,17 +195,16 @@
 
 .star-icon {
   font-size: 72rpx;
-  color: #E8E8F0;
+  color: #E8F0F5;
   transition: all 0.3s ease;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
 }
 
 /* 激活状态的星星 - 金色渐变 */
 .star.active .star-icon {
-  background: var(--gradient-gold);
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   text-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.4);
   animation: starPop 0.3s ease-out;
 }
@@ -246,36 +225,35 @@
 
 /* 评分文字 */
 .rating-text {
-  font-size: 32rpx;
-  background: var(--gradient-gold);
+  font-size: 34rpx;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   font-weight: 800;
-  padding: 8rpx 24rpx;
+  padding: 12rpx 28rpx;
   background-color: rgba(255, 215, 0, 0.1);
-  border-radius: var(--radius-full);
+  border-radius: 9999rpx;
   display: inline-block;
 }
 
 /* 评价标签区域 */
 .tags-section {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20rpx);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  box-shadow: var(--shadow-soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
 }
 
 .section-title {
-  font-size: 28rpx;
-  color: var(--text-primary);
+  font-size: 30rpx;
+  color: #2C3E50;
   font-weight: 700;
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
   display: block;
 }
 
@@ -287,12 +265,12 @@
 
 /* 评价标签 - 精致胶囊 */
 .tag {
-  padding: 16rpx 32rpx;
-  background: rgba(128, 147, 241, 0.08);
-  border-radius: var(--radius-full);
+  padding: 18rpx 36rpx;
+  background: rgba(240, 248, 255, 0.8);
+  border-radius: 9999rpx;
   font-size: 26rpx;
-  color: var(--text-secondary);
-  border: 2rpx solid transparent;
+  color: #6B8BA4;
+  border: 2rpx solid rgba(93, 184, 230, 0.1);
   transition: all 0.3s ease;
   font-weight: 500;
 }
@@ -303,21 +281,21 @@
 
 /* 选中状态的标签 */
 .tag.active {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
   color: white;
   border-color: transparent;
-  box-shadow: 0 4rpx 16rpx rgba(128, 147, 241, 0.4);
+  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.35);
 }
 
 /* 评价内容输入 */
 .comment-section {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20rpx);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  box-shadow: var(--shadow-soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -326,13 +304,13 @@
   width: 100%;
   min-height: 200rpx;
   font-size: 28rpx;
-  color: var(--text-primary);
+  color: #2C3E50;
   line-height: 1.6;
   padding-bottom: 40rpx;
 }
 
 .comment-input::placeholder {
-  color: var(--text-tertiary);
+  color: #A8C4D4;
 }
 
 .char-count {
@@ -340,13 +318,13 @@
   bottom: 16rpx;
   right: 24rpx;
   font-size: 24rpx;
-  color: var(--text-tertiary);
+  color: #A8C4D4;
   font-weight: 500;
 }
 
 /* 提交按钮 */
 .submit-section {
-  margin-bottom: var(--space-md);
+  margin-bottom: 28rpx;
   position: relative;
   z-index: 1;
 }
@@ -354,25 +332,25 @@
 .submit-btn {
   width: 100%;
   padding: 32rpx 0;
-  background: linear-gradient(135deg, #C8C9D4 0%, #D8D9E3 100%);
+  background: linear-gradient(135deg, #D4E5F0 0%, #C4D8E5 100%);
   color: white;
   font-size: 32rpx;
   font-weight: 700;
-  border-radius: var(--radius-full);
+  border-radius: 9999rpx;
   border: none;
   transition: all 0.3s ease;
-  box-shadow: 0 4rpx 16rpx rgba(200, 201, 212, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.15);
 }
 
 .submit-btn.active {
-  background: var(--gradient-primary);
-  box-shadow: 0 8rpx 32rpx rgba(128, 147, 241, 0.4);
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
   transform: translateY(-2rpx);
 }
 
 .submit-btn.active:active {
   transform: scale(0.98) translateY(0);
-  box-shadow: 0 4rpx 20rpx rgba(128, 147, 241, 0.3);
+  box-shadow: 0 4rpx 20rpx rgba(93, 184, 230, 0.3);
 }
 
 .submit-btn::after {
@@ -383,19 +361,18 @@
 .tips-section {
   background: rgba(255, 215, 0, 0.08);
   backdrop-filter: blur(10rpx);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  border: 1rpx solid rgba(255, 215, 0, 0.15);
+  border-radius: 28rpx;
+  padding: 28rpx;
+  border: 2rpx solid rgba(255, 215, 0, 0.15);
   position: relative;
   z-index: 1;
 }
 
 .tips-title {
   font-size: 28rpx;
-  color: var(--text-primary);
+  color: #2C3E50;
   font-weight: 700;
   margin-bottom: 16rpx;
-  display: block;
   display: flex;
   align-items: center;
   gap: 12rpx;
@@ -409,7 +386,7 @@
 .tips-item {
   display: block;
   font-size: 26rpx;
-  color: var(--text-secondary);
+  color: #6B8BA4;
   line-height: 1.8;
   padding-left: 44rpx;
   position: relative;

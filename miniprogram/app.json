@@ -1,9 +1,6 @@
 {
   "requiredBackgroundModes": [],
   "lazyCodeLoading": "requiredComponents",
-  "useExtendedLib": {
-    "weui": false
-  },
   "libVersion": "2.30.0",
   "pages": [
     "pages/index/index",
@@ -15,7 +12,9 @@
     "pages/my-needs/my-needs",
     "pages/my-tasks/my-tasks",
     "pages/task-detail/task-detail",
-    "pages/rating/rating"
+    "pages/rating/rating",
+    "pages/point-records/point-records",
+    "pages/user-info/user-info"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -24,10 +23,10 @@
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#999",
-    "selectedColor": "#07c160",
+    "color": "#8FA8B8",
+    "selectedColor": "#5DB8E6",
     "backgroundColor": "#fff",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
@@ -61,5 +60,9 @@
     "scope.userLocation": {
       "desc": "您的位置信息将用于匹配附近的帮助者"
     }
-  }
+  },
+  "requiredPrivateInfos": [
+    "chooseLocation",
+    "getLocation"
+  ]
 }

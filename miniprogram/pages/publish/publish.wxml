@@ -1,19 +1,9 @@
 <!-- 发布求助页面 - 城市绿洲风格 -->
 <view class="container">
-
-  <!-- 顶部导航 -->
-  <view class="header">
-    <view class="back-btn" bindtap="goBack">
-      <text class="back-icon">←</text>
-    </view>
-    <text class="header-title">发布求助</text>
-    <view class="header-right"></view>
-  </view>
-
   <!-- 主内容区 -->
   <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
 
-    <!-- 地图选址卡片 -->
+    <!-- 地点选择卡片 -->
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon location">📍</view>
@@ -23,33 +13,28 @@
         </view>
       </view>
 
-      <view class="map-container">
-        <map
-          id="locationMap"
-          class="location-map"
-          longitude="{{longitude}}"
-          latitude="{{latitude}}"
-          scale="16"
-          show-location
-          bindtap="onMapTap"
-        ></map>
-        <view class="map-center-pin">
-          <text class="pin-icon">📍</text>
+      <!-- 已选地点展示 -->
+      <view wx:if="{{locationName}}" class="selected-location" bindtap="goToLocationPicker">
+        <view class="location-info">
+          <text class="location-icon">📍</text>
+          <view class="location-text">
+            <text class="location-name">{{locationName}}</text>
+            <text wx:if="{{addressDetail}}" class="location-detail">{{addressDetail}}</text>
+          </view>
         </view>
+        <text class="change-btn">修改</text>
       </view>
 
-      <view class="location-input-wrapper">
-        <input
-          class="location-input"
-          placeholder="搜索地点或直接输入地址"
-          placeholder-class="input-placeholder"
-          value="{{locationName}}"
-          bindinput="onLocationInput"
-        />
-        <view class="location-btn" bindtap="getCurrentLocation">
-          <text class="location-btn-icon">🎯</text>
-          <text class="location-btn-text">定位</text>
+      <!-- 未选择地点 -->
+      <view wx:else class="location-picker-trigger" bindtap="goToLocationPicker">
+        <view class="picker-icon-wrapper">
+          <text class="picker-icon">🎯</text>
         </view>
+        <view class="picker-text">
+          <text class="picker-title">点击选择地点</text>
+          <text class="picker-desc">在地图上选择你想了解的位置</text>
+        </view>
+        <text class="picker-arrow">›</text>
       </view>
 
       <!-- 常用地点快捷选择 -->
@@ -58,11 +43,11 @@
         <view class="quick-tags">
           <text
             wx:for="{{quickLocations}}"
-            wx:key="*this"
-            class="quick-tag {{selectedLocation === item ? 'active' : ''}}"
+            wx:key="name"
+            class="quick-tag {{selectedLocation === item.name ? 'active' : ''}}"
             bindtap="selectQuickLocation"
             data-location="{{item}}"
-          >{{item}}</text>
+          >{{item.name}}</text>
         </view>
       </view>
     </view>
@@ -114,6 +99,47 @@
         value="{{description}}"
       ></textarea>
       <text class="char-count">{{description.length}}/500</text>
+    </view>
+
+    <!-- 图片上传 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon image">📷</view>
+        <view class="section-info">
+          <text class="section-title">添加图片</text>
+          <text class="section-subtitle">选填，最多3张，每张不超过10MB</text>
+        </view>
+      </view>
+
+      <view class="image-upload-area">
+        <!-- 已选择的图片预览 -->
+        <view
+          wx:for="{{images}}"
+          wx:key="index"
+          class="image-preview"
+        >
+          <image
+            class="preview-img"
+            src="{{item.path}}"
+            mode="aspectFill"
+            bindtap="previewImage"
+            data-index="{{index}}"
+          />
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">
+            <text class="delete-icon">×</text>
+          </view>
+        </view>
+
+        <!-- 添加图片按钮 -->
+        <view
+          wx:if="{{images.length < maxImageCount}}"
+          class="image-add-btn"
+          bindtap="chooseImage"
+        >
+          <text class="add-icon">+</text>
+          <text class="add-text">{{images.length}}/{{maxImageCount}}</text>
+        </view>
+      </view>
     </view>
 
     <!-- 有效期选择 -->

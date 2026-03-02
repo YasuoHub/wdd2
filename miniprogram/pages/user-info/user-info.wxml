@@ -1,0 +1,60 @@
+<!-- 用户信息填写页面 -->
+<view class="container">
+  <view class="header">
+    <view class="title">完善个人资料</view>
+    <view class="subtitle">请设置您的头像和昵称</view>
+  </view>
+
+  <view class="form">
+    <!-- 头像选择 -->
+    <view class="form-item">
+      <view class="label">头像</view>
+      <button
+        class="avatar-wrapper"
+        open-type="chooseAvatar"
+        bind:chooseavatar="onChooseAvatar"
+      >
+        <image
+          class="avatar"
+          src="{{avatarUrl || '/images/default-avatar.png'}}"
+          mode="aspectFill"
+        />
+        <view class="avatar-hint">点击选择</view>
+      </button>
+    </view>
+
+    <!-- 昵称输入 -->
+    <view class="form-item">
+      <view class="label">昵称</view>
+      <input
+        type="nickname"
+        class="nickname-input"
+        placeholder="请输入昵称"
+        value="{{nickname}}"
+        bind:input="onInputNickname"
+      />
+    </view>
+  </view>
+
+  <!-- 按钮组 -->
+  <view class="actions">
+    <button
+      class="btn btn-primary"
+      bindtap="handleLogin"
+      loading="{{isLoading}}"
+    >
+      确认登录
+    </button>
+    <button
+      class="btn btn-secondary"
+      bindtap="handleCancel"
+    >
+      取消
+    </button>
+  </view>
+
+  <!-- 提示 -->
+  <view class="tips">
+    <text class="tip-text">* 头像和昵称将用于个人资料展示</text>
+  </view>
+</view>

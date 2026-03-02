@@ -49,12 +49,15 @@
           <view class="message-info">
             <view class="message-top">
               <view class="message-title">{{item.title}}</view>
-              <view class="message-time">{{item.lastTime}}</view>
-            </view>
-            <view class="message-content">{{item.lastMessage}}</view>
-            <view class="message-bottom">
               <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
-              <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
+              
+            </view>
+            <view class="message-body">
+              <view class="message-content">{{item.lastMessage}}</view>
+              <view class="message-body-right">
+                <view class="message-time">{{item.lastTime}}</view>
+                <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
+              </view>
             </view>
           </view>
         </view>

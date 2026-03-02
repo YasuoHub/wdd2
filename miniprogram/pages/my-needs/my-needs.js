@@ -40,7 +40,21 @@ Page({
   },
 
   onShow() {
-    this.loadNeeds()
+    // 如果标记需要刷新，或者数据为空，则重新加载
+    if (this.data.needs.length === 0 || wx.getStorageSync('refreshMyNeeds')) {
+      this.refreshData()
+      wx.removeStorageSync('refreshMyNeeds')
+    }
+  },
+
+  // 刷新数据
+  refreshData() {
+    this.setData({
+      page: 1,
+      needs: []
+    }, () => {
+      this.loadNeeds()
+    })
   },
 
   // 切换筛选条件
@@ -213,7 +227,9 @@ Page({
           title: '已取消',
           icon: 'success'
         })
-        this.loadNeeds()
+        // 设置刷新标记
+        wx.setStorageSync('refreshMyNeeds', true)
+        this.refreshData()
       } else {
         throw new Error(result.message)
       }
@@ -232,6 +248,60 @@ Page({
     wx.navigateTo({
       url: `/pages/rating/rating?needId=${id}&type=seeker`
     })
+  },
+
+  // 完成任务
+  completeNeed(e) {
+    const { id } = e.currentTarget.dataset
+
+    wx.showModal({
+      title: '确认完成',
+      content: '确认已获得所需信息？完成后积分将转给帮助者。',
+      confirmColor: '#6DD5B0',
+      success: (res) => {
+        if (res.confirm) {
+          this.doCompleteNeed(id)
+        }
+      }
+    })
+  },
+
+  // 执行完成任务
+  async doCompleteNeed(id) {
+    try {
+      wx.showLoading({ title: '处理中...' })
+
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-settlement',
+        data: {
+          action: 'completeTask',
+          needId: id
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.code === 0) {
+        wx.showToast({
+          title: '任务已完成',
+          icon: 'success'
+        })
+        // 跳转到评价页面
+        setTimeout(() => {
+          wx.navigateTo({
+            url: `/pages/rating/rating?needId=${id}&type=seeker`
+          })
+        }, 1000)
+      } else {
+        throw new Error(result.message)
+      }
+    } catch (err) {
+      wx.hideLoading()
+      wx.showToast({
+        title: err.message || '操作失败',
+        icon: 'none'
+      })
+    }
   },
 
   // 去发布

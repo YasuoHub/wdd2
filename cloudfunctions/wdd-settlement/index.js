@@ -104,8 +104,8 @@ async function completeTask(event, OPENID) {
     // 5. 扣除求助者冻结积分（总积分也相应减少）
     await transaction.collection('wdd-users').doc(seeker._id).update({
       data: {
-        frozen_points: _.subtract(need.points),
-        total_points: _.subtract(need.points),
+        frozen_points: _.inc(-need.points),
+        total_points: _.inc(-need.points),
         update_time: new Date()
       }
     })
@@ -113,8 +113,8 @@ async function completeTask(event, OPENID) {
     // 6. 增加帮助者可用积分和总积分
     await transaction.collection('wdd-users').doc(takerUser._id).update({
       data: {
-        available_points: _.add(need.points),
-        total_points: _.add(need.points),
+        available_points: _.inc(need.points),
+        total_points: _.inc(need.points),
         update_time: new Date()
       }
     })
@@ -148,8 +148,9 @@ async function completeTask(event, OPENID) {
     // 提交事务
     await transaction.commit()
 
-    // 发送完成通知给帮助者
+    // 发送完成通知给帮助者和求助者
     await sendCompletionNotification(taker.taker_id, need)
+    await sendCompletionNotificationToSeeker(need.user_id, need)
 
     return {
       code: 0,
@@ -234,8 +235,8 @@ async function cancelTask(event, OPENID) {
     // 3. 解冻积分（冻结积分减少，可用积分增加）
     await transaction.collection('wdd-users').doc(user._id).update({
       data: {
-        frozen_points: _.subtract(need.points),
-        available_points: _.add(need.points),
+        frozen_points: _.inc(-need.points),
+        available_points: _.inc(need.points),
         update_time: new Date()
       }
     })
@@ -249,6 +250,19 @@ async function cancelTask(event, OPENID) {
         balance: user.available_points + need.points,
         description: `任务「${need.type_name || '求助'}」取消，积分退还`,
         need_id: needId,
+        create_time: new Date()
+      }
+    })
+
+    // 5. 给求助者发送取消通知
+    await transaction.collection('wdd-notifications').add({
+      data: {
+        user_id: currentUserId,
+        type: 'task_cancelled',
+        title: '任务已取消',
+        content: `您发布的「${need.type_name || '求助'}」任务已取消，${need.points}积分已退还`,
+        need_id: needId,
+        is_read: false,
         create_time: new Date()
       }
     })
@@ -267,7 +281,7 @@ async function cancelTask(event, OPENID) {
   }
 }
 
-// 发送完成通知
+// 发送完成通知给帮助者
 async function sendCompletionNotification(takerId, need) {
   try {
     await db.collection('wdd-notifications').add({
@@ -276,6 +290,25 @@ async function sendCompletionNotification(takerId, need) {
         type: 'task_completed',
         title: '任务已完成',
         content: `你帮助完成的「${need.type_name || '求助'}」任务已确认完成，获得 ${need.points} 积分`,
+        need_id: need._id,
+        is_read: false,
+        create_time: new Date()
+      }
+    })
+  } catch (err) {
+    console.error('发送通知失败:', err)
+  }
+}
+
+// 发送完成通知给求助者
+async function sendCompletionNotificationToSeeker(seekerId, need) {
+  try {
+    await db.collection('wdd-notifications').add({
+      data: {
+        user_id: seekerId,
+        type: 'task_completed',
+        title: '任务已完成',
+        content: `您发布的「${need.type_name || '求助'}」任务已完成，${need.points}积分已支付给帮助者`,
         need_id: need._id,
         is_read: false,
         create_time: new Date()

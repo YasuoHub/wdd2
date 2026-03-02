@@ -25,6 +25,8 @@ exports.main = async (event, context) => {
         return await getUnreadCount(OPENID)
       case 'getTaskCounts':
         return await getTaskCounts(OPENID)
+      case 'getUserInfo':
+        return await getUserInfo(OPENID)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -246,27 +248,59 @@ async function getTaskCounts(OPENID) {
     }
     const userId = userRes.data[0]._id
 
-    // 获取我的求助数量（非取消状态的）
-    const myNeedsRes = await db.collection('wdd-needs').where({
+    // 获取我的求助进行中的数量
+    const myNeedsOngoingRes = await db.collection('wdd-needs').where({
       user_id: userId,
-      status: db.command.in(['pending', 'ongoing', 'completed'])
+      status: db.command.in(['pending', 'ongoing'])
     }).count()
 
-    // 获取我的接单数量
-    const myTasksRes = await db.collection('wdd-need-takers').where({
+    // 获取我的接单进行中的数量
+    const myTasksOngoingRes = await db.collection('wdd-need-takers').where({
       taker_id: userId,
-      status: db.command.in(['ongoing', 'completed'])
+      status: 'ongoing'
     }).count()
 
     return {
       code: 0,
       data: {
-        myNeedsCount: myNeedsRes.total,
-        myTasksCount: myTasksRes.total
+        myNeedsCount: myNeedsOngoingRes.total,
+        myTasksCount: myTasksOngoingRes.total
       }
     }
   } catch (err) {
     console.error('获取任务统计失败:', err)
+    return { code: -1, message: '获取失败: ' + err.message }
+  }
+}
+
+// 获取用户信息
+async function getUserInfo(OPENID) {
+  try {
+    // 获取当前用户
+    const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+    if (userRes.data.length === 0) {
+      return { code: -1, message: '用户不存在' }
+    }
+    const user = userRes.data[0]
+
+    return {
+      code: 0,
+      data: {
+        userInfo: {
+          _id: user._id,
+          nickname: user.nickname,
+          avatar: user.avatar,
+          total_points: user.total_points,
+          available_points: user.available_points,
+          frozen_points: user.frozen_points,
+          role: user.role,
+          consecutive_sign_days: user.consecutive_sign_days,
+          invite_count: user.invite_count || 0
+        }
+      }
+    }
+  } catch (err) {
+    console.error('获取用户信息失败:', err)
     return { code: -1, message: '获取失败: ' + err.message }
   }
 }

@@ -19,25 +19,85 @@ Page({
     this.loadUserInfo()
     this.checkSignInStatus()
     this.loadTaskCounts()
+    // 更新消息角标
+    app.updateTabBarBadge()
   },
 
   // 加载用户信息
-  loadUserInfo() {
-    const userInfo = app.globalData.userInfo || wx.getStorageSync('userInfo')
-    if (userInfo) {
+  async loadUserInfo() {
+    // 先从本地获取显示
+    const localUserInfo = app.globalData.userInfo || wx.getStorageSync('userInfo')
+    if (localUserInfo) {
+      // 处理ID显示，只展示最后10位
+      if (localUserInfo._id && localUserInfo._id.length > 10) {
+        localUserInfo.displayId = localUserInfo._id.slice(-10)
+      } else {
+        localUserInfo.displayId = localUserInfo._id || '未知'
+      }
       this.setData({
-        userInfo: userInfo
+        userInfo: localUserInfo
       })
+    }
+
+    // 然后从服务器获取最新数据（刷新积分等）
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-notify',
+        data: {
+          action: 'getUserInfo'
+        }
+      })
+
+      if (result.code === 0 && result.data.userInfo) {
+        const freshUserInfo = result.data.userInfo
+        // 处理ID显示，只展示最后10位
+        if (freshUserInfo._id && freshUserInfo._id.length > 10) {
+          freshUserInfo.displayId = '...' + freshUserInfo._id.slice(-10)
+        } else {
+          freshUserInfo.displayId = freshUserInfo._id || '未知'
+        }
+        this.setData({
+          userInfo: freshUserInfo
+        })
+        // 更新全局数据
+        app.updateUserInfo(freshUserInfo)
+      }
+    } catch (err) {
+      console.error('获取最新用户信息失败:', err)
+      // 使用本地数据，不报错
     }
   },
 
   // 检查签到状态
-  checkSignInStatus() {
+  async checkSignInStatus() {
+    // 先从服务器获取真实的签到状态
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-sign-in',
+        data: { action: 'check' }
+      })
+      if (result.code === 0) {
+        this.setData({
+          hasSignedToday: result.data.hasSignedToday,
+          signPoints: result.data.todayPoints || 5
+        })
+        // 同步本地存储
+        if (result.data.hasSignedToday) {
+          wx.setStorageSync('lastSignDate', new Date().toDateString())
+        }
+        return
+      }
+    } catch (err) {
+      console.error('获取签到状态失败:', err)
+    }
+
+    // 降级到本地检查
     const lastSignDate = wx.getStorageSync('lastSignDate')
     const today = new Date().toDateString()
-
+    const hasSignedToday = lastSignDate === today
     this.setData({
-      hasSignedToday: lastSignDate === today
+      hasSignedToday: hasSignedToday,
+      signPoints: hasSignedToday ? this.data.signPoints : 5
     })
   },
 
@@ -90,11 +150,13 @@ Page({
       if (result.code === 0) {
         const { points, consecutiveDays } = result.data
 
-        // 更新本地数据
-        const userInfo = this.data.userInfo
-        userInfo.total_points += points
-        userInfo.available_points += points
-        userInfo.consecutive_sign_days = consecutiveDays
+        // 更新本地数据 - 创建新对象确保数据更新
+        const userInfo = {
+          ...this.data.userInfo,
+          total_points: this.data.userInfo.total_points + points,
+          available_points: this.data.userInfo.available_points + points,
+          consecutive_sign_days: consecutiveDays
+        }
 
         this.setData({
           userInfo,
@@ -141,9 +203,8 @@ Page({
 
   // 跳转到积分明细
   goToPointRecords() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/point-records/point-records'
     })
   },
 
@@ -161,7 +222,7 @@ Page({
   onShareAppMessage() {
     const userInfo = this.data.userInfo
     return {
-      title: `🙏 ${userInfo.nickname || '有人'}邀请你加入问当地，新用户送100积分！`,
+      title: `🙏 ${userInfo.nickname || '有人'}邀请你加入问当地，双方各得50积分！`,
       path: `/pages/index/index?inviter=${userInfo._id}`,
       imageUrl: '/images/share-cover.png'
     }
@@ -183,5 +244,83 @@ Page({
       content: '1. 新用户注册：+100积分\n2. 每日签到：+5~30积分（连续签到递增）\n3. 发布求助：冻结相应积分\n4. 完成求助：支付积分给帮助者\n5. 帮助他人：获得对方悬赏积分\n6. 邀请好友：双方各+50积分\n\n积分当年有效，次年1月1日清零。',
       showCancel: false
     })
+  },
+
+  // 退出登录
+  handleLogout() {
+    wx.showModal({
+      title: '确认退出',
+      content: '退出后需要重新登录',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (res.confirm) {
+          this.performLogout()
+        }
+      }
+    })
+  },
+
+  // 执行退出登录
+  performLogout() {
+    try {
+      // 1. 停止全局消息监听
+      app.stopGlobalMessageWatch()
+
+      // 2. 清除本地存储
+      wx.removeStorageSync('userInfo')
+      wx.removeStorageSync('lastSignDate')
+      wx.removeStorageSync('pendingInviterId')
+
+      // 3. 清除全局数据
+      app.globalData.userInfo = null
+      app.globalData.isLoggedIn = false
+      app.globalData.unreadCount = 0
+      app.globalData.globalMessageWatcher = null
+      app.globalData.messagePageRefreshCallback = null
+
+      // 4. 清除消息角标（如果存在）
+      try {
+        wx.removeTabBarBadge({ index: 2 })
+      } catch (e) {
+        // 角标可能不存在，忽略错误
+      }
+
+      // 5. 重置页面数据
+      this.setData({
+        userInfo: {},
+        hasSignedToday: false,
+        myNeedsCount: 0,
+        myTasksCount: 0
+      })
+
+      wx.showToast({
+        title: '已退出登录',
+        icon: 'success',
+        duration: 1500
+      })
+
+      // 6. 延迟切换到首页，让 toast 显示
+      setTimeout(() => {
+        wx.switchTab({
+          url: '/pages/index/index',
+          success: () => {
+            console.log('已切换到首页')
+          },
+          fail: (err) => {
+            console.error('切换首页失败:', err)
+            // 如果 switchTab 失败，尝试 redirectTo
+            wx.reLaunch({
+              url: '/pages/index/index'
+            })
+          }
+        })
+      }, 1500)
+    } catch (err) {
+      console.error('退出登录失败:', err)
+      wx.showToast({
+        title: '退出失败，请重试',
+        icon: 'none'
+      })
+    }
   }
 })

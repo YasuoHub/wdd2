@@ -1,0 +1,9 @@
+{
+  "name": "wdd-auto-cancel",
+  "version": "1.0.0",
+  "description": "自动取消过期任务",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

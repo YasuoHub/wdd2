@@ -37,9 +37,12 @@ exports.main = async (event, context) => {
 async function getPublicNeeds(event, OPENID) {
   const { filter, sort, distance, page = 1, pageSize = 10, limit } = event
 
+  const now = new Date()
+
   // 构建查询条件
   let where = {
-    status: 'pending' // 只查询待匹配的任务
+    status: 'pending', // 只查询待匹配的任务
+    expire_time: _.gt(now) // 只查询未过期的任务
   }
 
   // 类型筛选
@@ -342,8 +345,9 @@ function formatNeedItem(item) {
     bgColor: getTypeBgColor(item.type),
     color: getTypeColor(item.type),
     description: item.description,
+    images: item.images || [],
     location: item.location,
-    locationName: item.location?.name || '未知位置',
+    locationName: (item.location && item.location.name) || '未知位置',
     points: item.points,
     status: item.status,
     distance: distance,

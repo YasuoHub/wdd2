@@ -15,28 +15,76 @@ Page({
     chatList: [],
 
     // 系统通知列表
-    systemList: []
-  },
+    systemList: [],
+
+    },
 
   onLoad() {
-    this.loadMessages()
+    this.loadMessages(true)
+    // 注册全局刷新回调
+    app.registerMessagePageRefresh(() => {
+      console.log('收到全局刷新通知')
+      // 新消息来时静默刷新，不显示 loading
+      this.loadMessages(false)
+    })
   },
 
   onShow() {
-    this.loadMessages()
+    // 检查是否登录
+    if (!app.globalData.isLoggedIn) {
+      this.setData({
+        chatList: [],
+        systemList: [],
+        unreadCount: 0,
+        chatUnread: 0,
+        systemUnread: 0
+      })
+      return
+    }
+
+    this.loadMessages(true)
+    this.updateTabBarBadge()
+    // 确保全局监听已启动
+    app.startGlobalMessageWatch()
+  },
+
+  onHide() {
+    // 页面隐藏时不停止全局监听
+    // 全局监听由 app.js 统一管理
+  },
+
+  onUnload() {
+    // 注销全局刷新回调
+    app.unregisterMessagePageRefresh()
+  },
+
+  // 更新 TabBar 未读徽章
+  updateTabBarBadge() {
+    const { unreadCount } = this.data
+    if (unreadCount > 0) {
+      wx.setTabBarBadge({
+        index: 2,
+        text: String(unreadCount > 99 ? '99+' : unreadCount)
+      })
+    } else {
+      wx.removeTabBarBadge({ index: 2 })
+    }
   },
 
   // 切换标签
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     this.setData({ currentTab: tab })
-    this.loadMessages()
+    this.loadMessages(true)
   },
 
   // 加载消息列表
-  async loadMessages() {
+  // showLoading: 是否显示 loading，静默刷新时不显示
+  async loadMessages(showLoading = true) {
     try {
-      wx.showLoading({ title: '加载中...' })
+      if (showLoading) {
+        wx.showLoading({ title: '加载中...' })
+      }
 
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-notify',
@@ -45,7 +93,9 @@ Page({
         }
       })
 
-      wx.hideLoading()
+      if (showLoading) {
+        wx.hideLoading()
+      }
 
       if (result.code === 0) {
         // 处理聊天列表
@@ -68,14 +118,25 @@ Page({
           unreadCount: result.data.unreadCount || 0,
           chatUnread: result.data.chatUnread || 0,
           systemUnread: result.data.systemUnread || 0
+        }, () => {
+          // 更新 TabBar 徽章
+          this.updateTabBarBadge()
         })
       }
     } catch (err) {
-      wx.hideLoading()
+      if (showLoading) {
+        wx.hideLoading()
+      }
       console.error('加载消息失败:', err)
 
-      // 使用模拟数据展示效果
-      this.setMockData()
+      // 清空数据（可能是未登录）
+      this.setData({
+        chatList: [],
+        systemList: [],
+        unreadCount: 0,
+        chatUnread: 0,
+        systemUnread: 0
+      })
     }
   },
 

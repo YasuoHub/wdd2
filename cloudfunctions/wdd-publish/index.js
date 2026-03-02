@@ -24,7 +24,8 @@ exports.main = async (event, context) => {
     typeName,
     description,
     expireMinutes,
-    points
+    points,
+    images = []
   } = event
 
   // 参数校验
@@ -89,6 +90,7 @@ exports.main = async (event, context) => {
           type: type,
           type_name: typeName,
           description: description || '',
+          images: images || [],
           points: points,
           status: 'pending',      // pending: 待匹配, ongoing: 进行中, completed: 已完成, cancelled: 已取消
           expire_time: expireTime,
@@ -113,7 +115,7 @@ exports.main = async (event, context) => {
         data: {
           user_id: userId,
           type: 'freeze',
-          amount: -points,
+          points: points,
           description: `发布求助冻结积分：${typeName}`,
           need_id: needRes._id,
           balance: user.total_points,

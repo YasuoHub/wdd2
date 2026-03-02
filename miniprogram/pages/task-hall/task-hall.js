@@ -56,6 +56,9 @@ Page({
   },
 
   onShow() {
+    // 更新消息角标
+    app.updateTabBarBadge()
+
     // 每次显示页面时刷新
     if (this.data.taskList.length === 0) {
       this.loadTasks()
@@ -73,6 +76,7 @@ Page({
     })
 
     try {
+      console.log('开始加载任务列表...')
       // 调用云函数获取真实数据
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-get-needs',
@@ -85,36 +89,42 @@ Page({
         }
       })
 
+      console.log('云函数返回结果:', result)
+
       if (result.code === 0) {
         const list = result.data.list || []
         const total = result.data.total || 0
         const hasMore = result.data.hasMore || false
 
+        console.log('获取到任务数量:', list.length, '总数:', total)
+
         const processedList = list.map(item => ({
           ...item,
-          distanceText: item.distance < 1000 
-            ? item.distance + 'm' 
+          distanceText: item.distance < 1000
+            ? item.distance + 'm'
             : (item.distance / 1000).toFixed(1) + 'km'
         }))
 
         this.setData({
           taskList: isRefresh ? processedList : [...this.data.taskList, ...processedList],
           totalCount: total,
-          hasMore: hasMore
+          hasMore: hasMore,
+          isRefreshing: false,
+          isLoading: false
         })
       } else {
         throw new Error(result.message)
       }
     } catch (err) {
       console.error('加载任务失败:', err)
+      this.setData({
+        taskList: [],
+        isRefreshing: false,
+        isLoading: false
+      })
       wx.showToast({
         title: '加载失败',
         icon: 'none'
-      })
-    } finally {
-      this.setData({
-        isLoading: false,
-        isRefreshing: false
       })
     }
   },
@@ -263,6 +273,9 @@ Page({
 
         // 刷新列表
         this.loadTasks(true)
+
+        // 设置刷新标记，返回时刷新"我的接单"页面
+        wx.setStorageSync('refreshMyTasks', true)
 
         // 跳转到聊天页
         setTimeout(() => {

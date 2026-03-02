@@ -221,8 +221,9 @@ async function sendMessage(event, OPENID) {
   }
 
   // 创建消息记录
+  // 确保 need_id 是字符串类型，与前端监听查询保持一致
   const message = {
-    need_id: needId,
+    need_id: String(needId),
     sender_id: currentUserId,
     receiver_id: receiverId,
     type: type,
@@ -243,8 +244,8 @@ async function sendMessage(event, OPENID) {
     }
   })
 
-  // 发送消息通知（异步执行，不阻塞返回）
-  sendNotification(receiverId, currentUserId, need, type, content, imageUrl).catch(console.error)
+  // 注意：不再发送系统通知，避免通知过多
+  // 用户通过消息页面的实时监听获取新消息
 
   return {
     code: 0,

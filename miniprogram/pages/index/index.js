@@ -1,6 +1,16 @@
 // 首页逻辑 - 城市绿洲风格
 const app = getApp()
 
+// 求助类型配置
+const NEED_TYPES = [
+  { type: 'weather', name: '实时天气', icon: '🌤️', color: '#5DB8E6', lightColor: '#7EC8E8' },
+  { type: 'traffic', name: '道路拥堵', icon: '🚗', color: '#FFD166', lightColor: '#FFE08C' },
+  { type: 'shop', name: '店铺营业', icon: '🏪', color: '#B8B8E8', lightColor: '#D4D4F0' },
+  { type: 'parking', name: '停车场', icon: '🅿️', color: '#6DD5B0', lightColor: '#88D8A3' },
+  { type: 'queue', name: '排队情况', icon: '👥', color: '#FF8C69', lightColor: '#FF9A8B' },
+  { type: 'other', name: '其他', icon: '📝', color: '#A8C4D4', lightColor: '#C4D8E5' }
+]
+
 Page({
   data: {
     isLoggedIn: false,
@@ -10,18 +20,30 @@ Page({
     nearbyNeeds: [],
     nearbyLoading: false,
     nearbyEmpty: false,
-    nearbyError: false
+    nearbyError: false,
+    quickTypes: NEED_TYPES
   },
 
-  onLoad() {
+  onLoad(options) {
+    // 保存邀请人ID（如果有）
+    if (options.inviter) {
+      wx.setStorageSync('pendingInviterId', options.inviter)
+      console.log('收到邀请人ID:', options.inviter)
+    }
+
     this.checkLoginStatus()
     this.checkSignInStatus()
   },
 
   onShow() {
+    // 重新检查登录状态（处理退出登录后返回的情况）
+    this.checkLoginStatus()
+
     if (this.data.isLoggedIn) {
       this.loadNearbyNeeds()
       this.checkSignInStatus()
+      // 更新消息角标
+      app.updateTabBarBadge()
     }
   },
 
@@ -54,35 +76,34 @@ Page({
 
   // 处理登录
   handleLogin() {
-    const that = this
-    wx.getUserProfile({
-      desc: '用于完善用户资料'
-    }).then(({ userInfo }) => {
-      wx.showLoading({ title: '登录中...' })
-      return app.login(userInfo)
-    }).then(result => {
-      wx.hideLoading()
-      if (result.success) {
-        that.setData({
-          isLoggedIn: true,
-          userInfo: result.data.userInfo,
-          hasSignedToday: false
-        })
-        that.loadNearbyNeeds()
-        wx.showToast({
-          title: '欢迎新用户 🎉',
-          icon: 'none',
-          duration: 2000
-        })
-      }
-    }).catch(err => {
-      wx.hideLoading()
-      console.error('登录失败:', err)
-      wx.showToast({
-        title: '登录取消',
-        icon: 'none'
-      })
+    // 跳转到用户信息填写页面获取头像昵称
+    wx.navigateTo({
+      url: '/pages/user-info/user-info'
     })
+  },
+
+  // 登录成功回调
+  onLoginSuccess(result) {
+    if (result.success) {
+      this.setData({
+        isLoggedIn: true,
+        userInfo: result.data.userInfo,
+        hasSignedToday: false
+      })
+      this.loadNearbyNeeds()
+
+      // 判断是否是被邀请注册
+      const isInvited = result.data.userInfo.inviter_id != null
+      const toastTitle = result.data.isNewUser
+        ? (isInvited ? '注册成功，获得150积分 🎉' : '欢迎新用户，已送100积分')
+        : '登录成功'
+
+      wx.showToast({
+        title: toastTitle,
+        icon: 'none',
+        duration: 2000
+      })
+    }
   },
 
   // 处理签到
@@ -224,6 +245,22 @@ Page({
 
     wx.navigateTo({
       url: '/pages/publish/publish'
+    })
+  },
+
+  // 跳转到发布页并自动选择类型
+  goToPublishWithType(e) {
+    if (!this.data.isLoggedIn) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
+
+    const type = e.currentTarget.dataset.type
+    wx.navigateTo({
+      url: `/pages/publish/publish?type=${type}`
     })
   },
 

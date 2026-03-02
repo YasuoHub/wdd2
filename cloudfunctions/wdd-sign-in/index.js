@@ -10,6 +10,7 @@ const _ = db.command
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
+  const { action = 'sign' } = event
 
   if (!OPENID) {
     return {
@@ -48,7 +49,48 @@ exports.main = async (event, context) => {
       })
       .get()
 
-    if (signRes.data.length > 0) {
+    const hasSignedToday = signRes.data.length > 0
+
+    // 如果是检查动作，直接返回签到状态
+    if (action === 'check') {
+      // 计算今天应得积分
+      const consecutiveDays = user.consecutive_sign_days || 0
+      const lastSignDate = user.last_sign_in_date
+      let todayPoints = 5
+      let willBeDay = 1
+
+      if (lastSignDate) {
+        const lastDate = new Date(lastSignDate)
+        const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24))
+        if (diffDays === 1) {
+          // 连续签到，今天是第 consecutiveDays + 1 天
+          willBeDay = consecutiveDays + 1
+        } else if (diffDays === 0) {
+          // 今天已签到，显示今天的实际获得
+          willBeDay = consecutiveDays
+        } else {
+          // 断签，重置为第1天
+          willBeDay = 1
+        }
+      }
+
+      // 计算今天应得积分（第1-7天：5, 10, 15, 20, 25, 30, 30）
+      const pointsMap = [5, 10, 15, 20, 25, 30, 30]
+      todayPoints = pointsMap[Math.min(willBeDay - 1, 6)]
+
+      return {
+        code: 0,
+        message: '获取签到状态成功',
+        data: {
+          hasSignedToday,
+          todayPoints,
+          consecutiveDays: hasSignedToday ? consecutiveDays : willBeDay
+        }
+      }
+    }
+
+    // 签到动作：检查今天是否已签到
+    if (hasSignedToday) {
       return {
         code: -1,
         message: '今日已签到'
@@ -109,7 +151,7 @@ exports.main = async (event, context) => {
         data: {
           user_id: userId,
           type: 'gain',
-          amount: points,
+          points: points,
           description: `连续${consecutiveDays}天签到奖励`,
           balance: user.total_points + points,
           create_time: db.serverDate()

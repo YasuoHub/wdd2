@@ -1,0 +1,93 @@
+<!-- 积分明细页面 -->
+<view class="container">
+  <!-- 顶部积分卡片 -->
+  <view class="points-card">
+    <view class="points-header">
+      <text class="points-title">我的积分</text>
+      <view class="rules-btn" bindtap="showRules">
+        <text class="rules-icon">📋</text>
+        <text class="rules-text">规则</text>
+      </view>
+    </view>
+
+    <view class="points-total">
+      <text class="total-number">{{currentPoints.total}}</text>
+      <text class="total-unit">积分</text>
+    </view>
+
+    <view class="points-detail">
+      <view class="detail-item">
+        <text class="detail-label">可用</text>
+        <text class="detail-value available">{{currentPoints.available}}</text>
+      </view>
+      <view class="detail-divider"></view>
+      <view class="detail-item">
+        <text class="detail-label">冻结</text>
+        <text class="detail-value frozen">{{currentPoints.frozen}}</text>
+      </view>
+    </view>
+
+    <view class="points-hint">
+      <text class="hint-text">💡 积分未来可提现，10积分=1元</text>
+    </view>
+  </view>
+
+  <!-- 记录列表 -->
+  <view class="records-section">
+    <view class="section-title">
+      <text class="title-text">收支明细</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-state" wx:if="{{isLoading && records.length === 0}}">
+      <view class="loading-icon">⏳</view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{isEmpty}}">
+      <view class="empty-icon">📊</view>
+      <text class="empty-text">暂无积分记录</text>
+      <text class="empty-hint">快去签到或完成任务赚取积分吧~</text>
+    </view>
+
+    <!-- 记录列表 -->
+    <view class="records-list" wx:if="{{records.length > 0}}">
+      <view
+        class="record-item"
+        wx:for="{{records}}"
+        wx:key="_id"
+      >
+        <view class="record-icon" style="background-color: {{item.typeColor}}20; color: {{item.typeColor}}">
+          <text>{{item.type === 'task_pay' || item.type === 'freeze' ? '−' : '+'}}</text>
+        </view>
+
+        <view class="record-content">
+          <view class="record-header">
+            <text class="record-title">{{item.description}}</text>
+            <text class="record-amount" style="color: {{item.typeColor}}">
+              {{item.icon}}{{item.amount}}
+            </text>
+          </view>
+
+          <view class="record-footer">
+            <text class="record-type">{{item.typeLabel}}</text>
+            <text class="record-time">{{item.timeText}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 加载更多 -->
+      <view class="load-more" wx:if="{{hasMore}}">
+        <view class="loading-dots" wx:if="{{isLoadingMore}}">
+          <text>加载中...</text>
+        </view>
+        <text class="load-more-text" wx:else>上拉加载更多</text>
+      </view>
+
+      <view class="no-more" wx:if="{{!hasMore && records.length > 0}}">
+        <text>— 没有更多记录了 —</text>
+      </view>
+    </view>
+  </view>
+</view>

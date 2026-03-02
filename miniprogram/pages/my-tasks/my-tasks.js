@@ -42,7 +42,21 @@ Page({
   },
 
   onShow() {
-    this.loadTasks()
+    // 如果标记需要刷新，或者数据为空，则重新加载
+    if (this.data.tasks.length === 0 || wx.getStorageSync('refreshMyTasks')) {
+      this.refreshData()
+      wx.removeStorageSync('refreshMyTasks')
+    }
+  },
+
+  // 刷新数据
+  refreshData() {
+    this.setData({
+      page: 1,
+      tasks: []
+    }, () => {
+      this.loadTasks()
+    })
   },
 
   // 切换筛选条件

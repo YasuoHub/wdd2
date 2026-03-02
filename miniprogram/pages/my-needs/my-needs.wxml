@@ -85,7 +85,11 @@
           <view wx:if="{{item.status === 'ongoing'}}" class="action-btn primary" catchtap="goToChat" data-id="{{item._id}}">
             进入聊天
           </view>
-          <view class="action-btn danger" catchtap="cancelNeed" data-id="{{item._id}}" data-status="{{item.status}}">
+          <view wx:if="{{item.status === 'ongoing'}}" class="action-btn success" catchtap="completeNeed" data-id="{{item._id}}">
+            完成
+          </view>
+          <!-- 只有待匹配状态才能取消 -->
+          <view wx:if="{{item.status === 'pending'}}" class="action-btn danger" catchtap="cancelNeed" data-id="{{item._id}}" data-status="{{item.status}}">
             取消任务
           </view>
         </view>

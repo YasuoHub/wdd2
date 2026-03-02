@@ -42,6 +42,22 @@
         <text class="description-text">{{task.description || '暂无描述'}}</text>
       </view>
 
+      <!-- 图片展示 -->
+      <view class="images-section" wx:if="{{task.images && task.images.length > 0}}">
+        <text class="section-title">求助图片</text>
+        <view class="images-list">
+          <image
+            wx:for="{{task.images}}"
+            wx:key="index"
+            class="task-image"
+            src="{{item}}"
+            mode="aspectFill"
+            bindtap="previewTaskImages"
+            data-index="{{index}}"
+          />
+        </view>
+      </view>
+
       <!-- 位置 -->
       <view class="location-section">
         <text class="section-title">求助位置</text>

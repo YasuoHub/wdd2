@@ -1,0 +1,371 @@
+/* 积分明细页面样式 - 天蓝色青春活力风格 */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 50%, #EDF7FF 100%);
+  padding-bottom: 40rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 积分卡片 - 天蓝色渐变 */
+.points-card {
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  margin: 30rpx;
+  border-radius: 44rpx;
+  padding: 48rpx;
+  color: #fff;
+  box-shadow: 0 8rpx 40rpx rgba(93, 184, 230, 0.35);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.points-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36rpx;
+}
+
+.points-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  opacity: 0.98;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+}
+
+.rules-btn {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 14rpx 24rpx;
+  border-radius: 9999rpx;
+  backdrop-filter: blur(10rpx);
+  border: 2rpx solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.rules-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.rules-icon {
+  font-size: 26rpx;
+  margin-right: 8rpx;
+}
+
+.rules-text {
+  font-size: 24rpx;
+  opacity: 0.98;
+}
+
+.points-total {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 36rpx;
+}
+
+.total-number {
+  font-size: 104rpx;
+  font-weight: 800;
+  line-height: 1;
+  margin-right: 16rpx;
+  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.total-unit {
+  font-size: 34rpx;
+  opacity: 0.95;
+  font-weight: 600;
+}
+
+.points-detail {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 24rpx;
+  padding: 28rpx 0;
+  margin-bottom: 24rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.detail-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: 24rpx;
+  opacity: 0.9;
+  margin-bottom: 10rpx;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.detail-value.available {
+  color: #fff;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+.detail-value.frozen {
+  color: #FFF5E6;
+}
+
+.detail-divider {
+  width: 2rpx;
+  height: 64rpx;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.points-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hint-text {
+  font-size: 24rpx;
+  opacity: 0.95;
+  font-weight: 500;
+}
+
+/* 记录列表区域 - 天蓝色调 */
+.records-section {
+  background: rgba(255, 255, 255, 0.95);
+  margin: 0 30rpx;
+  border-radius: 44rpx;
+  padding: 40rpx;
+  min-height: 600rpx;
+  box-shadow: 0 4rpx 28rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
+}
+
+.section-title {
+  margin-bottom: 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.title-text {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2C3E50;
+}
+
+.title-icon {
+  width: 44rpx;
+  height: 44rpx;
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+.loading-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #E6F3FF 0%, #D4EDF7 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-bottom: 24rpx;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #6B8BA4;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+.empty-icon {
+  width: 180rpx;
+  height: 180rpx;
+  margin: 0 auto 28rpx;
+  background: linear-gradient(135deg, #E6F3FF 0%, #D4EDF7 50%, #C4E5F5 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 88rpx;
+  box-shadow: 0 6rpx 30rpx rgba(93, 184, 230, 0.15);
+}
+
+.empty-text {
+  font-size: 34rpx;
+  color: #2C3E50;
+  font-weight: 700;
+  margin-bottom: 16rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #6B8BA4;
+}
+
+/* 记录列表 */
+.records-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+  border-bottom: 2rpx solid rgba(93, 184, 230, 0.08);
+  transition: all 0.3s ease;
+}
+
+.record-item:active {
+  background: rgba(93, 184, 230, 0.03);
+  border-radius: 16rpx;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-icon {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.record-icon.income {
+  background: linear-gradient(135deg, rgba(93, 184, 230, 0.15) 0%, rgba(126, 200, 232, 0.1) 100%);
+  color: #3A9AD2;
+}
+
+.record-icon.expense {
+  background: linear-gradient(135deg, rgba(255, 140, 105, 0.15) 0%, rgba(255, 154, 139, 0.1) 100%);
+  color: #E86A4A;
+}
+
+.record-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10rpx;
+}
+
+.record-title {
+  font-size: 30rpx;
+  color: #2C3E50;
+  font-weight: 600;
+  flex: 1;
+  margin-right: 20rpx;
+  line-height: 1.4;
+}
+
+.record-amount {
+  font-size: 34rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.record-amount.income {
+  color: #3A9AD2;
+}
+
+.record-amount.expense {
+  color: #E86A4A;
+}
+
+.record-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.record-type {
+  font-size: 22rpx;
+  color: #6B8BA4;
+  background: linear-gradient(135deg, #F0F8FF 0%, #E6F3FF 100%);
+  padding: 8rpx 18rpx;
+  border-radius: 9999rpx;
+  font-weight: 500;
+}
+
+.record-time {
+  font-size: 22rpx;
+  color: #8FA8B8;
+}
+
+/* 加载更多 */
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: 32rpx 0;
+}
+
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.loading-dots text {
+  font-size: 26rpx;
+  color: #6B8BA4;
+}
+
+.load-more-text {
+  font-size: 26rpx;
+  color: #8FA8B8;
+}
+
+.no-more {
+  display: flex;
+  justify-content: center;
+  padding: 32rpx 0;
+}
+
+.no-more text {
+  font-size: 24rpx;
+  color: #A8C4D4;
+}
