@@ -234,7 +234,8 @@
 .publish-features {
   display: flex;
   gap: 16rpx;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  justify-content: space-between;
 }
 
 .feature-tag {
@@ -242,9 +243,12 @@
   backdrop-filter: blur(10rpx);
   color: white;
   font-size: 24rpx;
-  padding: 12rpx 28rpx;
+  padding: 12rpx 0;
   border-radius: 9999rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.15);
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .points-tip {

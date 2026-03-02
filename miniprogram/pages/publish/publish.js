@@ -104,6 +104,7 @@ Page({
 
   // 选择地点
   goToLocationPicker() {
+    console.log('打开地图选择，当前位置:', this.data.latitude, this.data.longitude)
     wx.chooseLocation({
       latitude: this.data.latitude,
       longitude: this.data.longitude,
@@ -112,7 +113,8 @@ Page({
           longitude: res.longitude,
           latitude: res.latitude,
           locationName: res.name || res.address || '选定位置',
-          addressDetail: res.address
+          addressDetail: res.address,
+          selectedLocation: '' // 清除常用地点的选中态
         })
         this.checkCanPublish()
       },

@@ -187,7 +187,17 @@ Page({
   cancelNeed(e) {
     const { id, status } = e.currentTarget.dataset
 
-    if (status !== 'pending' && status !== 'ongoing') {
+    // 如果任务已被接单（ongoing状态），提示不能取消
+    if (status === 'ongoing') {
+      wx.showToast({
+        title: '该任务已被接受，无法取消',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
+    if (status !== 'pending') {
       wx.showToast({
         title: '该任务无法取消',
         icon: 'none'

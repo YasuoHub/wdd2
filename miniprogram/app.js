@@ -171,7 +171,8 @@ App({
         })
         .watch({
           onChange: (snapshot) => {
-            console.log('全局消息监听回调:', snapshot.type, '变化数:', snapshot.docChanges?.length || 0)
+            var docChangesLength = (snapshot.docChanges && snapshot.docChanges.length) || 0
+            console.log('全局消息监听回调:', snapshot.type, '变化数:', docChangesLength)
 
             if (snapshot.type === 'init') {
               // 初始化时更新一次角标
@@ -181,8 +182,10 @@ App({
 
             // 有新消息变化
             if (snapshot.docChanges && snapshot.docChanges.length > 0) {
-              const hasNewUnread = snapshot.docChanges.some(
-                change => change.dataType === 'add' || (change.dataType === 'update' && change.doc.is_read === false)
+              var hasNewUnread = snapshot.docChanges.some(
+                function(change) {
+                  return change.dataType === 'add' || (change.dataType === 'update' && change.doc.is_read === false)
+                }
               )
 
               if (hasNewUnread) {

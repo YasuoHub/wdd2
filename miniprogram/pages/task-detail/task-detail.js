@@ -223,11 +223,19 @@ Page({
   cancelTask() {
     if (!this.data.canCancel) return
 
+    // 如果任务已被接单（ongoing状态），提示不能取消
+    if (this.data.task.status === 'ongoing') {
+      wx.showToast({
+        title: '该任务已被接受，无法取消',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
     wx.showModal({
       title: '确认取消',
-      content: this.data.task.status === 'pending'
-        ? '取消后积分将退还，确定要取消吗？'
-        : '任务已有人接单，取消会影响对方，确定要取消吗？',
+      content: '取消后积分将退还，确定要取消吗？',
       confirmColor: '#ff4d4f',
       success: (res) => {
         if (res.confirm) {
