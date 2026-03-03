@@ -121,7 +121,7 @@
           <!-- 底部信息 -->
           <view class="card-footer">
             <view class="publisher-info">
-              <view class="publisher-avatar">{{item.userNickname ? item.userNickname[0] : '?'}}</view>
+              <image class="publisher-avatar" src="{{item.user_avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
               <text class="publisher-name">{{item.userNickname || '匿名用户'}}</text>
             </view>
             <view class="time-info">

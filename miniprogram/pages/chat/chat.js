@@ -26,7 +26,7 @@ Page({
     inputValue: '',
     inputFocus: false,  // 初始不自动聚焦，避免进入页面自动打开输入法
     lastMessageId: '',
-    hasMoreMessages: false,
+    hasMoreMessages: true,  // 默认允许下拉刷新，首次加载后根据实际结果更新
     pageSize: 20,
 
     // 弹窗
@@ -53,6 +53,9 @@ Page({
     // 获取页面参数
     const { needId, isSeeker } = options
 
+    // 关键：立即保存当前页面任务ID到实例变量，确保后续所有操作使用正确的ID
+    this.currentNeedId = needId
+
     // 重置页面状态，防止数据串扰
     this.setData({
       'task._id': needId,
@@ -64,27 +67,37 @@ Page({
     })
 
     // 重置已处理消息ID集合
-    this.processedMessageIds = null
+    this.processedMessageIds = new Set()
 
     // 串行加载，避免同时发起多个云函数调用
-    this.loadTaskInfo().then(() => {
+    this.loadTaskInfo().then((result) => {
+      // 如果加载失败，不继续
+      if (!result || result.code !== 0) return
+      // 关键校验：页面可能已经切换，检查任务ID是否一致
+      if (this.currentNeedId !== needId) return
       // 任务信息加载完成后再加载消息
       return this.loadMessages()
-    }).then(() => {
+    }).then((result) => {
+      // 如果加载消息失败，不启动监听
+      if (!result || result.code !== 0) return
+      // 关键校验：页面可能已经切换，检查任务ID是否一致
+      if (this.currentNeedId !== needId) return
       // 历史消息加载完成后，开始监听新消息
       this.startMessageWatch().catch(err => {
         console.error('启动消息监听失败:', err)
         // 监听失败时切换到轮询
         this.startMessagePolling()
       })
+    }).catch(err => {
+      console.error('初始化聊天页面失败:', err)
     })
   },
 
   onShow() {
     // 页面显示时确保监听或轮询已启动
     const hasActiveListener = this.data.watchListener || this.data.messagePollingInterval
-    if (this.data.task._id && !hasActiveListener) {
-      console.log('页面显示，启动消息监听')
+    // 使用 currentNeedId 而不是 task._id，确保状态一致性
+    if (this.currentNeedId && !hasActiveListener) {
       this.startMessageWatch().catch(err => {
         console.error('启动消息监听失败:', err)
         this.startMessagePolling()
@@ -95,15 +108,15 @@ Page({
 
   onHide() {
     // 页面隐藏时停止轮询以节省资源，但保持watch监听（如果有的话）
-    console.log('页面隐藏，停止轮询')
     this.stopMessagePolling()
   },
 
   onUnload() {
     // 页面卸载时清理所有监听和状态
-    console.log('页面卸载，清理所有状态')
     this.stopMessageWatch()
     this.stopMessagePolling()
+    // 清空当前任务ID标记
+    this.currentNeedId = null
     // 清空消息数据，防止页面返回后显示错误数据
     this.setData({
       messages: [],
@@ -123,22 +136,15 @@ Page({
 
   // 启动消息轮询（watch不可用时的备用方案）
   startMessagePolling() {
-    if (this.data.messagePollingInterval) {
-      console.log('轮询已存在，跳过')
-      return
-    }
+    if (this.data.messagePollingInterval) return
 
-    console.log('启动消息轮询（watch备用方案）')
-
-    const poll = () => {
-      this.pollNewMessages()
-    }
+    const poll = () => this.pollNewMessages()
 
     // 立即执行一次
     poll()
 
-    // 每3秒轮询一次
-    const interval = setInterval(poll, 3000)
+    // 每5秒轮询一次（降低频率减少服务器压力）
+    const interval = setInterval(poll, 5000)
     this.setData({ messagePollingInterval: interval })
   },
 
@@ -147,63 +153,134 @@ Page({
     if (this.data.messagePollingInterval) {
       clearInterval(this.data.messagePollingInterval)
       this.setData({ messagePollingInterval: null })
-      console.log('消息轮询已停止')
     }
   },
 
   // 轮询获取新消息
+  // 只获取比当前最新消息更新的消息，避免重复加载历史消息
   async pollNewMessages() {
-    const { task, messages } = this.data
-    if (!task._id) return
+    const { messages } = this.data
+
+    // 关键：使用 currentNeedId 确保获取正确的任务消息
+    const currentNeedId = this.currentNeedId
+    if (!currentNeedId) return
+
+    // 如果消息列表为空（初始化未完成），跳过轮询
+    if (messages.length === 0) return
+
+    // 如果正在处理中，跳过本次轮询
+    if (this._isPolling) return
+    this._isPolling = true
 
     try {
+      // 计算 afterTime：取最后一条消息的时间
+      const afterTime = messages[messages.length - 1].create_time
+
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-chat',
         data: {
           action: 'getMessages',
-          needId: task._id,
-          limit: 50
+          needId: currentNeedId,
+          limit: 50,
+          afterTime: afterTime
         }
       })
 
-      if (result.code === 0) {
-        const serverMessages = result.data.list
+      // 关键校验：请求返回后检查页面是否已切换
+      if (this.currentNeedId !== currentNeedId) return
 
-        // 找出本地没有的新消息
-        const existingIds = new Set(messages.map(m => m._id))
-        const newServerMessages = serverMessages.filter(m => !existingIds.has(m._id))
+      if (result.code === 0 && result.data.list.length > 0) {
+        // 确保 processedMessageIds 已初始化
+        if (!this.processedMessageIds) {
+          this.processedMessageIds = new Set(messages.map(m => m._id))
+        }
 
-        if (newServerMessages.length > 0) {
-          console.log('轮询发现', newServerMessages.length, '条新消息')
+        const userInfo = this.data.userInfo
+        const newDocs = []
+        let messagesToUpdate = null
 
-          // 格式化新消息
-          const lastExistingMsg = messages[messages.length - 1]
-          const formattedNewMessages = newServerMessages.map((msg, index) => {
-            const prevMsg = index === 0 ? lastExistingMsg : newServerMessages[index - 1]
-            return this.formatMessage(msg, prevMsg)
-          })
+        for (const msg of result.data.list) {
+          // 1. 任务ID校验
+          if (msg.need_id !== currentNeedId) continue
+          // 2. 去重校验
+          if (this.processedMessageIds.has(msg._id)) continue
 
+          // 3. 如果是自己发的消息，尝试替换临时消息
+          if (msg.sender_id === userInfo._id) {
+            this.processedMessageIds.add(msg._id)
+            const tempIndex = messages.findIndex(m =>
+              m._id.startsWith('temp_') &&
+              m.type === msg.type &&
+              (msg.type === 'text' ? m.content === msg.content : m.isLocalImage)
+            )
+            if (tempIndex !== -1) {
+              // 找到临时消息，替换
+              messagesToUpdate = messagesToUpdate || [...messages]
+              messagesToUpdate[tempIndex] = {
+                ...messagesToUpdate[tempIndex],
+                _id: msg._id,
+                isLocalImage: false,
+                create_time: msg.create_time
+              }
+            } else {
+              // 没找到临时消息，当作新消息处理
+              newDocs.push(msg)
+            }
+            continue
+          }
+
+          // 4. 对方发的消息
+          this.processedMessageIds.add(msg._id)
+          newDocs.push(msg)
+        }
+
+        // 合并更新
+        if (messagesToUpdate || newDocs.length > 0) {
+          let finalMessages = messagesToUpdate || messages
+          if (newDocs.length > 0) {
+            const lastExistingMsg = finalMessages[finalMessages.length - 1]
+            const formattedNewDocs = []
+            for (let i = 0; i < newDocs.length; i++) {
+              const prevMsg = i === 0 ? lastExistingMsg : formattedNewDocs[i - 1]
+              formattedNewDocs.push(this.formatMessage(newDocs[i], prevMsg))
+            }
+            finalMessages = [...finalMessages, ...formattedNewDocs]
+          }
           this.setData({
-            messages: [...messages, ...formattedNewMessages],
-            lastMessageId: 'bottom-anchor'
+            messages: finalMessages,
+            lastMessageId: newDocs.length > 0 ? 'bottom-anchor' : this.data.lastMessageId
           })
         }
       }
     } catch (err) {
       console.error('轮询消息失败:', err)
+    } finally {
+      this._isPolling = false
     }
   },
 
   // 加载任务信息
   async loadTaskInfo() {
     try {
+      // 关键：使用 currentNeedId 确保请求正确的任务
+      const needId = this.currentNeedId || this.data.task._id
+      if (!needId) {
+        console.error('加载任务信息失败: 任务ID为空')
+        return { code: -1, message: '任务ID为空' }
+      }
+
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-chat',
         data: {
           action: 'getTaskInfo',
-          needId: this.data.task._id
+          needId: needId
         }
       })
+
+      // 关键校验：请求返回后检查页面是否已切换
+      if (this.currentNeedId !== needId) {
+        return { code: -1, message: '页面已切换' }
+      }
 
       if (result.code === 0) {
         const taskData = result.data
@@ -250,13 +327,17 @@ Page({
           })
         }
 
+        return result
       }
+      // 请求失败也返回 result，让上层处理
+      return result
     } catch (err) {
       console.error('加载任务信息失败:', err)
       wx.showToast({
         title: '加载失败',
         icon: 'none'
       })
+      return { code: -1, message: err.message }
     }
   },
 
@@ -267,8 +348,11 @@ Page({
     try {
       const { task, pageSize, messages } = this.data
 
+      // 关键：使用 currentNeedId 确保加载正确的任务消息
+      const currentNeedId = this.currentNeedId || (task && task._id)
+
       // 校验：确保有有效的任务ID
-      if (!task || !task._id) {
+      if (!currentNeedId) {
         console.error('加载消息失败: 任务ID无效')
         return { code: -1, message: '任务ID无效' }
       }
@@ -277,7 +361,7 @@ Page({
         name: 'wdd-chat',
         data: {
           action: 'getMessages',
-          needId: task._id,
+          needId: currentNeedId,
           limit: pageSize,
           beforeTime: isLoadMore && messages.length > 0
             ? messages[0].create_time
@@ -285,35 +369,65 @@ Page({
         }
       })
 
-      if (result.code === 0) {
-        // 格式化消息，传入上一条消息用于时间显示判断
-        const rawList = result.data.list
-        const newMessages = rawList.map((msg, index) => {
-          const prevMsg = index > 0 ? rawList[index - 1] : null
-          return this.formatMessage(msg, prevMsg)
-        })
+      // 关键校验：请求返回后检查页面是否已切换
+      if (this.currentNeedId !== currentNeedId) {
+        return { code: -1, message: '页面已切换' }
+      }
 
-        // 更新已处理消息ID集合
+      if (result.code === 0) {
+        const rawList = result.data.list
+
+        // 初始化已处理消息ID集合
         if (!this.processedMessageIds) {
           this.processedMessageIds = new Set()
         }
+
+        // 单次遍历：任务ID过滤 + 去重 + 格式化
+        const existingIds = isLoadMore ? new Set(messages.map(m => m._id)) : null
+        const newMessages = []
+        let lastValidMsg = null  // 记录上一条通过验证的消息
+
+        for (let i = 0; i < rawList.length; i++) {
+          const msg = rawList[i]
+          // 1. 任务ID过滤
+          if (msg.need_id !== currentNeedId) continue
+          // 2. 去重（加载更多时需要）
+          if (isLoadMore && existingIds.has(msg._id)) continue
+          // 3. 格式化（prevMsg 是上一条通过验证的消息）
+          newMessages.push(this.formatMessage(msg, lastValidMsg))
+          lastValidMsg = msg  // 更新上一条有效消息
+        }
+
+        // 更新已处理消息ID集合
         newMessages.forEach(msg => this.processedMessageIds.add(msg._id))
 
         if (isLoadMore) {
-          // 加载更多时，需要重新计算合并后所有消息的 showTime
-          const mergedMessages = [...newMessages, ...messages]
-          const recalculatedMessages = mergedMessages.map((msg, index) => {
-            if (index === 0) return { ...msg, showTime: true }
-            const prevMsg = mergedMessages[index - 1]
-            const currTime = new Date(msg.create_time).getTime()
-            const prevTime = new Date(prevMsg.create_time).getTime()
-            const diffMinutes = (currTime - prevTime) / (1000 * 60)
-            return { ...msg, showTime: diffMinutes > 2 }
-          })
+          // 加载更多：合并新消息（历史）和现有消息
+          // 注意：newMessages 是更早的消息，应该放在前面
+          let mergedMessages = [...newMessages, ...messages]
+
+          // 检查衔接处的时间差（最后一条新消息 和 第一条现有消息）
+          if (newMessages.length > 0 && messages.length > 0) {
+            const lastNewMsg = newMessages[newMessages.length - 1]
+            const firstOldMsg = messages[0]
+            const timeDiff = (new Date(firstOldMsg.create_time) - new Date(lastNewMsg.create_time)) / (1000 * 60)
+
+            if (timeDiff > 2) {
+              // 时间差超过2分钟，需要显示时间分割线
+              // 创建新数组，更新衔接处的 showTime
+              mergedMessages = mergedMessages.map((msg, index) => {
+                if (index === newMessages.length) {
+                  // 这是第一条旧消息的位置
+                  return { ...msg, showTime: true }
+                }
+                return msg
+              })
+            }
+          }
+
           this.setData({
-            messages: recalculatedMessages,
+            messages: mergedMessages,
             hasMoreMessages: newMessages.length >= pageSize
-            // 不设置 lastMessageId，保持当前滚动位置，避免跳屏
           })
         } else {
           this.setData({
@@ -333,7 +447,20 @@ Page({
   // 下拉刷新 - 加载历史消息
   async onRefresh() {
     this.setData({ isRefreshing: true })
-    await this.loadMessages(true, false) // 加载更多，不滚动到底部
+    const result = await this.loadMessages(true, false) // 加载更多，不滚动到底部
+    if (!result || result.code !== 0) {
+      wx.showToast({
+        title: result?.message || '加载失败',
+        icon: 'none'
+      })
+    } else if (!result.data?.list || result.data.list.length === 0) {
+      // 没有更多消息了
+      this.setData({ hasMoreMessages: false })
+      wx.showToast({
+        title: '没有更多消息了',
+        icon: 'none'
+      })
+    }
     this.setData({ isRefreshing: false })
   },
 
@@ -388,42 +515,39 @@ Page({
 
   // 开始监听新消息
   async startMessageWatch() {
-    if (this.data.watchListener) {
-      console.log('监听已存在，跳过')
+    // 防止重复启动：检查是否正在启动中或已存在
+    if (this._isStartingWatch || this.data.watchListener) {
       return
     }
+    this._isStartingWatch = true
 
-    const needId = this.data.task._id
+    // 关键：使用 currentNeedId 确保监听正确的任务
+    const needId = this.currentNeedId
     if (!needId) {
-      console.error('启动监听失败: needId 为空')
+      this._isStartingWatch = false
       return
     }
 
     const db = wx.cloud.database()
 
     // 初始化已处理消息ID集合（防止监听回调重复添加自己发的消息）
-    // 每次启动监听时重新初始化，避免旧数据干扰
     this.processedMessageIds = new Set(this.data.messages.map(m => m._id))
 
-    console.log('启动消息监听, needId:', needId, '类型:', typeof needId)
-    console.log('监听条件: need_id =', String(needId))
-    console.log('当前已加载消息数:', this.data.messages.length)
-    console.log('已处理消息IDs:', Array.from(this.processedMessageIds))
+    // 开发环境日志（生产环境可注释掉）
+    // console.log('启动消息监听, needId:', needId)
 
-    // 诊断查询：先验证 where 条件能否正确匹配数据
-    let diagnosticMatchCount = 0
-    try {
-      const diagnosticRes = await db.collection('wdd-messages')
-        .where({ need_id: String(needId) })
-        .limit(5)
-        .get()
-      diagnosticMatchCount = diagnosticRes.data.length
-      console.log('诊断查询结果：匹配到', diagnosticMatchCount, '条记录')
-      if (diagnosticMatchCount > 0) {
-        console.log('样例记录 need_id:', diagnosticRes.data[0].need_id, '类型:', typeof diagnosticRes.data[0].need_id)
+    // 可选诊断：只在消息数为0时执行（避免不必要的数据库查询）
+    let diagnosticMatchCount = -1 // -1 表示未执行诊断
+    if (this.data.messages.length === 0) {
+      try {
+        const diagnosticRes = await db.collection('wdd-messages')
+          .where({ need_id: String(needId) })
+          .limit(1)
+          .get()
+        diagnosticMatchCount = diagnosticRes.data.length
+      } catch (diagErr) {
+        // 静默失败，不影响主流程
       }
-    } catch (diagErr) {
-      console.error('诊断查询失败:', diagErr)
     }
 
     try {
@@ -433,27 +557,13 @@ Page({
         })
         .watch({
           onChange: (snapshot) => {
-            console.log('=== 收到监听回调 ===')
-            console.log('快照类型:', snapshot.type)
-            console.log('变化文档数:', snapshot.docChanges ? snapshot.docChanges.length : 0)
-            console.log('当前文档数:', snapshot.docs ? snapshot.docs.length : 0)
-
             if (snapshot.type === 'init') {
               const matchCount = snapshot.docs ? snapshot.docs.length : 0
-              console.log('监听初始化完成，当前匹配文档数:', matchCount)
-
-              // 记录watch活动时间
               this.setData({ lastWatchActivity: Date.now() })
 
-              // 如果诊断查询有结果但watch init没有匹配到，可能where条件有问题
+              // 诊断失败时提示
               if (diagnosticMatchCount > 0 && matchCount === 0) {
-                console.warn('警告：诊断查询有', diagnosticMatchCount, '条记录，但watch init匹配到0条')
-                console.warn('可能是数据库权限或where条件问题，建议切换到轮询方案')
-              }
-
-              // 打印前几个文档的 need_id 用于调试
-              if (snapshot.docs && snapshot.docs.length > 0) {
-                console.log('样例文档 need_id:', snapshot.docs[0].need_id, '类型:', typeof snapshot.docs[0].need_id)
+                console.warn('watch init 未匹配到消息，但诊断查询有结果，可能需要检查数据库权限')
               }
               return
             }
@@ -463,14 +573,12 @@ Page({
 
             // 只处理新增类型的变更
             if (!snapshot.docChanges || snapshot.docChanges.length === 0) {
-              console.log('没有文档变化')
               return
             }
 
-            // 关键校验：确保当前页面任务ID与监听器一致，防止页面切换后数据串扰
-            const currentNeedId = this.data.task._id
+            // 关键校验：页面是否已切换
+            const currentNeedId = this.currentNeedId
             if (!currentNeedId || currentNeedId !== needId) {
-              console.log('页面已切换，忽略旧监听器消息。当前taskId:', currentNeedId, '监听器taskId:', needId)
               return
             }
 
@@ -480,66 +588,69 @@ Page({
             const newDocs = []
 
             for (const change of snapshot.docChanges) {
-              console.log('处理变化:', change.dataType, 'doc._id:', change.doc._id)
-              if (change.dataType !== 'add') {
-                console.log('  跳过非新增类型')
-                continue
-              }
+              if (change.dataType !== 'add') continue
+
               const doc = change.doc
 
-              // 跳过已处理的消息（通过真实ID）
-              if (this.processedMessageIds.has(doc._id)) {
-                console.log('  跳过已处理消息:', doc._id)
-                continue
-              }
+              // 关键校验：消息必须属于当前任务
+              if (doc.need_id !== currentNeedId) continue
 
-              // 检查是否是自己刚发的消息的确认
+              // 跳过已处理的消息
+              if (this.processedMessageIds.has(doc._id)) continue
+
+              // 自己发送的消息：确认临时消息
               if (doc.sender_id === userInfo._id) {
-                console.log('  处理自己发送的消息确认:', doc._id)
                 this.processedMessageIds.add(doc._id)
-                // 找到对应的临时消息，清除 isLocalImage 标记
+                // 查找对应的临时消息（按时间倒序找最新的匹配项）
                 const tempIndex = currentMessages.findIndex(m =>
                   m._id.startsWith('temp_') &&
                   m.type === doc.type &&
                   (doc.type === 'text' ? m.content === doc.content : m.isLocalImage)
                 )
                 if (tempIndex !== -1) {
-                  // 创建新数组，只修改对应项的 isLocalImage
                   messagesToUpdate = [...currentMessages]
-                  messagesToUpdate[tempIndex] = { ...messagesToUpdate[tempIndex], isLocalImage: false }
+                  // 关键：更新 _id 为真实ID，并清除 isLocalImage 标记
+                  messagesToUpdate[tempIndex] = {
+                    ...messagesToUpdate[tempIndex],
+                    _id: doc._id,
+                    isLocalImage: false,
+                    create_time: doc.create_time  // 同步服务器时间
+                  }
+                } else {
+                  // 没找到临时消息，当作新消息处理（可能是其他设备发送的）
+                  newDocs.push(doc)
                 }
                 continue
               }
 
-              // 真正的新消息（别人发的）
-              console.log('  添加新消息（来自对方）:', doc._id)
+              // 对方发的消息
               this.processedMessageIds.add(doc._id)
               newDocs.push(doc)
             }
 
-            // 合并更新：如果有自己消息确认，使用更新后的数组；如果有新消息，追加到末尾
+            // 更新界面
             if (messagesToUpdate || newDocs.length > 0) {
-              console.log('准备更新界面, 自己消息确认:', !!messagesToUpdate, '新消息数:', newDocs.length)
               let finalMessages = messagesToUpdate || currentMessages
               if (newDocs.length > 0) {
                 // 格式化新消息，传入最后一条现有消息用于时间判断
                 const lastExistingMsg = finalMessages[finalMessages.length - 1]
-                const formattedNewDocs = newDocs.map((doc, index) => {
-                  const prevMsg = index === 0 ? lastExistingMsg : newDocs[index - 1]
-                  return this.formatMessage(doc, prevMsg)
-                })
+                const formattedNewDocs = []
+                for (let i = 0; i < newDocs.length; i++) {
+                  // prevMsg 应该是上一条已经格式化的消息，确保时间分割线正确
+                  const prevMsg = i === 0 ? lastExistingMsg : formattedNewDocs[i - 1]
+                  formattedNewDocs.push(this.formatMessage(newDocs[i], prevMsg))
+                }
                 finalMessages = [...finalMessages, ...formattedNewDocs]
               }
               this.setData({
                 messages: finalMessages,
                 lastMessageId: newDocs.length > 0 ? 'bottom-anchor' : this.data.lastMessageId
               })
-            } else {
-              console.log('没有需要更新的消息')
             }
           },
           onError: (err) => {
             console.error('消息监听失败:', err)
+            this._isStartingWatch = false
             this.setData({ watchListener: null })
           }
         })
@@ -548,7 +659,7 @@ Page({
         watchListener: listener,
         lastWatchActivity: Date.now()
       })
-      console.log('消息监听启动成功')
+      this._isStartingWatch = false
 
       // 设置自动降级检测：10秒后检查是否有watch活动
       setTimeout(() => {
@@ -556,38 +667,47 @@ Page({
         const now = Date.now()
         // 如果10秒内没有watch活动（包括init事件），且页面还开着，切换到轮询
         if (lastActivity && (now - lastActivity > 9000) && !this.data.messagePollingInterval) {
-          console.log('watch 10秒内无活动，自动切换到轮询方案')
-          this.stopMessageWatch()
+          // 切换到轮询时保留已处理消息ID，避免重复加载
+          this.stopMessageWatch(true)
           this.startMessagePolling()
         }
       }, 10000)
 
     } catch (err) {
       console.error('启动监听异常:', err)
+      this._isStartingWatch = false
       // 启动失败时切换到轮询
       this.startMessagePolling()
     }
   },
 
   // 停止监听
-  stopMessageWatch() {
+  stopMessageWatch(keepProcessedIds = false) {
     if (this.data.watchListener) {
       try {
         this.data.watchListener.close()
       } catch (e) {
-        console.error('关闭监听器失败:', e)
+        // 静默处理关闭失败
       }
       this.setData({ watchListener: null })
     }
-    // 重置已处理消息ID集合，避免页面切换后数据串扰
-    this.processedMessageIds = null
-    console.log('消息监听已停止，processedMessageIds 已重置')
+    this._isStartingWatch = false
+    if (!keepProcessedIds) {
+      this.processedMessageIds = null
+    }
   },
 
   // 发送文字消息
   async sendTextMessage() {
     const { inputValue, task, userInfo } = this.data
     if (!inputValue.trim()) return
+
+    // 关键：使用 currentNeedId 确保发送给正确的任务
+    const currentNeedId = this.currentNeedId
+    if (!currentNeedId) {
+      console.error('发送消息失败: 任务ID为空')
+      return
+    }
 
     // 检查任务状态
     if (task.status !== 'ongoing') {
@@ -612,7 +732,7 @@ Page({
     const tempId = 'temp_' + Date.now()
     const tempMessage = {
       _id: tempId,
-      need_id: task._id,
+      need_id: currentNeedId,
       sender_id: userInfo._id,
       type: 'text',
       content: content,
@@ -625,15 +745,19 @@ Page({
 
     // 合并输入框清空和消息添加，减少 setData 次数
     const newMessages = [...currentMessages, tempMessage]
+
+    // 将临时消息ID添加到已处理集合，防止重复渲染
+    if (!this.processedMessageIds) {
+      this.processedMessageIds = new Set(currentMessages.map(m => m._id))
+    }
+    this.processedMessageIds.add(tempId)
+
     this.setData({
       inputValue: '',
       messages: newMessages,
       lastMessageId: ''
-      // 注意：不要在发送时设置 inputFocus: true，会导致 iOS 键盘闪烁
-      // 输入框保持原有焦点状态即可
     }, () => {
       // 使用 nextTick 确保 DOM 更新后再滚动到最新消息
-      // scroll-into-view 目标需要与 WXML 中的 id 格式一致: msg-${id}
       wx.nextTick(() => {
         this.setData({ lastMessageId: 'msg-' + tempId })
       })
@@ -644,7 +768,7 @@ Page({
         name: 'wdd-chat',
         data: {
           action: 'sendMessage',
-          needId: task._id,
+          needId: currentNeedId,
           type: 'text',
           content
         }
@@ -694,6 +818,13 @@ Page({
   async uploadImage(filePath) {
     const { task, userInfo } = this.data
 
+    // 关键：使用 currentNeedId 确保发送给正确的任务
+    const currentNeedId = this.currentNeedId
+    if (!currentNeedId) {
+      console.error('发送图片失败: 任务ID为空')
+      return
+    }
+
     // 获取图片尺寸
     let originalWidth = 0
     let originalHeight = 0
@@ -717,7 +848,7 @@ Page({
     const tempId = 'temp_img_' + Date.now()
     const tempMessage = {
       _id: tempId,
-      need_id: task._id,
+      need_id: currentNeedId,
       sender_id: userInfo._id,
       type: 'image',
       imageUrl: filePath,
@@ -732,13 +863,17 @@ Page({
       imageHeight: displaySize.height
     }
 
-    // 合并消息添加，先清空再设置确保滚动触发
+    // 将临时消息ID添加到已处理集合，防止重复渲染
+    if (!this.processedMessageIds) {
+      this.processedMessageIds = new Set(currentMessages.map(m => m._id))
+    }
+    this.processedMessageIds.add(tempId)
+
+    // 合并消息添加
     this.setData({
       messages: [...currentMessages, tempMessage],
       lastMessageId: ''
     }, () => {
-      // 使用 nextTick 确保 DOM 更新后再滚动到最新消息
-      // scroll-into-view 目标需要与 WXML 中的 id 格式一致: msg-${id}
       wx.nextTick(() => {
         this.setData({ lastMessageId: 'msg-' + tempId })
       })
@@ -757,7 +892,7 @@ Page({
         name: 'wdd-chat',
         data: {
           action: 'sendMessage',
-          needId: task._id,
+          needId: currentNeedId,
           type: 'image',
           imageUrl: uploadResult.fileID,
           imageWidth: originalWidth,
@@ -863,6 +998,13 @@ Page({
   async completeTask() {
     this.hideCompleteModal()
 
+    // 关键：使用 currentNeedId 确保完成正确的任务
+    const currentNeedId = this.currentNeedId
+    if (!currentNeedId) {
+      console.error('完成任务失败: 任务ID为空')
+      return
+    }
+
     wx.showLoading({ title: '处理中...' })
 
     try {
@@ -870,7 +1012,7 @@ Page({
         name: 'wdd-settlement',
         data: {
           action: 'completeTask',
-          needId: this.data.task._id
+          needId: currentNeedId
         }
       })
 
@@ -895,7 +1037,7 @@ Page({
         // 跳转到评价页面
         setTimeout(() => {
           wx.navigateTo({
-            url: `/pages/rating/rating?needId=${this.data.task._id}`
+            url: `/pages/rating/rating?needId=${currentNeedId}`
           })
         }, 1500)
       } else {

@@ -115,7 +115,7 @@ async function getTaskInfo(event, OPENID) {
 
 // 获取历史消息
 async function getMessages(event, OPENID) {
-  const { needId, limit = 20, beforeTime } = event
+  const { needId, limit = 20, beforeTime, afterTime } = event
 
   // 获取当前用户
   const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
@@ -143,13 +143,29 @@ async function getMessages(event, OPENID) {
 
   // 构建查询条件 - 必须同时满足 need_id 和 create_time（分页用）
   let query
-  if (beforeTime) {
+  if (beforeTime && afterTime) {
+    // 既指定了beforeTime又指定了afterTime（用于获取中间段消息，一般不会用到）
+    console.log('查询条件: need_id=', needId, ', create_time between', afterTime, 'and', beforeTime)
+    query = db.collection('wdd-messages').where({
+      need_id: needId,
+      create_time: _.and(_.gt(new Date(afterTime)), _.lt(new Date(beforeTime)))
+    })
+  } else if (beforeTime) {
+    // 向上滚动加载历史消息（比beforeTime更早的消息）
     console.log('查询条件: need_id=', needId, ', create_time <', beforeTime)
     query = db.collection('wdd-messages').where({
       need_id: needId,
       create_time: _.lt(new Date(beforeTime))
     })
+  } else if (afterTime) {
+    // 轮询获取新消息（比afterTime更晚的消息）
+    console.log('查询条件: need_id=', needId, ', create_time >', afterTime)
+    query = db.collection('wdd-messages').where({
+      need_id: needId,
+      create_time: _.gt(new Date(afterTime))
+    })
   } else {
+    // 首次加载，无时间限制
     console.log('查询条件: need_id=', needId, ', 无时间限制')
     query = db.collection('wdd-messages').where({
       need_id: needId

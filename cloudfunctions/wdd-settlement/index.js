@@ -191,8 +191,12 @@ async function cancelTask(event, OPENID) {
     return { code: -1, message: '只有求助者可以取消任务' }
   }
 
-  // 检查任务状态
-  if (need.status !== 'pending' && need.status !== 'ongoing') {
+  // 检查任务状态 - 只有待匹配状态的任务才能取消
+  // 已被接单（ongoing）的任务不能取消，只能完成
+  if (need.status !== 'pending') {
+    if (need.status === 'ongoing') {
+      return { code: -1, message: '该任务已被接受，无法取消' }
+    }
     return { code: -1, message: '任务状态异常，无法取消' }
   }
 
@@ -212,27 +216,7 @@ async function cancelTask(event, OPENID) {
       }
     })
 
-    // 2. 如果有接单，更新接单记录
-    if (need.status === 'ongoing') {
-      const takerRes = await transaction.collection('wdd-need-takers').where({
-        need_id: needId
-      }).get()
-
-      if (takerRes.data.length > 0) {
-        await transaction.collection('wdd-need-takers').doc(takerRes.data[0]._id).update({
-          data: {
-            status: 'cancelled',
-            cancel_time: new Date(),
-            update_time: new Date()
-          }
-        })
-
-        // 通知帮助者任务已取消
-        await sendCancellationNotification(takerRes.data[0].taker_id, need)
-      }
-    }
-
-    // 3. 解冻积分（冻结积分减少，可用积分增加）
+    // 2. 解冻积分（冻结积分减少，可用积分增加）
     await transaction.collection('wdd-users').doc(user._id).update({
       data: {
         frozen_points: _.inc(-need.points),
@@ -241,7 +225,7 @@ async function cancelTask(event, OPENID) {
       }
     })
 
-    // 4. 创建积分流水记录
+    // 3. 创建积分流水记录
     await transaction.collection('wdd-point-records').add({
       data: {
         user_id: currentUserId,
@@ -254,7 +238,7 @@ async function cancelTask(event, OPENID) {
       }
     })
 
-    // 5. 给求助者发送取消通知
+    // 4. 给求助者发送取消通知
     await transaction.collection('wdd-notifications').add({
       data: {
         user_id: currentUserId,
