@@ -195,6 +195,24 @@
   border-radius: 9999rpx;
 }
 
+/* 必填标记 */
+.required-mark {
+  color: #FF8C69;
+  font-weight: 700;
+  margin-left: 4rpx;
+}
+
+/* 必填状态下的选择器 */
+.location-picker-trigger.required {
+  border: 2rpx dashed rgba(255, 140, 105, 0.5);
+  background: rgba(255, 140, 105, 0.05);
+}
+
+.location-picker-trigger.required .picker-title {
+  color: #FF8C69;
+  font-weight: 600;
+}
+
 /* 常用地点 */
 .quick-locations {
   display: flex;

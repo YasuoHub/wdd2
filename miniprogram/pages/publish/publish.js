@@ -68,11 +68,27 @@ Page({
 
   onLoad(options) {
     this.initUserInfo()
-    this.getCurrentLocation()
+
+    // 获取当前位置仅用于地图初始化中心点
+    this.initMapCenter()
 
     // 如果传入了类型参数，自动选择对应类型
     if (options.type) {
       this.autoSelectType(options.type)
+    }
+  },
+
+  // 初始化地图中心点（仅用于地图展示，不填充表单）
+  async initMapCenter() {
+    try {
+      const res = await wx.getLocation({ type: 'gcj02' })
+      this.setData({
+        longitude: res.longitude,
+        latitude: res.latitude
+      })
+    } catch (err) {
+      console.log('获取当前位置失败，使用默认位置')
+      // 使用默认的成都位置
     }
   },
 
@@ -134,42 +150,67 @@ Page({
   },
 
   // 获取当前位置
-  getCurrentLocation() {
-    wx.getLocation({
-      type: 'gcj02',
+  async getCurrentLocation() {
+    try {
+      const res = await wx.getLocation({ type: 'gcj02' })
+      this.setData({
+        longitude: res.longitude,
+        latitude: res.latitude
+      })
+      // 逆向地理编码获取地址名称
+      await this.reverseGeocode(res.longitude, res.latitude)
+    } catch (err) {
+      wx.showToast({
+        title: '定位失败，请手动输入',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 逆向地理编码 - 调用腾讯地图API获取真实地址
+  reverseGeocode(longitude, latitude) {
+    const QQ_MAP_KEY = 'LTXBZ-6QBEW-T7CRL-YCDUQ-WHXFK-GSFRJ'
+
+    wx.request({
+      url: `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${QQ_MAP_KEY}&get_poi=0`,
       success: (res) => {
-        this.setData({
-          longitude: res.longitude,
-          latitude: res.latitude
-        })
-        // 逆向地理编码获取地址名称
-        this.reverseGeocode(res.longitude, res.latitude)
+        if (res.data.status === 0 && res.data.result) {
+          const result = res.data.result
+          // 优先使用推荐地址
+          const addressName = result.formatted_addresses?.recommend
+            || result.formatted_addresses?.standard_address
+            || result.address
+            || '未知位置'
+
+          this.setData({
+            locationName: addressName
+          })
+          this.checkCanPublish()
+        } else {
+          console.error('逆地理编码失败:', res.data)
+          this.setData({
+            locationName: '未知位置'
+          })
+        }
       },
-      fail: () => {
-        wx.showToast({
-          title: '定位失败，请手动输入',
-          icon: 'none'
+      fail: (err) => {
+        console.error('请求腾讯地图API失败:', err)
+        this.setData({
+          locationName: '未知位置'
         })
       }
     })
   },
 
-  // 逆向地理编码（简化版，实际应调用腾讯地图API）
-  reverseGeocode(longitude, latitude) {
-    // 这里简化处理，实际项目中应调用腾讯地图SDK
-    this.setData({
-      locationName: '当前位置附近'
-    })
-  },
-
   // 地图点击
-  onMapTap(e) {
+  async onMapTap(e) {
     const { longitude, latitude } = e.detail
     this.setData({
       longitude,
-      latitude
+      latitude,
+      selectedLocation: '' // 清除常用地点选中态
     })
-    this.reverseGeocode(longitude, latitude)
+    await this.reverseGeocode(longitude, latitude)
   },
 
   // 地址输入
@@ -315,16 +356,45 @@ Page({
 
   // 发布求助
   async handlePublish() {
-    if (!this.data.canPublish || this.data.isPublishing) return
+    if (this.data.isPublishing) return
+
+    // 前置校验，给出明确提示
+    const { locationName, selectedType, rewardPoints, availablePoints } = this.data
+
+    if (!locationName) {
+      wx.showToast({
+        title: '请先选择地点',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
+    if (!selectedType) {
+      wx.showToast({
+        title: '请先选择求助类型',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
+    if (rewardPoints > availablePoints) {
+      wx.showToast({
+        title: '积分不足',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
+    if (!this.data.canPublish) return
 
     const {
       longitude,
       latitude,
-      locationName,
-      selectedType,
       description,
       selectedTime,
-      rewardPoints
     } = this.data
 
     // 找到类型信息
@@ -376,9 +446,9 @@ Page({
         // 设置刷新标记，返回时刷新"我的求助"页面
         wx.setStorageSync('refreshMyNeeds', true)
 
-        // 跳转到任务详情页
+        // 跳转到任务详情页（使用redirectTo关闭发布页）
         setTimeout(() => {
-          wx.navigateTo({
+          wx.redirectTo({
             url: `/pages/task-detail/task-detail?id=${result.data.needId}`
           })
         }, 1500)

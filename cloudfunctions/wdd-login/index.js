@@ -10,13 +10,21 @@ const _ = db.command
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { inviterId } = event  // 邀请人ID
+  const { inviterId, action } = event
 
   if (!OPENID) {
     return {
       code: -1,
       message: '获取用户openid失败'
     }
+  }
+
+  // 处理帮助者资料相关操作
+  if (action === 'getHelperProfile') {
+    return await getHelperProfile(OPENID)
+  }
+  if (action === 'updateHelperProfile') {
+    return await updateHelperProfile(event, OPENID)
   }
 
   try {
@@ -188,7 +196,18 @@ exports.main = async (event, context) => {
           available_points: userInfo.available_points,
           frozen_points: userInfo.frozen_points,
           role: userInfo.role,
-          consecutive_sign_days: userInfo.consecutive_sign_days
+          consecutive_sign_days: userInfo.consecutive_sign_days,
+          // 帮助者资料（直接字段）
+          help_willingness: userInfo.help_willingness || '',
+          frequent_locations: userInfo.frequent_locations || [],
+          help_types: userInfo.help_types || [],
+          // 帮助者资料（对象形式）
+          helperProfile: userInfo.help_willingness ? {
+            help_willingness: userInfo.help_willingness,
+            frequent_locations: userInfo.frequent_locations || [],
+            help_types: userInfo.help_types || []
+          } : null,
+          hasHelperProfile: !!userInfo.help_willingness
         },
         isNewUser
       }
@@ -198,6 +217,100 @@ exports.main = async (event, context) => {
     return {
       code: -1,
       message: '登录失败: ' + err.message
+    }
+  }
+}
+
+// 获取帮助者资料
+async function getHelperProfile(OPENID) {
+  try {
+    const userRes = await db.collection('wdd-users')
+      .where({ openid: OPENID })
+      .get()
+
+    if (userRes.data.length === 0) {
+      return {
+        code: -1,
+        message: '用户不存在'
+      }
+    }
+
+    const user = userRes.data[0]
+
+    return {
+      code: 0,
+      message: '获取成功',
+      data: {
+        helperProfile: user.help_willingness ? {
+          help_willingness: user.help_willingness,
+          frequent_locations: user.frequent_locations || [],
+          help_types: user.help_types || []
+        } : null,
+        hasHelperProfile: !!user.help_willingness
+      }
+    }
+  } catch (err) {
+    console.error('获取帮助者资料失败:', err)
+    return {
+      code: -1,
+      message: '获取失败: ' + err.message
+    }
+  }
+}
+
+// 更新帮助者资料
+async function updateHelperProfile(event, OPENID) {
+  const { helpWillingness, frequentLocations, helpTypes } = event
+
+  try {
+    const userRes = await db.collection('wdd-users')
+      .where({ openid: OPENID })
+      .get()
+
+    if (userRes.data.length === 0) {
+      return {
+        code: -1,
+        message: '用户不存在'
+      }
+    }
+
+    const userId = userRes.data[0]._id
+
+    // 构建更新数据
+    const updateData = {
+      help_willingness: helpWillingness,
+      update_time: db.serverDate()
+    }
+
+    // 只有愿意帮助的人才保存这些字段
+    if (helpWillingness === 'willing') {
+      updateData.frequent_locations = frequentLocations || []
+      updateData.help_types = helpTypes || []
+    } else {
+      updateData.frequent_locations = []
+      updateData.help_types = []
+    }
+
+    await db.collection('wdd-users').doc(userId).update({
+      data: updateData
+    })
+
+    return {
+      code: 0,
+      message: '更新成功',
+      data: {
+        helperProfile: {
+          help_willingness: helpWillingness,
+          frequent_locations: updateData.frequent_locations,
+          help_types: updateData.help_types
+        }
+      }
+    }
+  } catch (err) {
+    console.error('更新帮助者资料失败:', err)
+    return {
+      code: -1,
+      message: '更新失败: ' + err.message
     }
   }
 }

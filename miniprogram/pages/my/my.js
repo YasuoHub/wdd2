@@ -4,6 +4,7 @@ const app = getApp()
 Page({
   data: {
     userInfo: {},
+    isLoggedIn: false,
     hasSignedToday: false,
     signPoints: 5,
     myNeedsCount: 0,
@@ -16,6 +17,27 @@ Page({
   },
 
   onShow() {
+    // 先让 app 同步 globalData 和本地存储
+    app.checkLoginStatus()
+
+    // 更新登录状态
+    const isLoggedIn = app.globalData.isLoggedIn
+    this.setData({ isLoggedIn })
+
+    // 检查是否已登录
+    if (!isLoggedIn) {
+      // 未登录时清空数据
+      this.setData({
+        userInfo: {},
+        hasSignedToday: false,
+        myNeedsCount: 0,
+        myTasksCount: 0
+      })
+      // 清除消息角标
+      wx.removeTabBarBadge({ index: 2 })
+      return
+    }
+
     this.loadUserInfo()
     this.checkSignInStatus()
     this.loadTaskCounts()
@@ -27,19 +49,33 @@ Page({
   async loadUserInfo() {
     // 先从本地获取显示
     const localUserInfo = app.globalData.userInfo || wx.getStorageSync('userInfo')
-    if (localUserInfo) {
-      // 处理ID显示，只展示最后10位
-      if (localUserInfo._id && localUserInfo._id.length > 10) {
-        localUserInfo.displayId = localUserInfo._id.slice(-10)
-      } else {
-        localUserInfo.displayId = localUserInfo._id || '未知'
-      }
+    const isLoggedIn = !!(localUserInfo && localUserInfo._id)
+
+    // 更新登录状态
+    this.setData({ isLoggedIn })
+
+    if (!isLoggedIn) {
+      // 未登录状态，清空用户信息显示，并清空任务数
       this.setData({
-        userInfo: localUserInfo
+        userInfo: {},
+        myNeedsCount: 0,
+        myTasksCount: 0
       })
+      return
     }
 
+    // 处理ID显示，只展示最后10位
+    if (localUserInfo._id && localUserInfo._id.length > 10) {
+      localUserInfo.displayId = localUserInfo._id.slice(-10)
+    } else {
+      localUserInfo.displayId = localUserInfo._id || '未知'
+    }
+    this.setData({
+      userInfo: localUserInfo
+    })
+
     // 然后从服务器获取最新数据（刷新积分等）
+    // 注意：这里依赖本地存储的登录状态，如果用户已退出，不会调用
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-notify',
@@ -103,6 +139,16 @@ Page({
 
   // 加载任务数量
   async loadTaskCounts() {
+    // 检查是否已登录
+    const isLoggedIn = app.globalData.isLoggedIn
+    if (!isLoggedIn) {
+      this.setData({
+        myNeedsCount: 0,
+        myTasksCount: 0
+      })
+      return
+    }
+
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-notify',
@@ -129,6 +175,9 @@ Page({
 
   // 处理签到
   async handleSignIn() {
+    // 检查登录
+    if (!this.checkLoginAndShowTip()) return
+
     if (this.data.hasSignedToday) {
       wx.showToast({
         title: '今天已经签到过了',
@@ -187,8 +236,29 @@ Page({
     }
   },
 
+  // 检查登录状态，未登录提示
+  checkLoginAndShowTip() {
+    if (!this.data.isLoggedIn) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return false
+    }
+    return true
+  },
+
+  // 处理登录（一键登录）
+  handleLogin() {
+    // 跳转到用户信息填写页面获取头像昵称
+    wx.navigateTo({
+      url: '/pages/user-info/user-info'
+    })
+  },
+
   // 跳转到我的求助
   goToMyNeeds() {
+    if (!this.checkLoginAndShowTip()) return
     wx.navigateTo({
       url: '/pages/my-needs/my-needs'
     })
@@ -196,6 +266,7 @@ Page({
 
   // 跳转到我的接单
   goToMyTasks() {
+    if (!this.checkLoginAndShowTip()) return
     wx.navigateTo({
       url: '/pages/my-tasks/my-tasks'
     })
@@ -203,13 +274,23 @@ Page({
 
   // 跳转到积分明细
   goToPointRecords() {
+    if (!this.checkLoginAndShowTip()) return
     wx.navigateTo({
       url: '/pages/point-records/point-records'
     })
   },
 
+  // 跳转到帮助者资料页面
+  goToHelperProfile() {
+    if (!this.checkLoginAndShowTip()) return
+    wx.navigateTo({
+      url: '/pages/helper-profile/helper-profile?edit=true'
+    })
+  },
+
   // 显示邀请弹窗
   showInviteModal() {
+    if (!this.checkLoginAndShowTip()) return
     this.setData({ showInviteModal: true })
   },
 
@@ -263,27 +344,8 @@ Page({
   // 执行退出登录
   performLogout() {
     try {
-      // 1. 停止全局消息监听
-      app.stopGlobalMessageWatch()
-
-      // 2. 清除本地存储
-      wx.removeStorageSync('userInfo')
-      wx.removeStorageSync('lastSignDate')
-      wx.removeStorageSync('pendingInviterId')
-
-      // 3. 清除全局数据
-      app.globalData.userInfo = null
-      app.globalData.isLoggedIn = false
-      app.globalData.unreadCount = 0
-      app.globalData.globalMessageWatcher = null
-      app.globalData.messagePageRefreshCallback = null
-
-      // 4. 清除消息角标（如果存在）
-      try {
-        wx.removeTabBarBadge({ index: 2 })
-      } catch (e) {
-        // 角标可能不存在，忽略错误
-      }
+      // 调用 app 的退出登录方法
+      app.logout()
 
       // 5. 重置页面数据
       this.setData({

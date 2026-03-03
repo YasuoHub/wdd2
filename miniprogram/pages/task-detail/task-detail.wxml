@@ -18,7 +18,7 @@
       </view>
       <view class="status-info">
         <text class="status-text">{{task.statusText}}</text>
-        <text wx:if="{{task.remainTime}}" class="remain-time">剩余 {{task.remainTime}}</text>
+        <text wx:if="{{task.remainTime && task.status === 'pending'}}" class="remain-time">剩余 {{task.remainTime}}</text>
       </view>
     </view>
 
@@ -139,7 +139,7 @@
       class="action-btn primary large"
       bindtap="goToChat"
     >
-      {{isSeeker ? '与帮助者聊天' : '与求助者聊天'}}
+      进入聊天
     </button>
 
     <!-- 求助者专属操作 -->

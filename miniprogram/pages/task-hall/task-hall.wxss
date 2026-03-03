@@ -3,7 +3,7 @@
    ============================================ */
 
 .container {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
   display: flex;
   flex-direction: column;
@@ -169,8 +169,8 @@
 /* 内容滚动区 */
 .content {
   flex: 1;
-  height: auto;
-  overflow-y: auto;
+  height: 0;
+  overflow: hidden;
 }
 
 /* 统计信息栏 */
@@ -180,7 +180,7 @@
   justify-content: center;
   gap: 16rpx;
   padding: 24rpx 32rpx;
-  margin: 0 32rpx 16rpx;
+  margin: 20rpx 32rpx 16rpx;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 9999rpx;
   backdrop-filter: blur(10rpx);
@@ -695,4 +695,69 @@
   font-size: 32rpx;
   color: #5DB8E6;
   font-weight: 700;
+}
+
+/* 帮助者资料完善提示 */
+.helper-profile-tip {
+  margin: 20rpx 32rpx;
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CC 100%);
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(255, 200, 100, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tip-content {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.tip-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.tip-text {
+  flex: 1;
+}
+
+.tip-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #8B6914;
+  margin-bottom: 6rpx;
+}
+
+.tip-desc {
+  font-size: 24rpx;
+  color: #A08030;
+}
+
+.tip-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-left: 16rpx;
+}
+
+.tip-close {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #B89950;
+  font-size: 28rpx;
+}
+
+.tip-btn {
+  padding: 12rpx 24rpx;
+  background: linear-gradient(135deg, #FFC857 0%, #FFB347 100%);
+  color: #5D4A0C;
+  font-size: 26rpx;
+  font-weight: 600;
+  border-radius: 12rpx;
 }

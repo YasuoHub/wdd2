@@ -48,7 +48,10 @@ Page({
     showSortPopup: false,
     showDistancePopup: false,
     page: 1,
-    pageSize: 10
+    pageSize: 10,
+    // 帮助者资料提示
+    showHelperProfileTip: false,
+    userProfile: null
   },
 
   onLoad() {
@@ -105,12 +108,22 @@ Page({
             : (item.distance / 1000).toFixed(1) + 'km'
         }))
 
+        // 检查是否需要显示帮助者资料完善提示
+        const userProfile = result.data.userProfile
+        const showHelperProfileTip = userProfile && !userProfile.hasHelperProfile
+
+        // 根据用户设置重新排序筛选标签
+        const sortedFilters = this.sortFiltersByUserPreference(userProfile)
+
         this.setData({
           taskList: isRefresh ? processedList : [...this.data.taskList, ...processedList],
           totalCount: total,
           hasMore: hasMore,
           isRefreshing: false,
-          isLoading: false
+          isLoading: false,
+          showHelperProfileTip,
+          userProfile,
+          filters: sortedFilters
         })
       } else {
         throw new Error(result.message)
@@ -310,5 +323,56 @@ Page({
       content: '这里展示成都地区的所有待帮助任务。您可以根据类型、距离筛选，点击"接单"即可开始帮助。',
       showCancel: false
     })
+  },
+
+  // 关闭帮助者资料提示
+  closeHelperProfileTip() {
+    this.setData({
+      showHelperProfileTip: false
+    })
+  },
+
+  // 跳转到帮助者资料页面
+  goToHelperProfile() {
+    wx.navigateTo({
+      url: '/pages/helper-profile/helper-profile?edit=true'
+    })
+  },
+
+  // 根据用户设置的帮助类型重新排序筛选标签
+  sortFiltersByUserPreference(userProfile) {
+    // 如果没有用户资料或没有设置帮助类型，返回默认排序
+    if (!userProfile || !userProfile.helpTypes || userProfile.helpTypes.length === 0) {
+      return FILTERS
+    }
+
+    const userHelpTypes = userProfile.helpTypes
+
+    // 分离用户设置的类型和其他类型
+    const userTypes = []
+    const otherTypes = []
+
+    FILTERS.forEach(filter => {
+      if (filter.id === 'all') {
+        // "全部"保持不动
+        return
+      }
+      if (userHelpTypes.includes(filter.id)) {
+        // 按照用户设置的顺序添加
+        const index = userHelpTypes.indexOf(filter.id)
+        userTypes[index] = filter
+      } else {
+        otherTypes.push(filter)
+      }
+    })
+
+    // 合并：全部 + 用户设置的类型（按设置顺序）+ 其他类型
+    const sortedFilters = [
+      FILTERS[0], // "全部"
+      ...userTypes.filter(Boolean), // 用户设置的类型（去除空位）
+      ...otherTypes // 其他类型
+    ]
+
+    return sortedFilters
   }
 })

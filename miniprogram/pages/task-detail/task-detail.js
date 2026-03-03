@@ -71,7 +71,7 @@ Page({
                             task.status === 'ongoing'
 
         const canCancel = isSeeker &&
-                          (task.status === 'pending' || task.status === 'ongoing')
+                          task.status === 'pending'
 
         // 状态文本映射
         const statusTextMap = {
@@ -222,16 +222,6 @@ Page({
   // 取消任务
   cancelTask() {
     if (!this.data.canCancel) return
-
-    // 如果任务已被接单（ongoing状态），提示不能取消
-    if (this.data.task.status === 'ongoing') {
-      wx.showToast({
-        title: '该任务已被接受，无法取消',
-        icon: 'none',
-        duration: 2000
-      })
-      return
-    }
 
     wx.showModal({
       title: '确认取消',

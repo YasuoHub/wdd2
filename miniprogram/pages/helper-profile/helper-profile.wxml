@@ -1,0 +1,103 @@
+<!-- 帮助者信息完善页面 -->
+<view class="container">
+  <!-- 帮助意愿选择 -->
+  <view class="section">
+    <view class="section-title">
+      <text class="section-icon">🤔</text>
+      <text>帮助意愿</text>
+      <text class="required">*</text>
+    </view>
+    <view class="willingness-list">
+      <view
+        wx:for="{{willingnessOptions}}"
+        wx:key="value"
+        class="willingness-item {{helpWillingness === item.value ? 'active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="selectWillingness"
+      >
+        <view class="willingness-icon">{{item.icon}}</view>
+        <view class="willingness-content">
+          <view class="willingness-label">{{item.label}}</view>
+          <view class="willingness-desc">{{item.desc}}</view>
+        </view>
+        <view class="check-icon" wx:if="{{helpWillingness === item.value}}">✓</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 常去地点 -->
+  <view class="section" wx:if="{{helpWillingness === 'willing'}}">
+    <view class="section-title">
+      <text class="section-icon">📍</text>
+      <text>常去地点</text>
+      <text class="optional">（最多{{maxLocations}}个）</text>
+    </view>
+    <view class="location-list">
+      <view
+        wx:for="{{frequentLocations}}"
+        wx:key="index"
+        class="location-item"
+      >
+        <view class="location-info">
+          <view class="location-name">{{item.name}}</view>
+          <view class="location-address">{{item.address}}</view>
+        </view>
+        <view class="location-delete" data-index="{{index}}" bindtap="removeLocation">
+          <text class="delete-icon">✕</text>
+        </view>
+      </view>
+      <!-- 添加地点按钮 -->
+      <view
+        class="add-location-btn {{frequentLocations.length >= maxLocations ? 'disabled' : ''}}"
+        bindtap="addLocation"
+      >
+        <view class="add-icon-wrapper" wx:if="{{frequentLocations.length < maxLocations}}">
+          <text class="add-icon">+</text>
+        </view>
+        <text class="add-text" wx:if="{{frequentLocations.length >= maxLocations}}">已达到上限</text>
+      </view>
+    </view>
+    <view class="section-tip">
+      添加您经常活动的地点，系统会优先推荐附近的任务
+    </view>
+  </view>
+
+  <!-- 可帮助类型 -->
+  <view class="section" wx:if="{{helpWillingness === 'willing'}}">
+    <view class="section-title">
+      <text class="section-icon">🎯</text>
+      <text>可帮助类型</text>
+      <text class="required">*</text>
+    </view>
+    <view class="help-types-grid">
+      <view
+        wx:for="{{helpTypes}}"
+        wx:key="id"
+        class="help-type-item {{item.selected ? 'active' : ''}}"
+        style="{{item.selected ? 'background-color: ' + item.color + '20; border-color: ' + item.color : ''}}"
+        data-id="{{item.id}}"
+        bindtap="toggleHelpType"
+      >
+        <view class="type-icon">{{item.icon}}</view>
+        <view class="type-name">{{item.name}}</view>
+        <view class="type-check" wx:if="{{item.selected}}">✓</view>
+      </view>
+    </view>
+    <view class="section-tip" wx:if="{{selectedHelpTypes.length > 0}}">
+      已选择 {{selectedHelpTypes.length}} 种类型
+    </view>
+  </view>
+
+  <!-- 底部按钮区域 -->
+  <view class="footer {{fromLogin ? 'with-skip' : ''}}">
+    <view class="btn-skip" wx:if="{{fromLogin}}" bindtap="skip">
+      跳过，仅求助
+    </view>
+    <view
+      class="btn-save {{isLoading ? 'loading' : ''}}"
+      bindtap="saveProfile"
+    >
+      {{isLoading ? '保存中...' : '保存设置'}}
+    </view>
+  </view>
+</view>

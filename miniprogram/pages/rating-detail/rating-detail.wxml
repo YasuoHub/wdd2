@@ -1,0 +1,79 @@
+<!-- 评价详情页面 -->
+<view class="container">
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="loading-icon"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 评价内容 -->
+  <block wx:else>
+    <!-- 评价对象 -->
+    <view class="target-card">
+      <view class="target-avatar">
+        <text wx:if="{{!targetUser.avatar}}">{{targetUser.nickname ? targetUser.nickname[0] : '👤'}}</text>
+        <image wx:else src="{{targetUser.avatar}}" mode="aspectFill"/>
+      </view>
+      <view class="target-info">
+        <text class="target-label">{{ratingType === 'seeker' ? '帮助者' : '求助者'}}</text>
+        <text class="target-name">{{targetUser.nickname || '未知用户'}}</text>
+      </view>
+    </view>
+
+    <!-- 任务信息 -->
+    <view class="task-card" wx:if="{{task}}">
+      <view class="task-header">
+        <text class="task-type">{{task.typeName}}</text>
+        <text class="task-points">{{task.points}}积分</text>
+      </view>
+      <text class="task-desc">{{task.description}}</text>
+    </view>
+
+    <!-- 评分展示 -->
+    <view class="rating-section">
+      <text class="section-title">我的评价</text>
+      <view class="stars-wrapper">
+        <view
+          wx:for="{{[1,2,3,4,5]}}"
+          wx:key="*this"
+          class="star {{rating.rating >= item ? 'active' : ''}}"
+        >
+          <text class="star-icon">{{rating.rating >= item ? '★' : '☆'}}</text>
+        </view>
+      </view>
+      <text class="rating-score">{{rating.rating}}分</text>
+    </view>
+
+    <!-- 评价标签 -->
+    <view class="tags-section" wx:if="{{rating.tags && rating.tags.length > 0}}">
+      <text class="section-title">评价标签</text>
+      <view class="tags-wrapper">
+        <view
+          wx:for="{{rating.tags}}"
+          wx:key="*this"
+          class="tag"
+        >
+          {{item}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 评价内容 -->
+    <view class="comment-section" wx:if="{{rating.comment}}">
+      <text class="section-title">详细评价</text>
+      <view class="comment-box">
+        <text class="comment-text">{{rating.comment}}</text>
+      </view>
+    </view>
+
+    <!-- 评价时间 -->
+    <view class="time-section">
+      <text class="time-text">评价时间：{{rating.createTime}}</text>
+    </view>
+
+    <!-- 提示 -->
+    <view class="tips-section">
+      <text class="tips-text">评价已提交，无法修改</text>
+    </view>
+  </block>
+</view>

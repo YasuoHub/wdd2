@@ -26,10 +26,26 @@ Page({
   },
 
   onLoad() {
+    // 检查登录状态
+    app.checkLoginStatus()
+    if (!app.globalData.isLoggedIn) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      setTimeout(() => {
+        wx.navigateBack()
+      }, 1500)
+      return
+    }
     this.loadPointRecords()
   },
 
   onShow() {
+    // 检查登录状态
+    if (!app.globalData.isLoggedIn) {
+      return
+    }
     // 只在有数据时刷新积分余额，不重新加载列表
     if (this.data.records.length > 0) {
       this.refreshPointsOnly()

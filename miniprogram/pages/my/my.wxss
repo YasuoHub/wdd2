@@ -62,7 +62,7 @@
   left: 0;
   right: 0;
   height: 6rpx;
-  background: linear-gradient(90deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  /* background: linear-gradient(90deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%); */
 }
 
 .user-header {
@@ -402,10 +402,26 @@
   transform: scale(0.98);
 }
 
+/* 一键登录按钮样式 */
+.logout-section.login-btn {
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  box-shadow: 0 4rpx 20rpx rgba(93, 184, 230, 0.35);
+}
+
+.logout-section.login-btn:active {
+  background: linear-gradient(135deg, #7EC8E8 0%, #5DB8E6 100%);
+  transform: scale(0.98);
+}
+
 .logout-text {
   font-size: 30rpx;
   color: #ff4d4f;
   font-weight: 500;
+}
+
+.logout-section.login-btn .logout-text {
+  color: #FFFFFF;
+  font-weight: 600;
 }
 
 /* ============================================

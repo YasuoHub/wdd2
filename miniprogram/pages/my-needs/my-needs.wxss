@@ -376,6 +376,16 @@ page {
   box-shadow: 0 2rpx 10rpx rgba(109, 213, 176, 0.2);
 }
 
+/* 查看评价按钮 - 灰色默认样式 */
+.action-btn:not(.primary):not(.danger):not(.success) {
+  background: rgba(168, 196, 212, 0.15);
+  color: #6B8BA4;
+}
+
+.action-btn:not(.primary):not(.danger):not(.success):active {
+  background: rgba(168, 196, 212, 0.25);
+}
+
 /* 加载更多 */
 .load-more {
   text-align: center;

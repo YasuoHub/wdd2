@@ -13,8 +13,10 @@
     "pages/my-tasks/my-tasks",
     "pages/task-detail/task-detail",
     "pages/rating/rating",
+    "pages/rating-detail/rating-detail",
     "pages/point-records/point-records",
-    "pages/user-info/user-info"
+    "pages/user-info/user-info",
+    "pages/helper-profile/helper-profile"
   ],
   "window": {
     "backgroundTextStyle": "light",

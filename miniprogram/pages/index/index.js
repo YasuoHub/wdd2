@@ -37,6 +37,8 @@ Page({
 
   onShow() {
     // 重新检查登录状态（处理退出登录后返回的情况）
+    // 先让 app 同步 globalData 和本地存储
+    app.checkLoginStatus()
     this.checkLoginStatus()
 
     if (this.data.isLoggedIn) {
@@ -85,15 +87,17 @@ Page({
   // 登录成功回调
   onLoginSuccess(result) {
     if (result.success) {
+      const userInfo = result.data.userInfo
+
       this.setData({
         isLoggedIn: true,
-        userInfo: result.data.userInfo,
+        userInfo: userInfo,
         hasSignedToday: false
       })
       this.loadNearbyNeeds()
 
       // 判断是否是被邀请注册
-      const isInvited = result.data.userInfo.inviter_id != null
+      const isInvited = userInfo.inviter_id != null
       const toastTitle = result.data.isNewUser
         ? (isInvited ? '注册成功，获得150积分 🎉' : '欢迎新用户，已送100积分')
         : '登录成功'
@@ -103,6 +107,16 @@ Page({
         icon: 'none',
         duration: 2000
       })
+
+      // 检查是否需要完善帮助者资料
+      // 新用户或没有帮助者资料的用户，强制跳转
+      if (result.data.isNewUser || !userInfo.hasHelperProfile) {
+        setTimeout(() => {
+          wx.navigateTo({
+            url: '/pages/helper-profile/helper-profile?fromLogin=true'
+          })
+        }, 1500)
+      }
     }
   },
 
@@ -166,6 +180,16 @@ Page({
   // 加载附近任务
   async loadNearbyNeeds() {
     if (this.data.nearbyLoading) return
+
+    // 未登录时不加载
+    if (!this.data.isLoggedIn) {
+      this.setData({
+        nearbyNeeds: [],
+        nearbyEmpty: true,
+        nearbyLoading: false
+      })
+      return
+    }
 
     this.setData({
       nearbyLoading: true,
@@ -275,13 +299,6 @@ Page({
   goToTaskHall() {
     wx.switchTab({
       url: '/pages/task-hall/task-hall'
-    })
-  },
-
-  // 跳转到消息中心
-  goToMessages() {
-    wx.switchTab({
-      url: '/pages/messages/messages'
     })
   },
 

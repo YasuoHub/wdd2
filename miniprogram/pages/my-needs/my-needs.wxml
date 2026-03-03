@@ -73,7 +73,8 @@
         <view class="card-footer">
           <view class="meta-left">
             <view class="points-tag">{{item.points}}积分</view>
-            <view wx:if="{{item.status === 'ongoing'}}" class="countdown">
+            <!-- 只有待匹配状态才显示剩余时间 -->
+            <view wx:if="{{item.status === 'pending'}}" class="countdown">
               剩余{{item.remainTime}}
             </view>
           </view>
@@ -86,7 +87,7 @@
             进入聊天
           </view>
           <view wx:if="{{item.status === 'ongoing'}}" class="action-btn success" catchtap="completeNeed" data-id="{{item._id}}">
-            完成
+            完成任务
           </view>
           <!-- 只有待匹配状态才能取消 -->
           <view wx:if="{{item.status === 'pending'}}" class="action-btn danger" catchtap="cancelNeed" data-id="{{item._id}}" data-status="{{item.status}}">
@@ -94,10 +95,17 @@
           </view>
         </view>
 
-        <!-- 评价按钮 -->
-        <view wx:if="{{item.status === 'completed' && !item.hasRated}}" class="card-actions">
-          <view class="action-btn primary" catchtap="goToRate" data-id="{{item._id}}">
+        <!-- 已完成任务按钮 -->
+        <view wx:if="{{item.status === 'completed'}}" class="card-actions">
+          <view class="action-btn primary" catchtap="goToChat" data-id="{{item._id}}">
+            查看聊天
+          </view>
+          <!-- 未评价显示去评价，已评价显示查看评价 -->
+          <view wx:if="{{!item.hasRated}}" class="action-btn success" catchtap="goToRate" data-id="{{item._id}}">
             去评价
+          </view>
+          <view wx:else class="action-btn" catchtap="viewRating" data-id="{{item._id}}">
+            查看评价
           </view>
         </view>
       </view>

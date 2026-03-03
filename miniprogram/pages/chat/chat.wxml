@@ -2,6 +2,7 @@
 <view class="chat-container">
   <!-- 任务信息卡片 -->
   <view class="task-card {{isTaskCardCollapsed ? 'collapsed' : ''}}">
+
     <!-- 收起状态：只显示类型和积分，以及展开按钮 -->
     <view wx:if="{{isTaskCardCollapsed}}" class="task-card-collapsed" bindtap="toggleTaskCard">
       <view class="collapsed-left">
@@ -67,11 +68,11 @@
     scroll-into-view="{{lastMessageId}}"
     enhanced
     show-scrollbar="{{false}}"
+    refresher-enabled="{{hasMoreMessages}}"
+    refresher-triggered="{{isRefreshing}}"
+    bindrefresherrefresh="onRefresh"
+    bindrefresherrestore="onRestore"
   >
-    <!-- 加载更多 -->
-    <view class="load-more" wx:if="{{hasMoreMessages}}">
-      <text bindtap="loadMoreMessages">加载更多消息</text>
-    </view>
 
     <!-- 消息项 -->
     <view
@@ -109,11 +110,13 @@
           <block wx:if="{{item.type === 'image'}}">
             <view class="image-wrapper">
               <image
-                class="message-image"
+                class="message-image {{item.imageWidth ? 'has-size' : ''}}"
                 src="{{item.imageUrl}}"
-                mode="aspectFit"
+                mode="{{item.imageWidth ? 'scaleToFill' : 'aspectFit'}}"
+                style="{{item.imageWidth ? 'width: ' + item.imageWidth + 'rpx; height: ' + item.imageHeight + 'rpx;' : ''}}"
                 bindtap="previewImage"
                 data-url="{{item.imageUrl}}"
+                lazy-load
               />
               <!-- 图片 loading 指示器 -->
               <view class="image-loading" wx:if="{{item.isLocalImage}}">
@@ -137,43 +140,57 @@
 
   <!-- 底部操作栏 -->
   <view class="input-area">
-    <!-- 输入框区域 -->
-    <view class="input-row">
-      <view class="input-wrapper">
-        <input
-          class="message-input"
-          type="text"
-          value="{{inputValue}}"
-          placeholder="{{task.status === 'ongoing' ? '输入消息...' : '任务已结束'}}"
-          disabled="{{task.status !== 'ongoing'}}"
-          confirm-type="send"
-          bindinput="onInput"
-          bindconfirm="sendTextMessage"
-          focus="{{inputFocus}}"
-        />
-      </view>
-
-      <!-- 发送按钮 -->
-      <button
-        class="send-btn {{inputValue ? 'active' : ''}}"
-        bindtap="sendTextMessage"
-        disabled="{{!inputValue || task.status !== 'ongoing'}}"
-      >
-        发送
-      </button>
+    <!-- 任务已结束：显示提示 -->
+    <view wx:if="{{task.status !== 'ongoing'}}" class="task-ended-bar">
+      <text class="task-ended-text">任务已结束</text>
     </view>
 
-    <!-- 工具栏 -->
-    <view class="toolbar">
-      <view class="tool-item" bindtap="chooseImage" data-source="album">
-        <text class="tool-icon">🖼️</text>
-        <text class="tool-text">相册</text>
+    <!-- 任务进行中：显示输入框 -->
+    <block wx:else>
+      <!-- 输入框区域 -->
+      <view class="input-row">
+        <!-- 展开/收起工具栏按钮 -->
+        <view class="toolbar-toggle-btn {{isToolbarExpanded ? 'expanded' : ''}}" catchtap="toggleToolbar">
+          <text class="toggle-icon">{{isToolbarExpanded ? '▲' : '📎'}}</text>
+        </view>
+
+        <view class="input-wrapper">
+          <input
+            class="message-input"
+            type="text"
+            value="{{inputValue}}"
+            placeholder="输入消息..."
+            confirm-type="send"
+            bindinput="onInput"
+            bindconfirm="sendTextMessage"
+            bindfocus="onInputFocus"
+            focus="{{inputFocus}}"
+            hold-keyboard
+          />
+        </view>
+
+        <!-- 发送按钮 -->
+        <button
+          class="send-btn {{inputValue ? 'active' : ''}}"
+          catchtap="sendTextMessage"
+          disabled="{{!inputValue}}"
+        >
+          发送
+        </button>
       </view>
-      <view class="tool-item" bindtap="chooseImage" data-source="camera">
-        <text class="tool-icon">📸</text>
-        <text class="tool-text">拍照</text>
+
+      <!-- 工具栏 -->
+      <view class="toolbar {{isToolbarExpanded ? 'show' : ''}}">
+        <view class="tool-item" bindtap="chooseImage" data-source="album">
+          <text class="tool-icon">🖼️</text>
+          <text class="tool-text">相册</text>
+        </view>
+        <view class="tool-item" bindtap="chooseImage" data-source="camera">
+          <text class="tool-icon">📸</text>
+          <text class="tool-text">拍照</text>
+        </view>
       </view>
-    </view>
+    </block>
   </view>
 
   <!-- 完成任务确认弹窗 -->

@@ -3,47 +3,80 @@ const app = getApp()
 
 Page({
   data: {
-    // 当前标签
-    currentTab: 'chat',
+    // 当前聊天tab
+    currentChatTab: 'seeker', // 'seeker' | 'helper'
 
     // 未读数
     unreadCount: 0,
-    chatUnread: 0,
+    seekerChatUnread: 0,
+    helperChatUnread: 0,
     systemUnread: 0,
 
     // 聊天列表
-    chatList: [],
+    seekerChatList: [], // 求助聊天
+    helperChatList: [], // 帮助聊天
 
     // 系统通知列表
     systemList: [],
 
-    },
+    // 系统通知弹窗
+    showSystemModal: false,
+
+    // 下拉刷新
+    isRefreshing: false
+  },
 
   onLoad() {
-    this.loadMessages(true)
+    // 检查登录状态
+    app.checkLoginStatus()
+    if (!app.globalData.isLoggedIn) {
+      // 未登录时清空数据
+      this.setData({
+        seekerChatList: [],
+        helperChatList: [],
+        systemList: [],
+        unreadCount: 0,
+        seekerChatUnread: 0,
+        helperChatUnread: 0,
+        systemUnread: 0
+      })
+    } else {
+      this.loadMessages(true)
+    }
+
     // 注册全局刷新回调
     app.registerMessagePageRefresh(() => {
       console.log('收到全局刷新通知')
       // 新消息来时静默刷新，不显示 loading
-      this.loadMessages(false)
+      if (app.globalData.isLoggedIn) {
+        this.loadMessages(false)
+      }
     })
   },
 
   onShow() {
+    // 先让 app 同步 globalData 和本地存储
+    app.checkLoginStatus()
+
     // 检查是否登录
     if (!app.globalData.isLoggedIn) {
+      // 未登录时清空数据并清除角标
       this.setData({
-        chatList: [],
+        seekerChatList: [],
+        helperChatList: [],
         systemList: [],
         unreadCount: 0,
-        chatUnread: 0,
+        seekerChatUnread: 0,
+        helperChatUnread: 0,
         systemUnread: 0
+      }, () => {
+        // 清除 TabBar 角标
+        wx.removeTabBarBadge({ index: 2 })
       })
       return
     }
 
     this.loadMessages(true)
-    this.updateTabBarBadge()
     // 确保全局监听已启动
     app.startGlobalMessageWatch()
   },
@@ -71,19 +104,87 @@ Page({
     }
   },
 
-  // 切换标签
-  switchTab(e) {
+  // 切换聊天标签
+  switchChatTab(e) {
     const tab = e.currentTarget.dataset.tab
-    this.setData({ currentTab: tab })
-    this.loadMessages(true)
+    this.setData({ currentChatTab: tab })
+  },
+
+  // 打开系统通知弹窗
+  async openSystemNotifications() {
+    this.setData({ showSystemModal: true })
+
+    // 如果有未读系统通知，全部标记为已读
+    if (this.data.systemUnread > 0) {
+      await this.markAllSystemNotificationsRead()
+    }
+  },
+
+  // 关闭系统通知弹窗
+  closeSystemNotifications() {
+    this.setData({ showSystemModal: false })
+  },
+
+  // 标记所有系统通知为已读
+  async markAllSystemNotificationsRead() {
+    try {
+      const unreadNotifications = this.data.systemList.filter(item => !item.is_read)
+      if (unreadNotifications.length === 0) return
+
+      // 调用云函数批量标记已读
+      await wx.cloud.callFunction({
+        name: 'wdd-notify',
+        data: {
+          action: 'markAllAsRead'
+        }
+      })
+
+      // 更新本地状态
+      const systemList = this.data.systemList.map(item => ({
+        ...item,
+        is_read: true
+      }))
+
+      this.setData({
+        systemList,
+        systemUnread: 0
+      })
+
+      // 重新计算总未读数
+      this.calculateTotalUnread()
+    } catch (err) {
+      console.error('标记全部已读失败:', err)
+    }
+  },
+
+  // 计算总未读数
+  calculateTotalUnread() {
+    const { seekerChatUnread, helperChatUnread, systemUnread } = this.data
+    this.setData({
+      unreadCount: seekerChatUnread + helperChatUnread + systemUnread
+    }, () => {
+      this.updateTabBarBadge()
+    })
+  },
+
+  // 下拉刷新
+  async onRefresh() {
+    this.setData({ isRefreshing: true })
+    await this.loadMessages(false)
+    this.setData({ isRefreshing: false })
   },
 
   // 加载消息列表
   // showLoading: 是否显示 loading，静默刷新时不显示
   async loadMessages(showLoading = true) {
+    let loadingTimer = null
+
     try {
+      // 延迟显示 loading，超过1秒才显示
       if (showLoading) {
-        wx.showLoading({ title: '加载中...' })
+        loadingTimer = setTimeout(() => {
+          wx.showLoading({ title: '加载中...' })
+        }, 1000)
       }
 
       const { result } = await wx.cloud.callFunction({
@@ -93,17 +194,30 @@ Page({
         }
       })
 
+      // 清除 loading 定时器
+      if (loadingTimer) {
+        clearTimeout(loadingTimer)
+        loadingTimer = null
+      }
+      // 隐藏已显示的 loading
       if (showLoading) {
         wx.hideLoading()
       }
 
       if (result.code === 0) {
-        // 处理聊天列表
+        // 分离求助聊天和帮助聊天
         const chatList = result.data.chatList.map(item => ({
           ...item,
           lastTime: this.formatTime(item.lastTime),
           statusText: this.getStatusText(item.needStatus)
         }))
+
+        const seekerChatList = chatList.filter(item => item.isSeeker)
+        const helperChatList = chatList.filter(item => !item.isSeeker)
+
+        // 计算各类型未读数
+        const seekerChatUnread = seekerChatList.reduce((sum, item) => sum + (item.unread || 0), 0)
+        const helperChatUnread = helperChatList.reduce((sum, item) => sum + (item.unread || 0), 0)
 
         // 处理系统通知列表
         const systemList = result.data.systemList.map(item => ({
@@ -112,18 +226,27 @@ Page({
           timeText: this.formatTime(item.create_time)
         }))
 
+        const systemUnread = result.data.systemUnread || 0
+
         this.setData({
-          chatList,
+          seekerChatList,
+          helperChatList,
           systemList,
-          unreadCount: result.data.unreadCount || 0,
-          chatUnread: result.data.chatUnread || 0,
-          systemUnread: result.data.systemUnread || 0
+          seekerChatUnread,
+          helperChatUnread,
+          systemUnread,
+          unreadCount: seekerChatUnread + helperChatUnread + systemUnread
         }, () => {
           // 更新 TabBar 徽章
           this.updateTabBarBadge()
         })
       }
     } catch (err) {
+      // 清除 loading 定时器
+      if (loadingTimer) {
+        clearTimeout(loadingTimer)
+      }
+      // 隐藏已显示的 loading
       if (showLoading) {
         wx.hideLoading()
       }
@@ -131,106 +254,56 @@ Page({
 
       // 清空数据（可能是未登录）
       this.setData({
-        chatList: [],
+        seekerChatList: [],
+        helperChatList: [],
         systemList: [],
         unreadCount: 0,
-        chatUnread: 0,
+        seekerChatUnread: 0,
+        helperChatUnread: 0,
         systemUnread: 0
       })
     }
   },
 
-  // 使用模拟数据（开发阶段）
-  setMockData() {
-    const mockChatList = [
-      {
-        needId: '1',
-        title: '春熙路星巴克营业情况',
-        typeIcon: '🏪',
-        lastMessage: '已经开门了，人不多',
-        lastTime: '10:30',
-        needStatus: 'ongoing',
-        isSeeker: true,
-        unread: 2
-      },
-      {
-        needId: '2',
-        title: '天府广场实时天气',
-        typeIcon: '🌤️',
-        lastMessage: '[图片]',
-        lastTime: '昨天',
-        needStatus: 'completed',
-        isSeeker: false,
-        unread: 0
-      }
-    ]
-
-    const mockSystemList = [
-      {
-        _id: '1',
-        type: 'task_completed',
-        title: '任务已完成',
-        content: '你帮助完成的「天府广场实时天气」任务已确认完成，获得 10 积分',
-        create_time: new Date(Date.now() - 86400000),
-        is_read: false
-      },
-      {
-        _id: '2',
-        type: 'system',
-        title: '欢迎加入问当地',
-        content: '感谢你使用问当地！新用户已到账 100 积分，快去发布第一个求助吧~',
-        create_time: new Date(Date.now() - 172800000),
-        is_read: true
-      }
-    ]
-
-    this.setData({
-      chatList: mockChatList,
-      systemList: mockSystemList.map(item => ({
-        ...item,
-        icon: this.getNotificationIcon(item.type),
-        timeText: this.formatTime(item.create_time)
-      })),
-      unreadCount: 3,
-      chatUnread: 2,
-      systemUnread: 1
-    })
-  },
-
   // 跳转到聊天页
   goToChat(e) {
     const { needid, isseeker } = e.currentTarget.dataset
+    const isSeekerBool = isseeker === true || isseeker === 'true'
+
+    // 本地立即清零对应会话的未读数（优化体验）
+    this.clearLocalUnread(needid, isSeekerBool)
+
     wx.navigateTo({
-      url: `/pages/chat/chat?needId=${needid}&isSeeker=${isseeker}`
+      url: `/pages/chat/chat?needId=${needid}&isSeeker=${isSeekerBool}`
     })
   },
 
-  // 标记通知为已读
-  async readNotification(e) {
-    const id = e.currentTarget.dataset.id
+  // 本地清零指定会话的未读数
+  clearLocalUnread(needId, isSeeker) {
+    const listKey = isSeeker ? 'seekerChatList' : 'helperChatList'
+    const list = this.data[listKey].map(item => {
+      if (item.needId === needId) {
+        return { ...item, unread: 0 }
+      }
+      return item
+    })
 
-    try {
-      await wx.cloud.callFunction({
-        name: 'wdd-notify',
-        data: {
-          action: 'markAsRead',
-          notificationId: id
-        }
-      })
+    // 重新计算未读数
+    const newSeekerUnread = isSeeker
+      ? list.reduce((sum, item) => sum + (item.unread || 0), 0)
+      : this.data.seekerChatUnread
+    const newHelperUnread = !isSeeker
+      ? list.reduce((sum, item) => sum + (item.unread || 0), 0)
+      : this.data.helperChatUnread
 
-      // 更新本地状态
-      const systemList = this.data.systemList.map(item => {
-        if (item._id === id) {
-          return { ...item, is_read: true }
-        }
-        return item
-      })
-
-      this.setData({ systemList })
-      this.loadMessages()
-    } catch (err) {
-      console.error('标记已读失败:', err)
-    }
+    this.setData({
+      [listKey]: list,
+      seekerChatUnread: newSeekerUnread,
+      helperChatUnread: newHelperUnread,
+      unreadCount: newSeekerUnread + newHelperUnread + this.data.systemUnread
+    }, () => {
+      this.updateTabBarBadge()
+    })
   },
 
   // 获取状态文本

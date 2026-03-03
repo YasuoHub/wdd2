@@ -3,58 +3,72 @@
   <!-- 页面标题 -->
   <view class="page-header">
     <text class="page-title">消息</text>
-    <view wx:if="{{unreadCount > 0}}" class="unread-badge">{{unreadCount}}条未读</view>
+    <!-- 右上角系统通知铃铛 -->
+    <view class="notification-bell" bindtap="openSystemNotifications">
+      <text class="bell-icon">🔔</text>
+      <view wx:if="{{systemUnread > 0}}" class="bell-badge">{{systemUnread > 99 ? '99+' : systemUnread}}</view>
+    </view>
   </view>
 
-  <!-- 消息类型标签 -->
+  <!-- 聊天类型标签 -->
   <view class="message-tabs">
     <view
-      class="tab {{currentTab === 'chat' ? 'active' : ''}}"
-      bindtap="switchTab"
-      data-tab="chat"
+      class="tab {{currentChatTab === 'seeker' ? 'active' : ''}}"
+      bindtap="switchChatTab"
+      data-tab="seeker"
     >
-      <text>💬 聊天记录</text>
-      <view wx:if="{{chatUnread > 0}}" class="tab-badge">{{chatUnread}}</view>
+      <text>🙏 求助</text>
+      <view wx:if="{{seekerChatUnread > 0}}" class="tab-badge">{{seekerChatUnread}}</view>
     </view>
     <view
-      class="tab {{currentTab === 'system' ? 'active' : ''}}"
-      bindtap="switchTab"
-      data-tab="system"
+      class="tab {{currentChatTab === 'helper' ? 'active' : ''}}"
+      bindtap="switchChatTab"
+      data-tab="helper"
     >
-      <text>🔔 系统通知</text>
-      <view wx:if="{{systemUnread > 0}}" class="tab-badge">{{systemUnread}}</view>
+      <text>🤗 帮助</text>
+      <view wx:if="{{helperChatUnread > 0}}" class="tab-badge">{{helperChatUnread}}</view>
     </view>
   </view>
 
   <!-- 消息列表 -->
-  <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}">
-    <!-- 聊天记录 -->
-    <block wx:if="{{currentTab === 'chat'}}">
-      <view wx:if="{{chatList.length === 0}}" class="empty-state">
-        <view class="empty-icon">💬</view>
-        <view class="empty-text">暂无聊天记录</view>
-        <view class="empty-hint">去任务大厅接单开始聊天吧</view>
+  <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh">
+    <!-- 求助聊天 -->
+    <block wx:if="{{currentChatTab === 'seeker'}}">
+      <view wx:if="{{seekerChatList.length === 0}}" class="empty-state">
+        <view class="empty-icon">🙏</view>
+        <view class="empty-text">暂无求助聊天</view>
+        <view class="empty-hint">你发布的求助将会在这里显示</view>
       </view>
 
       <view wx:else class="chat-list">
         <view
-          wx:for="{{chatList}}"
+          wx:for="{{seekerChatList}}"
           wx:key="needId"
           class="message-card {{item.unread > 0 ? 'unread' : ''}}"
           bindtap="goToChat"
           data-needid="{{item.needId}}"
-          data-isseeker="{{item.isSeeker}}"
+          data-isseeker="{{true}}"
         >
-          <view class="message-avatar">{{item.avatar || item.typeIcon}}</view>
+          <!-- 左侧头像 -->
+          <view class="message-avatar">
+            <image wx:if="{{item.otherUserAvatar}}" src="{{item.otherUserAvatar}}" mode="aspectFill" />
+            <text wx:else>{{item.otherUserNickname ? item.otherUserNickname[0] : '?'}}</text>
+          </view>
+          <!-- 右侧信息 -->
           <view class="message-info">
-            <view class="message-top">
-              <view class="message-title">{{item.title}}</view>
-              <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
-              
+            <!-- 第一行：昵称 + 任务类型、位置、状态 -->
+            <view class="message-top-row">
+              <view class="message-nickname">{{item.otherUserNickname}}</view>
+              <view class="message-meta-inline">
+                <text class="meta-icon">{{item.typeIcon}}</text>
+                <text class="meta-location" wx:if="{{item.locationName}}">📍{{item.locationName}}</text>
+                <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
+              </view>
             </view>
-            <view class="message-body">
-              <view class="message-content">{{item.lastMessage}}</view>
-              <view class="message-body-right">
+            <!-- 第二行：最后消息和时间 -->
+            <view class="message-bottom">
+              <view class="message-last">{{item.lastMessage}}</view>
+              <view class="message-right">
                 <view class="message-time">{{item.lastTime}}</view>
                 <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
               </view>
@@ -64,12 +78,67 @@
       </view>
     </block>
 
-    <!-- 系统通知 -->
-    <block wx:if="{{currentTab === 'system'}}">
-      <view wx:if="{{systemList.length === 0}}" class="empty-state">
-        <view class="empty-icon">🔔</view>
-        <view class="empty-text">暂无系统通知</view>
-        <view class="empty-hint">重要消息会在这里显示</view>
+    <!-- 帮助聊天 -->
+    <block wx:if="{{currentChatTab === 'helper'}}">
+      <view wx:if="{{helperChatList.length === 0}}" class="empty-state">
+        <view class="empty-icon">🤗</view>
+        <view class="empty-text">暂无帮助聊天</view>
+        <view class="empty-hint">去任务大厅接单开始聊天吧</view>
+      </view>
+
+      <view wx:else class="chat-list">
+        <view
+          wx:for="{{helperChatList}}"
+          wx:key="needId"
+          class="message-card {{item.unread > 0 ? 'unread' : ''}}"
+          bindtap="goToChat"
+          data-needid="{{item.needId}}"
+          data-isseeker="{{false}}"
+        >
+          <!-- 左侧头像 -->
+          <view class="message-avatar">
+            <image wx:if="{{item.otherUserAvatar}}" src="{{item.otherUserAvatar}}" mode="aspectFill" />
+            <text wx:else>{{item.otherUserNickname ? item.otherUserNickname[0] : '?'}}</text>
+          </view>
+          <!-- 右侧信息 -->
+          <view class="message-info">
+            <!-- 第一行：昵称 + 任务类型、位置、状态 -->
+            <view class="message-top-row">
+              <view class="message-nickname">{{item.otherUserNickname}}</view>
+              <view class="message-meta-inline">
+                <text class="meta-icon">{{item.typeIcon}}</text>
+                <text class="meta-location" wx:if="{{item.locationName}}">📍{{item.locationName}}</text>
+                <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
+              </view>
+            </view>
+            <!-- 第二行：最后消息和时间 -->
+            <view class="message-bottom">
+              <view class="message-last">{{item.lastMessage}}</view>
+              <view class="message-right">
+                <view class="message-time">{{item.lastTime}}</view>
+                <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
+</view>
+
+<!-- 系统通知弹窗 -->
+<view class="notification-modal {{showSystemModal ? 'show' : ''}}" wx:if="{{showSystemModal}}">
+  <view class="modal-mask" bindtap="closeSystemNotifications"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">系统通知</text>
+      <view class="modal-close" bindtap="closeSystemNotifications">✕</view>
+    </view>
+
+    <scroll-view class="modal-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <view wx:if="{{systemList.length === 0}}" class="modal-empty">
+        <view class="modal-empty-icon">🔔</view>
+        <view class="modal-empty-text">暂无系统通知</view>
       </view>
 
       <view wx:else class="system-list">
@@ -77,8 +146,6 @@
           wx:for="{{systemList}}"
           wx:key="_id"
           class="system-card {{!item.is_read ? 'unread' : ''}}"
-          bindtap="readNotification"
-          data-id="{{item._id}}"
         >
           <view class="system-icon-wrapper">
             <view class="system-icon">{{item.icon}}</view>
@@ -92,6 +159,6 @@
           </view>
         </view>
       </view>
-    </block>
-  </scroll-view>
+    </scroll-view>
+  </view>
 </view>

@@ -45,6 +45,21 @@
     </view>
   </view>
 
+  <!-- 帮助者资料完善提示 -->
+  <view class="helper-profile-tip" wx:if="{{showHelperProfileTip}}">
+    <view class="tip-content">
+      <text class="tip-icon">💡</text>
+      <view class="tip-text">
+        <view class="tip-title">完善帮助者资料</view>
+        <view class="tip-desc">设置常去地点和可帮助类型，获取更精准的任务推荐</view>
+      </view>
+    </view>
+    <view class="tip-actions">
+      <text class="tip-close" bindtap="closeHelperProfileTip">✕</text>
+      <view class="tip-btn" bindtap="goToHelperProfile">去完善</view>
+    </view>
+  </view>
+
   <!-- 任务列表内容区 -->
   <scroll-view
     class="content"
@@ -58,7 +73,7 @@
     show-scrollbar="{{false}}"
   >
     <!-- 统计信息 -->
-    <view class="stats-bar">
+    <view class="stats-bar" wx:if="{{taskList.length > 0 || isLoading}}">
       <text class="stats-text">{{taskList.length > 0 ? '附近共有 ' + totalCount + ' 个求助' : '正在搜索附近求助...'}}</text>
       <view wx:if="{{isLocating}}" class="locating-indicator">
         <view class="locating-dot"></view>
@@ -130,13 +145,11 @@
         <text class="empty-icon">🌸</text>
       </view>
       <text class="empty-title">附近暂无求助任务</text>
-      <text class="empty-desc">稍后再来看看，或者去其他区域逛逛</text>
-      <view class="empty-actions">
+      <text class="empty-desc" wx:if="{{activeFilter === 'all'}}">下拉页面刷新，或稍后再来看看</text>
+      <text class="empty-desc" wx:else>试试查看全部类型，或稍后再来</text>
+      <view class="empty-actions" wx:if="{{activeFilter !== 'all'}}">
         <view class="empty-btn primary" bindtap="selectFilter" data-filter="all">
           <text>查看全部类型</text>
-        </view>
-        <view class="empty-btn secondary" bindtap="onRefresh">
-          <text>刷新试试</text>
         </view>
       </view>
     </view>

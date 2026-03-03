@@ -21,6 +21,8 @@ exports.main = async (event, context) => {
         return await getMyTasks(event, OPENID)
       case 'getNeedDetail':
         return await getNeedDetail(event, OPENID)
+      case 'getRatingDetail':
+        return await getRatingDetail(event, OPENID)
       default:
         return await getPublicNeeds(event, OPENID)
     }
@@ -35,7 +37,7 @@ exports.main = async (event, context) => {
 
 // 获取公共任务列表（任务大厅）
 async function getPublicNeeds(event, OPENID) {
-  const { filter, sort, distance, page = 1, pageSize = 10, limit } = event
+  const { filter, sort, distance, page = 1, pageSize = 10, limit, userId } = event
 
   const now = new Date()
 
@@ -45,16 +47,24 @@ async function getPublicNeeds(event, OPENID) {
     expire_time: _.gt(now) // 只查询未过期的任务
   }
 
+  // 获取用户帮助者资料（用于个性化推荐）
+  let userProfile = null
+  if (OPENID) {
+    try {
+      const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+      if (userRes.data.length > 0) {
+        userProfile = userRes.data[0]
+      }
+    } catch (err) {
+      console.error('获取用户资料失败:', err)
+    }
+  }
+
   // 类型筛选
   if (filter && filter !== 'all') {
     where.type = filter
   }
-
-  // 距离筛选（如果有用户位置）
-  if (distance && distance > 0) {
-    // 这里简化处理，实际应该根据用户位置计算
-    // where.location = ...
-  }
+  // 注：当filter为'all'时，不限制类型，显示所有任务
 
   // 查询总数
   const countRes = await db.collection('wdd-needs').where(where).count()
@@ -89,18 +99,32 @@ async function getPublicNeeds(event, OPENID) {
 
   const listRes = await query.get()
 
+  // 只有当选择按距离排序时，才根据常活动地点计算距离并排序
+  let sortedList = listRes.data
+  if (sort === 'distance' && userProfile && userProfile.frequent_locations &&
+      userProfile.frequent_locations.length > 0) {
+    sortedList = sortByNearestLocation(sortedList, userProfile.frequent_locations)
+  }
+
   // 格式化数据
-  const list = listRes.data.map(item => formatNeedItem(item))
+  const formattedList = sortedList.map(item => formatNeedItem(item, userProfile))
 
   return {
     code: 0,
     message: '获取成功',
     data: {
-      list,
+      list: formattedList,
       total,
       page,
       pageSize,
-      hasMore: page * pageSize < total
+      hasMore: page * pageSize < total,
+      // 返回用户帮助者资料状态，用于前端提示
+      userProfile: userProfile ? {
+        hasHelperProfile: !!userProfile.help_willingness,
+        helpWillingness: userProfile.help_willingness,
+        frequentLocations: userProfile.frequent_locations || [],
+        helpTypes: userProfile.help_types || []
+      } : null
     }
   }
 }
@@ -139,8 +163,22 @@ async function getMyNeeds(event, OPENID) {
     .limit(pageSize)
     .get()
 
-  // 格式化数据
-  const list = listRes.data.map(item => formatNeedItem(item))
+  // 格式化数据，并查询评价状态
+  const list = await Promise.all(listRes.data.map(async (item) => {
+    const formatted = formatNeedItem(item)
+
+    // 如果任务已完成，查询是否已评价
+    if (item.status === 'completed') {
+      const ratingRes = await db.collection('wdd-ratings').where({
+        need_id: item._id,
+        rater_id: userId,
+        rating_type: 'seeker'
+      }).count()
+      formatted.hasRated = ratingRes.total > 0
+    }
+
+    return formatted
+  }))
 
   return {
     code: 0,
@@ -185,14 +223,14 @@ async function getMyTasks(event, OPENID) {
     .limit(pageSize)
     .get()
 
-  // 获取关联的任务详情
+  // 获取关联的任务详情，并查询评价状态
   const tasks = await Promise.all(takerRes.data.map(async (taker) => {
     const needRes = await db.collection('wdd-needs').doc(taker.need_id).get()
     const need = needRes.data
 
     if (!need) return null
 
-    return {
+    const item = {
       ...taker,
       need_id: taker.need_id,
       type: need.type,
@@ -206,10 +244,24 @@ async function getMyTasks(event, OPENID) {
       seeker_nickname: need.user_nickname,
       seeker_avatar: need.user_avatar
     }
+
+    const formatted = formatNeedItem(item)
+
+    // 如果任务已完成，查询是否已评价
+    if (taker.status === 'completed') {
+      const ratingRes = await db.collection('wdd-ratings').where({
+        need_id: taker.need_id,
+        rater_id: userId,
+        rating_type: 'taker'
+      }).count()
+      formatted.hasRated = ratingRes.total > 0
+    }
+
+    return formatted
   }))
 
   // 过滤null值
-  const list = tasks.filter(item => item !== null).map(item => formatNeedItem(item))
+  const list = tasks.filter(item => item !== null)
 
   // 统计信息
   const totalRes = await db.collection('wdd-need-takers').where({
@@ -304,6 +356,84 @@ async function getNeedDetail(event, OPENID) {
   }
 }
 
+// 获取评价详情
+async function getRatingDetail(event, OPENID) {
+  const { needId, ratingType } = event
+
+  if (!needId) {
+    return { code: -1, message: '任务ID不能为空' }
+  }
+
+  try {
+    // 获取当前用户
+    const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+    if (userRes.data.length === 0) {
+      return { code: -1, message: '用户不存在' }
+    }
+    const currentUserId = userRes.data[0]._id
+
+    // 获取任务信息
+    const needRes = await db.collection('wdd-needs').doc(needId).get()
+    const need = needRes.data
+
+    if (!need) {
+      return { code: -1, message: '任务不存在' }
+    }
+
+    // 获取评价记录
+    const ratingRes = await db.collection('wdd-ratings').where({
+      need_id: needId,
+      rater_id: currentUserId,
+      rating_type: ratingType || 'seeker'
+    }).get()
+
+    if (ratingRes.data.length === 0) {
+      return { code: -1, message: '评价记录不存在' }
+    }
+
+    const rating = ratingRes.data[0]
+
+    // 获取评价对象信息
+    const targetUserRes = await db.collection('wdd-users').doc(rating.target_id).get()
+    const targetUser = targetUserRes.data || {}
+
+    // 格式化任务信息
+    const typeMap = {
+      'weather': '实时天气',
+      'traffic': '道路拥堵',
+      'shop': '店铺营业',
+      'parking': '停车场空位',
+      'queue': '排队情况',
+      'other': '其他'
+    }
+
+    return {
+      code: 0,
+      message: '获取成功',
+      data: {
+        rating: {
+          rating: rating.rating,
+          tags: rating.tags || [],
+          comment: rating.comment || '',
+          createTime: formatDateTime(rating.create_time)
+        },
+        task: {
+          typeName: typeMap[need.type] || '其他',
+          description: need.description,
+          points: need.points
+        },
+        targetUser: {
+          nickname: targetUser.nickname || '未知用户',
+          avatar: targetUser.avatar || ''
+        }
+      }
+    }
+  } catch (err) {
+    console.error('获取评价详情失败:', err)
+    return { code: -1, message: '获取失败: ' + err.message }
+  }
+}
+
 // 格式化日期时间
 function formatDateTime(date) {
   const d = new Date(date)
@@ -315,8 +445,52 @@ function formatDateTime(date) {
   return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 
+// 计算两点之间的距离（米）
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000 // 地球半径（米）
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return Math.round(R * c)
+}
+
+// 根据常活动地点排序
+function sortByNearestLocation(needs, frequentLocations) {
+  // 为每个任务计算到最近常去地点的距离
+  const needsWithDistance = needs.map(need => {
+    let minDistance = Infinity
+
+    if (need.location && need.location.latitude && need.location.longitude) {
+      for (const loc of frequentLocations) {
+        if (loc.latitude && loc.longitude) {
+          const dist = calculateDistance(
+            need.location.latitude,
+            need.location.longitude,
+            loc.latitude,
+            loc.longitude
+          )
+          if (dist < minDistance) {
+            minDistance = dist
+          }
+        }
+      }
+    }
+
+    return {
+      ...need,
+      nearestDistance: minDistance === Infinity ? 99999999 : minDistance
+    }
+  })
+
+  // 按最近距离排序
+  return needsWithDistance.sort((a, b) => a.nearestDistance - b.nearestDistance)
+}
+
 // 格式化任务项
-function formatNeedItem(item) {
+function formatNeedItem(item, userProfile) {
   // 计算剩余时间
   let remainTime = ''
   if (item.expire_time && (item.status === 'pending' || item.status === 'ongoing')) {
@@ -333,8 +507,16 @@ function formatNeedItem(item) {
     }
   }
 
-  // 格式化距离（示例）
-  const distance = Math.floor(Math.random() * 5000) + 100
+  // 计算距离
+  let distance = item.nearestDistance || Math.floor(Math.random() * 5000) + 100
+
+  // 如果小于1公里，显示米，否则显示公里
+  let distanceText = ''
+  if (distance < 1000) {
+    distanceText = distance + 'm'
+  } else {
+    distanceText = (distance / 1000).toFixed(1) + 'km'
+  }
 
   return {
     _id: item._id,

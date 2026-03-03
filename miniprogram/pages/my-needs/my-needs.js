@@ -36,10 +36,26 @@ Page({
   },
 
   onLoad() {
+    // 检查登录状态
+    app.checkLoginStatus()
+    if (!app.globalData.isLoggedIn) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      setTimeout(() => {
+        wx.navigateBack()
+      }, 1500)
+      return
+    }
     this.loadNeeds()
   },
 
   onShow() {
+    // 检查登录状态
+    if (!app.globalData.isLoggedIn) {
+      return
+    }
     // 如果标记需要刷新，或者数据为空，则重新加载
     if (this.data.needs.length === 0 || wx.getStorageSync('refreshMyNeeds')) {
       this.refreshData()
@@ -55,6 +71,13 @@ Page({
     }, () => {
       this.loadNeeds()
     })
+  },
+
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.refreshData()
+    // 停止下拉刷新动画
+    wx.stopPullDownRefresh()
   },
 
   // 切换筛选条件
@@ -257,6 +280,14 @@ Page({
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
       url: `/pages/rating/rating?needId=${id}&type=seeker`
+    })
+  },
+
+  // 查看评价
+  viewRating(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({
+      url: `/pages/rating-detail/rating-detail?needId=${id}&type=seeker`
     })
   },
 

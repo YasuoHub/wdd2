@@ -14,6 +14,26 @@ const MSG_TYPE = {
   IMAGE: 'image'
 }
 
+// 计算图片显示尺寸
+function calculateDisplaySize(width, height) {
+  const maxWidth = 400  // rpx
+  const maxHeight = 500 // rpx
+
+  // 如果没有尺寸信息，返回默认值
+  if (!width || !height || width <= 0 || height <= 0) {
+    return { width: maxWidth, height: maxHeight }
+  }
+
+  // 计算缩放比例
+  const scale = Math.min(maxWidth / width, maxHeight / height, 1)
+
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale)
+  }
+}
+
+
 // 主入口
 exports.main = async (event, context) => {
   const { action } = event
@@ -121,15 +141,18 @@ async function getMessages(event, OPENID) {
     return { code: -1, message: '无权查看消息' }
   }
 
-  // 构建查询条件
-  let query = db.collection('wdd-messages').where({
-    need_id: needId
-  })
-
-  // 分页查询
+  // 构建查询条件 - 必须同时满足 need_id 和 create_time（分页用）
+  let query
   if (beforeTime) {
-    query = query.where({
+    console.log('查询条件: need_id=', needId, ', create_time <', beforeTime)
+    query = db.collection('wdd-messages').where({
+      need_id: needId,
       create_time: _.lt(new Date(beforeTime))
+    })
+  } else {
+    console.log('查询条件: need_id=', needId, ', 无时间限制')
+    query = db.collection('wdd-messages').where({
+      need_id: needId
     })
   }
 
@@ -156,7 +179,7 @@ async function getMessages(event, OPENID) {
 
 // 发送消息
 async function sendMessage(event, OPENID) {
-  const { needId, type, content, imageUrl } = event
+  const { needId, type, content, imageUrl, imageWidth: clientWidth, imageHeight: clientHeight } = event
 
   // 验证参数
   if (!needId || !type) {
@@ -220,6 +243,23 @@ async function sendMessage(event, OPENID) {
     }
   }
 
+  // 图片消息：获取并计算显示尺寸
+  let imageDisplayWidth = 0
+  let imageDisplayHeight = 0
+
+  if (type === MSG_TYPE.IMAGE && imageUrl) {
+    // 优先使用前端传来的图片尺寸
+    const originalWidth = clientWidth || 0
+    const originalHeight = clientHeight || 0
+
+    // 计算显示尺寸
+    const displaySize = calculateDisplaySize(originalWidth, originalHeight)
+    imageDisplayWidth = displaySize.width
+    imageDisplayHeight = displaySize.height
+
+    console.log('图片尺寸:', originalWidth, 'x', originalHeight, '显示尺寸:', imageDisplayWidth, 'x', imageDisplayHeight)
+  }
+
   // 创建消息记录
   // 确保 need_id 是字符串类型，与前端监听查询保持一致
   const message = {
@@ -229,6 +269,9 @@ async function sendMessage(event, OPENID) {
     type: type,
     content: type === MSG_TYPE.TEXT ? content : '',
     image_url: type === MSG_TYPE.IMAGE ? imageUrl : '',
+    // 图片显示尺寸（后端预计算）
+    image_width: imageDisplayWidth,
+    image_height: imageDisplayHeight,
     is_read: false,
     create_time: new Date()
   }

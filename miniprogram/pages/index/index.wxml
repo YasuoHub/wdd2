@@ -7,10 +7,6 @@
       <view class="brand-icon">🌿</view>
       <text class="brand-text">问当地</text>
     </view>
-    <view class="notification-btn" bindtap="goToMessages">
-      <text class="notification-icon">🔔</text>
-      <text wx:if="{{unreadCount > 0}}" class="notification-badge">{{unreadCount}}</text>
-    </view>
   </view>
 
   <!-- 未登录提示卡片 -->

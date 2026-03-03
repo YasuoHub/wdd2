@@ -25,13 +25,17 @@ App({
     // 检查登录状态
     this.checkLoginStatus()
 
-    // 启动全局消息监听
-    this.startGlobalMessageWatch()
+    // 启动全局消息监听（仅已登录用户）
+    if (this.globalData.isLoggedIn) {
+      this.startGlobalMessageWatch()
+    }
   },
 
   onShow() {
-    // 小程序显示时刷新角标
-    this.updateTabBarBadge()
+    // 小程序显示时刷新角标（仅已登录用户）
+    if (this.globalData.isLoggedIn) {
+      this.updateTabBarBadge()
+    }
   },
 
   // 获取系统信息
@@ -51,6 +55,10 @@ App({
       this.globalData.isLoggedIn = true
       // 已登录用户启动全局消息监听
       this.startGlobalMessageWatch()
+    } else {
+      // 没有用户信息时，确保状态为未登录
+      this.globalData.userInfo = null
+      this.globalData.isLoggedIn = false
     }
   },
 
@@ -120,8 +128,50 @@ App({
     wx.setStorageSync('userInfo', userInfo)
   },
 
+  // 退出登录
+  logout() {
+    // 1. 停止全局消息监听
+    this.stopGlobalMessageWatch()
+
+    // 2. 清除本地存储
+    wx.removeStorageSync('userInfo')
+    wx.removeStorageSync('lastSignDate')
+    wx.removeStorageSync('pendingInviterId')
+
+    // 3. 停止全局消息监听（真正关闭）
+    if (this.globalData.globalMessageWatcher) {
+      try {
+        this.globalData.globalMessageWatcher.close()
+      } catch (e) {
+        console.error('关闭消息监听失败:', e)
+      }
+    }
+
+    // 4. 清除全局数据
+    this.globalData.userInfo = null
+    this.globalData.isLoggedIn = false
+    this.globalData.unreadCount = 0
+    this.globalData.globalMessageWatcher = null
+    this.globalData.messagePageRefreshCallback = null
+
+    // 4. 清除消息角标
+    try {
+      wx.removeTabBarBadge({ index: 2 })
+    } catch (e) {
+      // 角标可能不存在，忽略错误
+    }
+
+    console.log('退出登录完成')
+  },
+
   // 更新 TabBar 消息未读数
   async updateTabBarBadge() {
+    // 未登录时不获取
+    if (!this.globalData.isLoggedIn) {
+      wx.removeTabBarBadge({ index: 2 })
+      return
+    }
+
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-notify',

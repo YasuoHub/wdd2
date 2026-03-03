@@ -306,6 +306,7 @@
   font-size: 34rpx;
   font-weight: 700;
   flex-shrink: 0;
+  line-height: 0.4;
 }
 
 .record-amount.income {

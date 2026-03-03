@@ -1,8 +1,7 @@
 {
-  "navigationBarTitleText": "我的求助",
+  "navigationBarTitleText": "评价详情",
   "navigationBarBackgroundColor": "#F0F8FF",
   "navigationBarTextStyle": "black",
   "backgroundColor": "#F0F8FF",
-  "enablePullDownRefresh": true,
   "usingComponents": {}
 }

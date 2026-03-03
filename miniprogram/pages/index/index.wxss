@@ -47,49 +47,6 @@
   letter-spacing: -0.02em;
 }
 
-.notification-btn {
-  width: 76rpx;
-  height: 76rpx;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20rpx);
-  border-radius: 9999rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 4rpx 20rpx rgba(93, 184, 230, 0.15);
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
-  transition: all 0.3s ease;
-}
-
-.notification-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.1);
-}
-
-.notification-icon {
-  font-size: 34rpx;
-}
-
-.notification-badge {
-  position: absolute;
-  top: 6rpx;
-  right: 6rpx;
-  min-width: 32rpx;
-  height: 32rpx;
-  background: linear-gradient(135deg, #FF8C69 0%, #FF9A8B 100%);
-  border-radius: 9999rpx;
-  color: white;
-  font-size: 20rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10rpx;
-  box-shadow: 0 2rpx 10rpx rgba(255, 140, 105, 0.4);
-  animation: pulse 2s ease-in-out infinite;
-}
-
 /* ============================================
    未登录提示卡片
    ============================================ */

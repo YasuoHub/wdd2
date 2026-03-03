@@ -21,6 +21,8 @@ exports.main = async (event, context) => {
         return await getMessageList(OPENID)
       case 'markAsRead':
         return await markAsRead(event, OPENID)
+      case 'markAllAsRead':
+        return await markAllAsRead(OPENID)
       case 'getUnreadCount':
         return await getUnreadCount(OPENID)
       case 'getTaskCounts':
@@ -136,17 +138,39 @@ async function getChatSessions(userId) {
       }
     }
 
+    // 获取聊天对象信息
+    let otherUser = null
+    if (isSeeker) {
+      // 求助者视角，对方是帮助者
+      if (need.taker_id) {
+        const takerRes = await db.collection('wdd-users').doc(need.taker_id).get()
+        otherUser = takerRes.data
+      }
+    } else {
+      // 帮助者视角，对方是求助者
+      if (need.user_id) {
+        const seekerRes = await db.collection('wdd-users').doc(need.user_id).get()
+        otherUser = seekerRes.data
+      }
+    }
+
     return {
       needId: needId,
       title: need.description.length > 15
         ? need.description.substring(0, 15) + '...'
         : need.description,
       typeIcon: getTypeIcon(need.type),
+      typeName: getTypeName(need.type),
       lastMessage: lastMessageText,
       lastTime: lastTime,
       needStatus: need.status,
       isSeeker: isSeeker,
-      unread: unreadRes.total
+      unread: unreadRes.total,
+      // 聊天对象信息
+      otherUserNickname: otherUser ? otherUser.nickname : (isSeeker ? '帮助者' : '求助者'),
+      otherUserAvatar: otherUser ? otherUser.avatar : '',
+      // 任务位置
+      locationName: need.location ? need.location.name : ''
     }
   }))
 
@@ -204,6 +228,43 @@ async function markAsRead(event, OPENID) {
   return {
     code: 0,
     message: '已标记为已读'
+  }
+}
+
+// 标记所有系统通知为已读
+async function markAllAsRead(OPENID) {
+  try {
+    // 获取当前用户
+    const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+    if (userRes.data.length === 0) {
+      return { code: -1, message: '用户不存在' }
+    }
+    const userId = userRes.data[0]._id
+
+    // 批量更新所有未读系统通知
+    const updateRes = await db.collection('wdd-notifications').where({
+      user_id: userId,
+      is_read: false
+    }).update({
+      data: {
+        is_read: true,
+        read_time: new Date()
+      }
+    })
+
+    return {
+      code: 0,
+      message: '全部已标记为已读',
+      data: {
+        updated: updateRes.stats ? updateRes.stats.updated : 0
+      }
+    }
+  } catch (err) {
+    console.error('标记全部已读失败:', err)
+    return {
+      code: -1,
+      message: '操作失败: ' + err.message
+    }
   }
 }
 
@@ -295,7 +356,11 @@ async function getUserInfo(OPENID) {
           frozen_points: user.frozen_points,
           role: user.role,
           consecutive_sign_days: user.consecutive_sign_days,
-          invite_count: user.invite_count || 0
+          invite_count: user.invite_count || 0,
+          // 帮助者资料
+          help_willingness: user.help_willingness || '',
+          frequent_locations: user.frequent_locations || [],
+          help_types: user.help_types || []
         }
       }
     }
@@ -316,4 +381,17 @@ function getTypeIcon(type) {
     'other': '📌'
   }
   return iconMap[type] || '📌'
+}
+
+// 获取类型名称
+function getTypeName(type) {
+  const nameMap = {
+    'weather': '天气',
+    'traffic': '路况',
+    'shop': '店铺',
+    'parking': '停车',
+    'queue': '排队',
+    'other': '其他'
+  }
+  return nameMap[type] || '其他'
 }

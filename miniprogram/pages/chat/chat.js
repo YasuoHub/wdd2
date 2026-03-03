@@ -24,7 +24,7 @@ Page({
     // 消息相关
     messages: [],
     inputValue: '',
-    inputFocus: false,
+    inputFocus: false,  // 初始不自动聚焦，避免进入页面自动打开输入法
     lastMessageId: '',
     hasMoreMessages: false,
     pageSize: 20,
@@ -34,6 +34,12 @@ Page({
 
     // 任务卡片收起状态
     isTaskCardCollapsed: false,
+
+    // 工具栏展开状态
+    isToolbarExpanded: false,
+
+    // 下拉刷新状态
+    isRefreshing: false,
 
     // 监听
     watchListener: null,
@@ -47,11 +53,18 @@ Page({
     // 获取页面参数
     const { needId, isSeeker } = options
 
+    // 重置页面状态，防止数据串扰
     this.setData({
       'task._id': needId,
       isSeeker: isSeeker === 'true',
-      userInfo: app.globalData.userInfo
+      userInfo: app.globalData.userInfo,
+      messages: [], // 清空消息列表
+      inputValue: '',
+      lastMessageId: ''
     })
+
+    // 重置已处理消息ID集合
+    this.processedMessageIds = null
 
     // 串行加载，避免同时发起多个云函数调用
     this.loadTaskInfo().then(() => {
@@ -79,6 +92,7 @@ Page({
     }
   },
 
+
   onHide() {
     // 页面隐藏时停止轮询以节省资源，但保持watch监听（如果有的话）
     console.log('页面隐藏，停止轮询')
@@ -86,9 +100,25 @@ Page({
   },
 
   onUnload() {
-    // 页面卸载时清理
+    // 页面卸载时清理所有监听和状态
+    console.log('页面卸载，清理所有状态')
     this.stopMessageWatch()
     this.stopMessagePolling()
+    // 清空消息数据，防止页面返回后显示错误数据
+    this.setData({
+      messages: [],
+      task: {
+        _id: '',
+        type: '',
+        typeName: '',
+        typeIcon: '',
+        description: '',
+        points: 0,
+        status: 'ongoing',
+        statusText: '进行中',
+        expireTime: null
+      }
+    })
   },
 
   // 启动消息轮询（watch不可用时的备用方案）
@@ -213,6 +243,13 @@ Page({
           otherUser: result.data.otherUser
         })
 
+        // 设置导航栏标题为聊天对象昵称
+        if (result.data.otherUser && result.data.otherUser.nickname) {
+          wx.setNavigationBarTitle({
+            title: result.data.otherUser.nickname
+          })
+        }
+
       }
     } catch (err) {
       console.error('加载任务信息失败:', err)
@@ -224,9 +261,17 @@ Page({
   },
 
   // 加载历史消息
-  async loadMessages(isLoadMore = false) {
+  // isLoadMore: 是否加载更多（旧消息）
+  // shouldScrollToBottom: 是否滚动到底部（加载历史记录时为 false，避免跳屏）
+  async loadMessages(isLoadMore = false, shouldScrollToBottom = true) {
     try {
       const { task, pageSize, messages } = this.data
+
+      // 校验：确保有有效的任务ID
+      if (!task || !task._id) {
+        console.error('加载消息失败: 任务ID无效')
+        return { code: -1, message: '任务ID无效' }
+      }
 
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-chat',
@@ -268,12 +313,13 @@ Page({
           this.setData({
             messages: recalculatedMessages,
             hasMoreMessages: newMessages.length >= pageSize
+            // 不设置 lastMessageId，保持当前滚动位置，避免跳屏
           })
         } else {
           this.setData({
             messages: newMessages,
             hasMoreMessages: newMessages.length >= pageSize,
-            lastMessageId: 'bottom-anchor'
+            lastMessageId: shouldScrollToBottom ? 'bottom-anchor' : ''
           })
         }
       }
@@ -284,9 +330,16 @@ Page({
     }
   },
 
-  // 加载更多消息
-  loadMoreMessages() {
-    this.loadMessages(true)
+  // 下拉刷新 - 加载历史消息
+  async onRefresh() {
+    this.setData({ isRefreshing: true })
+    await this.loadMessages(true, false) // 加载更多，不滚动到底部
+    this.setData({ isRefreshing: false })
+  },
+
+  // 刷新完成恢复
+  onRestore() {
+    this.setData({ isRefreshing: false })
   },
 
   // 格式化消息
@@ -326,7 +379,10 @@ Page({
       timeText,
       showTime,
       // 统一图片字段为 camelCase（优先使用已有的 imageUrl，否则从 image_url 转换）
-      imageUrl: msg.imageUrl || msg.image_url || ''
+      imageUrl: msg.imageUrl || msg.image_url || '',
+      // 图片显示尺寸（后端预计算）
+      imageWidth: msg.image_width || 0,
+      imageHeight: msg.image_height || 0
     }
   },
 
@@ -346,9 +402,8 @@ Page({
     const db = wx.cloud.database()
 
     // 初始化已处理消息ID集合（防止监听回调重复添加自己发的消息）
-    if (!this.processedMessageIds) {
-      this.processedMessageIds = new Set(this.data.messages.map(m => m._id))
-    }
+    // 每次启动监听时重新初始化，避免旧数据干扰
+    this.processedMessageIds = new Set(this.data.messages.map(m => m._id))
 
     console.log('启动消息监听, needId:', needId, '类型:', typeof needId)
     console.log('监听条件: need_id =', String(needId))
@@ -409,6 +464,13 @@ Page({
             // 只处理新增类型的变更
             if (!snapshot.docChanges || snapshot.docChanges.length === 0) {
               console.log('没有文档变化')
+              return
+            }
+
+            // 关键校验：确保当前页面任务ID与监听器一致，防止页面切换后数据串扰
+            const currentNeedId = this.data.task._id
+            if (!currentNeedId || currentNeedId !== needId) {
+              console.log('页面已切换，忽略旧监听器消息。当前taskId:', currentNeedId, '监听器taskId:', needId)
               return
             }
 
@@ -510,9 +572,16 @@ Page({
   // 停止监听
   stopMessageWatch() {
     if (this.data.watchListener) {
-      this.data.watchListener.close()
+      try {
+        this.data.watchListener.close()
+      } catch (e) {
+        console.error('关闭监听器失败:', e)
+      }
       this.setData({ watchListener: null })
     }
+    // 重置已处理消息ID集合，避免页面切换后数据串扰
+    this.processedMessageIds = null
+    console.log('消息监听已停止，processedMessageIds 已重置')
   },
 
   // 发送文字消息
@@ -540,8 +609,9 @@ Page({
     const lastMsg = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null
     const showTime = !lastMsg || (now.getTime() - new Date(lastMsg.create_time).getTime()) / (1000 * 60) > 2
 
+    const tempId = 'temp_' + Date.now()
     const tempMessage = {
-      _id: 'temp_' + Date.now(),
+      _id: tempId,
       need_id: task._id,
       sender_id: userInfo._id,
       type: 'text',
@@ -558,7 +628,15 @@ Page({
     this.setData({
       inputValue: '',
       messages: newMessages,
-      lastMessageId: 'bottom-anchor'
+      lastMessageId: ''
+      // 注意：不要在发送时设置 inputFocus: true，会导致 iOS 键盘闪烁
+      // 输入框保持原有焦点状态即可
+    }, () => {
+      // 使用 nextTick 确保 DOM 更新后再滚动到最新消息
+      // scroll-into-view 目标需要与 WXML 中的 id 格式一致: msg-${id}
+      wx.nextTick(() => {
+        this.setData({ lastMessageId: 'msg-' + tempId })
+      })
     })
 
     try {
@@ -616,14 +694,29 @@ Page({
   async uploadImage(filePath) {
     const { task, userInfo } = this.data
 
+    // 获取图片尺寸
+    let originalWidth = 0
+    let originalHeight = 0
+    try {
+      const imgInfo = await wx.getImageInfo({ src: filePath })
+      originalWidth = imgInfo.width
+      originalHeight = imgInfo.height
+    } catch (err) {
+      console.error('获取图片信息失败:', err)
+    }
+
     // 立即显示本地图片（乐观更新）
     const now = new Date()
     const currentMessages = this.data.messages
     const lastMsg = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null
     const showTime = !lastMsg || (now.getTime() - new Date(lastMsg.create_time).getTime()) / (1000 * 60) > 2
 
+    // 计算显示尺寸（前端预计算，后端二次确认）
+    const displaySize = this.calculateImageDisplaySize(originalWidth, originalHeight)
+
+    const tempId = 'temp_img_' + Date.now()
     const tempMessage = {
-      _id: 'temp_img_' + Date.now(),
+      _id: tempId,
       need_id: task._id,
       sender_id: userInfo._id,
       type: 'image',
@@ -633,13 +726,22 @@ Page({
       senderAvatar: userInfo.avatar,
       timeText: this.formatTime(now),
       showTime: showTime,
-      isLocalImage: true
+      isLocalImage: true,
+      // 预计算显示尺寸
+      imageWidth: displaySize.width,
+      imageHeight: displaySize.height
     }
 
-    // 合并消息添加和滚动，减少 setData 次数
+    // 合并消息添加，先清空再设置确保滚动触发
     this.setData({
       messages: [...currentMessages, tempMessage],
-      lastMessageId: 'bottom-anchor'
+      lastMessageId: ''
+    }, () => {
+      // 使用 nextTick 确保 DOM 更新后再滚动到最新消息
+      // scroll-into-view 目标需要与 WXML 中的 id 格式一致: msg-${id}
+      wx.nextTick(() => {
+        this.setData({ lastMessageId: 'msg-' + tempId })
+      })
     })
 
     try {
@@ -650,14 +752,16 @@ Page({
         filePath
       })
 
-      // 发送图片消息
+      // 发送图片消息（带上原始尺寸）
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-chat',
         data: {
           action: 'sendMessage',
           needId: task._id,
           type: 'image',
-          imageUrl: uploadResult.fileID
+          imageUrl: uploadResult.fileID,
+          imageWidth: originalWidth,
+          imageHeight: originalHeight
         }
       })
 
@@ -734,6 +838,27 @@ Page({
     })
   },
 
+  // 切换工具栏展开/收起状态
+  toggleToolbar() {
+    const newExpanded = !this.data.isToolbarExpanded
+    this.setData({
+      isToolbarExpanded: newExpanded
+      // 注意：不要在这里设置 inputFocus: false，会导致 iOS 键盘闪烁
+      // 使用 hold-keyboard 属性来控制键盘保持
+    })
+  },
+
+  // 输入框获得焦点时收起工具栏
+  onInputFocus() {
+    // 如果工具栏展开，先收起工具栏
+    // 不手动控制 inputFocus，让输入框自行管理焦点
+    if (this.data.isToolbarExpanded) {
+      this.setData({
+        isToolbarExpanded: false
+      })
+    }
+  },
+
   // 完成任务
   async completeTask() {
     this.hideCompleteModal()
@@ -802,6 +927,23 @@ Page({
       name: location.name || '任务地点',
       address: location.name || ''
     })
+  },
+
+  // 计算图片显示尺寸
+  calculateImageDisplaySize(width, height) {
+    const maxWidth = 400
+    const maxHeight = 500
+
+    if (!width || !height || width <= 0 || height <= 0) {
+      return { width: maxWidth, height: maxHeight }
+    }
+
+    const scale = Math.min(maxWidth / width, maxHeight / height, 1)
+
+    return {
+      width: Math.round(width * scale),
+      height: Math.round(height * scale)
+    }
   },
 
   // 辅助函数：是否为同一天

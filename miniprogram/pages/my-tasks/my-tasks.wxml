@@ -25,24 +25,8 @@
     </view>
   </view>
 
-  <!-- 统计信息 -->
-  <view class="stats-bar">
-    <view class="stat-item">
-      <text class="stat-value">{{stats.total}}</text>
-      <text class="stat-label">总接单</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-value">{{stats.ongoing}}</text>
-      <text class="stat-label">进行中</text>
-    </view>
-    <view class="stat-item">
-      <text class="stat-value">{{stats.points}}</text>
-      <text class="stat-label">累计获得</text>
-    </view>
-  </view>
-
   <!-- 任务列表 -->
-  <scroll-view class="task-list" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMore">
+  <scroll-view class="task-scroll" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMore">
     <view wx:if="{{tasks.length === 0}}" class="empty-state">
       <view class="empty-icon">🤗</view>
       <view class="empty-text">暂无{{filterText}}任务</view>
@@ -88,24 +72,21 @@
         <view class="card-footer">
           <view class="meta-left">
             <view class="points-tag">+{{item.points}}积分</view>
-            <view wx:if="{{item.status === 'ongoing'}}" class="countdown">
-              剩余{{item.remainTime}}
-            </view>
           </view>
           <view class="time-text">{{item.createTime}}</view>
         </view>
 
-        <!-- 操作按钮 -->
+        <!-- 进行中按钮 -->
         <view wx:if="{{item.status === 'ongoing'}}" class="card-actions">
           <view class="action-btn primary" catchtap="goToChat" data-id="{{item.need_id}}">
-            继续帮助
+            进入聊天
           </view>
         </view>
 
-        <!-- 评价按钮 -->
-        <view wx:if="{{item.status === 'completed' && !item.hasRated}}" class="card-actions">
-          <view class="action-btn primary" catchtap="goToRate" data-id="{{item.need_id}}">
-            去评价
+        <!-- 已完成任务按钮 -->
+        <view wx:if="{{item.status === 'completed'}}" class="card-actions">
+          <view class="action-btn primary full-width" catchtap="goToChat" data-id="{{item.need_id}}">
+            查看聊天
           </view>
         </view>
       </view>

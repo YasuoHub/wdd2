@@ -118,6 +118,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 云环境 ID | wdd-2grpiy1r6f9f4cf2 |
 | 腾讯地图 APIKey | LTXBZ-6QBEW-T7CRL-YCDUQ-WHXFK-GSFRJ |
 | 云函数前缀 | `wdd-` |
+| 数据库集合前缀 | `wdd-` |
 
 ## 目录结构规划
 

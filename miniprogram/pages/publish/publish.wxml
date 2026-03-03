@@ -6,7 +6,7 @@
     <!-- 地点选择卡片 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon location">📍</view>
+        <view class="section-icon location">🗺️</view>
         <view class="section-info">
           <text class="section-title">求助地点</text>
           <text class="section-subtitle">选择你想了解的位置</text>
@@ -26,12 +26,12 @@
       </view>
 
       <!-- 未选择地点 -->
-      <view wx:else class="location-picker-trigger" bindtap="goToLocationPicker">
+      <view wx:else class="location-picker-trigger required" bindtap="goToLocationPicker">
         <view class="picker-icon-wrapper">
-          <text class="picker-icon">🎯</text>
+          <text class="picker-icon">📍</text>
         </view>
         <view class="picker-text">
-          <text class="picker-title">点击选择地点</text>
+          <text class="picker-title">请选择地点 <text class="required-mark">*</text></text>
           <text class="picker-desc">在地图上选择你想了解的位置</text>
         </view>
         <text class="picker-arrow">›</text>
