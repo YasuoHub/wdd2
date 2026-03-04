@@ -62,7 +62,10 @@
     <view class="section-header">
       <view class="section-title-wrapper">
         <view class="section-icon">📍</view>
-        <text class="section-title">附近求助</text>
+        <view class="title-group">
+          <text class="section-title">附近求助</text>
+          <view class="distance-tag">5公里内</view>
+        </view>
       </view>
       <text class="section-more" bindtap="goToTaskHall">查看全部 →</text>
     </view>
@@ -124,7 +127,7 @@
     <!-- 空状态 -->
     <view wx:elif="{{nearbyEmpty}}" class="empty-state">
       <view class="empty-icon">🌸</view>
-      <view class="empty-text">附近暂无求助任务</view>
+      <view class="empty-text">附近5公里内暂无求助任务</view>
       <view class="empty-hint" bindtap="goToTaskHall">去大厅看看其他地区的求助 →</view>
     </view>
   </view>

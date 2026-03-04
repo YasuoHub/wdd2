@@ -293,6 +293,24 @@
   gap: 14rpx;
 }
 
+.title-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.distance-tag {
+  display: inline-block;
+  font-size: 22rpx;
+  color: #5DB8E6;
+  background: rgba(93, 184, 230, 0.12);
+  padding: 4rpx 16rpx;
+  border-radius: 9999rpx;
+  font-weight: 600;
+  width: fit-content;
+}
+
 .section-icon {
   width: 56rpx;
   height: 56rpx;

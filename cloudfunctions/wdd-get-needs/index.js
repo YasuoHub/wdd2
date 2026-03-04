@@ -97,11 +97,6 @@ async function getPublicNeeds(event, OPENID) {
         distance: dist
       }
     })
-
-    // 距离筛选（distance > 0 表示需要筛选，distance = 0 表示全部距离）
-    if (distance > 0) {
-      list = list.filter(item => item.distance <= distance)
-    }
   } else {
     // 没有用户位置，使用常去地点计算距离（兼容旧逻辑）
     if (userProfile && userProfile.frequent_locations && userProfile.frequent_locations.length > 0) {
@@ -131,6 +126,14 @@ async function getPublicNeeds(event, OPENID) {
       // 既没有用户位置也没有常去地点，距离设为无穷大
       list = list.map(item => ({ ...item, distance: 99999999 }))
     }
+  }
+
+  // 距离筛选（无论是否有用户位置，只要传入了distance参数就进行筛选）
+  // distance > 0 表示需要筛选，distance = 0 表示全部距离
+  if (distance > 0) {
+    console.log('执行距离筛选:', distance, '米，筛选前数量:', list.length)
+    list = list.filter(item => item.distance <= distance)
+    console.log('筛选后数量:', list.length)
   }
 
   // 排序

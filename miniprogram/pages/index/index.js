@@ -264,7 +264,8 @@ Page({
       const requestData = {
         filter: 'all',
         sort: 'time',
-        limit: 5
+        limit: 5,
+        distance: 5000 // 只显示5公里内的任务
       }
 
       // 将用户当前位置传递给云函数
