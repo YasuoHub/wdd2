@@ -24,7 +24,8 @@ Page({
     quickTypes: NEED_TYPES,
     // 刷新控制
     lastRefreshTime: 0,      // 上次刷新时间戳
-    refreshInterval: 30000   // 最小刷新间隔 30秒
+    refreshInterval: 30000,  // 最小刷新间隔 30秒
+    currentRequestId: null   // 当前请求ID，用于取消旧请求
   },
 
   onLoad(options) {
@@ -236,7 +237,9 @@ Page({
 
   // 加载附近任务
   async loadNearbyNeeds() {
-    if (this.data.nearbyLoading) return
+    // 生成当前请求ID
+    const requestId = Date.now()
+    this.setData({ currentRequestId: requestId })
 
     // 未登录时不加载
     if (!this.data.isLoggedIn) {
@@ -333,6 +336,12 @@ Page({
             is_urgent: item.is_urgent || false
           }
         })
+        // 检查是否是最新请求的结果
+        if (this.data.currentRequestId !== requestId) {
+          console.log('请求已过期，忽略结果')
+          return
+        }
+
         this.setData({
           nearbyNeeds: list,
           nearbyEmpty: list.length === 0,
@@ -344,6 +353,11 @@ Page({
       }
     } catch (err) {
       console.error('加载附近任务失败:', err)
+      // 检查是否是最新请求的错误
+      if (this.data.currentRequestId !== requestId) {
+        console.log('请求已过期，忽略错误')
+        return
+      }
       this.setData({
         nearbyLoading: false,
         nearbyError: true

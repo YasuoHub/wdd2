@@ -56,7 +56,8 @@ Page({
     userLocation: null,
     // 刷新控制
     lastRefreshTime: 0,      // 上次刷新时间戳
-    refreshInterval: 30000   // 最小刷新间隔 30秒
+    refreshInterval: 30000,  // 最小刷新间隔 30秒
+    currentRequestId: null   // 当前请求ID，用于取消旧请求
   },
 
   onLoad() {
@@ -101,9 +102,11 @@ Page({
     }
   },
 
-  // 加载任务列表
+// 加载任务列表
   async loadTasks(isRefresh = false) {
-    if (this.data.isLoading) return
+    // 生成当前请求ID
+    const requestId = Date.now()
+    this.setData({ currentRequestId: requestId })
 
     this.setData({
       isLoading: !isRefresh,
@@ -164,6 +167,12 @@ Page({
         // 根据用户设置重新排序筛选标签
         const sortedFilters = this.sortFiltersByUserPreference(userProfile)
 
+        // 检查是否是最新请求的结果
+        if (this.data.currentRequestId !== requestId) {
+          console.log('请求已过期，忽略结果')
+          return
+        }
+
         this.setData({
           taskList: isRefresh ? processedList : [...this.data.taskList, ...processedList],
           totalCount: total,
@@ -180,6 +189,11 @@ Page({
       }
     } catch (err) {
       console.error('加载任务失败:', err)
+      // 检查是否是最新请求的错误
+      if (this.data.currentRequestId !== requestId) {
+        console.log('请求已过期，忽略错误')
+        return
+      }
       this.setData({
         taskList: [],
         isRefreshing: false,
