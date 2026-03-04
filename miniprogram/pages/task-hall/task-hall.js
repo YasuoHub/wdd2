@@ -25,7 +25,7 @@ const DISTANCE_OPTIONS = [
   { value: 3000, label: '3公里内', icon: '🚲' },
   { value: 5000, label: '5公里内', icon: '🚗' },
   { value: 10000, label: '10公里内', icon: '🚇' },
-  // { value: 0, label: '全部距离', icon: '🌍' }
+  { value: 0, label: '不限距离', icon: '🌍' }
 ]
 
 Page({

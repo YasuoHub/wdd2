@@ -66,7 +66,7 @@
               <view class="message-last">{{item.lastMessage}}</view>
               <view class="message-right">
                 <view class="message-time">{{item.lastTime}}</view>
-                <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
+                <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread < 100 ? item.unread : '99+'}}</view>
               </view>
             </view>
           </view>
@@ -108,7 +108,7 @@
               <view class="message-last">{{item.lastMessage}}</view>
               <view class="message-right">
                 <view class="message-time">{{item.lastTime}}</view>
-                <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread}}</view>
+                <view wx:if="{{item.unread > 0}}" class="unread-count">{{item.unread < 100 ? item.unread : '99+'}}</view>
               </view>
             </view>
           </view>

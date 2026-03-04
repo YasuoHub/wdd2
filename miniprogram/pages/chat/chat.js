@@ -314,7 +314,12 @@ Page({
             status: taskData.status,
             statusText: statusInfo.text,
             expireTime: taskData.expire_time,
-            location: taskData.location,
+            location: {
+              latitude: taskData.location.coordinates[1],
+              longitude: taskData.location.coordinates[0],
+              name: taskData.location_name
+            },
+            locationName: taskData.location_name,
             images: taskData.images || []
           },
           otherUser: result.data.otherUser
@@ -1067,7 +1072,7 @@ Page({
       latitude: location.latitude,
       longitude: location.longitude,
       name: location.name || '任务地点',
-      address: location.name || ''
+      address: location.name  || ''
     })
   },
 

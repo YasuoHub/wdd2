@@ -176,7 +176,7 @@ Page({
       bgColor: typeInfo.bgColor,
       statusText: statusInfo.text,
       statusClass: statusInfo.class,
-      locationName: (item.location && item.location.name) || '未知位置',
+      locationName: item.locationName || '未知位置',
       seekerNickname: item.seeker_nickname || item.seekerNickname || '匿名用户',
       remainTime,
       createTime
