@@ -51,21 +51,37 @@ Page({
     pageSize: 10,
     // 帮助者资料提示
     showHelperProfileTip: false,
-    userProfile: null
+    userProfile: null,
+    // 用户当前位置（从全局获取）
+    userLocation: null
   },
 
   onLoad() {
+    // 从全局数据获取位置
+    this.syncUserLocationFromGlobal()
+    // 加载任务
     this.loadTasks()
+  },
+
+  // 从全局同步用户位置
+  syncUserLocationFromGlobal() {
+    const globalLocation = app.getUserLocation()
+    if (globalLocation) {
+      this.setData({
+        userLocation: globalLocation
+      })
+      console.log('从全局同步位置:', globalLocation.latitude, globalLocation.longitude)
+    }
   },
 
   onShow() {
     // 更新消息角标
     app.updateTabBarBadge()
 
-    // 每次显示页面时刷新
-    if (this.data.taskList.length === 0) {
-      this.loadTasks()
-    }
+    // 每次显示页面时从全局同步最新位置并刷新任务列表
+    // 因为用户可能移动了位置，需要重新计算距离
+    this.syncUserLocationFromGlobal()
+    this.loadTasks(true)
   },
 
   // 加载任务列表
@@ -80,16 +96,25 @@ Page({
 
     try {
       console.log('开始加载任务列表...')
+      // 准备请求参数
+      const requestData = {
+        filter: this.data.activeFilter,
+        sort: this.data.currentSort.value,
+        distance: this.data.currentDistance.value,
+        page: this.data.page,
+        pageSize: this.data.pageSize
+      }
+
+      // 如果用户位置存在，传递给云函数
+      if (this.data.userLocation) {
+        requestData.latitude = this.data.userLocation.latitude
+        requestData.longitude = this.data.userLocation.longitude
+      }
+
       // 调用云函数获取真实数据
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-get-needs',
-        data: {
-          filter: this.data.activeFilter,
-          sort: this.data.currentSort.value,
-          distance: this.data.currentDistance.value,
-          page: this.data.page,
-          pageSize: this.data.pageSize
-        }
+        data: requestData
       })
 
       console.log('云函数返回结果:', result)
@@ -101,12 +126,19 @@ Page({
 
         console.log('获取到任务数量:', list.length, '总数:', total)
 
-        const processedList = list.map(item => ({
-          ...item,
-          distanceText: item.distance < 1000
-            ? item.distance + 'm'
-            : (item.distance / 1000).toFixed(1) + 'km'
-        }))
+        const processedList = list.map(item => {
+          // 只有有效距离（小于 999km）才显示距离文本
+          let distanceText = ''
+          if (item.distance && item.distance < 999000) {
+            distanceText = item.distance < 1000
+              ? item.distance + 'm'
+              : (item.distance / 1000).toFixed(1) + 'km'
+          }
+          return {
+            ...item,
+            distanceText
+          }
+        })
 
         // 检查是否需要显示帮助者资料完善提示
         const userProfile = result.data.userProfile
@@ -198,6 +230,8 @@ Page({
 
   // 下拉刷新
   onRefresh() {
+    // 从全局同步最新位置，再刷新任务
+    this.syncUserLocationFromGlobal()
     this.loadTasks(true)
   },
 
@@ -210,7 +244,7 @@ Page({
       page: this.data.page + 1
     })
 
-    this.loadTasks().then(() => {
+    this.loadTasks(false).then(() => {
       this.setData({ isLoadingMore: false })
     })
   },

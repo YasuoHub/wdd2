@@ -436,6 +436,26 @@
   color: #6B8BA4;
 }
 
+/* 地点和距离信息 */
+.location-item {
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distance-text {
+  color: #5DB8E6;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
 .meta-icon {
   font-size: 22rpx;
 }

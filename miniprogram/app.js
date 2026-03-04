@@ -4,6 +4,8 @@ App({
     userInfo: null,
     isLoggedIn: false,
     systemInfo: null,
+    // 用户当前位置（全局共享）
+    userLocation: null,
     // 全局消息监听
     globalMessageWatcher: null,
     // 未读消息数缓存
@@ -29,6 +31,9 @@ App({
     if (this.globalData.isLoggedIn) {
       this.startGlobalMessageWatch()
     }
+
+    // 获取用户当前位置（不阻塞启动）
+    this.updateUserLocation()
   },
 
   onShow() {
@@ -36,6 +41,36 @@ App({
     if (this.globalData.isLoggedIn) {
       this.updateTabBarBadge()
     }
+
+    // 每次显示小程序时更新用户位置
+    this.updateUserLocation()
+  },
+
+  // 获取/更新用户当前位置
+  async updateUserLocation() {
+    try {
+      const res = await wx.getLocation({
+        type: 'gcj02' // 国测局坐标系，与腾讯地图一致
+      })
+
+      this.globalData.userLocation = {
+        latitude: res.latitude,
+        longitude: res.longitude,
+        updateTime: Date.now()
+      }
+
+      console.log('全局位置更新成功:', res.latitude, res.longitude)
+      return this.globalData.userLocation
+    } catch (err) {
+      console.error('获取用户位置失败:', err)
+      // 抛出错误让调用者知道位置获取失败
+      throw err
+    }
+  },
+
+  // 获取当前用户位置（供页面调用）
+  getUserLocation() {
+    return this.globalData.userLocation
   },
 
   // 获取系统信息

@@ -33,6 +33,29 @@ Page({
 
     this.checkLoginStatus()
     this.checkSignInStatus()
+
+    // 确保位置获取后再加载任务
+    this.loadNearbyNeedsWithLocation()
+  },
+
+  // 带位置获取的任务加载
+  async loadNearbyNeedsWithLocation() {
+    // 如果已登录，先等待位置获取
+    if (app.globalData.isLoggedIn) {
+      let userLocation = app.getUserLocation()
+
+      // 如果没有位置，尝试获取
+      if (!userLocation) {
+        try {
+          await app.updateUserLocation()
+        } catch (err) {
+          // 位置获取失败，继续加载任务
+        }
+      }
+
+      // 加载任务
+      this.loadNearbyNeeds()
+    }
   },
 
   onShow() {
@@ -42,11 +65,28 @@ Page({
     this.checkLoginStatus()
 
     if (this.data.isLoggedIn) {
-      this.loadNearbyNeeds()
+      // 刷新位置并重新加载任务
+      this.refreshLocationAndLoad()
       this.checkSignInStatus()
       // 更新消息角标
       app.updateTabBarBadge()
     }
+  },
+
+  // 刷新位置并加载任务
+  async refreshLocationAndLoad() {
+    // 尝试获取最新位置
+    let userLocation = app.getUserLocation()
+    if (!userLocation) {
+      try {
+        await app.updateUserLocation()
+      } catch (err) {
+        // 位置获取失败，继续加载任务（会显示"--"）
+      }
+    }
+
+    // 重新加载任务
+    this.loadNearbyNeeds()
   },
 
   // 检查登录状态
@@ -59,9 +99,7 @@ Page({
       userInfo
     })
 
-    if (isLoggedIn) {
-      this.loadNearbyNeeds()
-    }
+    // 注意：不在此处加载任务，统一在 onShow 中处理，避免重复加载
   },
 
   // 检查今日签到状态
@@ -197,18 +235,58 @@ Page({
     })
 
     try {
+      // 先尝试获取用户位置
+      let userLocation = app.getUserLocation()
+
+      // 如果全局没有位置，尝试更新位置
+      if (!userLocation) {
+        try {
+          await app.updateUserLocation()
+          userLocation = app.getUserLocation()
+        } catch (err) {
+          // 如果用户拒绝了权限，显示提示
+          if (err.errMsg && err.errMsg.includes('auth')) {
+            wx.showModal({
+              title: '需要位置权限',
+              content: '需要您的位置信息来计算任务距离，是否去设置？',
+              confirmText: '去设置',
+              success: (res) => {
+                if (res.confirm) {
+                  wx.openSetting()
+                }
+              }
+            })
+          }
+        }
+      }
+
+      // 准备请求参数
+      const requestData = {
+        filter: 'all',
+        sort: 'time',
+        limit: 5
+      }
+
+      // 将用户当前位置传递给云函数
+      if (userLocation) {
+        requestData.latitude = userLocation.latitude
+        requestData.longitude = userLocation.longitude
+      }
+
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-get-needs',
-        data: {
-          filter: 'all',
-          sort: 'time',
-          limit: 5
-        }
+        data: requestData
       })
 
       if (result.code === 0) {
         const list = (result.data.list || []).map(item => {
-          const distanceText = item.distance < 1000 ? item.distance + 'm' : Math.round(item.distance / 100) / 10 + 'km'
+          // 只有有效距离（小于 999km）才显示距离文本
+          let distanceText = ''
+          if (item.distance && item.distance < 999000) {
+            distanceText = item.distance < 1000 ? item.distance + 'm' : Math.round(item.distance / 100) / 10 + 'km'
+          } else if (item.distance >= 999000) {
+            distanceText = '--'
+          }
           return {
             _id: item._id,
             need_id: item.need_id || item._id,

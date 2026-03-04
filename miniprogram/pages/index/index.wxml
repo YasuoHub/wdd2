@@ -106,9 +106,10 @@
         <view class="need-content">{{item.description || '暂无详细描述'}}</view>
         <view class="need-footer">
           <view class="need-meta">
-            <view class="meta-item">
+            <view class="meta-item location-item">
               <text class="meta-icon">📍</text>
-              <text>{{item.distanceText}}</text>
+              <text class="location-name">{{item.locationName}}</text>
+              <text wx:if="{{item.distanceText}}" class="distance-text">({{item.distanceText}})</text>
             </view>
             <view class="meta-item">
               <text class="meta-icon">⏱️</text>

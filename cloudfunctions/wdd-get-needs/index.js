@@ -37,7 +37,10 @@ exports.main = async (event, context) => {
 
 // 获取公共任务列表（任务大厅）
 async function getPublicNeeds(event, OPENID) {
-  const { filter, sort, distance, page = 1, pageSize = 10, limit, userId } = event
+  const { filter, sort, distance, page = 1, pageSize = 10, limit, userId, latitude, longitude } = event
+
+  // 记录接收到的位置参数（调试用）
+  // console.log('接收到位置参数:', { latitude, longitude, filter, sort })
 
   const now = new Date()
 
@@ -66,48 +69,97 @@ async function getPublicNeeds(event, OPENID) {
   }
   // 注：当filter为'all'时，不限制类型，显示所有任务
 
-  // 查询总数
-  const countRes = await db.collection('wdd-needs').where(where).count()
-  const total = countRes.total
-
-  // 构建排序
-  let orderByField = 'create_time'
-  let orderByDirection = 'desc'
-
-  switch (sort) {
-    case 'points':
-      orderByField = 'points'
-      orderByDirection = 'desc'
-      break
-    case 'time':
-      orderByField = 'create_time'
-      orderByDirection = 'desc'
-      break
-  }
-
-  // 查询数据
+  // 查询数据（先不分页，因为需要根据距离筛选）
   let query = db.collection('wdd-needs')
     .where(where)
-    .orderBy(orderByField, orderByDirection)
-
-  // 分页或限制
-  if (limit) {
-    query = query.limit(limit)
-  } else {
-    query = query.skip((page - 1) * pageSize).limit(pageSize)
-  }
 
   const listRes = await query.get()
+  let list = listRes.data
 
-  // 只有当选择按距离排序时，才根据常活动地点计算距离并排序
-  let sortedList = listRes.data
-  if (sort === 'distance' && userProfile && userProfile.frequent_locations &&
-      userProfile.frequent_locations.length > 0) {
-    sortedList = sortByNearestLocation(sortedList, userProfile.frequent_locations)
+  // 如果有用户当前位置，计算每个任务的距离
+  const userLocation = (latitude && longitude) ? { latitude, longitude } : null
+  // console.log('用户位置:', userLocation)
+
+  if (userLocation) {
+    // 计算每个任务与用户当前位置的距离
+    list = list.map(item => {
+      let dist = Infinity
+      if (item.location && item.location.latitude && item.location.longitude) {
+        dist = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          item.location.latitude,
+          item.location.longitude
+        )
+      }
+      return {
+        ...item,
+        distance: dist
+      }
+    })
+
+    // 距离筛选（distance > 0 表示需要筛选，distance = 0 表示全部距离）
+    if (distance > 0) {
+      list = list.filter(item => item.distance <= distance)
+    }
+  } else {
+    // 没有用户位置，使用常去地点计算距离（兼容旧逻辑）
+    if (userProfile && userProfile.frequent_locations && userProfile.frequent_locations.length > 0) {
+      list = list.map(item => {
+        let minDistance = Infinity
+        if (item.location && item.location.latitude && item.location.longitude) {
+          for (const loc of userProfile.frequent_locations) {
+            if (loc.latitude && loc.longitude) {
+              const dist = calculateDistance(
+                item.location.latitude,
+                item.location.longitude,
+                loc.latitude,
+                loc.longitude
+              )
+              if (dist < minDistance) {
+                minDistance = dist
+              }
+            }
+          }
+        }
+        return {
+          ...item,
+          distance: minDistance === Infinity ? 99999999 : minDistance
+        }
+      })
+    } else {
+      // 既没有用户位置也没有常去地点，距离设为无穷大
+      list = list.map(item => ({ ...item, distance: 99999999 }))
+    }
   }
 
+  // 排序
+  switch (sort) {
+    case 'distance':
+      // 按距离从近到远排序
+      list.sort((a, b) => a.distance - b.distance)
+      break
+    case 'points':
+      // 按积分从高到低排序
+      list.sort((a, b) => b.points - a.points)
+      break
+    case 'time':
+    default:
+      // 按时间从新到旧排序
+      list.sort((a, b) => new Date(b.create_time) - new Date(a.create_time))
+      break
+  }
+
+  // 计算总数
+  const total = list.length
+
+  // 分页处理（内存分页）
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const pagedList = list.slice(startIndex, endIndex)
+
   // 格式化数据
-  const formattedList = sortedList.map(item => formatNeedItem(item, userProfile))
+  const formattedList = pagedList.map(item => formatNeedItem(item, userProfile))
 
   return {
     code: 0,
@@ -117,7 +169,7 @@ async function getPublicNeeds(event, OPENID) {
       total,
       page,
       pageSize,
-      hasMore: page * pageSize < total,
+      hasMore: endIndex < total,
       // 返回用户帮助者资料状态，用于前端提示
       userProfile: userProfile ? {
         hasHelperProfile: !!userProfile.help_willingness,
@@ -507,8 +559,16 @@ function formatNeedItem(item, userProfile) {
     }
   }
 
-  // 计算距离
-  let distance = item.nearestDistance || Math.floor(Math.random() * 5000) + 100
+  // 计算距离（优先使用已计算的距离）
+  // 注意：要处理 0 是有效距离的情况
+  let distance
+  if (item.distance !== undefined && item.distance !== null && item.distance !== Infinity) {
+    distance = Number(item.distance)
+  } else if (item.nearestDistance !== undefined && item.nearestDistance !== null && item.nearestDistance !== Infinity) {
+    distance = Number(item.nearestDistance)
+  } else {
+    distance = 99999999
+  }
 
   // 如果小于1公里，显示米，否则显示公里
   let distanceText = ''
