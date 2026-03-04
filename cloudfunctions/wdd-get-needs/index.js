@@ -318,6 +318,7 @@ async function getMyTasks(event, OPENID) {
       type_name: need.type_name,
       description: need.description,
       location: need.location,
+      location_name: need.location_name,
       points: need.points,
       status: taker.status,
       expire_time: need.expire_time,
