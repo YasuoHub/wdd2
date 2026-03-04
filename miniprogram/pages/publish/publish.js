@@ -415,9 +415,9 @@ Page({
         name: 'wdd-publish',
         data: {
           location: {
-            longitude,
-            latitude,
-            name: locationName
+            name: locationName,
+            type: 'Point',                       // GeoJSON 类型
+            coordinates: [longitude, latitude]   // [经度, 纬度]
           },
           type: selectedType,
           typeName: typeInfo.name,
@@ -443,8 +443,10 @@ Page({
           duration: 2000
         })
 
-        // 设置刷新标记，返回时刷新"我的求助"页面
+        // 设置刷新标记，返回时刷新各页面
         wx.setStorageSync('refreshMyNeeds', true)
+        wx.setStorageSync('forceRefreshIndex', true)
+        wx.setStorageSync('forceRefreshTaskHall', true)
 
         // 跳转到任务详情页（使用redirectTo关闭发布页）
         setTimeout(() => {

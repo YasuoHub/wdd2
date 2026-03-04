@@ -39,8 +39,8 @@ exports.main = async (event, context) => {
 async function getPublicNeeds(event, OPENID) {
   const { filter, sort, distance, page = 1, pageSize = 10, limit, userId, latitude, longitude } = event
 
-  // 记录接收到的位置参数（调试用）
-  // console.log('接收到位置参数:', { latitude, longitude, filter, sort })
+  // 记录接收到的参数（调试用）
+  console.log('接收到参数:', { latitude, longitude, filter, sort, distance })
 
   const now = new Date()
 
@@ -75,6 +75,10 @@ async function getPublicNeeds(event, OPENID) {
 
   const listRes = await query.get()
   let list = listRes.data
+  console.log('查询到任务数:', list.length)
+  if (list.length > 0) {
+    console.log('第一个任务状态:', list[0].status, '过期时间:', list[0].expire_time)
+  }
 
   // 如果有用户当前位置，计算每个任务的距离
   const userLocation = (latitude && longitude) ? { latitude, longitude } : null
@@ -82,15 +86,29 @@ async function getPublicNeeds(event, OPENID) {
 
   if (userLocation) {
     // 计算每个任务与用户当前位置的距离
+    // 使用 GeoJSON 格式: coordinates: [经度, 纬度]
     list = list.map(item => {
       let dist = Infinity
-      if (item.location && item.location.latitude && item.location.longitude) {
+      // 处理 GeoJSON 格式 - 数据库可能返回特殊对象
+      let locationData = item.location
+      // 如果是数据库地理位置对象，转换为普通对象
+      if (locationData && typeof locationData.toJSON === 'function') {
+        locationData = locationData.toJSON()
+      }
+      console.log('任务location:', JSON.stringify(locationData))
+      if (locationData && locationData.type === 'Point' && locationData.coordinates) {
+        const [taskLon, taskLat] = locationData.coordinates
+        console.log('用户位置:', userLocation.latitude, userLocation.longitude)
+        console.log('任务位置:', taskLat, taskLon)
         dist = calculateDistance(
           userLocation.latitude,
           userLocation.longitude,
-          item.location.latitude,
-          item.location.longitude
+          taskLat,
+          taskLon
         )
+        console.log('计算距离:', dist)
+      } else {
+        console.log('任务location格式不正确')
       }
       return {
         ...item,
@@ -102,12 +120,18 @@ async function getPublicNeeds(event, OPENID) {
     if (userProfile && userProfile.frequent_locations && userProfile.frequent_locations.length > 0) {
       list = list.map(item => {
         let minDistance = Infinity
-        if (item.location && item.location.latitude && item.location.longitude) {
+        // 处理 GeoJSON 格式 - 数据库可能返回特殊对象
+        let locationData = item.location
+        if (locationData && typeof locationData.toJSON === 'function') {
+          locationData = locationData.toJSON()
+        }
+        if (locationData && locationData.type === 'Point' && locationData.coordinates) {
+          const [taskLon, taskLat] = locationData.coordinates
           for (const loc of userProfile.frequent_locations) {
             if (loc.latitude && loc.longitude) {
               const dist = calculateDistance(
-                item.location.latitude,
-                item.location.longitude,
+                taskLat,
+                taskLon,
                 loc.latitude,
                 loc.longitude
               )
@@ -220,7 +244,9 @@ async function getMyNeeds(event, OPENID) {
 
   // 格式化数据，并查询评价状态
   const list = await Promise.all(listRes.data.map(async (item) => {
+    console.log('getMyNeeds - 原始数据 location_name:', item.location_name, 'location:', JSON.stringify(item.location))
     const formatted = formatNeedItem(item)
+    console.log('getMyNeeds - 格式化后 locationName:', formatted.locationName)
 
     // 如果任务已完成，查询是否已评价
     if (item.status === 'completed') {
@@ -518,12 +544,14 @@ function sortByNearestLocation(needs, frequentLocations) {
   const needsWithDistance = needs.map(need => {
     let minDistance = Infinity
 
-    if (need.location && need.location.latitude && need.location.longitude) {
+    // 使用 GeoJSON 格式: coordinates: [经度, 纬度]
+    if (need.location && need.location.type === 'Point' && need.location.coordinates) {
+      const [needLon, needLat] = need.location.coordinates
       for (const loc of frequentLocations) {
         if (loc.latitude && loc.longitude) {
           const dist = calculateDistance(
-            need.location.latitude,
-            need.location.longitude,
+            needLat,
+            needLon,
             loc.latitude,
             loc.longitude
           )
@@ -591,8 +619,11 @@ function formatNeedItem(item, userProfile) {
     color: getTypeColor(item.type),
     description: item.description,
     images: item.images || [],
-    location: item.location,
-    locationName: (item.location && item.location.name) || '未知位置',
+    // 处理 GeoJSON - 数据库地理位置对象需要转换为普通对象
+    location: item.location && typeof item.location.toJSON === 'function'
+      ? item.location.toJSON()
+      : item.location,
+    locationName: item.location_name || '未知位置',
     points: item.points,
     status: item.status,
     distance: distance,

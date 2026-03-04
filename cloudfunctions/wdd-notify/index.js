@@ -170,7 +170,7 @@ async function getChatSessions(userId) {
       otherUserNickname: otherUser ? otherUser.nickname : (isSeeker ? '帮助者' : '求助者'),
       otherUserAvatar: otherUser ? otherUser.avatar : '',
       // 任务位置
-      locationName: need.location ? need.location.name : ''
+      locationName: need.location_name || '未知位置'
     }
   }))
 

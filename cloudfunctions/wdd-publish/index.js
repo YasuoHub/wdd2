@@ -28,8 +28,9 @@ exports.main = async (event, context) => {
     images = []
   } = event
 
-  // 参数校验
-  if (!location || !location.name || !type || !points) {
+
+  // 参数校验（新格式: coordinates: [经度, 纬度]）
+  if (!location || !location.name || !location.coordinates || !Array.isArray(location.coordinates) || location.coordinates.length !== 2 || !type || !points) {
     return {
       code: -1,
       message: '参数不完整'
@@ -77,16 +78,20 @@ exports.main = async (event, context) => {
 
     try {
       // 1. 创建求助任务
+      // 使用 GeoJSON 格式保存位置: type: "Point", coordinates: [经度, 纬度]
       const needRes = await transaction.collection('wdd-needs').add({
         data: {
           user_id: userId,
           user_nickname: user.nickname,
           user_avatar: user.avatar,
+          // 位置信息拆分为两个字段
+          // location: GeoJSON 格式（数据库地理位置索引用）
+          // location_name: 地点名称（展示用）
           location: {
-            name: location.name,
-            longitude: location.longitude,
-            latitude: location.latitude
+            type: 'Point',
+            coordinates: location.coordinates  // [经度, 纬度]
           },
+          location_name: location.name,
           type: type,
           type_name: typeName,
           description: description || '',

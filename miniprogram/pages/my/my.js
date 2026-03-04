@@ -88,7 +88,7 @@ Page({
         const freshUserInfo = result.data.userInfo
         // 处理ID显示，只展示最后10位
         if (freshUserInfo._id && freshUserInfo._id.length > 10) {
-          freshUserInfo.displayId = '...' + freshUserInfo._id.slice(-10)
+          freshUserInfo.displayId = freshUserInfo._id.slice(-10)
         } else {
           freshUserInfo.displayId = freshUserInfo._id || '未知'
         }

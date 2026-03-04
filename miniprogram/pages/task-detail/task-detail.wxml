@@ -63,7 +63,7 @@
         <text class="section-title">求助位置</text>
         <view class="location-box" bindtap="previewLocation">
           <text class="location-icon">📍</text>
-          <text class="location-name">{{task.location.name || '未知位置'}}</text>
+          <text class="location-name">{{task.locationName || '未知位置'}}</text>
           <text class="location-arrow">›</text>
         </view>
         <view class="location-actions">

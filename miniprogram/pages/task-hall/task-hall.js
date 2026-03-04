@@ -53,7 +53,10 @@ Page({
     showHelperProfileTip: false,
     userProfile: null,
     // 用户当前位置（从全局获取）
-    userLocation: null
+    userLocation: null,
+    // 刷新控制
+    lastRefreshTime: 0,      // 上次刷新时间戳
+    refreshInterval: 30000   // 最小刷新间隔 30秒
   },
 
   onLoad() {
@@ -78,10 +81,24 @@ Page({
     // 更新消息角标
     app.updateTabBarBadge()
 
-    // 每次显示页面时从全局同步最新位置并刷新任务列表
-    // 因为用户可能移动了位置，需要重新计算距离
-    this.syncUserLocationFromGlobal()
-    this.loadTasks(true)
+    // 检查是否需要强制刷新
+    const forceRefresh = wx.getStorageSync('forceRefreshTaskHall')
+    if (forceRefresh) {
+      wx.removeStorageSync('forceRefreshTaskHall')
+      this.syncUserLocationFromGlobal()
+      this.loadTasks(true)
+      return
+    }
+
+    // 判断是否需要刷新（超过刷新间隔）
+    const now = Date.now()
+    const shouldRefresh = now - this.data.lastRefreshTime > this.data.refreshInterval
+
+    if (shouldRefresh) {
+      // 从全局同步最新位置并刷新任务列表
+      this.syncUserLocationFromGlobal()
+      this.loadTasks(true)
+    }
   },
 
   // 加载任务列表
@@ -155,7 +172,8 @@ Page({
           isLoading: false,
           showHelperProfileTip,
           userProfile,
-          filters: sortedFilters
+          filters: sortedFilters,
+          lastRefreshTime: Date.now()  // 更新上次刷新时间
         })
       } else {
         throw new Error(result.message)

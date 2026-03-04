@@ -173,7 +173,7 @@ Page({
       bgColor: typeInfo.bgColor,
       statusText: statusInfo.text,
       statusClass: statusInfo.class,
-      locationName: (item.location && item.location.name) || '未知位置',
+      // 云函数已返回 locationName，直接使用，不要覆盖
       remainTime,
       createTime
     }

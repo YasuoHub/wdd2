@@ -271,30 +271,32 @@ Page({
 
   // 预览位置
   previewLocation() {
-    const { location } = this.data.task
-    if (!location || !location.latitude || !location.longitude) {
+    const { location, locationName } = this.data.task
+    // 使用 GeoJSON 格式: coordinates: [经度, 纬度]
+    if (!location || !location.coordinates || !Array.isArray(location.coordinates)) {
       wx.showToast({ title: '位置信息不完整', icon: 'none' })
       return
     }
 
+    const [longitude, latitude] = location.coordinates
     wx.openLocation({
-      latitude: location.latitude,
-      longitude: location.longitude,
-      name: location.name || '求助位置',
-      address: location.name || ''
+      latitude: latitude,
+      longitude: longitude,
+      name: locationName || '求助位置',
+      address: locationName || ''
     })
   },
 
   // 复制位置
   copyLocation() {
-    const { location } = this.data.task
-    if (!location || !location.name) {
+    const { locationName } = this.data.task
+    if (!locationName) {
       wx.showToast({ title: '暂无位置信息', icon: 'none' })
       return
     }
 
     wx.setClipboardData({
-      data: location.name,
+      data: locationName,
       success: () => {
         wx.showToast({ title: '已复制地址', icon: 'none' })
       }

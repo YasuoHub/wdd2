@@ -21,7 +21,10 @@ Page({
     nearbyLoading: false,
     nearbyEmpty: false,
     nearbyError: false,
-    quickTypes: NEED_TYPES
+    quickTypes: NEED_TYPES,
+    // 刷新控制
+    lastRefreshTime: 0,      // 上次刷新时间戳
+    refreshInterval: 30000   // 最小刷新间隔 30秒
   },
 
   onLoad(options) {
@@ -65,8 +68,24 @@ Page({
     this.checkLoginStatus()
 
     if (this.data.isLoggedIn) {
-      // 刷新位置并重新加载任务
-      this.refreshLocationAndLoad()
+      // 检查是否需要强制刷新（从发布页返回等情况）
+      const forceRefresh = wx.getStorageSync('forceRefreshIndex')
+      if (forceRefresh) {
+        wx.removeStorageSync('forceRefreshIndex')
+        this.refreshLocationAndLoad()
+        this.checkSignInStatus()
+        app.updateTabBarBadge()
+        return
+      }
+
+      // 判断是否需要刷新（超过刷新间隔）
+      const now = Date.now()
+      const shouldRefresh = now - this.data.lastRefreshTime > this.data.refreshInterval
+
+      if (shouldRefresh) {
+        // 刷新位置并重新加载任务
+        this.refreshLocationAndLoad()
+      }
       this.checkSignInStatus()
       // 更新消息角标
       app.updateTabBarBadge()
@@ -298,7 +317,7 @@ Page({
             color: item.color,
             description: item.description,
             location: item.location,
-            locationName: item.locationName || (item.location && item.location.name) || '未知位置',
+            locationName: item.locationName || '未知位置',
             points: item.points,
             status: item.status,
             distance: item.distance,
@@ -317,7 +336,8 @@ Page({
         this.setData({
           nearbyNeeds: list,
           nearbyEmpty: list.length === 0,
-          nearbyLoading: false
+          nearbyLoading: false,
+          lastRefreshTime: Date.now()  // 更新上次刷新时间
         })
       } else {
         throw new Error(result.message)
