@@ -982,7 +982,8 @@ Page({
   toggleToolbar() {
     const newExpanded = !this.data.isToolbarExpanded
     this.setData({
-      isToolbarExpanded: newExpanded
+      isToolbarExpanded: newExpanded,
+      inputFocus: false
       // 注意：不要在这里设置 inputFocus: false，会导致 iOS 键盘闪烁
       // 使用 hold-keyboard 属性来控制键盘保持
     })
