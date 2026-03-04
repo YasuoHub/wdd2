@@ -5,7 +5,7 @@
 /* 页面容器 */
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, #F5FAFF 100%);
   padding-bottom: 40rpx;
   box-sizing: border-box;
   width: 100%;
@@ -30,7 +30,7 @@
 .brand-icon {
   width: 72rpx;
   height: 72rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   border-radius: 24rpx;
   display: flex;
   align-items: center;
@@ -43,7 +43,7 @@
 .brand-text {
   font-size: 38rpx;
   font-weight: 800;
-  color: #2C3E50;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -52,11 +52,11 @@
    ============================================ */
 .login-card {
   margin: 0 32rpx 32rpx;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(40rpx);
-  border-radius: 40rpx;
+  border-radius: var(--radius-xl);
   padding: 48rpx;
-  box-shadow: 0 6rpx 32rpx rgba(93, 184, 230, 0.12);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.12);
   text-align: center;
 }
@@ -65,7 +65,7 @@
   width: 180rpx;
   height: 180rpx;
   margin: 0 auto 32rpx;
-  background: linear-gradient(135deg, #E6F3FF 0%, #D4EDF7 50%, #C4E5F5 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #D4EDF7 50%, #C4E5F5 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -78,24 +78,24 @@
 .login-title {
   font-size: 34rpx;
   font-weight: 800;
-  color: #2C3E50;
+  color: var(--text-primary);
   margin-bottom: 12rpx;
 }
 
 .login-subtitle {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-secondary);
   margin-bottom: 36rpx;
 }
 
 .login-btn {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   color: white;
   font-size: 30rpx;
   font-weight: 700;
   padding: 28rpx 72rpx;
-  border-radius: 9999rpx;
-  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sky);
   display: inline-flex;
   align-items: center;
   gap: 12rpx;
@@ -119,12 +119,12 @@
 }
 
 .publish-card {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
-  border-radius: 40rpx;
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
+  border-radius: var(--radius-xl);
   padding: 52rpx 44rpx;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8rpx 40rpx rgba(93, 184, 230, 0.35);
+  box-shadow: var(--shadow-lg);
 }
 
 /* 装饰性气泡 */
@@ -212,15 +212,15 @@
   margin-top: 28rpx;
   text-align: center;
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-secondary);
   background: rgba(93, 184, 230, 0.1);
   padding: 18rpx 28rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   border: 2rpx solid rgba(93, 184, 230, 0.15);
 }
 
 .points-tip .link {
-  color: #5DB8E6;
+  color: var(--sky-primary);
   font-weight: 700;
 }
 
@@ -326,12 +326,12 @@
 .section-title {
   font-size: 34rpx;
   font-weight: 800;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .section-more {
   font-size: 28rpx;
-  color: #5DB8E6;
+  color: var(--sky-primary);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -346,11 +346,11 @@
 }
 
 .need-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 36rpx;
+  border-radius: var(--radius-lg);
   padding: 32rpx 32rpx 32rpx 44rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-sm);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   overflow: hidden;
@@ -371,16 +371,16 @@
   transform: translateY(-50%);
   width: 10rpx;
   height: 48rpx;
-  background: linear-gradient(180deg, #5DB8E6 0%, #7EC8E8 100%);
-  border-radius: 9999rpx;
+  background: linear-gradient(180deg, var(--sky-primary) 0%, var(--sky-light) 100%);
+  border-radius: var(--radius-full);
   opacity: 0.9;
 }
 
-.need-card.type-weather::before { background: linear-gradient(180deg, #5DB8E6 0%, #7EC8E8 100%); }
-.need-card.type-traffic::before { background: linear-gradient(180deg, #FFD166 0%, #FFE08C 100%); }
-.need-card.type-shop::before { background: linear-gradient(180deg, #B8B8E8 0%, #D4D4F0 100%); }
-.need-card.type-parking::before { background: linear-gradient(180deg, #6DD5B0 0%, #88D8A3 100%); }
-.need-card.type-queue::before { background: linear-gradient(180deg, #FF8C69 0%, #FF9A8B 100%); }
+.need-card.type-weather::before { background: linear-gradient(180deg, var(--sky-primary) 0%, var(--sky-light) 100%); }
+.need-card.type-traffic::before { background: linear-gradient(180deg, var(--vitality-yellow) 0%, #FFE08C 100%); }
+.need-card.type-shop::before { background: linear-gradient(180deg, var(--lavender) 0%, #D4D4F0 100%); }
+.need-card.type-parking::before { background: linear-gradient(180deg, var(--fresh-mint) 0%, var(--fresh-green) 100%); }
+.need-card.type-queue::before { background: linear-gradient(180deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%); }
 
 .need-header {
   display: flex;
@@ -409,22 +409,22 @@
 .type-name {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .need-points {
-  background: linear-gradient(135deg, #FF8C69 0%, #FF9A8B 50%, #FFB6A8 100%);
+  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 50%, #FFB6A8 100%);
   color: white;
   font-size: 24rpx;
   font-weight: 700;
   padding: 10rpx 24rpx;
-  border-radius: 9999rpx;
-  box-shadow: 0 4rpx 16rpx rgba(255, 140, 105, 0.3);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-orange);
 }
 
 .need-content {
   font-size: 30rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   margin-bottom: 18rpx;
   line-height: 1.5;
   overflow: hidden;
@@ -451,7 +451,7 @@
   align-items: center;
   gap: 8rpx;
   font-size: 24rpx;
-  color: #6B8BA4;
+  color: var(--text-secondary);
 }
 
 /* 地点和距离信息 */
@@ -469,7 +469,7 @@
 }
 
 .distance-text {
-  color: #5DB8E6;
+  color: var(--sky-primary);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -487,7 +487,7 @@
 
 .need-status.urgent {
   background: rgba(255, 140, 105, 0.15);
-  color: #E86A4A;
+  color: var(--vitality-orange);
 }
 
 /* ============================================
@@ -496,9 +496,9 @@
 .empty-state {
   text-align: center;
   padding: 80rpx 40rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 36rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
 }
 
@@ -517,14 +517,14 @@
 
 .empty-text {
   font-size: 32rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   margin-bottom: 16rpx;
   font-weight: 600;
 }
 
 .empty-hint {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-secondary);
 }
 
 /* ============================================

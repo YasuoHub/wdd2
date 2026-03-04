@@ -4,5 +4,8 @@
   "navigationBarTextStyle": "black",
   "backgroundColor": "#F0F8FF",
   "enablePullDownRefresh": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "loading": "/components/loading/loading",
+    "empty": "/components/empty/empty"
+  }
 }

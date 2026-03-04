@@ -3,17 +3,6 @@
 
   <!-- 顶部导航栏 -->
   <view class="header">
-    <view class="header-content">
-      <view class="location-bar" bindtap="changeLocation">
-        <text class="location-icon">📍</text>
-        <text class="location-name">{{currentCity}}</text>
-        <text class="location-arrow">▼</text>
-      </view>
-      <view class="help-btn" bindtap="showHelp">
-        <text class="help-icon">?</text>
-      </view>
-    </view>
-
     <!-- 筛选标签栏 -->
     <view class="filter-bar">
       <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
@@ -139,26 +128,10 @@
     </view>
 
     <!-- 空状态 -->
-    <view wx:if="{{taskList.length === 0 && !isRefreshing && !isLoading}}" class="empty-state">
-      <view class="empty-illustration">
-        <view class="empty-circle"></view>
-        <text class="empty-icon">🌸</text>
-      </view>
-      <text class="empty-title">附近暂无求助任务</text>
-      <text class="empty-desc" wx:if="{{activeFilter === 'all'}}">下拉页面刷新，或稍后再来看看</text>
-      <text class="empty-desc" wx:else>试试查看全部类型，或稍后再来</text>
-      <view class="empty-actions" wx:if="{{activeFilter !== 'all'}}">
-        <view class="empty-btn primary" bindtap="selectFilter" data-filter="all">
-          <text>查看全部类型</text>
-        </view>
-      </view>
-    </view>
+    <empty wx:if="{{taskList.length === 0 && !isRefreshing && !isLoading}}" type="normal" icon="🌸" title="附近暂无求助任务" desc="{{activeFilter === 'all' ? '下拉页面刷新，或稍后再来看看' : '试试查看全部类型，或稍后再来'}}" showBtn="{{activeFilter !== 'all'}}" btnText="查看全部类型" btnType="primary" bind:btnTap="onViewAllTap"></empty>
 
     <!-- 加载更多 -->
-    <view wx:if="{{isLoadingMore}}" class="loading-more">
-      <view class="loading-spinner"></view>
-      <text class="loading-text">正在加载更多...</text>
-    </view>
+    <loading wx:if="{{isLoadingMore}}" type="normal" text="正在加载更多..." mode="spinner" size="48"></loading>
 
     <!-- 到底提示 -->
     <view wx:if="{{!hasMore && taskList.length > 0}}" class="no-more">

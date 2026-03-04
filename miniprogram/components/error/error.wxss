@@ -1,0 +1,109 @@
+/* ============================================
+   错误状态组件 - 天蓝色青春活力风格
+   ============================================ */
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+}
+
+/* 卡片模式 */
+.error-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 36rpx;
+  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  margin: 32rpx;
+}
+
+/* 图标区域 */
+.error-icon-wrapper {
+  margin-bottom: 36rpx;
+}
+
+.error-circle {
+  width: 180rpx;
+  height: 180rpx;
+  background: linear-gradient(135deg, #FFF0ED 0%, #FFE8E0 50%, #FFD8D0 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(255, 140, 105, 0.15);
+}
+
+.error-emoji {
+  font-size: 88rpx;
+}
+
+/* 标题 */
+.error-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2C3E50;
+  margin-bottom: 16rpx;
+  text-align: center;
+}
+
+/* 描述 */
+.error-desc {
+  font-size: 26rpx;
+  color: #6B8BA4;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 40rpx;
+}
+
+/* 操作按钮 */
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  align-items: center;
+}
+
+.error-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx 56rpx;
+  border-radius: 9999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  line-height: 1;
+}
+
+.error-btn::after {
+  border: none;
+}
+
+.error-btn.primary {
+  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  color: white;
+  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.35);
+}
+
+.error-btn.secondary {
+  background: rgba(93, 184, 230, 0.1);
+  color: #5DB8E6;
+  border: 2rpx solid rgba(93, 184, 230, 0.2);
+}
+
+.btn-hover {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.error-btn.primary.btn-hover {
+  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.25);
+}
+
+.btn-icon {
+  font-size: 28rpx;
+}

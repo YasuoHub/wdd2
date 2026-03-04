@@ -25,12 +25,11 @@ const DISTANCE_OPTIONS = [
   { value: 3000, label: '3公里内', icon: '🚲' },
   { value: 5000, label: '5公里内', icon: '🚗' },
   { value: 10000, label: '10公里内', icon: '🚇' },
-  { value: 0, label: '全部距离', icon: '🌍' }
+  // { value: 0, label: '全部距离', icon: '🌍' }
 ]
 
 Page({
   data: {
-    currentCity: '成都',
     filters: FILTERS,
     activeFilter: 'all',
     sortOptions: SORT_OPTIONS,
@@ -403,6 +402,15 @@ Page({
     wx.navigateTo({
       url: '/pages/helper-profile/helper-profile?edit=true'
     })
+  },
+
+  // 空状态按钮点击 - 查看全部类型
+  onViewAllTap() {
+    this.setData({
+      activeFilter: 'all',
+      page: 1
+    })
+    this.loadTasks(true)
   },
 
   // 根据用户设置的帮助类型重新排序筛选标签

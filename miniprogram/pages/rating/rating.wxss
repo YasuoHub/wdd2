@@ -4,7 +4,7 @@
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, #F5FAFF 100%);
   padding: 32rpx;
   padding-bottom: 80rpx;
   position: relative;
@@ -43,12 +43,12 @@
   display: flex;
   align-items: center;
   gap: 24rpx;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 28rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
@@ -58,7 +58,7 @@
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,24 +93,24 @@
 
 .target-label {
   font-size: 24rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
   font-weight: 500;
 }
 
 .target-name {
   font-size: 38rpx;
   font-weight: 800;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 /* 任务信息卡片 */
 .task-card {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 28rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
@@ -123,7 +123,7 @@
   left: 0;
   right: 0;
   height: 6rpx;
-  background: linear-gradient(90deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(90deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   border-radius: 32rpx 32rpx 0 0;
 }
 
@@ -137,12 +137,12 @@
 .task-type {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .task-points {
   font-size: 28rpx;
-  background: linear-gradient(135deg, #FF8C69 0%, #FF9A8B 100%);
+  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
@@ -150,18 +150,18 @@
 
 .task-desc {
   font-size: 28rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
   line-height: 1.5;
 }
 
 /* 星级评分区域 - 精致卡片 */
 .rating-section {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
+  border-radius: var(--radius-xl);
   padding: 48rpx 32rpx;
   margin-bottom: 28rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   text-align: center;
   position: relative;
@@ -170,7 +170,7 @@
 
 .rating-title {
   font-size: 32rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 36rpx;
   display: block;
@@ -232,18 +232,18 @@
   font-weight: 800;
   padding: 12rpx 28rpx;
   background-color: rgba(255, 215, 0, 0.1);
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   display: inline-block;
 }
 
 /* 评价标签区域 */
 .tags-section {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 28rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
@@ -251,7 +251,7 @@
 
 .section-title {
   font-size: 30rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 28rpx;
   display: block;
@@ -267,10 +267,10 @@
 .tag {
   padding: 18rpx 36rpx;
   background: rgba(240, 248, 255, 0.8);
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   font-size: 26rpx;
-  color: #6B8BA4;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  color: var(--text-tertiary);
+  border: 2rpx solid var(--border-light);
   transition: all 0.3s ease;
   font-weight: 500;
 }
@@ -281,20 +281,20 @@
 
 /* 选中状态的标签 */
 .tag.active {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   color: white;
   border-color: transparent;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.35);
+  box-shadow: var(--shadow-sky);
 }
 
 /* 评价内容输入 */
 .comment-section {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 28rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   z-index: 1;
@@ -304,13 +304,13 @@
   width: 100%;
   min-height: 200rpx;
   font-size: 28rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   line-height: 1.6;
   padding-bottom: 40rpx;
 }
 
 .comment-input::placeholder {
-  color: #A8C4D4;
+  color: var(--text-light);
 }
 
 .char-count {
@@ -318,7 +318,7 @@
   bottom: 16rpx;
   right: 24rpx;
   font-size: 24rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
   font-weight: 500;
 }
 
@@ -336,14 +336,14 @@
   color: white;
   font-size: 32rpx;
   font-weight: 700;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   border: none;
   transition: all 0.3s ease;
   box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.15);
 }
 
 .submit-btn.active {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
   transform: translateY(-2rpx);
 }
@@ -370,7 +370,7 @@
 
 .tips-title {
   font-size: 28rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 16rpx;
   display: flex;
@@ -386,7 +386,7 @@
 .tips-item {
   display: block;
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
   line-height: 1.8;
   padding-left: 44rpx;
   position: relative;

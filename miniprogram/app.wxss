@@ -5,50 +5,57 @@
 
 /* 页面基础样式 - 天蓝青春风格 */
 page {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  color: #2C3E50;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 50%, #EDF7FF 100%);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #2c3e50;
+  background: linear-gradient(180deg, #f0f8ff 0%, #e6f3ff 50%, #edf7ff 100%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 28rpx;
   line-height: 1.6;
   box-sizing: border-box;
   width: 100%;
-}
 
-/* CSS变量 - 天蓝色系设计令牌 */
-:root {
+  /* CSS变量 - 天蓝色系设计令牌 */
   /* 主色调 - 天蓝色系 */
-  --sky-primary: #5DB8E6;
-  --sky-light: #7EC8E8;
-  --sky-soft: #A8D8F0;
-  --sky-pale: #D4EDF7;
-  --sky-dark: #3A9AD2;
-  --sky-deep: #2A7DB3;
+  --sky-primary: #5db8e6;
+  --sky-light: #7ec8e8;
+  --sky-soft: #a8d8f0;
+  --sky-pale: #d4edf7;
+  --sky-dark: #3a9ad2;
+  --sky-deep: #2a7db3;
 
   /* 辅助色 - 活力点缀 */
-  --vitality-orange: #FF8C69;
-  --vitality-coral: #FF9A8B;
-  --vitality-yellow: #FFD166;
-  --fresh-mint: #6DD5B0;
-  --fresh-green: #88D8A3;
-  --lavender: #B8B8E8;
-  --pink-soft: #FFB6C1;
+  --vitality-orange: #ff8c69;
+  --vitality-coral: #ff9a8b;
+  --vitality-yellow: #ffd166;
+  --fresh-mint: #6dd5b0;
+  --fresh-green: #88d8a3;
+  --lavender: #b8b8e8;
+  --pink-soft: #ffb6c1;
 
   /* 背景色 */
-  --bg-primary: #F0F8FF;
-  --bg-secondary: #E6F3FF;
-  --bg-tertiary: #EDF7FF;
+  --bg-primary: #f0f8ff;
+  --bg-secondary: #e6f3ff;
+  --bg-tertiary: #edf7ff;
   --bg-card: rgba(255, 255, 255, 0.95);
   --bg-glass: rgba(255, 255, 255, 0.85);
 
   /* 文字色 - 确保对比度 */
-  --text-primary: #2C3E50;
-  --text-secondary: #4A6572;
-  --text-tertiary: #6B8BA4;
-  --text-light: #8FA8B8;
-  --text-muted: #A8C4D4;
-  --text-white: #FFFFFF;
+  --text-primary: #2c3e50;
+  --text-secondary: #4a6572;
+  --text-tertiary: #6b8ba4;
+  --text-light: #8fa8b8;
+  --text-muted: #a8c4d4;
+  --text-white: #ffffff;
+
+  /* 边框色 */
+  --border-color: rgba(93, 184, 230, 0.2);
+  --border-light: rgba(93, 184, 230, 0.12);
+
+  /* 功能色 */
+  --danger-color: #ff6b6b;
 
   /* 阴影 */
   --shadow-sm: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
@@ -56,6 +63,7 @@ page {
   --shadow-lg: 0 8rpx 40rpx rgba(93, 184, 230, 0.16);
   --shadow-sky: 0 4rpx 20rpx rgba(93, 184, 230, 0.25);
   --shadow-orange: 0 4rpx 16rpx rgba(255, 140, 105, 0.3);
+  --shadow-green: 0 4rpx 16rpx rgba(109, 213, 176, 0.35);
 
   /* 圆角 - 亲和力 */
   --radius-xs: 12rpx;
@@ -76,7 +84,12 @@ page {
 }
 
 /* 重置默认样式 */
-view, text, image, button, input, textarea {
+view,
+text,
+image,
+button,
+input,
+textarea {
   box-sizing: border-box;
 }
 
@@ -120,38 +133,66 @@ button::after {
 
 /* 弹跳动画 */
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10rpx); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10rpx);
+  }
 }
 
 /* 脉冲动画 */
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 /* 闪烁动画 */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* 旋转动画 */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 浮动动画 */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8rpx); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8rpx);
+  }
 }
 
 /* 呼吸光晕 */
 @keyframes breathe {
-  0%, 100% { box-shadow: 0 0 20rpx rgba(93, 184, 230, 0.3); }
-  50% { box-shadow: 0 0 40rpx rgba(93, 184, 230, 0.5); }
+  0%,
+  100% {
+    box-shadow: 0 0 20rpx rgba(93, 184, 230, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40rpx rgba(93, 184, 230, 0.5);
+  }
 }
 
 /* ============================================
@@ -159,7 +200,9 @@ button::after {
    ============================================ */
 
 /* 弹性布局 */
-.flex { display: flex; }
+.flex {
+  display: flex;
+}
 .flex-center {
   display: flex;
   align-items: center;
@@ -178,12 +221,20 @@ button::after {
   display: flex;
   flex-wrap: wrap;
 }
-.flex-1 { flex: 1; }
+.flex-1 {
+  flex: 1;
+}
 
 /* 文字对齐 */
-.text-center { text-align: center; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
 
 /* 文字截断 */
 .text-ellipsis {
@@ -202,11 +253,21 @@ button::after {
 /* ============================================
    阴影样式
    ============================================ */
-.shadow-sm { box-shadow: var(--shadow-sm); }
-.shadow-md { box-shadow: var(--shadow-md); }
-.shadow-lg { box-shadow: var(--shadow-lg); }
-.shadow-sky { box-shadow: var(--shadow-sky); }
-.shadow-orange { box-shadow: var(--shadow-orange); }
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+.shadow-sky {
+  box-shadow: var(--shadow-sky);
+}
+.shadow-orange {
+  box-shadow: var(--shadow-orange);
+}
 
 /* ============================================
    毛玻璃效果
@@ -239,7 +300,12 @@ button::after {
 
 /* 主按钮 - 天蓝色渐变 */
 .btn-primary {
-  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--sky-primary) 0%,
+    var(--sky-light) 50%,
+    var(--sky-soft) 100%
+  );
   color: var(--text-white);
   box-shadow: var(--shadow-sky);
 }
@@ -258,14 +324,22 @@ button::after {
 
 /* 活力橙按钮 */
 .btn-vitality {
-  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--vitality-orange) 0%,
+    var(--vitality-coral) 100%
+  );
   color: var(--text-white);
   box-shadow: var(--shadow-orange);
 }
 
 /* 薄荷绿按钮 */
 .btn-fresh {
-  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--fresh-mint) 0%,
+    var(--fresh-green) 100%
+  );
   color: var(--text-white);
   box-shadow: 0 4rpx 20rpx rgba(109, 213, 176, 0.3);
 }
@@ -294,42 +368,75 @@ button::after {
 }
 
 .tag-sky {
-  background: linear-gradient(135deg, rgba(93, 184, 230, 0.2) 0%, rgba(168, 216, 240, 0.15) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(93, 184, 230, 0.2) 0%,
+    rgba(168, 216, 240, 0.15) 100%
+  );
   color: var(--sky-deep);
 }
 
 .tag-orange {
-  background: linear-gradient(135deg, rgba(255, 140, 105, 0.2) 0%, rgba(255, 154, 139, 0.15) 100%);
-  color: #E86A4A;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 140, 105, 0.2) 0%,
+    rgba(255, 154, 139, 0.15) 100%
+  );
+  color: #e86a4a;
 }
 
 .tag-mint {
-  background: linear-gradient(135deg, rgba(109, 213, 176, 0.2) 0%, rgba(136, 216, 163, 0.15) 100%);
-  color: #3BA882;
+  background: linear-gradient(
+    135deg,
+    rgba(109, 213, 176, 0.2) 0%,
+    rgba(136, 216, 163, 0.15) 100%
+  );
+  color: #3ba882;
 }
 
 .tag-yellow {
-  background: linear-gradient(135deg, rgba(255, 209, 102, 0.25) 0%, rgba(255, 220, 130, 0.2) 100%);
-  color: #C9941E;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 209, 102, 0.25) 0%,
+    rgba(255, 220, 130, 0.2) 100%
+  );
+  color: #c9941e;
 }
 
 /* ============================================
    背景渐变
    ============================================ */
 .bg-sky-gradient {
-  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--sky-primary) 0%,
+    var(--sky-light) 50%,
+    var(--sky-soft) 100%
+  );
 }
 
 .bg-sky-light {
-  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--bg-primary) 0%,
+    var(--bg-secondary) 100%
+  );
 }
 
 .bg-vitality {
-  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--vitality-orange) 0%,
+    var(--vitality-coral) 100%
+  );
 }
 
 .bg-fresh {
-  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--fresh-mint) 0%,
+    var(--fresh-green) 100%
+  );
 }
 
 /* ============================================
@@ -358,7 +465,7 @@ button::after {
    加载状态
    ============================================ */
 .skeleton {
-  background: linear-gradient(90deg, #E8F4F8 25%, #D4EDF7 50%, #E8F4F8 75%);
+  background: linear-gradient(90deg, #e8f4f8 25%, #d4edf7 50%, #e8f4f8 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);

@@ -2,7 +2,7 @@
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 50%, #EDF7FF 100%);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
   padding-bottom: 40rpx;
   box-sizing: border-box;
   width: 100%;
@@ -10,12 +10,12 @@
 
 /* 积分卡片 - 天蓝色渐变 */
 .points-card {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   margin: 30rpx;
-  border-radius: 44rpx;
+  border-radius: var(--radius-xl);
   padding: 48rpx;
   color: #fff;
-  box-shadow: 0 8rpx 40rpx rgba(93, 184, 230, 0.35);
+  box-shadow: var(--shadow-lg);
   border: 2rpx solid rgba(255, 255, 255, 0.2);
 }
 
@@ -38,7 +38,7 @@
   align-items: center;
   background: rgba(255, 255, 255, 0.25);
   padding: 14rpx 24rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   backdrop-filter: blur(10rpx);
   border: 2rpx solid rgba(255, 255, 255, 0.15);
   transition: all 0.3s ease;
@@ -136,12 +136,12 @@
 
 /* 记录列表区域 - 天蓝色调 */
 .records-section {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   margin: 0 30rpx;
-  border-radius: 44rpx;
+  border-radius: var(--radius-xl);
   padding: 40rpx;
   min-height: 600rpx;
-  box-shadow: 0 4rpx 28rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-sm);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
 }
 
@@ -155,13 +155,13 @@
 .title-text {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .title-icon {
   width: 44rpx;
   height: 44rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   border-radius: 14rpx;
   display: flex;
   align-items: center;
@@ -180,7 +180,7 @@
 .loading-icon {
   width: 80rpx;
   height: 80rpx;
-  background: linear-gradient(135deg, #E6F3FF 0%, #D4EDF7 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #D4EDF7 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -197,7 +197,7 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
 }
 
 /* 空状态 */
@@ -212,7 +212,7 @@
   width: 180rpx;
   height: 180rpx;
   margin: 0 auto 28rpx;
-  background: linear-gradient(135deg, #E6F3FF 0%, #D4EDF7 50%, #C4E5F5 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #D4EDF7 50%, #C4E5F5 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -223,14 +223,14 @@
 
 .empty-text {
   font-size: 34rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 16rpx;
 }
 
 .empty-hint {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
 }
 
 /* 记录列表 */
@@ -243,7 +243,7 @@
   display: flex;
   align-items: center;
   padding: 28rpx 0;
-  border-bottom: 2rpx solid rgba(93, 184, 230, 0.08);
+  border-bottom: 2rpx solid var(--border-light);
   transition: all 0.3s ease;
 }
 
@@ -272,12 +272,12 @@
 
 .record-icon.income {
   background: linear-gradient(135deg, rgba(93, 184, 230, 0.15) 0%, rgba(126, 200, 232, 0.1) 100%);
-  color: #3A9AD2;
+  color: var(--sky-dark);
 }
 
 .record-icon.expense {
   background: linear-gradient(135deg, rgba(255, 140, 105, 0.15) 0%, rgba(255, 154, 139, 0.1) 100%);
-  color: #E86A4A;
+  color: var(--danger-color);
 }
 
 .record-content {
@@ -295,7 +295,7 @@
 
 .record-title {
   font-size: 30rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 600;
   flex: 1;
   margin-right: 20rpx;
@@ -310,11 +310,11 @@
 }
 
 .record-amount.income {
-  color: #3A9AD2;
+  color: var(--sky-dark);
 }
 
 .record-amount.expense {
-  color: #E86A4A;
+  color: var(--danger-color);
 }
 
 .record-footer {
@@ -325,16 +325,16 @@
 
 .record-type {
   font-size: 22rpx;
-  color: #6B8BA4;
-  background: linear-gradient(135deg, #F0F8FF 0%, #E6F3FF 100%);
+  color: var(--text-tertiary);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   padding: 8rpx 18rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   font-weight: 500;
 }
 
 .record-time {
   font-size: 22rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
 }
 
 /* 加载更多 */
@@ -352,12 +352,12 @@
 
 .loading-dots text {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
 }
 
 .load-more-text {
   font-size: 26rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
 }
 
 .no-more {
@@ -368,5 +368,5 @@
 
 .no-more text {
   font-size: 24rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
 }

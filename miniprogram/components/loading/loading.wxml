@@ -1,0 +1,26 @@
+<!-- 通用加载状态组件 -->
+<view class="loading-container {{type === 'full' ? 'loading-full' : ''}}">
+  <!-- 转圈加载 -->
+  <block wx:if="{{mode === 'spinner'}}">
+    <view class="loading-spinner" style="width: {{size}}rpx; height: {{size}}rpx;"></view>
+  </block>
+
+  <!-- 点状加载 -->
+  <block wx:if="{{mode === 'dots'}}">
+    <view class="loading-dots">
+      <view class="dot" wx:for="{{3}}" wx:key="index"></view>
+    </view>
+  </block>
+
+  <!-- 骨架屏 -->
+  <block wx:if="{{mode === 'skeleton'}}">
+    <view class="skeleton-wrapper">
+      <view wx:for="{{rows}}" wx:key="index" class="skeleton-row">
+        <view class="skeleton-item" style="width: {{item.width}}%;"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 提示文字 -->
+  <text wx:if="{{text}}" class="loading-text" style="font-size: {{textSize}}rpx;">{{text}}</text>
+</view>

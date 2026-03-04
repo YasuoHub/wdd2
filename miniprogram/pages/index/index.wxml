@@ -78,17 +78,10 @@
     </view>
 
     <!-- 加载中 -->
-    <view wx:elif="{{nearbyLoading}}" class="loading-card">
-      <view class="loading-spinner"></view>
-      <view class="loading-text">正在搜索附近任务...</view>
-    </view>
+    <loading wx:elif="{{nearbyLoading}}" type="card" text="正在搜索附近任务..." mode="spinner" size="64"></loading>
 
     <!-- 加载失败 -->
-    <view wx:elif="{{nearbyError}}" class="error-card">
-      <view class="error-icon">⚠️</view>
-      <view class="error-text">加载失败，请重试</view>
-      <view class="retry-btn" bindtap="reloadNearbyNeeds">重新加载</view>
-    </view>
+    <error wx:elif="{{nearbyError}}" type="card" icon="⚠️" title="加载失败" desc="网络异常，请稍后重试" showRetry="true" retryText="重新加载" bind:retry="reloadNearbyNeeds"></error>
 
     <!-- 任务列表 -->
     <view wx:elif="{{nearbyNeeds.length > 0}}" class="need-list">
@@ -125,11 +118,7 @@
     </view>
 
     <!-- 空状态 -->
-    <view wx:elif="{{nearbyEmpty}}" class="empty-state">
-      <view class="empty-icon">🌸</view>
-      <view class="empty-text">附近5公里内暂无求助任务</view>
-      <view class="empty-hint" bindtap="goToTaskHall">去大厅看看其他地区的求助 →</view>
-    </view>
+    <empty wx:elif="{{nearbyEmpty}}" type="card" icon="🌸" title="附近5公里内暂无求助任务" desc="成都地区的实时求助信息" showBtn="true" btnText="去大厅看看" btnType="primary" bind:btnTap="goToTaskHall"></empty>
   </view>
 
   <!-- 底部装饰 -->

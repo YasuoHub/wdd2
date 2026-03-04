@@ -11,7 +11,7 @@ page {
 .container {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, #F5FAFF 100%);
   box-sizing: border-box;
 }
 
@@ -20,7 +20,7 @@ page {
   display: flex;
   padding: 28rpx 24rpx;
   gap: 12rpx;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -35,9 +35,9 @@ page {
   text-align: center;
   padding: 16rpx 8rpx;
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-secondary);
   background: rgba(240, 248, 255, 0.8);
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   transition: all 0.3s;
   font-weight: 500;
   border: 2rpx solid rgba(93, 184, 230, 0.1);
@@ -48,10 +48,10 @@ page {
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   color: white;
   font-weight: 600;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
+  box-shadow: var(--shadow-sky);
 }
 
 /* 任务列表 */
@@ -75,7 +75,7 @@ page {
   width: 180rpx;
   height: 180rpx;
   margin-bottom: 32rpx;
-  background: linear-gradient(135deg, #E6F3FF 0%, #D4EDF7 50%, #C4E5F5 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #D4EDF7 50%, #C4E5F5 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -87,7 +87,7 @@ page {
 
 .empty-text {
   font-size: 34rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   margin-bottom: 12rpx;
   font-weight: 700;
   text-align: center;
@@ -96,7 +96,7 @@ page {
 
 .empty-hint {
   font-size: 26rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
   margin-bottom: 40rpx;
   text-align: center;
   word-break: break-all;
@@ -104,11 +104,11 @@ page {
 
 .empty-btn {
   padding: 28rpx 72rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   color: white;
   font-size: 30rpx;
   font-weight: 600;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   box-shadow: 0 6rpx 24rpx rgba(93, 184, 230, 0.35);
   transition: all 0.3s;
   flex-shrink: 0;
@@ -131,10 +131,10 @@ page {
 
 .need-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 36rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   padding: 28rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-sm);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
   position: relative;
   overflow: hidden;
@@ -144,7 +144,7 @@ page {
 
 .need-card:active {
   transform: translateY(-2rpx);
-  box-shadow: 0 6rpx 28rpx rgba(93, 184, 230, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 /* 左侧天蓝色装饰 */
@@ -155,7 +155,7 @@ page {
   top: 20%;
   width: 6rpx;
   height: 60%;
-  background: linear-gradient(180deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(180deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   border-radius: 0 4rpx 4rpx 0;
 }
 
@@ -174,11 +174,11 @@ page {
   align-items: center;
   gap: 8rpx;
   padding: 10rpx 18rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   font-size: 24rpx;
   font-weight: 600;
   background: rgba(93, 184, 230, 0.1);
-  color: #5DB8E6;
+  color: var(--sky-primary);
   flex-shrink: 0;
   max-width: 60%;
   white-space: nowrap;
@@ -195,7 +195,7 @@ page {
 .status-badge {
   font-size: 22rpx;
   padding: 8rpx 18rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   font-weight: 500;
   flex-shrink: 0;
   white-space: nowrap;
@@ -231,7 +231,7 @@ page {
 
 .description {
   font-size: 28rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -248,8 +248,8 @@ page {
   gap: 8rpx;
   margin-bottom: 20rpx;
   padding: 12rpx 16rpx;
-  background: rgba(240, 248, 255, 0.6);
-  border-radius: 16rpx;
+  background: var(--bg-glass);
+  border-radius: var(--radius-sm);
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
@@ -257,13 +257,13 @@ page {
 
 .location-icon {
   font-size: 24rpx;
-  color: #5DB8E6;
+  color: var(--sky-primary);
   flex-shrink: 0;
 }
 
 .location-name {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -277,7 +277,7 @@ page {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 20rpx;
-  border-bottom: 2rpx solid rgba(93, 184, 230, 0.06);
+  border-bottom: 2rpx solid var(--border-light);
   gap: 16rpx;
   min-width: 0;
 }
@@ -292,13 +292,13 @@ page {
 }
 
 .points-tag {
-  background: linear-gradient(135deg, #FF8C69 0%, #FF9A8B 100%);
+  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
   color: white;
   font-size: 22rpx;
   font-weight: 600;
   padding: 8rpx 18rpx;
-  border-radius: 9999rpx;
-  box-shadow: 0 2rpx 10rpx rgba(255, 140, 105, 0.25);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-orange);
   flex-shrink: 0;
   white-space: nowrap;
   box-sizing: border-box;
@@ -306,7 +306,7 @@ page {
 
 .countdown {
   font-size: 22rpx;
-  color: #FF8C69;
+  color: var(--vitality-orange);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -316,7 +316,7 @@ page {
 
 .time-text {
   font-size: 22rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -335,7 +335,7 @@ page {
   min-width: 0;
   text-align: center;
   padding: 20rpx 12rpx;
-  border-radius: 16rpx;
+  border-radius: var(--radius-sm);
   font-size: 26rpx;
   font-weight: 600;
   transition: all 0.3s;
@@ -346,9 +346,9 @@ page {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   color: white;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
+  box-shadow: var(--shadow-sky);
 }
 
 .action-btn.primary:active {
@@ -358,7 +358,7 @@ page {
 
 .action-btn.danger {
   background: rgba(255, 140, 105, 0.1);
-  color: #E86A4A;
+  color: var(--danger-color);
 }
 
 .action-btn.danger:active {
@@ -366,7 +366,7 @@ page {
 }
 
 .action-btn.success {
-  background: linear-gradient(135deg, #6DD5B0 0%, #88D8A3 100%);
+  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
   color: white;
   box-shadow: 0 4rpx 16rpx rgba(109, 213, 176, 0.3);
 }
@@ -379,7 +379,7 @@ page {
 /* 查看评价按钮 - 灰色默认样式 */
 .action-btn:not(.primary):not(.danger):not(.success) {
   background: rgba(168, 196, 212, 0.15);
-  color: #6B8BA4;
+  color: var(--text-tertiary);
 }
 
 .action-btn:not(.primary):not(.danger):not(.success):active {
@@ -391,7 +391,7 @@ page {
   text-align: center;
   padding: 32rpx;
   font-size: 26rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
   width: 100%;
   box-sizing: border-box;
 }

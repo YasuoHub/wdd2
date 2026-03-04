@@ -1,0 +1,37 @@
+<!-- 通用错误状态组件 -->
+<view class="error-container {{type === 'card' ? 'error-card' : ''}}">
+  <!-- 错误图标 -->
+  <view class="error-icon-wrapper">
+    <view class="error-circle">
+      <text class="error-emoji">{{icon}}</text>
+    </view>
+  </view>
+
+  <!-- 错误标题 -->
+  <text wx:if="{{title}}" class="error-title">{{title}}</text>
+
+  <!-- 错误描述 -->
+  <text wx:if="{{desc}}" class="error-desc">{{desc}}</text>
+
+  <!-- 操作按钮 -->
+  <view class="error-actions">
+    <button
+      wx:if="{{showRetry}}"
+      class="error-btn primary"
+      bind:tap="onRetryTap"
+      hover-class="btn-hover"
+    >
+      <text class="btn-icon">🔄</text>
+      <text>{{retryText}}</text>
+    </button>
+
+    <button
+      wx:if="{{showBack}}"
+      class="error-btn secondary"
+      bind:tap="onBackTap"
+      hover-class="btn-hover"
+    >
+      {{backText}}
+    </button>
+  </view>
+</view>

@@ -34,11 +34,7 @@
   <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh">
     <!-- 求助聊天 -->
     <block wx:if="{{currentChatTab === 'seeker'}}">
-      <view wx:if="{{seekerChatList.length === 0}}" class="empty-state">
-        <view class="empty-icon">🙏</view>
-        <view class="empty-text">暂无求助聊天</view>
-        <view class="empty-hint">你发布的求助将会在这里显示</view>
-      </view>
+      <empty wx:if="{{seekerChatList.length === 0}}" type="normal" icon="🙏" title="暂无求助聊天" desc="你发布的求助将会在这里显示"></empty>
 
       <view wx:else class="chat-list">
         <view
@@ -80,11 +76,7 @@
 
     <!-- 帮助聊天 -->
     <block wx:if="{{currentChatTab === 'helper'}}">
-      <view wx:if="{{helperChatList.length === 0}}" class="empty-state">
-        <view class="empty-icon">🤗</view>
-        <view class="empty-text">暂无帮助聊天</view>
-        <view class="empty-hint">去任务大厅接单开始聊天吧</view>
-      </view>
+      <empty wx:if="{{helperChatList.length === 0}}" type="normal" icon="🤗" title="暂无帮助聊天" desc="去任务大厅接单开始聊天吧" showBtn="true" btnText="去大厅" btnType="primary" bind:btnTap="goToHall"></empty>
 
       <view wx:else class="chat-list">
         <view

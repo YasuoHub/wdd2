@@ -1,0 +1,34 @@
+<!-- 通用空状态组件 -->
+<view class="empty-container {{type === 'card' ? 'empty-card' : ''}}">
+  <!-- 图标区域 -->
+  <view class="empty-icon-wrapper">
+    <!-- 使用表情图标 -->
+    <block wx:if="{{iconType === 'emoji'}}">
+      <view class="empty-circle">
+        <text class="empty-emoji">{{icon}}</text>
+      </view>
+    </block>
+
+    <!-- 使用图片 -->
+    <block wx:if="{{iconType === 'image'}}">
+      <image class="empty-image" src="{{icon}}" mode="aspectFit"></image>
+    </block>
+  </view>
+
+  <!-- 标题 -->
+  <text wx:if="{{title}}" class="empty-title">{{title}}</text>
+
+  <!-- 描述 -->
+  <text wx:if="{{desc}}" class="empty-desc">{{desc}}</text>
+
+  <!-- 操作按钮 -->
+  <view wx:if="{{showBtn}}" class="empty-actions">
+    <button
+      class="empty-btn {{btnType}}"
+      bind:tap="onBtnTap"
+      hover-class="btn-hover"
+    >
+      {{btnText}}
+    </button>
+  </view>
+</view>

@@ -1,5 +1,8 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "loading": "/components/loading/loading",
+    "empty": "/components/empty/empty"
+  },
   "navigationBarTitleText": "任务大厅",
   "navigationBarBackgroundColor": "#F0F8FF",
   "navigationBarTextStyle": "black"

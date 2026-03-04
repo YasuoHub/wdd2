@@ -39,17 +39,10 @@
     </view>
 
     <!-- 加载中 -->
-    <view class="loading-state" wx:if="{{isLoading && records.length === 0}}">
-      <view class="loading-icon">⏳</view>
-      <text class="loading-text">加载中...</text>
-    </view>
+    <loading wx:if="{{isLoading && records.length === 0}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 
     <!-- 空状态 -->
-    <view class="empty-state" wx:if="{{isEmpty}}">
-      <view class="empty-icon">📊</view>
-      <text class="empty-text">暂无积分记录</text>
-      <text class="empty-hint">快去签到或完成任务赚取积分吧~</text>
-    </view>
+    <empty wx:if="{{isEmpty}}" type="normal" icon="📊" title="暂无积分记录" desc="快去签到或完成任务赚取积分吧~"></empty>
 
     <!-- 记录列表 -->
     <view class="records-list" wx:if="{{records.length > 0}}">

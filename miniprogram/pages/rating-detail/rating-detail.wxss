@@ -1,9 +1,11 @@
-/* 评价详情页面样式 */
+/* ============================================
+   问当地 - 评价详情 - 天蓝色青春活力风格
+   ============================================ */
 
 page {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, var(--bg-primary) 100%);
   box-sizing: border-box;
 }
 
@@ -25,8 +27,8 @@ page {
 .loading-icon {
   width: 60rpx;
   height: 60rpx;
-  border: 4rpx solid rgba(93, 184, 230, 0.2);
-  border-top-color: #5DB8E6;
+  border: 4rpx solid var(--border-light);
+  border-top-color: var(--sky-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20rpx;
@@ -38,27 +40,27 @@ page {
 
 .loading-text {
   font-size: 28rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
 }
 
 /* 评价对象卡片 */
 .target-card {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 32rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   display: flex;
   align-items: center;
   gap: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-md);
+  border: 2rpx solid var(--border-light);
 }
 
 .target-avatar {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,23 +84,23 @@ page {
 
 .target-label {
   font-size: 24rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
 }
 
 .target-name {
   font-size: 34rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 /* 任务卡片 */
 .task-card {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 32rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 28rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-md);
+  border: 2rpx solid var(--border-light);
 }
 
 .task-header {
@@ -110,39 +112,39 @@ page {
 
 .task-type {
   font-size: 28rpx;
-  color: #5DB8E6;
+  color: var(--sky-primary);
   font-weight: 600;
-  background: rgba(93, 184, 230, 0.1);
+  background: var(--bg-glass);
   padding: 8rpx 20rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
 }
 
 .task-points {
   font-size: 26rpx;
-  color: #FF8C69;
+  color: var(--vitality-orange);
   font-weight: 600;
 }
 
 .task-desc {
   font-size: 28rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
 /* 评分区域 */
 .rating-section {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 32rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-md);
+  border: 2rpx solid var(--border-light);
   text-align: center;
 }
 
 .section-title {
   font-size: 28rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
   margin-bottom: 24rpx;
   display: block;
 }
@@ -156,12 +158,12 @@ page {
 
 .star {
   font-size: 56rpx;
-  color: #E0E0E0;
+  color: var(--border-color);
   transition: all 0.3s;
 }
 
 .star.active {
-  color: #FFD166;
+  color: var(--vitality-yellow);
 }
 
 .star-icon {
@@ -170,18 +172,18 @@ page {
 
 .rating-score {
   font-size: 40rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 /* 标签区域 */
 .tags-section {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 32rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-md);
+  border: 2rpx solid var(--border-light);
 }
 
 .tags-wrapper {
@@ -191,33 +193,34 @@ page {
 }
 
 .tag {
-  background: rgba(93, 184, 230, 0.1);
-  color: #5DB8E6;
+  background: var(--bg-glass);
+  color: var(--sky-primary);
   font-size: 26rpx;
   padding: 12rpx 24rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   font-weight: 500;
 }
 
 /* 评价内容区域 */
 .comment-section {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 32rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
   padding: 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-md);
+  border: 2rpx solid var(--border-light);
 }
 
 .comment-box {
-  background: rgba(240, 248, 255, 0.6);
-  border-radius: 20rpx;
+  background: var(--bg-glass);
+  border-radius: var(--radius-md);
   padding: 24rpx;
+  border: 2rpx solid var(--border-light);
 }
 
 .comment-text {
   font-size: 28rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   line-height: 1.8;
 }
 
@@ -229,16 +232,20 @@ page {
 
 .time-text {
   font-size: 24rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
 }
 
 /* 提示区域 */
 .tips-section {
   text-align: center;
   padding: 24rpx;
+  background: var(--bg-glass);
+  border-radius: var(--radius-lg);
+  margin-top: 16rpx;
+  border: 2rpx solid var(--border-light);
 }
 
 .tips-text {
   font-size: 24rpx;
-  color: #8FA8B8;
+  color: var(--text-tertiary);
 }

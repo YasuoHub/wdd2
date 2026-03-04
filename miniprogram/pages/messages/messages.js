@@ -265,6 +265,13 @@ Page({
     }
   },
 
+  // 跳转到任务大厅
+  goToHall() {
+    wx.switchTab({
+      url: '/pages/task-hall/task-hall'
+    })
+  },
+
   // 跳转到聊天页
   goToChat(e) {
     const { needid, isseeker } = e.currentTarget.dataset

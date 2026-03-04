@@ -5,7 +5,7 @@
 /* 页面容器 - 天蓝渐变背景 */
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F0F8FF 0%, #E6F3FF 30%, #EDF7FF 70%, #F5FAFF 100%);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, var(--bg-primary) 100%);
   padding-bottom: 40rpx;
   position: relative;
   overflow: hidden;
@@ -43,11 +43,11 @@
    ============================================ */
 .user-card {
   margin: 32rpx;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(40rpx);
-  border-radius: 44rpx;
+  border-radius: var(--radius-xl);
   padding: 44rpx;
-  box-shadow: 0 6rpx 32rpx rgba(93, 184, 230, 0.12);
+  box-shadow: var(--shadow-md);
   border: 2rpx solid rgba(93, 184, 230, 0.1);
   position: relative;
   z-index: 1;
@@ -76,11 +76,11 @@
 .avatar-wrapper {
   width: 130rpx;
   height: 130rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--radius-full);
   overflow: hidden;
   border: 4rpx solid white;
   box-shadow: 0 6rpx 24rpx rgba(93, 184, 230, 0.35);
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -94,8 +94,8 @@
   left: -10rpx;
   right: -10rpx;
   bottom: -10rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
-  border-radius: 9999rpx;
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
+  border-radius: var(--radius-full);
   z-index: -1;
   opacity: 0.35;
   filter: blur(16rpx);
@@ -122,12 +122,12 @@
 .nickname {
   font-size: 42rpx;
   font-weight: 800;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .user-id {
   font-size: 24rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
   font-weight: 500;
 }
 
@@ -140,7 +140,7 @@
   align-items: center;
   padding: 32rpx 0;
   background: rgba(240, 248, 255, 0.7);
-  border-radius: 32rpx;
+  border-radius: var(--radius-md);
   border: 2rpx solid rgba(93, 184, 230, 0.12);
   position: relative;
   overflow: hidden;
@@ -168,24 +168,24 @@
 .points-value {
   font-size: 52rpx;
   font-weight: 800;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .points-value.available {
-  background: linear-gradient(135deg, #5DB8E6 0%, #3A9AD2 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .points-value.frozen {
-  background: linear-gradient(135deg, #FF8C69 0%, #E86A4A 100%);
+  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .points-label {
   font-size: 24rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
   font-weight: 500;
 }
 
@@ -205,8 +205,8 @@
   justify-content: center;
   gap: 14rpx;
   padding: 32rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
-  border-radius: 32rpx;
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
+  border-radius: var(--radius-md);
   color: white;
   font-size: 32rpx;
   font-weight: 700;
@@ -247,9 +247,10 @@
 }
 
 .sign-in-btn.signed {
-  background: linear-gradient(135deg, #D4EDF7 0%, #E8F4F8 100%);
-  color: #6B8BA4;
+  background: var(--bg-glass);
+  color: var(--text-tertiary);
   box-shadow: inset 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  border: 2rpx solid var(--border-light);
 }
 
 .sign-in-icon {
@@ -270,18 +271,18 @@
 .menu-title {
   font-size: 28rpx;
   font-weight: 700;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
   margin-bottom: 18rpx;
   margin-left: 10rpx;
   letter-spacing: 2rpx;
 }
 
 .menu-list {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 32rpx;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: var(--shadow-sm);
   border: 2rpx solid rgba(93, 184, 230, 0.08);
 }
 
@@ -289,7 +290,7 @@
   display: flex;
   align-items: center;
   padding: 30rpx;
-  border-bottom: 2rpx solid rgba(93, 184, 230, 0.06);
+  border-bottom: 2rpx solid var(--border-light);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -307,14 +308,14 @@
 .menu-icon-wrapper {
   width: 76rpx;
   height: 76rpx;
-  border-radius: 22rpx;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .menu-icon-wrapper::before {
@@ -329,19 +330,19 @@
 
 /* 不同菜单项的图标颜色 - 青春活力配色 */
 .menu-item:nth-child(1) .menu-icon-wrapper {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
 }
 
 .menu-item:nth-child(2) .menu-icon-wrapper {
-  background: linear-gradient(135deg, #FF8C69 0%, #FF9A8B 100%);
+  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
 }
 
 .menu-item:nth-child(3) .menu-icon-wrapper {
-  background: linear-gradient(135deg, #6DD5B0 0%, #88D8A3 100%);
+  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
 }
 
 .menu-item:nth-child(4) .menu-icon-wrapper {
-  background: linear-gradient(135deg, #FFD166 0%, #FFE08C 100%);
+  background: linear-gradient(135deg, var(--vitality-yellow) 0%, #FFE08C 100%);
 }
 
 .menu-icon {
@@ -360,18 +361,18 @@
 
 .menu-text {
   font-size: 32rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .menu-desc {
   font-size: 24rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
 }
 
 .menu-arrow {
   font-size: 38rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
   margin-left: 8rpx;
   transition: transform 0.3s ease;
 }
@@ -386,9 +387,9 @@
 .logout-section {
   margin: 20rpx 32rpx;
   padding: 28rpx 0;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--bg-card);
   backdrop-filter: blur(20rpx);
-  border-radius: 24rpx;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -404,23 +405,23 @@
 
 /* 一键登录按钮样式 */
 .logout-section.login-btn {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
-  box-shadow: 0 4rpx 20rpx rgba(93, 184, 230, 0.35);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
+  box-shadow: var(--shadow-sky);
 }
 
 .logout-section.login-btn:active {
-  background: linear-gradient(135deg, #7EC8E8 0%, #5DB8E6 100%);
+  background: linear-gradient(135deg, var(--sky-light) 0%, var(--sky-primary) 100%);
   transform: scale(0.98);
 }
 
 .logout-text {
   font-size: 30rpx;
-  color: #ff4d4f;
+  color: var(--danger-color);
   font-weight: 500;
 }
 
 .logout-section.login-btn .logout-text {
-  color: #FFFFFF;
+  color: var(--text-white);
   font-weight: 600;
 }
 
@@ -431,7 +432,7 @@
   text-align: center;
   padding: 48rpx 32rpx;
   font-size: 24rpx;
-  color: #8FA8B8;
+  color: var(--text-light);
   display: flex;
   flex-direction: column;
   gap: 10rpx;
@@ -475,12 +476,12 @@
 .modal-content {
   position: relative;
   width: 620rpx;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(40rpx);
-  border-radius: 44rpx;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   padding: 52rpx;
-  box-shadow: 0 8rpx 40rpx rgba(93, 184, 230, 0.2);
+  box-shadow: var(--shadow-lg);
   border: 2rpx solid rgba(93, 184, 230, 0.1);
   transform: translateY(20rpx) scale(0.95);
   transition: all 0.3s ease;
@@ -500,7 +501,7 @@
   align-items: center;
   justify-content: center;
   font-size: 34rpx;
-  color: #A8C4D4;
+  color: var(--text-light);
   background: rgba(93, 184, 230, 0.1);
   border-radius: 50%;
   transition: all 0.3s ease;
@@ -516,7 +517,7 @@
   font-weight: 800;
   text-align: center;
   margin-bottom: 36rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
 }
 
 .invite-content {
@@ -528,7 +529,7 @@
   width: 130rpx;
   height: 130rpx;
   margin: 0 auto 28rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -552,23 +553,23 @@
 
 .invite-text {
   font-size: 34rpx;
-  color: #2C3E50;
+  color: var(--text-primary);
   font-weight: 700;
   margin-bottom: 14rpx;
 }
 
 .invite-tip {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: var(--text-tertiary);
 }
 
 .invite-btn {
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 50%, #A8D8F0 100%);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   color: white;
   font-size: 32rpx;
   font-weight: 700;
   padding: 32rpx;
-  border-radius: 32rpx;
+  border-radius: var(--radius-md);
   border: none;
   box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
   position: relative;
