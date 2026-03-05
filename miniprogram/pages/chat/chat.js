@@ -221,10 +221,17 @@ Page({
           // 3. 如果是自己发的消息，尝试替换临时消息
           if (msg.sender_id === userInfo._id) {
             this.processedMessageIds.add(msg._id)
+            const incomingClientMsgId = msg.client_msg_id || msg.clientMsgId || ''
             const tempIndex = messages.findIndex(m =>
-              m._id.startsWith('temp_') &&
-              m.type === msg.type &&
-              (msg.type === 'text' ? m.content === msg.content : m.isLocalImage)
+              (
+                incomingClientMsgId &&
+                m.sendStatus === 'sending' &&
+                m.clientMsgId === incomingClientMsgId
+              ) || (
+                m._id.startsWith('temp_') &&
+                m.type === msg.type &&
+                (msg.type === 'text' ? m.content === msg.content : m.isLocalImage)
+              )
             )
             if (tempIndex !== -1) {
               // 找到临时消息，替换
@@ -233,7 +240,8 @@ Page({
                 ...messagesToUpdate[tempIndex],
                 _id: msg._id,
                 isLocalImage: false,
-                create_time: msg.create_time
+                create_time: msg.create_time,
+                sendStatus: 'sent'
               }
             } else {
               // 没找到临时消息，当作新消息处理
@@ -325,7 +333,7 @@ Page({
     
     if (isAtBottom !== this.data.isAtBottom) {
       this.setData({ isAtBottom })
-      if (isAtBottom) {
+      if (isAtBottom && newMessageCount > 0) {
         // 滚动到底部：标记已读 + 清零计数
         this.markMessagesRead()
         this.setData({ newMessageCount: 0 })
@@ -592,6 +600,8 @@ Page({
 
     return {
       ...msg,
+      clientMsgId: msg.clientMsgId || msg.client_msg_id || msg._id,
+      sendStatus: msg.sendStatus || 'sent',
       isSelf,
       senderAvatar: isSelf ? userInfo.avatar : (this.data.otherUser && this.data.otherUser.avatar) || '/images/default-avatar.png',
       timeText,
@@ -692,11 +702,18 @@ Page({
               // 自己发送的消息：确认临时消息
               if (doc.sender_id === userInfo._id) {
                 this.processedMessageIds.add(doc._id)
+                const incomingClientMsgId = doc.client_msg_id || doc.clientMsgId || ''
                 // 查找对应的临时消息（按时间倒序找最新的匹配项）
                 const tempIndex = currentMessages.findIndex(m =>
-                  m._id.startsWith('temp_') &&
-                  m.type === doc.type &&
-                  (doc.type === 'text' ? m.content === doc.content : m.isLocalImage)
+                  (
+                    incomingClientMsgId &&
+                    m.sendStatus === 'sending' &&
+                    m.clientMsgId === incomingClientMsgId
+                  ) || (
+                    m._id.startsWith('temp_') &&
+                    m.type === doc.type &&
+                    (doc.type === 'text' ? m.content === doc.content : m.isLocalImage)
+                  )
                 )
                 if (tempIndex !== -1) {
                   messagesToUpdate = [...currentMessages]
@@ -705,7 +722,8 @@ Page({
                     ...messagesToUpdate[tempIndex],
                     _id: doc._id,
                     isLocalImage: false,
-                    create_time: doc.create_time  // 同步服务器时间
+                    create_time: doc.create_time,  // 同步服务器时间
+                    sendStatus: 'sent'
                   }
                 } else {
                   // 没找到临时消息，当作新消息处理（可能是其他设备发送的）
@@ -836,8 +854,10 @@ Page({
     const showTime = !lastMsg || (now.getTime() - new Date(lastMsg.create_time).getTime()) / (1000 * 60) > 2
 
     const tempId = 'temp_' + Date.now()
+    const clientMsgId = this.generateClientMsgId()
     const tempMessage = {
       _id: tempId,
+      clientMsgId,
       need_id: currentNeedId,
       sender_id: userInfo._id,
       type: 'text',
@@ -846,7 +866,8 @@ Page({
       isSelf: true,
       senderAvatar: userInfo.avatar,
       timeText: this.formatTime(now),
-      showTime: showTime
+      showTime: showTime,
+      sendStatus: 'sending'
     }
 
     // 合并输入框清空和消息添加，减少 setData 次数
@@ -865,7 +886,7 @@ Page({
     }, () => {
       // 使用 nextTick 确保 DOM 更新后再滚动到最新消息
       wx.nextTick(() => {
-        this.setData({ lastMessageId: 'msg-' + tempId })
+        this.setData({ lastMessageId: 'msg-' + clientMsgId })
       })
     })
 
@@ -876,7 +897,8 @@ Page({
           action: 'sendMessage',
           needId: currentNeedId,
           type: 'text',
-          content
+          content,
+          clientMsgId
         }
       })
 
@@ -887,11 +909,12 @@ Page({
       // 发送成功，直接替换临时消息
       const realMessageId = result.data.messageId
       const messages = this.data.messages.map(m => {
-        if (m._id === tempId) {
+        if (m.clientMsgId === clientMsgId) {
           return {
             ...m,
             _id: realMessageId,
-            create_time: result.data.createTime || new Date().toISOString()
+            create_time: result.data.createTime || new Date().toISOString(),
+            sendStatus: 'sent'
           }
         }
         return m
@@ -899,6 +922,7 @@ Page({
       this.setData({ messages })
 
       // 把真实消息 ID 添加到已处理集合，防止 watch 回调重复处理
+      this.processedMessageIds.delete(tempId)
       this.processedMessageIds.add(realMessageId)
 
     } catch (err) {
@@ -973,8 +997,10 @@ Page({
     const displaySize = this.calculateImageDisplaySize(originalWidth, originalHeight)
 
     const tempId = 'temp_img_' + Date.now()
+    const clientMsgId = this.generateClientMsgId()
     const tempMessage = {
       _id: tempId,
+      clientMsgId,
       need_id: currentNeedId,
       sender_id: userInfo._id,
       type: 'image',
@@ -985,6 +1011,7 @@ Page({
       timeText: this.formatTime(now),
       showTime: showTime,
       isLocalImage: true,
+      sendStatus: 'sending',
       // 预计算显示尺寸
       imageWidth: displaySize.width,
       imageHeight: displaySize.height
@@ -1002,7 +1029,7 @@ Page({
       lastMessageId: ''
     }, () => {
       wx.nextTick(() => {
-        this.setData({ lastMessageId: 'msg-' + tempId })
+        this.setData({ lastMessageId: 'msg-' + clientMsgId })
       })
     })
 
@@ -1023,7 +1050,8 @@ Page({
           type: 'image',
           imageUrl: uploadResult.fileID,
           imageWidth: originalWidth,
-          imageHeight: originalHeight
+          imageHeight: originalHeight,
+          clientMsgId
         }
       })
 
@@ -1034,13 +1062,14 @@ Page({
       // 发送成功，直接替换临时消息
       const realMessageId = result.data.messageId
       const messages = this.data.messages.map(m => {
-        if (m._id === tempId) {
+        if (m.clientMsgId === clientMsgId) {
           return {
             ...m,
             _id: realMessageId,
             imageUrl: uploadResult.fileID,
             isLocalImage: false,
-            create_time: result.data.createTime || new Date().toISOString()
+            create_time: result.data.createTime || new Date().toISOString(),
+            sendStatus: 'sent'
           }
         }
         return m
@@ -1048,6 +1077,7 @@ Page({
       this.setData({ messages })
 
       // 把真实消息 ID 添加到已处理集合，防止 watch 回调重复处理
+      this.processedMessageIds.delete(tempId)
       this.processedMessageIds.add(realMessageId)
 
     } catch (err) {
@@ -1145,14 +1175,17 @@ Page({
         isToolbarExpanded: false
       })
     }
-    // 滚动到底部 + 标记已读
-    this.setData({ 
-      isAtBottom: true,
-      newMessageCount: 0
-    }, () => {
-      this.setData({ lastMessageId: 'bottom-anchor' })
-      this.markMessagesRead()
-    })
+
+    // 如果当前不在底部或未读消息不为0，则滚动到底部 + 标记已读
+    if(!this.data.isAtBottom || this.data.newMessageCount > 0) {
+      this.setData({ 
+        isAtBottom: true,
+        newMessageCount: 0
+      }, () => {
+        this.setData({ lastMessageId: 'bottom-anchor' })
+        this.markMessagesRead()
+      })
+    }
   },
 
   // 完成任务
@@ -1272,5 +1305,10 @@ Page({
   // 辅助函数：格式化日期
   formatDate(date) {
     return `${date.getMonth() + 1}月${date.getDate()}日`
+  },
+
+  // 生成稳定的客户端消息ID（用于列表渲染key，避免发送确认后闪烁）
+  generateClientMsgId() {
+    return `c_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   }
 })

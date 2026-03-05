@@ -195,7 +195,15 @@ async function getMessages(event, OPENID) {
 
 // 发送消息
 async function sendMessage(event, OPENID) {
-  const { needId, type, content, imageUrl, imageWidth: clientWidth, imageHeight: clientHeight } = event
+  const {
+    needId,
+    type,
+    content,
+    imageUrl,
+    imageWidth: clientWidth,
+    imageHeight: clientHeight,
+    clientMsgId
+  } = event
 
   // 验证参数
   if (!needId || !type) {
@@ -280,6 +288,7 @@ async function sendMessage(event, OPENID) {
   // 确保 need_id 是字符串类型，与前端监听查询保持一致
   const message = {
     need_id: String(needId),
+    client_msg_id: clientMsgId || '',
     sender_id: currentUserId,
     receiver_id: receiverId,
     type: type,

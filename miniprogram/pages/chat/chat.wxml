@@ -79,8 +79,8 @@
     <!-- 消息项 -->
     <view
       wx:for="{{messages}}"
-      wx:key="_id"
-      id="msg-{{item._id}}"
+      wx:key="clientMsgId"
+      id="msg-{{item.clientMsgId}}"
       class="message-item {{item.isSelf ? 'self' : 'other'}}"
     >
       <!-- 时间分隔线 -->
@@ -97,7 +97,7 @@
         </view>
 
         <!-- 文字消息 loading 指示器（自己发的临时消息显示在左侧） -->
-        <view class="message-loading" wx:if="{{item.isSelf && item._id.startsWith('temp_') && item.type === 'text'}}">
+        <view class="message-loading" wx:if="{{item.isSelf && item.sendStatus === 'sending' && item.type === 'text'}}">
           <view class="loading-dot"></view>
         </view>
 

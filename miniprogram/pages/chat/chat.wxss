@@ -920,7 +920,7 @@
   justify-content: center;
   width: 40rpx;
   height: 40rpx;
-  margin-right: 12rpx;
+  margin-right: 6rpx;
   align-self: center;
 }
 
