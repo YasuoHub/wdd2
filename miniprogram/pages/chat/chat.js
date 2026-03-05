@@ -884,11 +884,32 @@ Page({
         throw new Error(result.message)
       }
 
-      // 发送成功，监听回调会自动添加消息到列表
-      console.log('消息发送成功，等待监听回调:', result.data.messageId)
+      // 发送成功，直接替换临时消息
+      const realMessageId = result.data.messageId
+      const messages = this.data.messages.map(m => {
+        if (m._id === tempId) {
+          return {
+            ...m,
+            _id: realMessageId,
+            create_time: result.data.createTime || new Date().toISOString()
+          }
+        }
+        return m
+      })
+      this.setData({ messages })
+
+      // 把真实消息 ID 添加到已处理集合，防止 watch 回调重复处理
+      this.processedMessageIds.add(realMessageId)
 
     } catch (err) {
       console.error('发送消息失败:', err)
+
+      // 发送失败，删除临时消息
+      const messages = this.data.messages.filter(m => m._id !== tempId)
+      this.setData({ messages })
+
+      // 删除临时消息 ID
+      this.processedMessageIds.delete(tempId)
 
       wx.showToast({
         title: '发送失败',
@@ -1010,10 +1031,35 @@ Page({
         throw new Error(result.message)
       }
 
-      console.log('图片发送成功，等待监听回调:', result.data.messageId)
+      // 发送成功，直接替换临时消息
+      const realMessageId = result.data.messageId
+      const messages = this.data.messages.map(m => {
+        if (m._id === tempId) {
+          return {
+            ...m,
+            _id: realMessageId,
+            imageUrl: uploadResult.fileID,
+            isLocalImage: false,
+            create_time: result.data.createTime || new Date().toISOString()
+          }
+        }
+        return m
+      })
+      this.setData({ messages })
+
+      // 把真实消息 ID 添加到已处理集合，防止 watch 回调重复处理
+      this.processedMessageIds.add(realMessageId)
 
     } catch (err) {
       console.error('发送图片失败:', err)
+
+      // 发送失败，删除临时消息
+      const messages = this.data.messages.filter(m => m._id !== tempId)
+      this.setData({ messages })
+
+      // 删除临时消息 ID
+      this.processedMessageIds.delete(tempId)
+
       wx.showToast({ title: '发送失败', icon: 'none' })
     }
   },
