@@ -66,12 +66,14 @@
     class="message-list"
     scroll-y
     scroll-into-view="{{lastMessageId}}"
+    scroll-top="{{scrollTop}}"
     enhanced
     show-scrollbar="{{false}}"
     refresher-enabled="{{hasMoreMessages}}"
     refresher-triggered="{{isRefreshing}}"
     bindrefresherrefresh="onRefresh"
     bindrefresherrestore="onRestore"
+    bindscroll="onScroll"
   >
 
     <!-- 消息项 -->
@@ -137,6 +139,16 @@
     <!-- 底部占位 -->
     <view id="bottom-anchor" style="height: 20rpx;"></view>
   </scroll-view>
+
+  <!-- 未读新消息提示按钮 -->
+  <view 
+    class="new-message-btn {{newMessageCount > 0 ? 'show' : ''}}" 
+    bindtap="scrollToBottomAndClear"
+    wx:if="{{newMessageCount > 0}}"
+  >
+    <text class="btn-arrow">↓</text>
+    <text class="btn-text">{{newMessageCount}}条新消息</text>
+  </view>
 
   <!-- 底部操作栏 -->
   <view class="input-area">

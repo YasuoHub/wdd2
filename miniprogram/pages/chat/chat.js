@@ -29,6 +29,12 @@ Page({
     hasMoreMessages: true,  // 默认允许下拉刷新，首次加载后根据实际结果更新
     pageSize: 20,
 
+    // 滚动状态
+    isAtBottom: true,      // 当前是否在底部
+    newMessageCount: 0,     // 未滚动到底部的新消息数
+    scrollTop: 0,          // 记录滚动位置
+    scrollViewHeight: 0,   // scroll-view 高度
+
     // 弹窗
     showCompleteModal: false,
 
@@ -69,6 +75,9 @@ Page({
     // 重置已处理消息ID集合
     this.processedMessageIds = new Set()
 
+    // 获取 scroll-view 高度
+    this.getScrollViewHeight()
+
     // 串行加载，避免同时发起多个云函数调用
     this.loadTaskInfo().then((result) => {
       // 如果加载失败，不继续
@@ -102,6 +111,10 @@ Page({
         console.error('启动消息监听失败:', err)
         this.startMessagePolling()
       })
+    }
+    // 只有在底部时才标记已读
+    if (this.data.isAtBottom) {
+      this.markMessagesRead()
     }
   },
 
@@ -246,9 +259,24 @@ Page({
             }
             finalMessages = [...finalMessages, ...formattedNewDocs]
           }
+          // 先更新消息，等渲染完成后再处理滚动和已读
           this.setData({
-            messages: finalMessages,
-            lastMessageId: newDocs.length > 0 ? 'bottom-anchor' : this.data.lastMessageId
+            messages: finalMessages
+          }, () => {
+            if (newDocs.length > 0) {
+              wx.nextTick(() => {
+                if (this.data.isAtBottom) {
+                  // 在底部：滚动到底部 + 标记已读
+                  this.setData({ lastMessageId: 'bottom-anchor' })
+                  this.markMessagesRead()
+                } else {
+                  // 不在底部：显示按钮 + 不标记已读
+                  this.setData({ 
+                    newMessageCount: this.data.newMessageCount + newDocs.length 
+                  })
+                }
+              })
+            }
           })
         }
       }
@@ -257,6 +285,64 @@ Page({
     } finally {
       this._isPolling = false
     }
+  },
+
+  // 标记当前会话消息为已读
+  async markMessagesRead() {
+    const currentNeedId = this.currentNeedId
+    if (!currentNeedId) return
+
+    try {
+      await wx.cloud.callFunction({
+        name: 'wdd-notify',
+        data: {
+          action: 'markAsRead',
+          notificationId: currentNeedId,
+          type: 'chat'
+        }
+      })
+      console.log('消息已标记为已读')
+    } catch (err) {
+      console.error('标记已读失败:', err)
+    }
+  },
+
+  // 获取 scroll-view 高度
+  getScrollViewHeight() {
+    const query = wx.createSelectorQuery()
+    query.select('.message-list').boundingClientRect(rect => {
+      if (rect && rect.height) {
+        this.setData({ scrollViewHeight: rect.height })
+      }
+    }).exec()
+  },
+
+  // 监听滚动事件，判断是否在底部
+  onScroll(e) {
+    const { scrollTop, scrollHeight } = e.detail
+    const clientHeight = this.data.scrollViewHeight || 0
+    const isAtBottom = clientHeight > 0 && (scrollHeight - scrollTop - clientHeight < 50)
+    
+    if (isAtBottom !== this.data.isAtBottom) {
+      this.setData({ isAtBottom })
+      if (isAtBottom) {
+        // 滚动到底部：标记已读 + 清零计数
+        this.markMessagesRead()
+        this.setData({ newMessageCount: 0 })
+      }
+    }
+  },
+
+  // 点击未读消息按钮滚动到底部
+  scrollToBottomAndClear() {
+    this.setData({
+      isAtBottom: true,
+      newMessageCount: 0,
+      lastMessageId: 'bottom-anchor'
+    }, () => {
+      // 滚动到底部后标记已读
+      this.markMessagesRead()
+    })
   },
 
   // 加载任务信息
@@ -647,9 +733,24 @@ Page({
                 }
                 finalMessages = [...finalMessages, ...formattedNewDocs]
               }
+              // 先更新消息，等渲染完成后再处理滚动和已读
               this.setData({
-                messages: finalMessages,
-                lastMessageId: newDocs.length > 0 ? 'bottom-anchor' : this.data.lastMessageId
+                messages: finalMessages
+              }, () => {
+                if (newDocs.length > 0) {
+                  wx.nextTick(() => {
+                    if (this.data.isAtBottom) {
+                      // 在底部：滚动到底部 + 标记已读
+                      this.setData({ lastMessageId: 'bottom-anchor' })
+                      this.markMessagesRead()
+                    } else {
+                      // 不在底部：显示按钮 + 不标记已读
+                      this.setData({ 
+                        newMessageCount: this.data.newMessageCount + newDocs.length 
+                      })
+                    }
+                  })
+                }
               })
             }
           },
@@ -998,6 +1099,14 @@ Page({
         isToolbarExpanded: false
       })
     }
+    // 滚动到底部 + 标记已读
+    this.setData({ 
+      isAtBottom: true,
+      newMessageCount: 0
+    }, () => {
+      this.setData({ lastMessageId: 'bottom-anchor' })
+      this.markMessagesRead()
+    })
   },
 
   // 完成任务

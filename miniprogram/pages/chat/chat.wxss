@@ -983,3 +983,36 @@
     transform: rotate(360deg);
   }
 }
+
+/* 未读新消息提示按钮 */
+.new-message-btn {
+  position: fixed;
+  right: 30rpx;
+  bottom: 150rpx;
+  background: var(--sky-pale);
+  padding: 16rpx 24rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(20rpx);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.new-message-btn.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-arrow {
+  font-size: 24rpx;
+  color: var(--text-primary);
+}
+
+.btn-text {
+  font-size: 24rpx;
+  color: var(--text-primary);
+}
