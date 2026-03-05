@@ -172,7 +172,7 @@
             type="text"
             value="{{inputValue}}"
             placeholder="输入消息..."
-            confirm-type="send"
+            confirm-type="confirm"
             bindinput="onInput"
             bindconfirm="sendTextMessage"
             bindfocus="onInputFocus"
