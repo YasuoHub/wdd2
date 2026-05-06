@@ -15,7 +15,7 @@ const FILTERS = [
 // 排序选项
 const SORT_OPTIONS = [
   { value: 'distance', label: '距离最近', icon: '📍' },
-  { value: 'points', label: '积分最高', icon: '💎' },
+  { value: 'reward', label: '金额最高', icon: '💰' },
   { value: 'time', label: '时间最新', icon: '⏱️' }
 ]
 

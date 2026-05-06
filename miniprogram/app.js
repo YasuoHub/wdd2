@@ -32,8 +32,10 @@ App({
       this.startGlobalMessageWatch()
     }
 
-    // 获取用户当前位置（不阻塞启动）
-    this.updateUserLocation()
+    // 获取用户当前位置（不阻塞启动；位置可能因 GPS 弱/未授权 timeout，静默忽略）
+    this.updateUserLocation().catch(err => {
+      console.warn('启动时获取位置失败:', err.errMsg || err.message)
+    })
   },
 
   onShow() {
@@ -42,8 +44,10 @@ App({
       this.updateTabBarBadge()
     }
 
-    // 每次显示小程序时更新用户位置
-    this.updateUserLocation()
+    // 每次显示小程序时更新用户位置（静默忽略失败）
+    this.updateUserLocation().catch(err => {
+      console.warn('onShow 获取位置失败:', err.errMsg || err.message)
+    })
   },
 
   // 获取/更新用户当前位置

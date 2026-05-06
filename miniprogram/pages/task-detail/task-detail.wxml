@@ -30,10 +30,10 @@
         <text>{{task.typeName}}</text>
       </view>
 
-      <!-- 积分 -->
-      <view class="points-badge">
-        <text class="points-value">{{task.points}}</text>
-        <text class="points-label">积分</text>
+      <!-- 悬赏金额 -->
+      <view class="amount-badge">
+        <text class="amount-symbol">¥</text>
+        <text class="amount-value">{{task.rewardAmount || 0}}</text>
       </view>
 
       <!-- 描述 -->
@@ -130,7 +130,7 @@
       class="action-btn primary large"
       bindtap="takeTask"
     >
-      立即接单 (+{{task.points}}积分)
+      立即接单 (+¥{{task._takerIncome}})
     </button>
 
     <!-- 已接单状态：可以聊天 -->

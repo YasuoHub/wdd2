@@ -1,0 +1,86 @@
+<!-- 提现页面 -->
+<view class="container">
+  <!-- 余额展示 -->
+  <view class="balance-section">
+    <text class="balance-label">可提现余额</text>
+    <view class="balance-amount">
+      <text class="amount-symbol">¥</text>
+      <text class="amount-number">{{formatMoney(balance)}}</text>
+    </view>
+  </view>
+
+  <!-- 提现金额输入 -->
+  <view class="withdraw-section">
+    <view class="section-title">
+      <text>提现金额</text>
+      <text class="all-btn" bindtap="withdrawAll">全部提现</text>
+    </view>
+
+    <view class="amount-input-wrapper">
+      <text class="input-symbol">¥</text>
+      <input
+        class="amount-input"
+        type="digit"
+        value="{{withdrawAmount}}"
+        bindinput="onAmountInput"
+        placeholder="{{withdrawMinAmount}}"
+        placeholder-class="input-placeholder"
+        focus
+      />
+    </view>
+
+    <view wx:if="{{errorTip}}" class="error-tip">
+      <text>{{errorTip}}</text>
+    </view>
+  </view>
+
+  <!-- 到账信息 -->
+  <view class="detail-section">
+    <view class="detail-row">
+      <text class="detail-label">提现金额</text>
+      <text class="detail-value">¥{{withdrawAmount || '0.00'}}</text>
+    </view>
+    <view class="detail-row">
+      <text class="detail-label">手续费（{{withdrawFeeRate}}%）</text>
+      <text class="detail-value fee">-¥{{withdrawFee}}</text>
+    </view>
+    <view class="detail-divider"></view>
+    <view class="detail-row total">
+      <text class="detail-label">实际到账</text>
+      <text class="detail-value actual">¥{{actualAmount}}</text>
+    </view>
+  </view>
+
+  <!-- 提现规则 -->
+  <view class="rules-section">
+    <view class="rules-title">提现规则</view>
+    <view class="rule-item">
+      <text class="rule-dot"></text>
+      <text class="rule-text">最低提现金额：¥{{withdrawMinAmount}}</text>
+    </view>
+    <view class="rule-item">
+      <text class="rule-dot"></text>
+      <text class="rule-text">单次最低：¥{{withdrawMinPerRequest}}，最高：¥{{withdrawMaxPerRequest}}</text>
+    </view>
+    <view class="rule-item">
+      <text class="rule-dot"></text>
+      <text class="rule-text">手续费率：{{withdrawFeeRate}}%</text>
+    </view>
+    <view class="rule-item">
+      <text class="rule-dot"></text>
+      <text class="rule-text">预计到账时间：1-3个工作日</text>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="footer">
+    <button
+      class="submit-btn {{canSubmit ? '' : 'disabled'}}"
+      bindtap="handleSubmit"
+      disabled="{{!canSubmit || isSubmitting}}"
+    >
+      <text wx:if="{{isSubmitting}}">提交中...</text>
+      <text wx:else>确认提现</text>
+    </button>
+  </view>
+</view>

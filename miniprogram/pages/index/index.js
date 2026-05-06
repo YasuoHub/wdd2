@@ -322,6 +322,7 @@ Page({
             location: item.location,
             locationName: item.locationName || '未知位置',
             points: item.points,
+            rewardAmount: item.rewardAmount || 0,
             status: item.status,
             distance: item.distance,
             distanceText: distanceText,

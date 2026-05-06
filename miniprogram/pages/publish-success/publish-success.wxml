@@ -1,0 +1,53 @@
+<!-- 发布成功页面 -->
+<view class="container {{showAnimation ? 'show' : ''}}">
+  <!-- 成功动画区域 -->
+  <view class="success-section">
+    <view class="success-icon">✅</view>
+    <text class="success-title">发布成功！</text>
+    <text class="success-subtitle">您的求助已上线，正在为您匹配附近帮助者</text>
+  </view>
+
+  <!-- 任务信息卡片 -->
+  <view class="task-info-card">
+    <view class="info-row">
+      <text class="info-label">求助类型</text>
+      <text class="info-value">{{typeName}}</text>
+    </view>
+    <view class="info-divider"></view>
+    <view class="info-row">
+      <text class="info-label">悬赏金额</text>
+      <text class="info-value amount">¥{{amount}}</text>
+    </view>
+    <view class="info-divider"></view>
+    <view class="info-row">
+      <text class="info-label">帮助者获得</text>
+      <text class="info-value income">¥{{takerIncome}}</text>
+    </view>
+  </view>
+
+  <!-- 提示信息 -->
+  <view class="tips-section">
+    <view class="tip-item">
+      <text class="tip-icon">⏱️</text>
+      <text class="tip-text">任务有效期内，系统会自动匹配附近的帮助者</text>
+    </view>
+    <view class="tip-item">
+      <text class="tip-icon">💬</text>
+      <text class="tip-text">有帮助者接单后，您会收到通知，可立即开始沟通</text>
+    </view>
+    <view class="tip-item">
+      <text class="tip-icon">💰</text>
+      <text class="tip-text">任务取消后，悬赏金额将原路退回至您的账户</text>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="footer">
+    <button class="btn-primary" bindtap="goToTaskDetail">
+      查看任务详情
+    </button>
+    <button class="btn-secondary" bindtap="goToHome">
+      返回首页
+    </button>
+  </view>
+</view>

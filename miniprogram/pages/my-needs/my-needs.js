@@ -230,7 +230,7 @@ Page({
 
     wx.showModal({
       title: '确认取消',
-      content: '取消后积分将退还，确定要取消吗？',
+      content: '取消后悬赏金额将原路退回，确定要取消吗？',
       confirmColor: '#FF6B6B',
       success: (res) => {
         if (res.confirm) {

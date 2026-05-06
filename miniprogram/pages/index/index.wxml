@@ -97,7 +97,8 @@
             <view class="type-icon">{{item.typeIcon}}</view>
             <text class="type-name">{{item.typeName}}</text>
           </view>
-          <text class="need-points">+{{item.points}}积分</text>
+          <text class="need-points" wx:if="{{item.rewardAmount > 0}}">¥{{item.rewardAmount}}</text>
+          <text class="need-points" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
         </view>
         <view class="need-content">{{item.description || '暂无详细描述'}}</view>
         <view class="need-footer">

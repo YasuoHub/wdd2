@@ -316,21 +316,21 @@
   color: var(--text-primary);
 }
 
-.points-badge {
+.amount-badge {
   display: flex;
   align-items: center;
   gap: 4rpx;
   padding: 10rpx 20rpx;
-  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
+  background: linear-gradient(135deg, #FFD166 0%, #FFB347 100%);
   border-radius: var(--radius-full);
-  box-shadow: var(--shadow-orange);
+  box-shadow: 0 4rpx 16rpx rgba(255, 209, 102, 0.35);
 }
 
-.points-icon {
+.amount-icon {
   font-size: 22rpx;
 }
 
-.points-value {
+.amount-value {
   font-size: 24rpx;
   font-weight: 700;
   color: white;

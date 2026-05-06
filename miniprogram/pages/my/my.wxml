@@ -13,21 +13,21 @@
       </view>
     </view>
 
-    <!-- 积分展示 -->
-    <view class="points-section">
-      <view class="points-item">
-        <text class="points-value">{{userInfo.total_points || 0}}</text>
-        <text class="points-label">总积分</text>
+    <!-- 余额展示 -->
+    <view class="balance-section" bindtap="goToWallet">
+      <view class="balance-item">
+        <text class="balance-value">¥{{userInfo.balance || 0}}</text>
+        <text class="balance-label">平台余额</text>
       </view>
-      <view class="points-divider"></view>
-      <view class="points-item">
-        <text class="points-value available">{{userInfo.available_points || 0}}</text>
-        <text class="points-label">可用积分</text>
+      <view class="balance-divider"></view>
+      <view class="balance-item">
+        <text class="balance-value points">{{userInfo.total_points || 0}}</text>
+        <text class="balance-label">总积分</text>
       </view>
-      <view class="points-divider"></view>
-      <view class="points-item">
-        <text class="points-value frozen">{{userInfo.frozen_points || 0}}</text>
-        <text class="points-label">冻结中</text>
+      <view class="balance-divider"></view>
+      <view class="balance-item">
+        <text class="balance-value available">{{userInfo.available_points || 0}}</text>
+        <text class="balance-label">可用积分</text>
       </view>
     </view>
 
@@ -86,8 +86,18 @@
   </view>
 
   <view class="menu-section">
-    <view class="menu-title">积分管理</view>
+    <view class="menu-title">资产管理</view>
     <view class="menu-list">
+      <view class="menu-item" bindtap="goToWallet">
+        <view class="menu-icon-wrapper" style="background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 179, 71, 0.15));">
+          <text class="menu-icon">💰</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">我的钱包</text>
+          <text class="menu-desc">余额 ¥{{userInfo.balance || 0}}</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
       <view class="menu-item" bindtap="goToPointRecords">
         <view class="menu-icon-wrapper" style="background: rgba(253, 203, 110, 0.15);">
           <text class="menu-icon">💰</text>

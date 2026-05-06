@@ -67,7 +67,8 @@
         <!-- 卡片底部 -->
         <view class="card-footer">
           <view class="meta-left">
-            <view class="points-tag">{{item.points}}积分</view>
+            <view class="points-tag" wx:if="{{item.rewardAmount > 0}}">¥{{item.rewardAmount}}</view>
+            <view class="points-tag" wx:elif="{{item.points > 0}}">{{item.points}}积分</view>
             <!-- 只有待匹配状态才显示剩余时间 -->
             <view wx:if="{{item.status === 'pending'}}" class="countdown">
               剩余{{item.remainTime}}

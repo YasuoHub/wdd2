@@ -16,7 +16,10 @@
     "pages/rating-detail/rating-detail",
     "pages/point-records/point-records",
     "pages/user-info/user-info",
-    "pages/helper-profile/helper-profile"
+    "pages/helper-profile/helper-profile",
+    "pages/publish-success/publish-success",
+    "pages/wallet/wallet",
+    "pages/withdraw/withdraw"
   ],
   "window": {
     "backgroundTextStyle": "light",

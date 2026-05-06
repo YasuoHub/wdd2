@@ -736,3 +736,305 @@
   font-size: 24rpx;
   color: var(--text-light);
 }
+
+/* 金额图标 */
+.section-icon.amount {
+  background: linear-gradient(
+    135deg,
+    #FFD166 0%,
+    #FFB347 100%
+  );
+}
+
+/* 金额输入 */
+.amount-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 32rpx;
+  background: rgba(255, 209, 102, 0.08);
+  border-radius: 28rpx;
+  border: 2rpx solid rgba(255, 209, 102, 0.2);
+  margin-bottom: 24rpx;
+}
+
+.amount-symbol {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--vitality-orange);
+}
+
+.amount-input {
+  flex: 1;
+  max-width: 200rpx;
+  font-size: 64rpx;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  height: auto;
+  min-height: 80rpx;
+}
+
+.amount-placeholder {
+  color: var(--text-light);
+  font-size: 48rpx;
+}
+
+.amount-unit {
+  font-size: 32rpx;
+  color: var(--text-tertiary);
+}
+
+/* 金额滑块 */
+.amount-slider {
+  margin: 20rpx 0;
+}
+
+.amount-range {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 24rpx;
+  color: var(--text-light);
+  padding: 0 10rpx;
+}
+
+.amount-current {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--vitality-orange);
+}
+
+/* 快捷金额 */
+.quick-amounts {
+  display: flex;
+  justify-content: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.quick-amount {
+  padding: 16rpx 32rpx;
+  background: rgba(240, 248, 255, 0.8);
+  border-radius: var(--radius-full);
+  font-size: 26rpx;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  transition: all 0.3s;
+  border: 2rpx solid rgba(93, 184, 230, 0.1);
+}
+
+.quick-amount.active {
+  background: linear-gradient(
+    135deg,
+    var(--vitality-orange) 0%,
+    var(--vitality-coral) 100%
+  );
+  color: white;
+  box-shadow: 0 4rpx 16rpx rgba(255, 140, 105, 0.35);
+}
+
+/* 金额明细 */
+.amount-detail {
+  background: rgba(240, 248, 255, 0.8);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;
+  border: 2rpx solid rgba(93, 184, 230, 0.1);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.detail-row.total {
+  padding-top: 16rpx;
+  margin-top: 8rpx;
+}
+
+.detail-label {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.detail-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detail-value.fee {
+  color: var(--vitality-orange);
+}
+
+.detail-value.income {
+  color: var(--fresh-mint);
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.detail-divider {
+  height: 2rpx;
+  background: rgba(93, 184, 230, 0.15);
+  margin: 8rpx 0;
+}
+
+/* 平台规则提示 */
+.rules-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 20rpx;
+  background: rgba(93, 184, 230, 0.08);
+  border-radius: 16rpx;
+  margin-top: 24rpx;
+  border: 2rpx solid rgba(93, 184, 230, 0.15);
+}
+
+.rules-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.rules-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.rules-arrow {
+  font-size: 28rpx;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+/* 底部发布栏 */
+.publish-amount {
+  font-size: 40rpx;
+  font-weight: 800;
+  background: linear-gradient(
+    135deg,
+    var(--vitality-orange) 0%,
+    var(--vitality-coral) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 平台规则弹窗 */
+.rules-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rules-modal-content {
+  background: white;
+  border-radius: 40rpx 40rpx 0 0;
+  width: 100%;
+  max-height: 80vh;
+  padding: 40rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.rules-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+
+.rules-modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rules-modal-close {
+  font-size: 48rpx;
+  color: var(--text-light);
+  line-height: 1;
+  padding: 8rpx;
+}
+
+.rules-modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid rgba(93, 184, 230, 0.1);
+}
+
+.rule-item:last-child {
+  border-bottom: none;
+}
+
+.rule-icon {
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.rule-content {
+  flex: 1;
+}
+
+.rule-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+.rule-desc {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.rules-modal-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(
+    135deg,
+    var(--sky-primary) 0%,
+    var(--sky-light) 100%
+  );
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-top: 32rpx;
+  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+}

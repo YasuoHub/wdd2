@@ -1,5 +1,6 @@
 // 任务详情页
 const app = getApp()
+const { MoneyUtils, PLATFORM_RULES } = require('../../utils/platformRules')
 
 Page({
   data: {
@@ -12,7 +13,8 @@ Page({
     canChat: false,
     canComplete: false,
     canCancel: false,
-    loading: true
+    loading: true,
+    feeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
   },
 
   onLoad(options) {
@@ -82,6 +84,12 @@ Page({
         }
         task.statusText = statusTextMap[task.status] || task.status
 
+        // 计算金额显示值（避免WXML中写死比例）
+        const rewardAmount = task.rewardAmount || 0
+        task._displayAmount = rewardAmount
+        task._platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
+        task._takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+
         this.setData({
           task,
           isSeeker,
@@ -109,9 +117,13 @@ Page({
   async takeTask() {
     if (!this.data.canTake) return
 
+    const rewardAmount = this.data.task.rewardAmount || 0
+    const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+    const feeRate = Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
+
     wx.showModal({
       title: '确认接单',
-      content: `承接此任务可获得 ${this.data.task.points} 积分，确定要接单吗？`,
+      content: `承接此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要接单吗？`,
       success: async (res) => {
         if (res.confirm) {
           wx.showLoading({ title: '处理中...' })
@@ -168,7 +180,7 @@ Page({
 
     wx.showModal({
       title: '确认完成',
-      content: '确认帮助者已完成任务？积分将转给对方',
+      content: '确认帮助者已完成任务？悬赏金额将结算给对方',
       success: (res) => {
         if (res.confirm) {
           this.doCompleteTask()
@@ -225,7 +237,7 @@ Page({
 
     wx.showModal({
       title: '确认取消',
-      content: '取消后积分将退还，确定要取消吗？',
+      content: '取消后悬赏金额将原路退回，确定要取消吗？',
       confirmColor: '#ff4d4f',
       success: (res) => {
         if (res.confirm) {

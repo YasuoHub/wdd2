@@ -91,9 +91,9 @@
               <text class="type-icon">{{item.typeIcon}}</text>
               <text class="type-name">{{item.typeName}}</text>
             </view>
-            <view class="points-badge">
-              <text class="points-icon">💎</text>
-              <text class="points-value">+{{item.points}}</text>
+            <view class="amount-badge">
+              <text class="amount-icon">💰</text>
+              <text class="amount-value">¥{{item.rewardAmount || item.points / 10}}</text>
             </view>
           </view>
 

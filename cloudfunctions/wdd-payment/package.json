@@ -1,0 +1,9 @@
+{
+  "name": "wdd-payment",
+  "version": "1.0.0",
+  "description": "微信支付相关云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

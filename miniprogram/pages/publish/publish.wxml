@@ -148,7 +148,7 @@
         <view class="section-icon time">⏱️</view>
         <view class="section-info">
           <text class="section-title">有效时间</text>
-          <text class="section-subtitle">超时自动取消，积分退还</text>
+          <text class="section-subtitle">超时自动取消，金额原路退回</text>
         </view>
       </view>
 
@@ -166,67 +166,84 @@
       </view>
     </view>
 
-    <!-- 悬赏积分 -->
+    <!-- 悬赏金额 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon points">💎</view>
+        <view class="section-icon amount">💰</view>
         <view class="section-info">
-          <text class="section-title">悬赏积分</text>
+          <text class="section-title">悬赏金额</text>
           <text class="section-subtitle">设置悬赏，吸引更多帮助者</text>
         </view>
       </view>
 
-      <view class="points-setting">
-        <view class="points-slider-wrapper">
-          <slider
-            class="points-slider"
-            min="10"
-            max="100"
-            step="5"
-            value="{{rewardPoints}}"
-            activeColor="#A8E6CF"
-            backgroundColor="#F5EDE4"
-            block-size="28"
-            bindchange="onPointsChange"
+      <!-- 金额输入 -->
+      <view class="amount-setting">
+        <view class="amount-input-wrapper">
+          <text class="amount-symbol">¥</text>
+          <input
+            class="amount-input"
+            type="digit"
+            value="{{rewardAmount}}"
+            bindinput="onAmountInput"
+            placeholder="{{minRewardAmount}}"
+            placeholder-class="amount-placeholder"
           />
-          <view class="points-range">
-            <text>10</text>
-            <text class="points-current">
-              <text class="points-number">{{rewardPoints}}</text>
-              <text class="points-unit">积分</text>
-            </text>
-            <text>100</text>
-          </view>
+          <text class="amount-unit">元</text>
         </view>
 
-        <!-- 快捷积分选择 -->
-        <view class="quick-points">
+        <slider
+          class="amount-slider"
+          min="{{minRewardAmount}}"
+          max="{{maxRewardAmount}}"
+          step="1"
+          value="{{rewardAmount}}"
+          activeColor="#FF8C69"
+          backgroundColor="#F5EDE4"
+          block-size="28"
+          bindchange="onAmountChange"
+        />
+        <view class="amount-range">
+          <text>{{minRewardAmount}}元</text>
+          <text class="amount-current">{{rewardAmount}}元</text>
+          <text>{{maxRewardAmount}}元</text>
+        </view>
+
+        <!-- 快捷金额选择 -->
+        <view class="quick-amounts">
           <view
-            wx:for="{{quickPoints}}"
+            wx:for="{{quickAmounts}}"
             wx:key="*this"
-            class="quick-point {{rewardPoints === item ? 'active' : ''}}"
-            bindtap="selectQuickPoints"
-            data-points="{{item}}"
+            class="quick-amount {{rewardAmount === item ? 'active' : ''}}"
+            bindtap="selectQuickAmount"
+            data-amount="{{item}}"
           >
-            {{item}}
+            {{item}}元
           </view>
         </view>
       </view>
 
-      <!-- 积分提示 -->
-      <view class="points-tip-wrapper">
-        <view class="points-balance">
-          <text class="balance-label">可用积分</text>
-          <text class="balance-value {{availablePoints < rewardPoints ? 'insufficient' : ''}}">{{availablePoints}}</text>
+      <!-- 金额明细与平台规则 -->
+      <view class="amount-detail">
+        <view class="detail-row">
+          <text class="detail-label">悬赏金额</text>
+          <text class="detail-value">¥{{rewardAmount}}</text>
         </view>
-        <view wx:if="{{availablePoints < rewardPoints}}" class="points-warning">
-          <text class="warning-icon">⚠️</text>
-          <text class="warning-text">积分不足，去签到获取</text>
+        <view class="detail-row">
+          <text class="detail-label">平台服务费（{{platformFeeRate}}%）</text>
+          <text class="detail-value fee">-¥{{platformFee}}</text>
         </view>
-        <view wx:else class="points-estimate">
-          <text class="estimate-label">约等于</text>
-          <text class="estimate-value">{{estimateValue}}元</text>
+        <view class="detail-divider"></view>
+        <view class="detail-row total">
+          <text class="detail-label">帮助者实际获得</text>
+          <text class="detail-value income">¥{{takerIncome}}</text>
         </view>
+      </view>
+
+      <!-- 平台规则提示 -->
+      <view class="rules-tip" bindtap="showPlatformRules">
+        <text class="rules-icon">ℹ️</text>
+        <text class="rules-text">平台规则：{{feePolicy}}。{{refundPolicy}}</text>
+        <text class="rules-arrow">›</text>
       </view>
     </view>
 
@@ -238,17 +255,65 @@
   <view class="footer">
     <view class="footer-content">
       <view class="publish-info">
-        <text class="publish-label">悬赏</text>
-        <text class="publish-points">{{rewardPoints}}积分</text>
+        <text class="publish-label">需支付</text>
+        <text class="publish-amount">¥{{rewardAmount}}</text>
       </view>
       <button
         class="publish-btn {{!canPublish ? 'disabled' : ''}}"
         bindtap="handlePublish"
         disabled="{{!canPublish || isPublishing}}"
       >
-        <text wx:if="{{isPublishing}}" class="loading">发布中...</text>
-        <text wx:else>立即发布</text>
+        <text wx:if="{{isPublishing}}" class="loading">处理中...</text>
+        <text wx:else>立即支付并发布</text>
       </button>
+    </view>
+  </view>
+
+  <!-- 平台规则弹窗 -->
+  <view wx:if="{{showRulesModal}}" class="rules-modal" bindtap="hidePlatformRules">
+    <view class="rules-modal-content" catchtap="preventHide">
+      <view class="rules-modal-header">
+        <text class="rules-modal-title">平台规则说明</text>
+        <text class="rules-modal-close" bindtap="hidePlatformRules">×</text>
+      </view>
+      <view class="rules-modal-body">
+        <view class="rule-item">
+          <text class="rule-icon">💰</text>
+          <view class="rule-content">
+            <text class="rule-title">悬赏支付</text>
+            <text class="rule-desc">发布任务时需先支付悬赏金额，支付成功后任务才会上线。</text>
+          </view>
+        </view>
+        <view class="rule-item">
+          <text class="rule-icon">📊</text>
+          <view class="rule-content">
+            <text class="rule-title">平台服务费</text>
+            <text class="rule-desc">平台对每单任务收取{{platformFeeRate}}%服务费，用于平台运营和技术维护。</text>
+          </view>
+        </view>
+        <view class="rule-item">
+          <text class="rule-icon">↩️</text>
+          <view class="rule-content">
+            <text class="rule-title">取消退款</text>
+            <text class="rule-desc">任务超时无人接单或手动取消，悬赏金额将原路退回至您的支付账户。</text>
+          </view>
+        </view>
+        <view class="rule-item">
+          <text class="rule-icon">✅</text>
+          <view class="rule-content">
+            <text class="rule-title">任务完成</text>
+            <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入平台余额。</text>
+          </view>
+        </view>
+        <view class="rule-item">
+          <text class="rule-icon">🏦</text>
+          <view class="rule-content">
+            <text class="rule-title">提现规则</text>
+            <text class="rule-desc">平台余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>
+          </view>
+        </view>
+      </view>
+      <button class="rules-modal-btn" bindtap="hidePlatformRules">我知道了</button>
     </view>
   </view>
 </view>

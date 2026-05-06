@@ -280,6 +280,14 @@ Page({
     })
   },
 
+  // 跳转到钱包
+  goToWallet() {
+    if (!this.checkLoginAndShowTip()) return
+    wx.navigateTo({
+      url: '/pages/wallet/wallet'
+    })
+  },
+
   // 跳转到帮助者资料页面
   goToHelperProfile() {
     if (!this.checkLoginAndShowTip()) return

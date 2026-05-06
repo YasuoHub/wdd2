@@ -133,30 +133,44 @@
   font-size: 28rpx;
 }
 
-/* 积分徽章 */
-.points-badge {
+/* 金额徽章 */
+.amount-badge {
   display: flex;
   align-items: baseline;
-  gap: 8rpx;
-  margin-bottom: 32rpx;
+  gap: 4rpx;
+  margin-bottom: 12rpx;
   padding: 20rpx 28rpx;
-  background: linear-gradient(135deg, rgba(255, 140, 105, 0.1) 0%, rgba(255, 154, 139, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.1) 0%, rgba(255, 179, 71, 0.1) 100%);
   border-radius: var(--radius-sm);
-  border: 2rpx solid rgba(255, 140, 105, 0.15);
+  border: 2rpx solid rgba(255, 209, 102, 0.2);
 }
 
-.points-value {
+.amount-symbol {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--vitality-orange);
+}
+
+.amount-value {
   font-size: 48rpx;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
+  background: linear-gradient(135deg, #FFD166 0%, #FF8C69 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.points-label {
-  font-size: 26rpx;
-  color: var(--vitality-orange);
-  font-weight: 600;
+/* 平台抽成信息 */
+.fee-info {
+  margin-bottom: 24rpx;
+  padding: 12rpx 16rpx;
+  background: rgba(93, 184, 230, 0.06);
+  border-radius: 12rpx;
+}
+
+.fee-text {
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+  line-height: 1.5;
 }
 
 /* 描述区域 */

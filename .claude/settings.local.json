@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Read(//c/Users/leox5/.claude/plans/**)",
+      "Bash(mkdir -p \"C:/Users/leox5/.claude/plans/\")"
     ]
   }
 }

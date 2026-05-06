@@ -1,0 +1,248 @@
+/* 钱包/余额页面 */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    #f0f8ff 0%,
+    #e6f3ff 20%,
+    #f5faff 100%
+  );
+  padding: 32rpx;
+  box-sizing: border-box;
+}
+
+/* 余额卡片 */
+.balance-card {
+  background: linear-gradient(
+    135deg,
+    var(--sky-primary) 0%,
+    var(--sky-light) 100%
+  );
+  border-radius: 32rpx;
+  padding: 48rpx 40rpx;
+  box-shadow: 0 8rpx 40rpx rgba(93, 184, 230, 0.3);
+  margin-bottom: 32rpx;
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.balance-title {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.balance-rules {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 24rpx;
+}
+
+.rules-icon {
+  font-size: 24rpx;
+}
+
+.rules-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.balance-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  margin-bottom: 32rpx;
+}
+
+.amount-symbol {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: white;
+}
+
+.amount-number {
+  font-size: 72rpx;
+  font-weight: 800;
+  color: white;
+}
+
+.balance-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.withdraw-btn {
+  flex: 1;
+  height: 80rpx;
+  background: white;
+  border-radius: 40rpx;
+  color: var(--sky-primary);
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+.withdraw-btn.disabled {
+  background: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 统计区域 */
+.stats-section {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 32rpx;
+}
+
+.stat-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  padding: 28rpx 20rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+}
+
+.stat-value {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+}
+
+/* 账单列表 */
+.records-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+}
+
+.records-header {
+  margin-bottom: 24rpx;
+}
+
+.records-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: var(--text-light);
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid rgba(93, 184, 230, 0.08);
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.record-icon-wrapper {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.record-icon {
+  font-size: 32rpx;
+}
+
+.record-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.record-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.record-time {
+  font-size: 24rpx;
+  color: var(--text-light);
+}
+
+.record-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+}
+
+.record-amount {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.record-amount.income {
+  color: var(--fresh-mint);
+}
+
+.record-amount.expense {
+  color: var(--vitality-orange);
+}
+
+.record-balance {
+  font-size: 22rpx;
+  color: var(--text-light);
+}
+
+.loading-more,
+.no-more {
+  text-align: center;
+  padding: 32rpx 0;
+}
+
+.loading-text,
+.no-more-text {
+  font-size: 24rpx;
+  color: var(--text-light);
+}

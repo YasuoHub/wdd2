@@ -132,9 +132,9 @@
 }
 
 /* ============================================
-   积分展示 - 精致卡片
+   余额展示 - 精致卡片
    ============================================ */
-.points-section {
+.balance-section {
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -146,7 +146,7 @@
   overflow: hidden;
 }
 
-.points-section::before {
+.balance-section::before {
   content: '';
   position: absolute;
   top: 0;
@@ -156,7 +156,7 @@
   background: linear-gradient(135deg, rgba(93, 184, 230, 0.05) 0%, rgba(168, 216, 240, 0.03) 100%);
 }
 
-.points-item {
+.balance-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -165,31 +165,31 @@
   z-index: 1;
 }
 
-.points-value {
-  font-size: 52rpx;
+.balance-value {
+  font-size: 48rpx;
   font-weight: 800;
   color: var(--text-primary);
 }
 
-.points-value.available {
+.balance-value.points {
   background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.points-value.frozen {
-  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
+.balance-value.available {
+  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.points-label {
+.balance-label {
   font-size: 24rpx;
   color: var(--text-tertiary);
   font-weight: 500;
 }
 
-.points-divider {
+.balance-divider {
   width: 2rpx;
   height: 70rpx;
   background: linear-gradient(180deg, transparent 0%, rgba(93, 184, 230, 0.3) 50%, transparent 100%);

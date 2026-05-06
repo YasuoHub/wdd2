@@ -1,0 +1,230 @@
+/* 提现页面 */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    #f0f8ff 0%,
+    #f5faff 100%
+  );
+  padding: 32rpx;
+  box-sizing: border-box;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}
+
+/* 余额展示 */
+.balance-section {
+  text-align: center;
+  padding: 48rpx 0;
+}
+
+.balance-label {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-bottom: 16rpx;
+}
+
+.balance-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.amount-symbol {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.amount-number {
+  font-size: 72rpx;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* 提现金额输入 */
+.withdraw-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.section-title text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.all-btn {
+  font-size: 26rpx;
+  color: var(--sky-primary);
+  font-weight: 600;
+}
+
+.amount-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid rgba(93, 184, 230, 0.15);
+}
+
+.input-symbol {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.amount-input {
+  flex: 1;
+  font-size: 64rpx;
+  font-weight: 800;
+  color: var(--text-primary);
+  height: auto;
+  min-height: 80rpx;
+}
+
+.input-placeholder {
+  color: var(--text-light);
+  font-size: 48rpx;
+}
+
+.error-tip {
+  margin-top: 16rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 12rpx;
+}
+
+.error-tip text {
+  font-size: 26rpx;
+  color: var(--danger-color);
+}
+
+/* 到账信息 */
+.detail-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+}
+
+.detail-row.total {
+  padding-top: 24rpx;
+}
+
+.detail-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.detail-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detail-value.fee {
+  color: var(--vitality-orange);
+}
+
+.detail-value.actual {
+  color: var(--fresh-mint);
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.detail-divider {
+  height: 2rpx;
+  background: rgba(93, 184, 230, 0.12);
+  margin: 8rpx 0;
+}
+
+/* 提现规则 */
+.rules-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+}
+
+.rules-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20rpx;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 12rpx 0;
+}
+
+.rule-dot {
+  width: 12rpx;
+  height: 12rpx;
+  background: var(--sky-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rule-text {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 底部按钮 */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(40rpx);
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 24rpx rgba(93, 184, 230, 0.1);
+}
+
+.submit-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(
+    135deg,
+    var(--sky-primary) 0%,
+    var(--sky-light) 100%
+  );
+  border-radius: 48rpx;
+  color: white;
+  font-size: 32rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+}
+
+.submit-btn.disabled {
+  background: linear-gradient(135deg, #d4e5f0 0%, #c4d8e5 100%);
+  box-shadow: none;
+}

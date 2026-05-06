@@ -1,12 +1,12 @@
-// 云函数入口文件
+// 结算云函数 - 处理任务完成、取消和评价
 const cloud = require('wx-server-sdk')
-
-cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
-})
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
+
+// 引入平台规则
+const { MoneyUtils } = require('./platformRules')
 
 // 主入口
 exports.main = async (event, context) => {
@@ -50,7 +50,7 @@ async function completeTask(event, OPENID) {
     return { code: -1, message: '任务不存在' }
   }
 
-  // 验证权限（只有求助者可以确认完成）
+  // 验证权限
   if (need.user_id !== currentUserId) {
     return { code: -1, message: '只有求助者可以确认完成任务' }
   }
@@ -75,17 +75,41 @@ async function completeTask(event, OPENID) {
   const transaction = await db.startTransaction()
 
   try {
-    // 1. 更新任务状态
+    // 0. 事务内必须先 get 才能 update（云开发事务强制规则）
+    const needResTx = await transaction.collection('wdd-needs').doc(needId).get()
+    const needInTx = needResTx.data
+    if (!needInTx || needInTx.status !== 'ongoing') {
+      await transaction.rollback()
+      return { code: -1, message: '任务状态异常，无法完成' }
+    }
+
+    const takerResTx = await transaction.collection('wdd-need-takers').where({
+      need_id: needId
+    }).get()
+    if (takerResTx.data.length === 0) {
+      await transaction.rollback()
+      return { code: -1, message: '未找到接单记录' }
+    }
+    const takerInTx = takerResTx.data[0]
+
+    // 1. 计算平台抽成和帮助者收入
+    const rewardAmount = needInTx.reward_amount || 0
+    const platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
+    const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+
+    // 2. 更新任务状态
     await transaction.collection('wdd-needs').doc(needId).update({
       data: {
         status: 'completed',
+        platform_fee: platformFee,
+        taker_income: takerIncome,
         complete_time: new Date(),
         update_time: new Date()
       }
     })
 
-    // 2. 更新接单记录
-    await transaction.collection('wdd-need-takers').doc(taker._id).update({
+    // 3. 更新接单记录
+    await transaction.collection('wdd-need-takers').doc(takerInTx._id).update({
       data: {
         status: 'completed',
         complete_time: new Date(),
@@ -93,52 +117,59 @@ async function completeTask(event, OPENID) {
       }
     })
 
-    // 3. 获取求助者用户信息
+    // 4. 获取求助者用户信息
     const seekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
     const seeker = seekerRes.data
 
-    // 4. 获取帮助者用户信息
+    // 5. 获取帮助者用户信息
     const takerUserRes = await transaction.collection('wdd-users').doc(taker.taker_id).get()
     const takerUser = takerUserRes.data
 
-    // 5. 扣除求助者冻结积分（总积分也相应减少）
-    await transaction.collection('wdd-users').doc(seeker._id).update({
-      data: {
-        frozen_points: _.inc(-need.points),
-        total_points: _.inc(-need.points),
-        update_time: new Date()
-      }
-    })
-
-    // 6. 增加帮助者可用积分和总积分
+    // 6. 帮助者余额增加（扣除平台抽成后）
     await transaction.collection('wdd-users').doc(takerUser._id).update({
       data: {
-        available_points: _.inc(need.points),
-        total_points: _.inc(need.points),
+        balance: _.inc(takerIncome),
+        total_earned: _.inc(takerIncome),
         update_time: new Date()
       }
     })
 
-    // 7. 创建积分流水记录（求助者）
+    // 6.5 重新查询帮助者最新余额，确保流水余额准确
+    const latestTakerRes = await transaction.collection('wdd-users').doc(taker.taker_id).get()
+    const latestTakerBalance = latestTakerRes.data.balance || 0
+
+    // 7. 创建金额流水记录（帮助者收入）
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: taker.taker_id,
+        type: 'task_income',
+        amount: takerIncome,
+        balance: latestTakerBalance,
+        description: `任务「${need.type_name || '求助'}」收入`,
+        need_id: needId,
+        create_time: new Date()
+      }
+    })
+
+    // 8. 保留积分流水记录（兼容旧数据）
     await transaction.collection('wdd-point-records').add({
       data: {
         user_id: need.user_id,
         type: 'task_pay',
-        points: -need.points,
-        balance: seeker.total_points - need.points,
+        points: -(need.points || 0),
+        balance: seeker.total_points || 0,
         description: `任务「${need.type_name || '求助'}」支出`,
         need_id: needId,
         create_time: new Date()
       }
     })
 
-    // 8. 创建积分流水记录（帮助者）
     await transaction.collection('wdd-point-records').add({
       data: {
         user_id: taker.taker_id,
         type: 'task_reward',
-        points: need.points,
-        balance: takerUser.total_points + need.points,
+        points: need.points || 0,
+        balance: (takerUser.total_points || 0) + (need.points || 0),
         description: `任务「${need.type_name || '求助'}」收入`,
         need_id: needId,
         create_time: new Date()
@@ -148,16 +179,18 @@ async function completeTask(event, OPENID) {
     // 提交事务
     await transaction.commit()
 
-    // 发送完成通知给帮助者和求助者
-    await sendCompletionNotification(taker.taker_id, need)
-    await sendCompletionNotificationToSeeker(need.user_id, need)
+    // 发送完成通知
+    await sendCompletionNotification(taker.taker_id, need, takerIncome)
+    await sendCompletionNotificationToSeeker(need.user_id, need, rewardAmount)
 
     return {
       code: 0,
       message: '任务完成',
       data: {
         needId,
-        points: need.points
+        rewardAmount: rewardAmount,
+        platformFee: platformFee,
+        takerIncome: takerIncome
       }
     }
 
@@ -191,8 +224,7 @@ async function cancelTask(event, OPENID) {
     return { code: -1, message: '只有求助者可以取消任务' }
   }
 
-  // 检查任务状态 - 只有待匹配状态的任务才能取消
-  // 已被接单（ongoing）的任务不能取消，只能完成
+  // 检查任务状态
   if (need.status !== 'pending') {
     if (need.status === 'ongoing') {
       return { code: -1, message: '该任务已被接受，无法取消' }
@@ -207,6 +239,14 @@ async function cancelTask(event, OPENID) {
   const transaction = await db.startTransaction()
 
   try {
+    // 0. 事务内必须先 get 才能 update（云开发事务强制规则）
+    const needResTx = await transaction.collection('wdd-needs').doc(needId).get()
+    const needInTx = needResTx.data
+    if (!needInTx || needInTx.status !== 'pending') {
+      await transaction.rollback()
+      return { code: -1, message: '任务状态异常，无法取消' }
+    }
+
     // 1. 更新任务状态
     await transaction.collection('wdd-needs').doc(needId).update({
       data: {
@@ -216,35 +256,38 @@ async function cancelTask(event, OPENID) {
       }
     })
 
-    // 2. 解冻积分（冻结积分减少，可用积分增加）
-    await transaction.collection('wdd-users').doc(user._id).update({
-      data: {
-        frozen_points: _.inc(-need.points),
-        available_points: _.inc(need.points),
-        update_time: new Date()
-      }
-    })
+    // 2. 保留积分解冻逻辑（兼容旧数据）
+    if (needInTx.points > 0) {
+      const userResTx = await transaction.collection('wdd-users').doc(user._id).get()
+      const userInTx = userResTx.data
+      await transaction.collection('wdd-users').doc(user._id).update({
+        data: {
+          frozen_points: _.inc(-needInTx.points),
+          available_points: _.inc(needInTx.points),
+          update_time: new Date()
+        }
+      })
 
-    // 3. 创建积分流水记录
-    await transaction.collection('wdd-point-records').add({
-      data: {
-        user_id: currentUserId,
-        type: 'task_cancel',
-        points: need.points,
-        balance: user.available_points + need.points,
-        description: `任务「${need.type_name || '求助'}」取消，积分退还`,
-        need_id: needId,
-        create_time: new Date()
-      }
-    })
+      await transaction.collection('wdd-point-records').add({
+        data: {
+          user_id: currentUserId,
+          type: 'task_cancel',
+          points: needInTx.points,
+          balance: (userInTx.available_points || 0) + needInTx.points,
+          description: `任务「${needInTx.type_name || '求助'}」取消，积分退还`,
+          need_id: needId,
+          create_time: new Date()
+        }
+      })
+    }
 
-    // 4. 给求助者发送取消通知
+    // 3. 给求助者发送取消通知（退款结果在事务外处理）
     await transaction.collection('wdd-notifications').add({
       data: {
         user_id: currentUserId,
         type: 'task_cancelled',
         title: '任务已取消',
-        content: `您发布的「${need.type_name || '求助'}」任务已取消，${need.points}积分已退还`,
+        content: `您发布的「${need.type_name || '求助'}」任务已取消，如有支付将原路退回`,
         need_id: needId,
         is_read: false,
         create_time: new Date()
@@ -253,72 +296,40 @@ async function cancelTask(event, OPENID) {
 
     await transaction.commit()
 
-    return {
-      code: 0,
-      message: '任务已取消，积分已退还',
-      data: { needId }
-    }
-
   } catch (err) {
     await transaction.rollback()
     throw err
   }
-}
 
-// 发送完成通知给帮助者
-async function sendCompletionNotification(takerId, need) {
-  try {
-    await db.collection('wdd-notifications').add({
-      data: {
-        user_id: takerId,
-        type: 'task_completed',
-        title: '任务已完成',
-        content: `你帮助完成的「${need.type_name || '求助'}」任务已确认完成，获得 ${need.points} 积分`,
-        need_id: need._id,
-        is_read: false,
-        create_time: new Date()
+  // 4. 事务提交后调用退款（避免事务内调用云函数导致不一致，refundOrder 自身已处理 total_paid 和幂等）
+  let refundSuccess = false
+  if (need.payment_order_id) {
+    try {
+      const { result } = await cloud.callFunction({
+        name: 'wdd-payment',
+        data: {
+          action: 'refundOrder',
+          orderId: need.payment_order_id,
+          openid: OPENID  // 云函数间调用需显式传递 openid
+        }
+      })
+      console.log('退款结果:', result)
+      if (result.code === 0) {
+        refundSuccess = true
       }
-    })
-  } catch (err) {
-    console.error('发送通知失败:', err)
+    } catch (err) {
+      console.error('退款调用失败:', err)
+    }
   }
-}
 
-// 发送完成通知给求助者
-async function sendCompletionNotificationToSeeker(seekerId, need) {
-  try {
-    await db.collection('wdd-notifications').add({
-      data: {
-        user_id: seekerId,
-        type: 'task_completed',
-        title: '任务已完成',
-        content: `您发布的「${need.type_name || '求助'}」任务已完成，${need.points}积分已支付给帮助者`,
-        need_id: need._id,
-        is_read: false,
-        create_time: new Date()
-      }
-    })
-  } catch (err) {
-    console.error('发送通知失败:', err)
-  }
-}
+  const message = refundSuccess
+    ? '任务已取消，悬赏金额已原路退回'
+    : '任务已取消，如有支付将原路退回（退款处理中）'
 
-// 发送取消通知
-async function sendCancellationNotification(takerId, need) {
-  try {
-    await db.collection('wdd-notifications').add({
-      data: {
-        user_id: takerId,
-        type: 'task_cancelled',
-        title: '任务已取消',
-        content: `你承接的「${need.type_name || '求助'}」任务已被求助者取消`,
-        need_id: need._id,
-        is_read: false,
-        create_time: new Date()
-      }
-    })
-  } catch (err) {
-    console.error('发送通知失败:', err)
+  return {
+    code: 0,
+    message: message,
+    data: { needId }
   }
 }
 
@@ -422,7 +433,6 @@ async function submitRating(event, OPENID) {
 // 更新用户评分统计
 async function updateUserRating(userId) {
   try {
-    // 获取该用户的所有评价
     const ratingsRes = await db.collection('wdd-ratings').where({
       target_id: userId
     }).get()
@@ -430,10 +440,8 @@ async function updateUserRating(userId) {
     const ratings = ratingsRes.data
     if (ratings.length === 0) return
 
-    // 计算平均分
     const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
 
-    // 更新用户评分
     await db.collection('wdd-users').doc(userId).update({
       data: {
         rating: Math.round(avgRating * 10) / 10,
@@ -443,5 +451,43 @@ async function updateUserRating(userId) {
     })
   } catch (err) {
     console.error('更新用户评分失败:', err)
+  }
+}
+
+// 发送完成通知给帮助者
+async function sendCompletionNotification(takerId, need, takerIncome) {
+  try {
+    await db.collection('wdd-notifications').add({
+      data: {
+        user_id: takerId,
+        type: 'task_completed',
+        title: '任务已完成',
+        content: `你帮助完成的「${need.type_name || '求助'}」任务已确认完成，¥${takerIncome}已计入您的平台余额`,
+        need_id: need._id,
+        is_read: false,
+        create_time: new Date()
+      }
+    })
+  } catch (err) {
+    console.error('发送通知失败:', err)
+  }
+}
+
+// 发送完成通知给求助者
+async function sendCompletionNotificationToSeeker(seekerId, need, rewardAmount) {
+  try {
+    await db.collection('wdd-notifications').add({
+      data: {
+        user_id: seekerId,
+        type: 'task_completed',
+        title: '任务已完成',
+        content: `您发布的「${need.type_name || '求助'}」任务已完成，悬赏金额¥${rewardAmount}已结算给帮助者`,
+        need_id: need._id,
+        is_read: false,
+        create_time: new Date()
+      }
+    })
+  } catch (err) {
+    console.error('发送通知失败:', err)
   }
 }

@@ -167,8 +167,13 @@ async function getPublicNeeds(event, OPENID) {
       list.sort((a, b) => a.distance - b.distance)
       break
     case 'points':
-      // 按积分从高到低排序
-      list.sort((a, b) => b.points - a.points)
+    case 'reward':
+      // 按悬赏金额从高到低排序（优先用 reward_amount，兼容旧数据用 points）
+      list.sort((a, b) => {
+        const aReward = a.reward_amount || (a.points ? a.points / 10 : 0)
+        const bReward = b.reward_amount || (b.points ? b.points / 10 : 0)
+        return bReward - aReward
+      })
       break
     case 'time':
     default:
@@ -320,6 +325,7 @@ async function getMyTasks(event, OPENID) {
       location: need.location,
       location_name: need.location_name,
       points: need.points,
+      reward_amount: need.reward_amount || 0,
       status: taker.status,
       expire_time: need.expire_time,
       create_time: taker.create_time,
@@ -626,6 +632,7 @@ function formatNeedItem(item, userProfile) {
       : item.location,
     locationName: item.location_name || '未知位置',
     points: item.points,
+    rewardAmount: item.reward_amount || 0,
     status: item.status,
     distance: distance,
     remainTime: remainTime,
