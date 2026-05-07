@@ -48,7 +48,7 @@ Page({
     selectedTime: PLATFORM_RULES.DEFAULT_EXPIRE_MINUTES,
 
     // 悬赏金额（元）
-    rewardAmount: 10,
+    rewardAmount: 1,
     quickAmounts: QUICK_AMOUNTS,
 
     // 平台规则

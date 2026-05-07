@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "http",
+      "type": "http",
+      "config": {}
+    }
+  ]
+}

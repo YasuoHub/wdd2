@@ -42,6 +42,8 @@ exports.main = async (event, context) => {
         return await queryOrder(event, OPENID)
       case 'refundOrder':
         return await refundOrder(event, OPENID)
+      case 'retryRefund':
+        return await retryRefund(event, OPENID)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -168,19 +170,7 @@ async function confirmPayment(event, OPENID) {
     return { code: -1, message: '订单ID不能为空' }
   }
 
-  // 查询订单
-  const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get()
-  if (!orderRes.data) {
-    return { code: -1, message: '订单不存在' }
-  }
-
-  if (!orderRes.data) {
-    return { code: -1, message: '订单不存在' }
-  }
-
-  const metadata = orderRes.data.metadata || {}
-
-  // 开启事务：更新订单状态 + 创建任务
+  // 开启事务：更新订单状态 + 创建任务（订单状态必须从事务内读取，避免并发修改）
   const transaction = await db.startTransaction()
 
   try {
@@ -191,6 +181,7 @@ async function confirmPayment(event, OPENID) {
       await transaction.rollback()
       return { code: -1, message: '订单不存在' }
     }
+    const metadata = orderInTx.metadata || {}
     if (orderInTx.openid !== OPENID) {
       await transaction.rollback()
       return { code: -1, message: '订单归属错误' }
@@ -237,7 +228,7 @@ async function confirmPayment(event, OPENID) {
         description: metadata.description || '',
         images: metadata.images || [],
         points: 0, // 积分字段保留但设为0
-        reward_amount: order.amount, // 悬赏金额（元）
+        reward_amount: orderInTx.amount, // 悬赏金额（元）
         platform_fee: 0, // 完成后计算
         taker_income: 0, // 完成后计算
         status: 'pending',
@@ -264,7 +255,7 @@ async function confirmPayment(event, OPENID) {
     // 5. 更新用户累计支付金额
     await transaction.collection('wdd-users').doc(user._id).update({
       data: {
-        total_paid: _.inc(order.amount),
+        total_paid: _.inc(orderInTx.amount),
         update_time: new Date()
       }
     })
@@ -275,7 +266,7 @@ async function confirmPayment(event, OPENID) {
         user_id: user._id,
         type: 'system',
         title: '求助发布成功',
-        content: `您发布的"${metadata.typeName || '求助'}"已上线，悬赏金额¥${order.amount}，正在为您匹配附近帮助者...`,
+        content: `您发布的"${metadata.typeName || '求助'}"已上线，悬赏金额¥${orderInTx.amount}，正在为您匹配附近帮助者...`,
         need_id: needRes._id,
         is_read: false,
         create_time: new Date()
@@ -290,7 +281,7 @@ async function confirmPayment(event, OPENID) {
       data: {
         needId: needRes._id,
         orderId: orderId,
-        amount: order.amount
+        amount: orderInTx.amount
       }
     }
 
@@ -349,11 +340,11 @@ async function refundOrder(event, OPENID) {
     }
     order = orderRes.data
   } else {
-    // 通过任务ID查找订单
+    // 通过任务ID查找订单（同时兼容 paid 和 refund_pending 状态）
     const orderRes = await db.collection('wdd-payment-orders')
       .where({
         'metadata.need_id': needId,
-        status: 'paid'
+        status: _.in(['paid', 'refund_pending'])
       })
       .limit(1)
       .get()
@@ -368,80 +359,175 @@ async function refundOrder(event, OPENID) {
     return { code: -1, message: '订单归属错误' }
   }
 
-  // 真实支付模式下，先调用微信退款API（只调API不操作数据库）
+  return await executeRefund(order)
+}
+
+// 退款重试（由 wdd-auto-cancel 定时器调用，专门处理 refund_pending 状态的订单）
+async function retryRefund(event, OPENID) {
+  const { orderId } = event
+  if (!orderId) {
+    return { code: -1, message: '订单ID不能为空' }
+  }
+
+  const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get()
+  if (!orderRes.data) {
+    return { code: -1, message: '订单不存在' }
+  }
+
+  const order = orderRes.data
+  if (order.status !== 'refund_pending') {
+    return { code: -1, message: '订单状态非待退款，无需重试' }
+  }
+
+  return await executeRefund(order)
+}
+
+// 退款核心逻辑（refundOrder 和 retryRefund 共用）
+// 行为：
+//   - 微信退款 API 成功 → 订单转 refunded，扣减 total_paid
+//   - 微信退款 API 失败 → 订单转 refund_pending，记录失败次数和下次重试时间（不报错给上游）
+//   - refund_attempts 达到 MAX_REFUND_ATTEMPTS → 转 refund_failed，需人工介入
+async function executeRefund(order) {
+  const MAX_REFUND_ATTEMPTS = 5
+  // 指数退避：第1/2/3/4/5次失败后，分别 5/10/20/40/80 分钟后重试
+  const BACKOFF_MINUTES = [5, 10, 20, 40, 80]
+
   let refundResult = null
+  let refundError = null
+
+  // 1. 调用微信退款 API（在事务外，只调 API 不操作数据库）
   if (!MOCK_PAYMENT) {
     if (!order.out_trade_no) {
-      return { code: -1, message: '订单缺少支付单号，无法退款' }
+      return { code: -1, message: '订单缺少支付单号，无法退款', status: 'failed' }
     }
     try {
       refundResult = await createRealRefund(order)
     } catch (err) {
+      refundError = err
       console.error('微信退款失败:', err)
-      return { code: -1, message: err.message || '微信退款失败' }
     }
   }
 
-  // 开启事务：更新订单状态 + 退款记录
+  // 2. 开启事务更新订单状态
   const transaction = await db.startTransaction()
 
   try {
-    // 0. 事务内必须先 get 订单，才能 update（云开发事务强制规则）
     const orderResTx = await transaction.collection('wdd-payment-orders').doc(order._id).get()
     const orderInTx = orderResTx.data
     if (!orderInTx) {
       await transaction.rollback()
-      return { code: -1, message: '订单不存在' }
-    }
-    if (orderInTx.status !== 'paid') {
-      await transaction.rollback()
-      return { code: -1, message: '订单状态不允许退款' }
+      return { code: -1, message: '订单不存在', status: 'failed' }
     }
 
-    // 1. 更新订单状态为已退款（合并所有订单字段，避免同一文档多次 update）
+    // 幂等：已退款则直接返回成功
+    if (orderInTx.status === 'refunded') {
+      await transaction.rollback()
+      return {
+        code: 0,
+        message: '订单已退款',
+        status: 'refunded',
+        data: { orderId: order._id, refundAmount: orderInTx.refund_amount || orderInTx.amount }
+      }
+    }
+
+    // 只允许从 paid / refund_pending 状态发起退款
+    if (orderInTx.status !== 'paid' && orderInTx.status !== 'refund_pending') {
+      await transaction.rollback()
+      return { code: -1, message: '订单状态不允许退款', status: 'failed' }
+    }
+
+    if (refundError) {
+      // 退款失败：挂入待重试队列，由 wdd-auto-cancel 扫描重试
+      const attempts = (orderInTx.refund_attempts || 0) + 1
+      const errMsg = (refundError.message || '微信退款失败').slice(0, 200)
+
+      if (attempts >= MAX_REFUND_ATTEMPTS) {
+        // 达到重试上限 → 标记失败，不再自动重试
+        await transaction.collection('wdd-payment-orders').doc(order._id).update({
+          data: {
+            status: 'refund_failed',
+            refund_attempts: attempts,
+            last_refund_error: errMsg,
+            update_time: new Date()
+          }
+        })
+        await transaction.commit()
+        return {
+          code: -1,
+          message: '退款重试次数已达上限，请联系客服处理',
+          status: 'failed',
+          data: { orderId: order._id }
+        }
+      }
+
+      // 计算下次重试时间（指数退避）
+      const backoffMin = BACKOFF_MINUTES[attempts - 1] || BACKOFF_MINUTES[BACKOFF_MINUTES.length - 1]
+      const nextRetryTime = new Date(Date.now() + backoffMin * 60 * 1000)
+
+      await transaction.collection('wdd-payment-orders').doc(order._id).update({
+        data: {
+          status: 'refund_pending',
+          refund_attempts: attempts,
+          last_refund_error: errMsg,
+          next_retry_time: nextRetryTime,
+          update_time: new Date()
+        }
+      })
+      await transaction.commit()
+      return {
+        code: 0,
+        message: `退款已加入重试队列，将在约 ${backoffMin} 分钟内自动重试`,
+        status: 'pending',
+        data: { orderId: order._id, attempts, nextRetryTime }
+      }
+    }
+
+    // 退款成功（或 mock 模式）：转 refunded 并扣减 total_paid
     const orderUpdateData = {
       status: 'refunded',
       refund_time: new Date(),
-      refund_amount: order.amount,
-      refund_reason: '任务取消',
+      refund_amount: orderInTx.amount,
+      refund_reason: orderInTx.refund_reason || '任务取消',
       update_time: new Date()
     }
     if (refundResult && refundResult.refundId) {
       orderUpdateData.refund_id = refundResult.refundId
     }
+
     await transaction.collection('wdd-payment-orders').doc(order._id).update({
       data: orderUpdateData
     })
 
-    // 2. 获取用户信息
+    // 扣减用户累计支付金额（只在最终成功时扣，避免 pending 状态重复扣）
     const userRes = await transaction.collection('wdd-users').where({
-      openid: OPENID
+      openid: orderInTx.openid
     }).get()
-    const user = userRes.data[0]
-
-    // 3. 更新用户累计支付金额（减去退款）
-    await transaction.collection('wdd-users').doc(user._id).update({
-      data: {
-        total_paid: _.inc(-order.amount),
-        update_time: new Date()
-      }
-    })
+    if (userRes.data.length > 0) {
+      const user = userRes.data[0]
+      await transaction.collection('wdd-users').doc(user._id).update({
+        data: {
+          total_paid: _.inc(-orderInTx.amount),
+          update_time: new Date()
+        }
+      })
+    }
 
     await transaction.commit()
 
     return {
       code: 0,
       message: '退款成功',
+      status: 'refunded',
       data: {
         orderId: order._id,
-        refundAmount: order.amount
+        refundAmount: orderInTx.amount
       }
     }
 
   } catch (err) {
     await transaction.rollback()
     console.error('退款事务失败:', err)
-    return { code: -1, message: '退款失败: ' + err.message }
+    return { code: -1, message: '退款失败: ' + err.message, status: 'failed' }
   }
 }
 

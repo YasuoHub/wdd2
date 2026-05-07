@@ -143,7 +143,9 @@ Page({
   // 执行提现
   async doWithdraw(amount) {
     this.setData({ isSubmitting: true })
-    wx.showLoading({ title: '提交中...' })
+    wx.showLoading({ title: '提交中...', mask: true })
+
+    let withdrawId = null
 
     try {
       const { result } = await wx.cloud.callFunction({
@@ -155,24 +157,33 @@ Page({
       })
 
       wx.hideLoading()
-      this.setData({ isSubmitting: false })
 
-      if (result.code === 0) {
-        wx.showModal({
-          title: '提现申请已提交',
-          content: '您的提现申请已提交，我们将在1-3个工作日内处理，请留意到账通知。',
-          showCancel: false,
-          success: () => {
-            wx.navigateBack()
-          }
-        })
-      } else {
+      if (result.code !== 0) {
+        this.setData({ isSubmitting: false })
         wx.showToast({
           title: result.message || '提现失败',
           icon: 'none',
           duration: 3000
         })
+        return
       }
+
+      withdrawId = result.data.withdrawId
+      const packageInfo = result.data.packageInfo
+
+      if (!packageInfo) {
+        this.setData({ isSubmitting: false })
+        wx.showToast({
+          title: '获取转账信息失败',
+          icon: 'none',
+          duration: 3000
+        })
+        return
+      }
+
+      // 新版商家转账：调起用户确认收款页面
+      await this.requestMerchantTransfer(packageInfo, withdrawId)
+
     } catch (err) {
       wx.hideLoading()
       this.setData({ isSubmitting: false })
@@ -182,5 +193,129 @@ Page({
         duration: 3000
       })
     }
+  },
+
+  // 调起微信确认收款页面（新版商家转账必需步骤）
+  requestMerchantTransfer(packageInfo, withdrawId) {
+    return new Promise((resolve) => {
+      // 使用新版商家转账 JSAPI 调起确认页面
+      // eslint-disable-next-line
+      if (typeof wx.requestMerchantTransfer !== 'function') {
+        this.setData({ isSubmitting: false })
+        wx.showModal({
+          title: '提示',
+          content: '当前微信版本不支持此功能，请升级微信后重试',
+          showCancel: false
+        })
+        resolve()
+        return
+      }
+
+      wx.requestMerchantTransfer({
+        package_info: packageInfo,
+        success: (res) => {
+          console.log('用户确认收款成功:', res)
+          // 用户确认成功，开始轮询到账状态
+          wx.showLoading({ title: '打款中...', mask: true })
+          this._pollStopped = false
+          this.pollWithdrawStatus(withdrawId)
+          resolve()
+        },
+        fail: (err) => {
+          console.error('用户取消或未确认收款:', err)
+          this.setData({ isSubmitting: false })
+
+          // 用户取消确认，提示可在钱包中重新发起
+          wx.showModal({
+            title: '未确认收款',
+            content: '您尚未确认收款，可在「我的-钱包」中查看并重新确认',
+            showCancel: false,
+            success: () => {
+              wx.navigateBack()
+            }
+          })
+          resolve()
+        }
+      })
+    })
+  },
+
+  // 轮询打款状态：每 4 秒查一次，最多 30 次（2 分钟）；连续 3 次拿不到结果即终止
+  async pollWithdrawStatus(withdrawId) {
+    const MAX_ATTEMPTS = 30
+    const INTERVAL_MS = 4000
+    const MAX_CONSECUTIVE_FAILS = 3
+    let attempts = 0
+    let consecutiveFails = 0
+
+    const finish = (title, content) => {
+      this._pollStopped = true
+      wx.hideLoading()
+      this.setData({ isSubmitting: false })
+      wx.showModal({
+        title,
+        content,
+        showCancel: false,
+        success: () => wx.navigateBack()
+      })
+    }
+
+    const tick = async () => {
+      if (this._pollStopped) return
+      if (attempts >= MAX_ATTEMPTS) {
+        finish('处理中', '打款仍在处理，可稍后在「我的-钱包」中查看进度。')
+        return
+      }
+      attempts++
+
+      try {
+        const { result } = await wx.cloud.callFunction({
+          name: 'wdd-withdraw',
+          data: { action: 'getWithdrawStatus', withdrawId }
+        })
+
+        if (this._pollStopped) return
+
+        if (result && result.code === 0) {
+          consecutiveFails = 0
+          const { status, rejectReason } = result.data
+          if (status === 'completed') {
+            finish('已到账', '提现已到账，请在微信「服务通知」中查看到账信息。')
+            return
+          }
+          if (status === 'rejected') {
+            finish('打款失败', (rejectReason || '打款失败') + '，金额已退回到余额。')
+            return
+          }
+          if (status === 'transfer_failed') {
+            finish('打款异常', '打款多次失败，请联系客服处理。')
+            return
+          }
+          // processing / transfer_pending → 继续轮询
+        } else {
+          consecutiveFails++
+          if (consecutiveFails >= MAX_CONSECUTIVE_FAILS) {
+            finish('查询失败', '无法查询提现状态，请稍后在「我的-钱包」中查看进度。')
+            return
+          }
+        }
+      } catch (err) {
+        console.warn('查询提现状态失败:', err)
+        consecutiveFails++
+        if (consecutiveFails >= MAX_CONSECUTIVE_FAILS) {
+          finish('网络异常', '无法查询提现状态，请稍后在「我的-钱包」中查看进度。')
+          return
+        }
+      }
+
+      setTimeout(tick, INTERVAL_MS)
+    }
+
+    tick()
+  },
+
+  onUnload() {
+    // 离开页面时停止轮询，避免无效请求
+    this._pollStopped = true
   }
 })

@@ -1,5 +1,13 @@
 <!-- 帮助者信息完善页面 -->
 <view class="container">
+  <!-- 页面加载中 -->
+  <view class="page-loading" wx:if="{{pageLoading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 主内容区 -->
+  <view wx:if="{{!pageLoading}}">
   <!-- 帮助意愿选择 -->
   <view class="section">
     <view class="section-title">
@@ -99,5 +107,6 @@
     >
       {{isLoading ? '保存中...' : '保存设置'}}
     </view>
+  </view>
   </view>
 </view>

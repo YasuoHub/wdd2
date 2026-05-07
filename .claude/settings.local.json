@@ -3,7 +3,13 @@
     "allow": [
       "Bash(grep:*)",
       "Read(//c/Users/leox5/.claude/plans/**)",
-      "Bash(mkdir -p \"C:/Users/leox5/.claude/plans/\")"
+      "Bash(mkdir -p \"C:/Users/leox5/.claude/plans/\")",
+      "Bash(node -c cloudfunctions/wdd-payment/index.js)",
+      "Bash(node -c cloudfunctions/wdd-settlement/index.js)",
+      "Bash(node -c cloudfunctions/wdd-auto-cancel/index.js)",
+      "WebSearch",
+      "Bash(openssl x509 *)",
+      "WebFetch(domain:pay.weixin.qq.com)"
     ]
   }
 }

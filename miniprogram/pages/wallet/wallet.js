@@ -36,8 +36,20 @@ Page({
   },
 
   onShow() {
+    this.applyPlatformConfig()
     this.loadBalance()
     this.loadRecords(true)
+  },
+
+  // 应用平台配置到页面数据（从数据库动态加载的费率/阈值）
+  applyPlatformConfig() {
+    const config = app.globalData.platformConfig
+    if (config) {
+      this.setData({
+        withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
+        withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100)
+      })
+    }
   },
 
   // 加载用户信息
@@ -146,8 +158,13 @@ Page({
     })
   },
 
-  // 格式化金额
-  formatMoney(amount) {
-    return MoneyUtils.formatAmount(amount)
+  // 显示提现规则
+  showWithdrawRules() {
+    const feeRate = Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100)
+    wx.showModal({
+      title: '提现规则',
+      content: `1. 最低提现金额：${PLATFORM_RULES.WITHDRAW_MIN_AMOUNT}元\r\n2. 提现手续费：${feeRate}%\r\n3. 单次提现最低${PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST}元，最高${PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST}元`,
+      showCancel: false
+    })
   }
 })

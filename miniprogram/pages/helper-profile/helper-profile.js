@@ -31,7 +31,8 @@ Page({
     // 页面状态
     isLoading: false,
     isEditing: false, // 是否为编辑模式（老用户修改）
-    fromLogin: false  // 是否来自登录流程
+    fromLogin: false,  // 是否来自登录流程
+    pageLoading: true  // 页面初始加载中
   },
 
   onLoad(options) {
@@ -84,8 +85,13 @@ Page({
 
   // 加载现有帮助者资料
   async loadExistingProfile() {
+    this.setData({ pageLoading: true })
+
     const userInfo = app.globalData.userInfo
-    if (!userInfo || !userInfo._id) return
+    if (!userInfo || !userInfo._id) {
+      this.setData({ pageLoading: false })
+      return
+    }
 
     try {
       const { result } = await wx.cloud.callFunction({
@@ -108,6 +114,8 @@ Page({
       }
     } catch (err) {
       console.error('加载帮助者资料失败:', err)
+    } finally {
+      this.setData({ pageLoading: false })
     }
   },
 

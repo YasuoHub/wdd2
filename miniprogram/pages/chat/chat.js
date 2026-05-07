@@ -10,7 +10,7 @@ Page({
       typeName: '',
       typeIcon: '',
       description: '',
-      points: 0,
+      rewardAmount: 0,
       status: 'ongoing',
       statusText: '进行中',
       expireTime: null
@@ -139,7 +139,7 @@ Page({
         typeName: '',
         typeIcon: '',
         description: '',
-        points: 0,
+        rewardAmount: 0,
         status: 'ongoing',
         statusText: '进行中',
         expireTime: null
@@ -255,6 +255,10 @@ Page({
           newDocs.push(msg)
         }
 
+        // 检查是否有系统消息
+        const hasSystemMessage = newDocs.some(doc => doc.type === 'system')
+        const normalNewDocsCount = newDocs.filter(doc => doc.type !== 'system').length
+
         // 合并更新
         if (messagesToUpdate || newDocs.length > 0) {
           let finalMessages = messagesToUpdate || messages
@@ -273,14 +277,22 @@ Page({
           }, () => {
             if (newDocs.length > 0) {
               wx.nextTick(() => {
-                if (this.data.isAtBottom) {
+                if (hasSystemMessage) {
+                  // 系统消息：刷新任务状态 + 自动滚动到底部 + 标记已读
+                  this.loadTaskInfo()
+                  this.setData({
+                    lastMessageId: 'bottom-anchor',
+                    newMessageCount: 0
+                  })
+                  this.markMessagesRead()
+                } else if (this.data.isAtBottom) {
                   // 在底部：滚动到底部 + 标记已读
                   this.setData({ lastMessageId: 'bottom-anchor' })
                   this.markMessagesRead()
                 } else {
                   // 不在底部：显示按钮 + 不标记已读
-                  this.setData({ 
-                    newMessageCount: this.data.newMessageCount + newDocs.length 
+                  this.setData({
+                    newMessageCount: this.data.newMessageCount + normalNewDocsCount
                   })
                 }
               })
@@ -404,7 +416,7 @@ Page({
             typeName: typeInfo.name,
             typeIcon: typeInfo.icon,
             description: taskData.description,
-            points: taskData.points,
+            rewardAmount: taskData.reward_amount || taskData.rewardAmount || 0,
             status: taskData.status,
             statusText: statusInfo.text,
             expireTime: taskData.expire_time,
@@ -603,6 +615,7 @@ Page({
       clientMsgId: msg.clientMsgId || msg.client_msg_id || msg._id,
       sendStatus: msg.sendStatus || 'sent',
       isSelf,
+      isSystem: msg.type === 'system',
       senderAvatar: isSelf ? userInfo.avatar : (this.data.otherUser && this.data.otherUser.avatar) || '/images/default-avatar.png',
       timeText,
       showTime,
@@ -737,6 +750,10 @@ Page({
               newDocs.push(doc)
             }
 
+            // 检查是否有系统消息
+            const hasSystemMessage = newDocs.some(doc => doc.type === 'system')
+            const normalNewDocsCount = newDocs.filter(doc => doc.type !== 'system').length
+
             // 更新界面
             if (messagesToUpdate || newDocs.length > 0) {
               let finalMessages = messagesToUpdate || currentMessages
@@ -757,14 +774,22 @@ Page({
               }, () => {
                 if (newDocs.length > 0) {
                   wx.nextTick(() => {
-                    if (this.data.isAtBottom) {
+                    if (hasSystemMessage) {
+                      // 系统消息：刷新任务状态 + 自动滚动到底部 + 标记已读
+                      this.loadTaskInfo()
+                      this.setData({
+                        lastMessageId: 'bottom-anchor',
+                        newMessageCount: 0
+                      })
+                      this.markMessagesRead()
+                    } else if (this.data.isAtBottom) {
                       // 在底部：滚动到底部 + 标记已读
                       this.setData({ lastMessageId: 'bottom-anchor' })
                       this.markMessagesRead()
                     } else {
                       // 不在底部：显示按钮 + 不标记已读
-                      this.setData({ 
-                        newMessageCount: this.data.newMessageCount + newDocs.length 
+                      this.setData({
+                        newMessageCount: this.data.newMessageCount + normalNewDocsCount
                       })
                     }
                   })

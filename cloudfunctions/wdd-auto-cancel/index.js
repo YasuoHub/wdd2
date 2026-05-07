@@ -1,4 +1,4 @@
-// 云函数：自动取消过期任务
+// 云函数：自动取消过期任务 + 退款重试
 // 定时触发器：每5分钟执行一次
 
 const cloud = require('wx-server-sdk')
@@ -17,6 +17,10 @@ exports.main = async (event, context) => {
   const results = {
     cancelledNeeds: 0,
     refundedAmount: 0,
+    retriedRefunds: 0,
+    retriedPending: 0,
+    retriedTransfers: 0,
+    queriedTransfers: 0,
     errors: []
   }
 
@@ -46,8 +50,114 @@ exports.main = async (event, context) => {
       }
     }
 
+    // 2. 扫描待重试退款订单
+    const pendingRefundRes = await db.collection('wdd-payment-orders')
+      .where({
+        status: 'refund_pending',
+        next_retry_time: _.lte(now)
+      })
+      .get()
+
+    console.log(`找到 ${pendingRefundRes.data.length} 个待重试退款订单`)
+
+    for (const order of pendingRefundRes.data) {
+      try {
+        const { result } = await cloud.callFunction({
+          name: 'wdd-payment',
+          data: {
+            action: 'retryRefund',
+            orderId: order._id
+          }
+        })
+        if (result.code === 0) {
+          if (result.status === 'refunded') {
+            results.retriedRefunds++
+          } else if (result.status === 'pending') {
+            results.retriedPending++
+          }
+        } else {
+          console.error(`重试退款业务失败 ${order._id}:`, result.message)
+        }
+      } catch (err) {
+        console.error(`重试退款调用失败 ${order._id}:`, err)
+        results.errors.push({ orderId: order._id, error: err.message })
+      }
+    }
+
     // 注意：进行中的任务（ongoing）不会被自动取消
     // 任务被接单后，由求助者手动确认完成
+
+    // 3. 扫描待重试的提现（新版商家转账失败重试中）
+    const pendingTransferRes = await db.collection('wdd-balance-records')
+      .where({
+        type: 'withdraw',
+        status: 'transfer_pending',
+        next_retry_time: _.lte(now)
+      })
+      .limit(20)
+      .get()
+
+    console.log(`找到 ${pendingTransferRes.data.length} 条待重试提现`)
+
+    for (const record of pendingTransferRes.data) {
+      try {
+        const { result } = await cloud.callFunction({
+          name: 'wdd-withdraw',
+          data: {
+            action: 'retryFailedTransfer',
+            withdrawId: record._id
+          }
+        })
+        if (result.code === 0) {
+          results.retriedTransfers++
+        } else {
+          console.error(`重试提现业务失败 ${record._id}:`, result.message)
+        }
+      } catch (err) {
+        console.error(`重试提现调用失败 ${record._id}:`, err)
+        results.errors.push({ withdrawId: record._id, error: err.message })
+      }
+    }
+
+    // 4. 扫描 processing 长时间未回调的提现（兜底查询）
+    // 注：与 wdd-withdraw/platformRules.js 中 TRANSFER_QUERY_TIMEOUT_MINUTES 保持一致
+    const queryTimeoutMin = 1
+    const queryThreshold = new Date(now.getTime() - queryTimeoutMin * 60 * 1000)
+    const stuckProcessingRes = await db.collection('wdd-balance-records')
+      .where(_.and([
+        { type: 'withdraw' },
+        { status: 'processing' },
+        { update_time: _.lte(queryThreshold) },
+        _.or([
+          { last_query_time: _.exists(false) },
+          { last_query_time: null },
+          { last_query_time: _.lte(queryThreshold) }
+        ])
+      ]))
+      .limit(20)
+      .get()
+
+    console.log(`找到 ${stuckProcessingRes.data.length} 条长时间处理中的提现，触发查询`)
+
+    for (const record of stuckProcessingRes.data) {
+      try {
+        const { result } = await cloud.callFunction({
+          name: 'wdd-withdraw',
+          data: {
+            action: 'queryTransferStatus',
+            withdrawId: record._id
+          }
+        })
+        if (result.code === 0) {
+          results.queriedTransfers++
+        } else {
+          console.error(`查询提现业务失败 ${record._id}:`, result.message)
+        }
+      } catch (err) {
+        console.error(`查询提现调用失败 ${record._id}:`, err)
+        results.errors.push({ withdrawId: record._id, error: err.message })
+      }
+    }
 
     console.log('自动取消任务检查完成:', results)
 
@@ -76,7 +186,14 @@ async function cancelPendingNeed(need) {
     const seekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
     const seeker = seekerRes.data
 
-    // 2. 更新任务状态
+    // 2. 云开发事务要求先 get 再 update
+    const needResTx = await transaction.collection('wdd-needs').doc(need._id).get()
+    if (!needResTx.data || needResTx.data.status !== 'pending') {
+      await transaction.rollback()
+      throw new Error('任务不存在或状态已变更')
+    }
+
+    // 3. 更新任务状态
     await transaction.collection('wdd-needs').doc(need._id).update({
       data: {
         status: 'cancelled',
@@ -86,7 +203,7 @@ async function cancelPendingNeed(need) {
       }
     })
 
-    // 3. 保留积分解冻逻辑（兼容旧数据）
+    // 4. 保留积分解冻逻辑（兼容旧数据）
     if (need.points > 0) {
       await transaction.collection('wdd-users').doc(need.user_id).update({
         data: {
@@ -109,7 +226,7 @@ async function cancelPendingNeed(need) {
       })
     }
 
-    // 4. 发送系统通知（退款结果在事务外处理，避免事务内调用云函数）
+    // 5. 发送系统通知（退款结果在事务外处理，避免事务内调用云函数导致不一致）
     await transaction.collection('wdd-notifications').add({
       data: {
         user_id: need.user_id,
@@ -128,7 +245,7 @@ async function cancelPendingNeed(need) {
     throw err
   }
 
-  // 5. 事务提交后调用退款（避免事务内调用云函数导致不一致）
+  // 6. 事务提交后调用退款（避免事务内调用云函数导致不一致）
   if (need.payment_order_id) {
     try {
       // 查询订单获取 openid（定时触发器无 wxContext.OPENID）
@@ -144,7 +261,7 @@ async function cancelPendingNeed(need) {
         }
       })
       if (refundRes.code === 0) {
-        result.refundAmount = refundRes.data.refundAmount || 0
+        result.refundAmount = refundRes.data ? refundRes.data.refundAmount || 0 : 0
       } else {
         console.error('自动退款业务失败:', refundRes.message)
       }

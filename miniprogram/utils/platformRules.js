@@ -1,11 +1,47 @@
 // 平台业务规则常量配置
 // 所有涉及金额、费率、门槛的常量统一在此管理
-// 修改此处即可调整平台规则，无需改动业务代码
+//
+// 核心费率（如 platform_fee_rate）支持从数据库动态加载，
+// 默认值为代码中的硬编码。如需修改全局费率，
+// 请在云数据库 wdd-config 集合中调整，无需改动此文件。
+
+// 内部可变配置（可被数据库配置覆盖）
+let _PLATFORM_FEE_RATE = 0.15
+let _WITHDRAW_MIN_AMOUNT = 2
+let _WITHDRAW_MIN_PER_REQUEST = 1
+let _WITHDRAW_MAX_PER_REQUEST = 5000
+let _MIN_REWARD_AMOUNT = 0.1
+let _MAX_REWARD_AMOUNT = 500
+
+// 动态设置平台配置（由 app.js 启动时从数据库加载后调用）
+function setPlatformConfig(config) {
+  if (!config) return
+  if (typeof config.platform_fee_rate === 'number') {
+    _PLATFORM_FEE_RATE = config.platform_fee_rate
+  }
+  if (typeof config.withdraw_min_amount === 'number') {
+    _WITHDRAW_MIN_AMOUNT = config.withdraw_min_amount
+  }
+  if (typeof config.withdraw_min_per_request === 'number') {
+    _WITHDRAW_MIN_PER_REQUEST = config.withdraw_min_per_request
+  }
+  if (typeof config.withdraw_max_per_request === 'number') {
+    _WITHDRAW_MAX_PER_REQUEST = config.withdraw_max_per_request
+  }
+  if (typeof config.min_reward_amount === 'number') {
+    _MIN_REWARD_AMOUNT = config.min_reward_amount
+  }
+  if (typeof config.max_reward_amount === 'number') {
+    _MAX_REWARD_AMOUNT = config.max_reward_amount
+  }
+}
 
 const PLATFORM_RULES = {
   // 平台抽成比例（从悬赏金额中扣除）
-  // 例如：悬赏100元，平台抽成15元，帮助者到账85元
-  PLATFORM_FEE_RATE: 0.05,
+  // 默认值 15%，可被数据库配置覆盖
+  get PLATFORM_FEE_RATE() {
+    return _PLATFORM_FEE_RATE
+  },
 
   // 提现手续费率
   // 例如：提现100元，手续费1元，实际到账99元
@@ -13,20 +49,30 @@ const PLATFORM_RULES = {
 
   // 最低提现门槛（元）
   // 余额满此金额才可申请提现
-  WITHDRAW_MIN_AMOUNT: 50,
+  get WITHDRAW_MIN_AMOUNT() {
+    return _WITHDRAW_MIN_AMOUNT
+  },
 
   // 单次提现最低金额（元）
-  WITHDRAW_MIN_PER_REQUEST: 1,
+  get WITHDRAW_MIN_PER_REQUEST() {
+    return _WITHDRAW_MIN_PER_REQUEST
+  },
 
   // 单次提现最高金额（元）
-  WITHDRAW_MAX_PER_REQUEST: 5000,
+  get WITHDRAW_MAX_PER_REQUEST() {
+    return _WITHDRAW_MAX_PER_REQUEST
+  },
 
   // 最小悬赏金额（元）
   // 发布任务时，悬赏金额不能低于此值
-  MIN_REWARD_AMOUNT: 0.1,
+  get MIN_REWARD_AMOUNT() {
+    return _MIN_REWARD_AMOUNT
+  },
 
   // 最大悬赏金额（元）
-  MAX_REWARD_AMOUNT: 500,
+  get MAX_REWARD_AMOUNT() {
+    return _MAX_REWARD_AMOUNT
+  },
 
   // 任务默认有效期（分钟）
   DEFAULT_EXPIRE_MINUTES: 60,
@@ -48,8 +94,10 @@ const PLATFORM_RULES = {
   // 退款处理说明
   REFUND_POLICY: '任务取消后，悬赏金额将原路退回至您的支付账户',
 
-  // 平台服务费说明
-  FEE_POLICY: '平台对每单任务收取15%服务费，用于平台运营和技术维护'
+  // 平台服务费说明（随费率动态变化）
+  get FEE_POLICY() {
+    return `平台对每单任务收取${Math.round(_PLATFORM_FEE_RATE * 100)}%服务费，用于平台运营和技术维护`
+  }
 }
 
 // 金额计算工具函数
@@ -58,7 +106,7 @@ const MoneyUtils = {
   // amount: 悬赏金额（元）
   // return: 平台服务费（元，保留2位小数）
   calcPlatformFee(amount) {
-    return Math.round(amount * PLATFORM_RULES.PLATFORM_FEE_RATE * 100) / 100
+    return Math.round(amount * _PLATFORM_FEE_RATE * 100) / 100
   },
 
   // 计算帮助者实际到账金额
@@ -93,10 +141,10 @@ const MoneyUtils = {
   // balance: 当前余额（元）
   // return: { canWithdraw: boolean, reason: string }
   checkCanWithdraw(balance) {
-    if (balance < PLATFORM_RULES.WITHDRAW_MIN_AMOUNT) {
+    if (balance < _WITHDRAW_MIN_AMOUNT) {
       return {
         canWithdraw: false,
-        reason: `余额满${PLATFORM_RULES.WITHDRAW_MIN_AMOUNT}元才可提现`
+        reason: `余额满${_WITHDRAW_MIN_AMOUNT}元才可提现`
       }
     }
     return { canWithdraw: true, reason: '' }
@@ -110,11 +158,11 @@ const MoneyUtils = {
     if (amount <= 0) {
       return { valid: false, reason: '提现金额必须大于0' }
     }
-    if (amount < PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST) {
-      return { valid: false, reason: `单次提现最低${PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST}元` }
+    if (amount < _WITHDRAW_MIN_PER_REQUEST) {
+      return { valid: false, reason: `单次提现最低${_WITHDRAW_MIN_PER_REQUEST}元` }
     }
-    if (amount > PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST) {
-      return { valid: false, reason: `单次提现最高${PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST}元` }
+    if (amount > _WITHDRAW_MAX_PER_REQUEST) {
+      return { valid: false, reason: `单次提现最高${_WITHDRAW_MAX_PER_REQUEST}元` }
     }
     if (amount > balance) {
       return { valid: false, reason: '提现金额不能超过余额' }
@@ -125,5 +173,6 @@ const MoneyUtils = {
 
 module.exports = {
   PLATFORM_RULES,
-  MoneyUtils
+  MoneyUtils,
+  setPlatformConfig
 }

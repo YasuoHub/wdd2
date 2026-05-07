@@ -1,0 +1,14 @@
+// 金额格式化 WXS 模块
+// WXML 中调用：{{money.format(amount)}}
+
+function format(amount) {
+  var num = +amount
+  if (isNaN(num)) {
+    return '0.00'
+  }
+  return (Math.round(num * 100) / 100).toFixed(2)
+}
+
+module.exports = {
+  format: format
+}

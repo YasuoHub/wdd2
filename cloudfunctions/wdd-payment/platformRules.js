@@ -9,7 +9,7 @@ const PLATFORM_RULES = {
   WITHDRAW_FEE_RATE: 0.01,
 
   // 最低提现门槛（元）
-  WITHDRAW_MIN_AMOUNT: 50,
+  WITHDRAW_MIN_AMOUNT: 2,
 
   // 单次提现最低金额（元）
   WITHDRAW_MIN_PER_REQUEST: 1,

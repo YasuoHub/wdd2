@@ -1,0 +1,10 @@
+# 商户证书目录（绝不提交到代码仓库）
+.cert/*
+!.cert/.gitkeep
+
+# 依赖
+node_modules/
+
+# 调试
+*.log
+.DS_Store

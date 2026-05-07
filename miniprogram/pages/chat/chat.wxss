@@ -1016,3 +1016,23 @@
   font-size: 24rpx;
   color: var(--text-primary);
 }
+
+/* 系统消息 */
+.system-message {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 24rpx 0;
+}
+
+.system-message-text {
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+  background: var(--bg-glass);
+  backdrop-filter: blur(10rpx);
+  padding: 16rpx 32rpx;
+  border-radius: var(--radius-full);
+  border: 1rpx solid var(--border-light);
+  text-align: center;
+  line-height: 1.5;
+}

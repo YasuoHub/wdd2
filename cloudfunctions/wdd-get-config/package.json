@@ -1,0 +1,9 @@
+{
+  "name": "wdd-get-config",
+  "version": "1.0.0",
+  "description": "获取平台全局配置",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

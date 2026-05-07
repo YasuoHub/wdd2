@@ -1,6 +1,8 @@
 // 任务大厅
 const app = getApp()
 
+const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
+
 // 筛选标签
 const FILTERS = [
   { id: 'all', name: '全部', icon: '✨' },
@@ -308,6 +310,7 @@ Page({
   // 接单
   async takeTask(e) {
     const id = e.currentTarget.dataset.id
+    const rewardAmount = parseFloat(e.currentTarget.dataset.amount) || 0
 
     // 检查登录
     if (!app.globalData.isLoggedIn) {
@@ -318,9 +321,12 @@ Page({
       return
     }
 
+    const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+    const feeRate = Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
+
     wx.showModal({
       title: '确认接单',
-      content: '接单后请及时提供帮助，完成后将获得积分奖励',
+      content: `承接此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要接单吗？`,
       confirmColor: '#A8E6CF',
       success: (res) => {
         if (res.confirm) {

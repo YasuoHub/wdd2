@@ -9,13 +9,26 @@ const PLATFORM_RULES = {
   WITHDRAW_FEE_RATE: 0.01,
 
   // 最低提现门槛（元）
-  WITHDRAW_MIN_AMOUNT: 50,
+  WITHDRAW_MIN_AMOUNT: 2,
 
   // 单次提现最低金额（元）
   WITHDRAW_MIN_PER_REQUEST: 1,
 
   // 单次提现最高金额（元）
   WITHDRAW_MAX_PER_REQUEST: 5000,
+
+  // 单日累计提现限额（元）—— 商户平台同步配置
+  WITHDRAW_DAILY_LIMIT: 5000,
+
+  // 商家转账失败最大重试次数
+  MAX_TRANSFER_RETRY: 5,
+
+  // 商家转账失败重试的指数退避分钟数（参考 wdd-payment 退款重试）
+  TRANSFER_BACKOFF_MINUTES: [5, 10, 20, 40, 80],
+
+  // 处理中状态多久未收到回调时触发主动查询（分钟）
+  // 注意：wdd-auto-cancel/index.js 中也使用了相同的值，修改时请同步
+  TRANSFER_QUERY_TIMEOUT_MINUTES: 1,
 
   // 最小悬赏金额（元）
   MIN_REWARD_AMOUNT: 1,

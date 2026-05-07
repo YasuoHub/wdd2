@@ -11,7 +11,9 @@ App({
     // 未读消息数缓存
     unreadCount: 0,
     // 消息中心页面刷新回调
-    messagePageRefreshCallback: null
+    messagePageRefreshCallback: null,
+    // 平台全局配置（费率等）
+    platformConfig: null
   },
 
   onLaunch() {
@@ -36,6 +38,9 @@ App({
     this.updateUserLocation().catch(err => {
       console.warn('启动时获取位置失败:', err.errMsg || err.message)
     })
+
+    // 加载平台全局配置（费率等），不阻塞启动
+    this.loadPlatformConfig()
   },
 
   onShow() {
@@ -48,6 +53,9 @@ App({
     this.updateUserLocation().catch(err => {
       console.warn('onShow 获取位置失败:', err.errMsg || err.message)
     })
+
+    // 刷新平台配置（不阻塞；用户在后台修改数据库后切回可自动生效）
+    this.loadPlatformConfig()
   },
 
   // 获取/更新用户当前位置
@@ -326,5 +334,22 @@ App({
   // 用户登录成功后重新启动全局监听
   onLoginSuccess() {
     this.startGlobalMessageWatch()
+  },
+
+  // 加载平台全局配置（费率等）
+  async loadPlatformConfig() {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-get-config'
+      })
+      if (result.code === 0 && result.data) {
+        const { setPlatformConfig } = require('./utils/platformRules')
+        setPlatformConfig(result.data)
+        this.globalData.platformConfig = result.data
+        console.log('平台配置加载成功:', result.data)
+      }
+    } catch (e) {
+      console.warn('获取平台配置失败，使用默认值:', e)
+    }
   }
 })

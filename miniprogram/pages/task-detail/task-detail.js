@@ -263,8 +263,9 @@ Page({
 
       if (result.code === 0) {
         wx.showToast({
-          title: '已取消',
-          icon: 'success'
+          title: result.message || '已取消',
+          icon: 'none',
+          duration: 2500
         })
         // 设置刷新标记
         wx.setStorageSync('refreshMyNeeds', true)

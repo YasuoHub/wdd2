@@ -1,4 +1,5 @@
 <!-- 个人中心页面 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 用户信息卡片 -->
   <view class="user-card">
@@ -16,7 +17,7 @@
     <!-- 余额展示 -->
     <view class="balance-section" bindtap="goToWallet">
       <view class="balance-item">
-        <text class="balance-value">¥{{userInfo.balance || 0}}</text>
+        <text class="balance-value">¥{{money.format(userInfo.balance)}}</text>
         <text class="balance-label">平台余额</text>
       </view>
       <view class="balance-divider"></view>
@@ -94,7 +95,7 @@
         </view>
         <view class="menu-content">
           <text class="menu-text">我的钱包</text>
-          <text class="menu-desc">余额 ¥{{userInfo.balance || 0}}</text>
+          <text class="menu-desc">余额 ¥{{money.format(userInfo.balance)}}</text>
         </view>
         <text class="menu-arrow">›</text>
       </view>

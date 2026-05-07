@@ -8,7 +8,7 @@
       <view class="collapsed-left">
         <text class="type-icon">{{task.typeIcon}}</text>
         <text class="type-name">{{task.typeName}}</text>
-        <text class="task-points-mini">{{task.points}}积分</text>
+        <text class="task-points-mini">¥{{task.rewardAmount || 0}}</text>
       </view>
       <view class="expand-btn">
         <text class="expand-icon">▼</text>
@@ -24,7 +24,7 @@
         </view>
         <view class="task-meta">
           <view class="task-status {{task.status}}">{{task.statusText}}</view>
-          <view class="task-points">{{task.points}}积分</view>
+          <view class="task-points">¥{{task.rewardAmount || 0}}</view>
           <!-- 完成按钮（仅在任务进行中且是求助者时显示） -->
           <view wx:if="{{isSeeker && task.status === 'ongoing'}}" class="complete-btn" bindtap="showCompleteConfirm">
             <text class="complete-icon">✓</text>
@@ -90,49 +90,59 @@
 
       <!-- 消息内容 -->
       <view class="message-content">
-        <!-- 对方头像 -->
-        <view wx:if="{{!item.isSelf}}" class="avatar">
-          <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
-          <text wx:else>{{item.senderName ? item.senderName[0] : '?'}}</text>
-        </view>
+        <!-- 系统消息：居中显示，无头像 -->
+        <block wx:if="{{item.isSystem}}">
+          <view class="system-message">
+            <text class="system-message-text">{{item.content}}</text>
+          </view>
+        </block>
 
-        <!-- 文字消息 loading 指示器（自己发的临时消息显示在左侧） -->
-        <view class="message-loading" wx:if="{{item.isSelf && item.sendStatus === 'sending' && item.type === 'text'}}">
-          <view class="loading-dot"></view>
-        </view>
+        <!-- 普通消息：原有逻辑 -->
+        <block wx:else>
+          <!-- 对方头像 -->
+          <view wx:if="{{!item.isSelf}}" class="avatar">
+            <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
+            <text wx:else>{{item.senderName ? item.senderName[0] : '?'}}</text>
+          </view>
 
-        <!-- 消息气泡 -->
-        <view class="message-bubble {{item.type}} {{item.isLocalImage ? 'sending' : ''}}">
-          <!-- 文字消息 -->
-          <block wx:if="{{item.type === 'text'}}">
-            <text class="message-text" selectable>{{item.content}}</text>
-          </block>
+          <!-- 文字消息 loading 指示器（自己发的临时消息显示在左侧） -->
+          <view class="message-loading" wx:if="{{item.isSelf && item.sendStatus === 'sending' && item.type === 'text'}}">
+            <view class="loading-dot"></view>
+          </view>
 
-          <!-- 图片消息 -->
-          <block wx:if="{{item.type === 'image'}}">
-            <view class="image-wrapper">
-              <image
-                class="message-image {{item.imageWidth ? 'has-size' : ''}}"
-                src="{{item.imageUrl}}"
-                mode="{{item.imageWidth ? 'scaleToFill' : 'aspectFit'}}"
-                style="{{item.imageWidth ? 'width: ' + item.imageWidth + 'rpx; height: ' + item.imageHeight + 'rpx;' : ''}}"
-                bindtap="previewImage"
-                data-url="{{item.imageUrl}}"
-                lazy-load
-              />
-              <!-- 图片 loading 指示器 -->
-              <view class="image-loading" wx:if="{{item.isLocalImage}}">
-                <view class="loading-spinner"></view>
+          <!-- 消息气泡 -->
+          <view class="message-bubble {{item.type}} {{item.isLocalImage ? 'sending' : ''}}">
+            <!-- 文字消息 -->
+            <block wx:if="{{item.type === 'text'}}">
+              <text class="message-text" selectable>{{item.content}}</text>
+            </block>
+
+            <!-- 图片消息 -->
+            <block wx:if="{{item.type === 'image'}}">
+              <view class="image-wrapper">
+                <image
+                  class="message-image {{item.imageWidth ? 'has-size' : ''}}"
+                  src="{{item.imageUrl}}"
+                  mode="{{item.imageWidth ? 'scaleToFill' : 'aspectFit'}}"
+                  style="{{item.imageWidth ? 'width: ' + item.imageWidth + 'rpx; height: ' + item.imageHeight + 'rpx;' : ''}}"
+                  bindtap="previewImage"
+                  data-url="{{item.imageUrl}}"
+                  lazy-load
+                />
+                <!-- 图片 loading 指示器 -->
+                <view class="image-loading" wx:if="{{item.isLocalImage}}">
+                  <view class="loading-spinner"></view>
+                </view>
               </view>
-            </view>
-          </block>
-        </view>
+            </block>
+          </view>
 
-        <!-- 自己头像 -->
-        <view wx:if="{{item.isSelf}}" class="avatar">
-          <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
-          <text wx:else>我</text>
-        </view>
+          <!-- 自己头像 -->
+          <view wx:if="{{item.isSelf}}" class="avatar">
+            <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
+            <text wx:else>我</text>
+          </view>
+        </block>
       </view>
     </view>
 
@@ -211,7 +221,7 @@
     <view class="modal-content">
       <view class="modal-title">确认完成任务</view>
       <view class="modal-body">
-        <text>确认已获得所需信息？确认后任务将完成，积分将转给帮助者。</text>
+        <text>确认已获得所需信息？确认后任务将完成，悬赏金额将结算给帮助者。</text>
       </view>
       <view class="modal-footer">
         <button class="modal-btn cancel" bindtap="hideCompleteModal">取消</button>

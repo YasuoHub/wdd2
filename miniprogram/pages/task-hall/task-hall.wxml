@@ -121,7 +121,7 @@
         </view>
 
         <!-- 接单按钮 -->
-        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}">
+        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.rewardAmount || 0}}">
           <text class="take-text">接单</text>
         </view>
       </view>

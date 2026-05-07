@@ -1,4 +1,5 @@
 <!-- 钱包/余额页面 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 余额卡片 -->
   <view class="balance-card">
@@ -11,7 +12,7 @@
     </view>
     <view class="balance-amount">
       <text class="amount-symbol">¥</text>
-      <text class="amount-number">{{formatMoney(balance)}}</text>
+      <text class="amount-number">{{money.format(balance)}}</text>
     </view>
     <view class="balance-actions">
       <button class="withdraw-btn {{canWithdraw ? '' : 'disabled'}}" bindtap="goToWithdraw">
@@ -24,15 +25,15 @@
   <!-- 统计卡片 -->
   <view class="stats-section">
     <view class="stat-card">
-      <text class="stat-value">¥{{formatMoney(totalEarned)}}</text>
+      <text class="stat-value">¥{{money.format(totalEarned)}}</text>
       <text class="stat-label">累计收入</text>
     </view>
     <view class="stat-card">
-      <text class="stat-value">¥{{formatMoney(totalWithdrawn)}}</text>
+      <text class="stat-value">¥{{money.format(totalWithdrawn)}}</text>
       <text class="stat-label">累计提现</text>
     </view>
     <view class="stat-card">
-      <text class="stat-value">¥{{formatMoney(totalPaid)}}</text>
+      <text class="stat-value">¥{{money.format(totalPaid)}}</text>
       <text class="stat-label">累计支付</text>
     </view>
   </view>
@@ -64,8 +65,8 @@
           </view>
         </view>
         <view class="record-right">
-          <text class="record-amount {{item.type}}">{{item.amount > 0 ? '+' : ''}}{{item.amount}}</text>
-          <text class="record-balance">余额 ¥{{formatMoney(item.balance)}}</text>
+          <text class="record-amount {{item.type}}">{{item.amount > 0 ? '+' : ''}}{{money.format(item.amount)}}</text>
+          <text class="record-balance">余额 ¥{{money.format(item.balance)}}</text>
         </view>
       </view>
     </view>

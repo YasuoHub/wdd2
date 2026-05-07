@@ -5,8 +5,9 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 引入平台规则
-const { MoneyUtils } = require('./platformRules')
+// 平台费率从数据库 wdd-config 集合动态读取（见 completeTask 函数）
+// 此处保留 platformRules 的引用以便未来扩展
+// const { MoneyUtils } = require('./platformRules')
 
 // 主入口
 exports.main = async (event, context) => {
@@ -92,10 +93,19 @@ async function completeTask(event, OPENID) {
     }
     const takerInTx = takerResTx.data[0]
 
-    // 1. 计算平台抽成和帮助者收入
+    // 1. 从数据库读取平台费率配置（优先使用数据库值，失败则回退默认值）
+    let feeRate = 0.15
+    try {
+      const configRes = await db.collection('wdd-config').doc('platform').get()
+      feeRate = configRes.data.platform_fee_rate || 0.15
+    } catch (e) {
+      console.warn('wdd-config/platform 不存在，使用默认费率 15%:', e.message)
+    }
+
+    // 1.1 计算平台抽成和帮助者收入
     const rewardAmount = needInTx.reward_amount || 0
-    const platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
-    const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+    const platformFee = Math.round(rewardAmount * feeRate * 100) / 100
+    const takerIncome = Math.round((rewardAmount - platformFee) * 100) / 100
 
     // 2. 更新任务状态
     await transaction.collection('wdd-needs').doc(needId).update({
@@ -178,6 +188,9 @@ async function completeTask(event, OPENID) {
 
     // 提交事务
     await transaction.commit()
+
+    // 向消息表写入系统消息（用于实时推送给帮助者）
+    await sendSystemMessage(need, taker.taker_id, need.user_id, takerIncome)
 
     // 发送完成通知
     await sendCompletionNotification(taker.taker_id, need, takerIncome)
@@ -302,7 +315,8 @@ async function cancelTask(event, OPENID) {
   }
 
   // 4. 事务提交后调用退款（避免事务内调用云函数导致不一致，refundOrder 自身已处理 total_paid 和幂等）
-  let refundSuccess = false
+  let refundStatus = 'none'
+  let refundMessage = ''
   if (need.payment_order_id) {
     try {
       const { result } = await cloud.callFunction({
@@ -315,21 +329,29 @@ async function cancelTask(event, OPENID) {
       })
       console.log('退款结果:', result)
       if (result.code === 0) {
-        refundSuccess = true
+        refundStatus = result.status || 'unknown' // 'refunded' | 'pending'
+        refundMessage = result.message || ''
+      } else {
+        refundStatus = 'failed'
+        refundMessage = result.message || '退款调用失败'
       }
     } catch (err) {
+      refundStatus = 'failed'
+      refundMessage = err.message || '退款调用失败'
       console.error('退款调用失败:', err)
     }
   }
 
-  const message = refundSuccess
+  const message = refundStatus === 'refunded'
     ? '任务已取消，悬赏金额已原路退回'
-    : '任务已取消，如有支付将原路退回（退款处理中）'
+    : refundStatus === 'pending'
+      ? '任务已取消，退款已加入队列自动处理，请稍后查看微信账单'
+      : '任务已取消，如有支付将原路退回（退款处理中）'
 
   return {
     code: 0,
     message: message,
-    data: { needId }
+    data: { needId, refundStatus }
   }
 }
 
@@ -489,5 +511,26 @@ async function sendCompletionNotificationToSeeker(seekerId, need, rewardAmount) 
     })
   } catch (err) {
     console.error('发送通知失败:', err)
+  }
+}
+
+// 发送系统消息到聊天（用于实时推送任务状态变更）
+async function sendSystemMessage(need, takerId, seekerId, takerIncome) {
+  try {
+    await db.collection('wdd-messages').add({
+      data: {
+        need_id: String(need._id),
+        client_msg_id: '',
+        sender_id: seekerId,
+        receiver_id: takerId,
+        type: 'system',
+        content: `任务已完成，¥${takerIncome}已计入您的平台余额`,
+        image_url: '',
+        create_time: new Date()
+      }
+    })
+  } catch (err) {
+    console.error('发送系统消息失败:', err)
+    // 不影响主流程
   }
 }
