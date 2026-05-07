@@ -32,14 +32,10 @@ const WECHATPAY_CONFIG = {
   // 通过商户单号查询转账单
   TRANSFER_QUERY_BY_OUT_NO_PATH: '/v3/fund-app/mch-transfer/transfer-bills/out-bill-no',
 
-  // ===================== 回调通知地址（可选）=====================
+  // ===================== 回调通知地址 =====================
   // 新版商家转账支持通过 notify_url 接收异步回调通知。
-  // 但微信云开发的 HTTP 触发器在 2025 年后配置困难（入口变更/套餐限制），
-  // 因此当前方案采用「不传 notify_url + 纯轮询」模式：
-  //   - 前端轮询：用户确认收款后，前端每4秒查一次状态
-  //   - 定时轮询：wdd-auto-cancel 每5分钟查一次 processing 状态的记录
-  // 如需开启回调，取消下面注释并配置 HTTP 触发器：
-  // NOTIFY_URL: 'https://wdd-2grpiy1r6f9f4cf2.service.tcloudbase.com/wdd-withdraw',
+  // 需在云开发控制台开启 HTTP 触发器，路径：/wdd-withdraw
+  NOTIFY_URL: 'https://wdd-2grpiy1r6f9f4cf2-1406090658.ap-shanghai.app.tcloudbase.com/wdd-withdraw',
 
   // ===================== 商户私钥 =====================
   PRIVATE_KEY_PATH: '.cert/apiclient_key.pem',
@@ -49,16 +45,15 @@ const WECHATPAY_CONFIG = {
   // 当前配置：1005 = 佣金报酬
   TRANSFER_SCENE_ID: '1005',
 
-  // 用户收款感知（展示给用户看的转账原因）
-  USER_RECV_PERCEPTION: '佣金提现',
+  // 用户收款感知：不传，使用 1005 场景默认文案「劳务报酬」
 
   // 转账备注
   DEFAULT_TRANSFER_REMARK: '提现到零钱',
 
   // 场景报备信息（必填，需与商户平台报备内容一致）
   TRANSFER_SCENE_REPORT_INFOS: [
-    { info_type: '活动名称', info_content: '问当地用户提现' },
-    { info_type: '奖励说明', info_content: '帮助者收益提现' }
+    { info_type: '岗位类型', info_content: '信息提供者' },
+    { info_type: '报酬说明', info_content: '信息悬赏报酬' }
   ]
 }
 

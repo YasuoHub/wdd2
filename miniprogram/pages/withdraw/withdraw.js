@@ -153,7 +153,8 @@ Page({
         data: {
           action: 'apply',
           amount: amount
-        }
+        },
+        timeout: 20000
       })
 
       wx.hideLoading()
@@ -170,8 +171,10 @@ Page({
 
       withdrawId = result.data.withdrawId
       const packageInfo = result.data.packageInfo
+      const mchId = result.data.mchId
+      const appId = result.data.appId
 
-      if (!packageInfo) {
+      if (!packageInfo || !mchId || !appId) {
         this.setData({ isSubmitting: false })
         wx.showToast({
           title: '获取转账信息失败',
@@ -182,7 +185,7 @@ Page({
       }
 
       // 新版商家转账：调起用户确认收款页面
-      await this.requestMerchantTransfer(packageInfo, withdrawId)
+      await this.requestMerchantTransfer(mchId, appId, packageInfo, withdrawId)
 
     } catch (err) {
       wx.hideLoading()
@@ -196,7 +199,7 @@ Page({
   },
 
   // 调起微信确认收款页面（新版商家转账必需步骤）
-  requestMerchantTransfer(packageInfo, withdrawId) {
+  requestMerchantTransfer(mchId, appId, packageInfo, withdrawId) {
     return new Promise((resolve) => {
       // 使用新版商家转账 JSAPI 调起确认页面
       // eslint-disable-next-line
@@ -212,7 +215,9 @@ Page({
       }
 
       wx.requestMerchantTransfer({
-        package_info: packageInfo,
+        mchId: mchId,
+        appId: appId,
+        package: packageInfo,
         success: (res) => {
           console.log('用户确认收款成功:', res)
           // 用户确认成功，开始轮询到账状态

@@ -6,11 +6,32 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const axios = require('axios')
 const { MoneyUtils, PLATFORM_RULES } = require('./platformRules')
+const { WECHATPAY_CONFIG } = require('./wechatpayConfig')
 const { callTransferBill, callQueryBillByOutNo, verifyCallbackSignature, decryptCallbackResource } = require('./transfer')
 
 // 主入口
 exports.main = async (event, context) => {
+  // 打印出口IP（用于配置微信支付IP白名单）
+  const ipServices = [
+    'https://httpbin.org/ip',
+    'https://api.ipify.org?format=json',
+    'https://ifconfig.me/ip'
+  ]
+  for (const url of ipServices) {
+    try {
+      const ipRes = await axios.get(url, { timeout: 5000 })
+      const ip = ipRes.data.origin || ipRes.data.ip || ipRes.data
+      if (ip) {
+        console.log('云函数出口IP:', ip)
+        break
+      }
+    } catch (e) {
+      console.log(`获取出口IP失败(${url}):`, e.message)
+    }
+  }
+
   // 微信支付回调通过云函数 HTTP 触发器接入，event 格式为 { path, httpMethod, headers, body, ... }
   // 没有 action 字段 + 有 httpMethod 时识别为 HTTP 回调
   if (!event.action && event.httpMethod) {
@@ -165,6 +186,8 @@ async function applyWithdraw(event, OPENID) {
       amount,
       fee,
       actualAmount,
+      mchId: WECHATPAY_CONFIG.MCH_ID,
+      appId: WECHATPAY_CONFIG.APP_ID,
       ...(transferResult.data || {})
     }
   }
@@ -443,9 +466,9 @@ async function queryTransferStatus(event) {
     } else if (result.state === 'FAIL') {
       // 转账失败
       return await rollbackWithdrawBalance(withdraw, `转账失败: ${result.failReason || '微信侧失败'}`)
-    } else if (result.state === 'CLOSED') {
-      // 单据已关闭
-      return await rollbackWithdrawBalance(withdraw, '转账单已关闭')
+    } else if (result.state === 'CANCELLED') {
+      // 单据已撤销
+      return await rollbackWithdrawBalance(withdraw, '转账单已撤销')
     }
     // ACCEPTED / WAIT_USER_CONFIRM / PROCESSING / TRANSFERING → 继续等待
 
@@ -544,10 +567,10 @@ async function handleTransferCallback(event) {
     return httpResponse(200, 'SUCCESS', 'fail and rollback')
   }
 
-  // 单据关闭
-  if (state === 'CLOSED') {
-    await rollbackWithdrawBalance(withdraw, '转账单已关闭')
-    return httpResponse(200, 'SUCCESS', 'closed and rollback')
+  // 单据撤销
+  if (state === 'CANCELLED') {
+    await rollbackWithdrawBalance(withdraw, '转账单已撤销')
+    return httpResponse(200, 'SUCCESS', 'cancelled and rollback')
   }
 
   // 其他状态（ACCEPTED / WAIT_USER_CONFIRM / PROCESSING / TRANSFERING）仅记录
@@ -590,14 +613,8 @@ async function rollbackWithdrawBalance(withdraw, reason) {
       }
     })
 
-    // 记录置为 rejected
-    await transaction.collection('wdd-balance-records').doc(withdraw._id).update({
-      data: {
-        status: 'rejected',
-        reject_reason: reason,
-        update_time: new Date()
-      }
-    })
+    // 提现失败，直接删除记录，不在收支明细中展示
+    await transaction.collection('wdd-balance-records').doc(withdraw._id).remove()
 
     await transaction.commit()
 

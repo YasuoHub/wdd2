@@ -95,7 +95,6 @@ async function callTransferBill({ outBillNo, transferAmount, openid, transferRem
     openid: openid,
     transfer_amount: transferAmount,
     transfer_remark: transferRemark || WECHATPAY_CONFIG.DEFAULT_TRANSFER_REMARK,
-    user_recv_perception: WECHATPAY_CONFIG.USER_RECV_PERCEPTION,
     transfer_scene_report_infos: WECHATPAY_CONFIG.TRANSFER_SCENE_REPORT_INFOS
   }
 
@@ -263,6 +262,11 @@ async function verifyCallbackSignature(headers, rawBody) {
 
   if (!timestamp || !nonce || !signature || !serial) {
     console.warn('回调缺少必要头部:', { timestamp, nonce, signature: !!signature, serial })
+    return false
+  }
+
+  if (serial.startsWith('PUB_KEY_ID_')) {
+    console.warn('回调使用平台公钥模式，当前实现仅支持证书模式，请在商户平台「平台公钥」配置切换为证书')
     return false
   }
 
