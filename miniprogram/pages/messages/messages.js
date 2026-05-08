@@ -281,7 +281,7 @@ Page({
     this.clearLocalUnread(needid, isSeekerBool)
 
     wx.navigateTo({
-      url: `/pages/chat/chat?needId=${needid}&isSeeker=${isSeekerBool}`
+      url: `/pages/chat/chat?needId=${needid}`
     })
   },
 

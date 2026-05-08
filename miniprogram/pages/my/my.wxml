@@ -105,7 +105,7 @@
         </view>
         <view class="menu-content">
           <text class="menu-text">积分明细</text>
-          <text class="menu-desc">查看收支记录</text>
+          <text class="menu-desc">可兑换免单券、提现免手续费券等权益（开发中）</text>
         </view>
         <text class="menu-arrow">›</text>
       </view>

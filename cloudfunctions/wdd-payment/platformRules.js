@@ -1,110 +1,105 @@
-// 平台业务规则常量配置（云函数端）
-// 与小程序端 miniprogram/utils/platformRules.js 保持同步
+// 平台业务规则配置（支持从 wdd-config 动态加载，带 5 分钟本地缓存）
 
-const PLATFORM_RULES = {
-  // 平台抽成比例
+const cloud = require('wx-server-sdk')
+
+const DEFAULT_RULES = {
   PLATFORM_FEE_RATE: 0.15,
-
-  // 提现手续费率
   WITHDRAW_FEE_RATE: 0.01,
-
-  // 最低提现门槛（元）
   WITHDRAW_MIN_AMOUNT: 2,
-
-  // 单次提现最低金额（元）
   WITHDRAW_MIN_PER_REQUEST: 1,
-
-  // 单次提现最高金额（元）
   WITHDRAW_MAX_PER_REQUEST: 5000,
-
-  // 最小悬赏金额（元）
+  WITHDRAW_DAILY_LIMIT: 5000,
+  MAX_TRANSFER_RETRY: 5,
+  TRANSFER_BACKOFF_MINUTES: [5, 10, 20, 40, 80],
+  TRANSFER_QUERY_TIMEOUT_MINUTES: 1,
   MIN_REWARD_AMOUNT: 0.1,
-
-  // 最大悬赏金额（元）
   MAX_REWARD_AMOUNT: 500,
-
-  // 任务默认有效期（分钟）
-  DEFAULT_EXPIRE_MINUTES: 60,
-
-  // 任务有效期选项（分钟）
-  EXPIRE_OPTIONS: [
-    { value: 30, label: '30分钟', recommended: false },
-    { value: 60, label: '1小时', recommended: true },
-    { value: 120, label: '2小时', recommended: false },
-    { value: 240, label: '4小时', recommended: false },
-    { value: 720, label: '12小时', recommended: false },
-    { value: 1440, label: '24小时', recommended: false }
-  ],
-
-  // 支付订单超时时间（分钟）
+  DEFAULT_EXPIRE_MINUTES: 30,
   PAYMENT_EXPIRE_MINUTES: 30,
-
-  // 退款处理说明
   REFUND_POLICY: '任务取消后，悬赏金额将原路退回至您的支付账户',
-
-  // 平台服务费说明
   FEE_POLICY: '平台对每单任务收取15%服务费，用于平台运营和技术维护'
 }
 
-// 金额计算工具函数
-const MoneyUtils = {
-  // 计算平台服务费
-  calcPlatformFee(amount) {
-    return Math.round(amount * PLATFORM_RULES.PLATFORM_FEE_RATE * 100) / 100
-  },
+let _cachedRules = null
+let _cacheExpireAt = 0
 
-  // 计算帮助者实际到账金额
-  calcTakerIncome(amount) {
-    const fee = this.calcPlatformFee(amount)
-    return Math.round((amount - fee) * 100) / 100
-  },
+async function loadFromDb() {
+  const now = Date.now()
+  if (_cachedRules && _cacheExpireAt > now) {
+    return _cachedRules
+  }
 
-  // 计算提现手续费
-  calcWithdrawFee(amount) {
-    return Math.round(amount * PLATFORM_RULES.WITHDRAW_FEE_RATE * 100) / 100
-  },
+  try {
+    const db = cloud.database()
+    const res = await db.collection('wdd-config').doc('platform').get()
+    const cfg = res.data || {}
+    _cachedRules = {
+      PLATFORM_FEE_RATE: cfg.platform_fee_rate ?? DEFAULT_RULES.PLATFORM_FEE_RATE,
+      WITHDRAW_FEE_RATE: cfg.withdraw_fee_rate ?? DEFAULT_RULES.WITHDRAW_FEE_RATE,
+      WITHDRAW_MIN_AMOUNT: cfg.withdraw_min_amount ?? DEFAULT_RULES.WITHDRAW_MIN_AMOUNT,
+      WITHDRAW_MIN_PER_REQUEST: cfg.withdraw_min_per_request ?? DEFAULT_RULES.WITHDRAW_MIN_PER_REQUEST,
+      WITHDRAW_MAX_PER_REQUEST: cfg.withdraw_max_per_request ?? DEFAULT_RULES.WITHDRAW_MAX_PER_REQUEST,
+      WITHDRAW_DAILY_LIMIT: cfg.withdraw_daily_limit ?? DEFAULT_RULES.WITHDRAW_DAILY_LIMIT,
+      MIN_REWARD_AMOUNT: cfg.min_reward_amount ?? DEFAULT_RULES.MIN_REWARD_AMOUNT,
+      MAX_REWARD_AMOUNT: cfg.max_reward_amount ?? DEFAULT_RULES.MAX_REWARD_AMOUNT,
+      DEFAULT_EXPIRE_MINUTES: DEFAULT_RULES.DEFAULT_EXPIRE_MINUTES,
+      PAYMENT_EXPIRE_MINUTES: DEFAULT_RULES.PAYMENT_EXPIRE_MINUTES,
+      MAX_TRANSFER_RETRY: cfg.max_transfer_retry ?? DEFAULT_RULES.MAX_TRANSFER_RETRY,
+      TRANSFER_BACKOFF_MINUTES: cfg.transfer_backoff_minutes ?? DEFAULT_RULES.TRANSFER_BACKOFF_MINUTES,
+      TRANSFER_QUERY_TIMEOUT_MINUTES: cfg.transfer_query_timeout_minutes ?? DEFAULT_RULES.TRANSFER_QUERY_TIMEOUT_MINUTES,
+      REFUND_POLICY: DEFAULT_RULES.REFUND_POLICY,
+      FEE_POLICY: `平台对每单任务收取${Math.round((cfg.platform_fee_rate ?? DEFAULT_RULES.PLATFORM_FEE_RATE) * 100)}%服务费，用于平台运营和技术维护`
+    }
+    _cacheExpireAt = now + 5 * 60 * 1000
+    return _cachedRules
+  } catch (e) {
+    return DEFAULT_RULES
+  }
+}
 
-  // 计算提现实际到账金额
-  calcWithdrawActual(amount) {
-    const fee = this.calcWithdrawFee(amount)
-    return Math.round((amount - fee) * 100) / 100
-  },
+function clearCache() {
+  _cachedRules = null
+  _cacheExpireAt = 0
+}
 
-  // 格式化金额显示
-  formatAmount(amount) {
-    return (Math.round(amount * 100) / 100).toFixed(2)
-  },
-
-  // 检查是否满足提现条件
-  checkCanWithdraw(balance) {
-    if (balance < PLATFORM_RULES.WITHDRAW_MIN_AMOUNT) {
-      return {
-        canWithdraw: false,
-        reason: `余额满${PLATFORM_RULES.WITHDRAW_MIN_AMOUNT}元才可提现`
+function createMoneyUtils(rules) {
+  return {
+    calcPlatformFee(amount) {
+      return Math.round(amount * rules.PLATFORM_FEE_RATE * 100) / 100
+    },
+    calcTakerIncome(amount) {
+      const fee = this.calcPlatformFee(amount)
+      return Math.round((amount - fee) * 100) / 100
+    },
+    calcWithdrawFee(amount) {
+      return Math.round(amount * rules.WITHDRAW_FEE_RATE * 100) / 100
+    },
+    calcWithdrawActual(amount) {
+      const fee = this.calcWithdrawFee(amount)
+      return Math.round((amount - fee) * 100) / 100
+    },
+    formatAmount(amount) {
+      return (Math.round(amount * 100) / 100).toFixed(2)
+    },
+    checkCanWithdraw(balance) {
+      if (balance < rules.WITHDRAW_MIN_AMOUNT) {
+        return { canWithdraw: false, reason: `余额满${rules.WITHDRAW_MIN_AMOUNT}元才可提现` }
       }
+      return { canWithdraw: true, reason: '' }
+    },
+    checkWithdrawAmount(amount, balance) {
+      if (amount <= 0) return { valid: false, reason: '提现金额必须大于0' }
+      if (amount < rules.WITHDRAW_MIN_PER_REQUEST) return { valid: false, reason: `单次提现最低${rules.WITHDRAW_MIN_PER_REQUEST}元` }
+      if (amount > rules.WITHDRAW_MAX_PER_REQUEST) return { valid: false, reason: `单次提现最高${rules.WITHDRAW_MAX_PER_REQUEST}元` }
+      if (amount > balance) return { valid: false, reason: '提现金额不能超过余额' }
+      return { valid: true, reason: '' }
     }
-    return { canWithdraw: true, reason: '' }
-  },
-
-  // 检查提现金额是否合法
-  checkWithdrawAmount(amount, balance) {
-    if (amount <= 0) {
-      return { valid: false, reason: '提现金额必须大于0' }
-    }
-    if (amount < PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST) {
-      return { valid: false, reason: `单次提现最低${PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST}元` }
-    }
-    if (amount > PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST) {
-      return { valid: false, reason: `单次提现最高${PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST}元` }
-    }
-    if (amount > balance) {
-      return { valid: false, reason: '提现金额不能超过余额' }
-    }
-    return { valid: true, reason: '' }
   }
 }
 
 module.exports = {
-  PLATFORM_RULES,
-  MoneyUtils
+  DEFAULT_RULES,
+  loadFromDb,
+  clearCache,
+  createMoneyUtils
 }

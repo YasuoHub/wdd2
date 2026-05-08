@@ -8,6 +8,26 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 从 wdd-config 读取积分配置，未配置时使用默认值
+async function getPointsConfig() {
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get()
+    const cfg = configRes.data
+    if (cfg && cfg.points) {
+      return {
+        register: cfg.points.register ?? 100,
+        invite: cfg.points.invite ?? 50,
+        signInMap: cfg.points.signIn?.daily ?? [5, 10, 15, 20, 25, 30, 30]
+      }
+    }
+  } catch (e) {}
+  return {
+    register: 100,
+    invite: 50,
+    signInMap: [5, 10, 15, 20, 25, 30, 30]
+  }
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { inviterId, action } = event
@@ -42,71 +62,71 @@ exports.main = async (event, context) => {
       // 新用户，创建记录
       isNewUser = true
 
-      // 检查是否有邀请人
+      const pointsCfg = await getPointsConfig()
+
+      // 检查是否有邀请人（事务外查询，确保信息可用）
       let inviter = null
       let inviteBonus = 0
       if (inviterId) {
         const inviterRes = await db.collection('wdd-users').doc(inviterId).get()
         if (inviterRes.data) {
           inviter = inviterRes.data
-          inviteBonus = 50  // 邀请奖励积分
+          inviteBonus = pointsCfg.invite
         }
       }
+
+      const registerPoints = pointsCfg.register
 
       const newUser = {
         openid: OPENID,
         nickname: event.nickname || '微信用户',
         avatar: event.avatar || '',
-        total_points: 100 + inviteBonus,      // 总积分（注册100 + 邀请奖励）
-        available_points: 100 + inviteBonus,  // 可用积分
-        frozen_points: 0,                      // 冻结积分
-        role: 'both',                          // both: 双角色
+        total_points: registerPoints + inviteBonus,
+        available_points: registerPoints + inviteBonus,
+        frozen_points: 0,
+        role: 'both',
         inviter_id: inviter ? inviter._id : null,
-        invite_count: 0,                       // 邀请人数
+        invite_count: 0,
         create_time: db.serverDate(),
         update_time: db.serverDate(),
         last_sign_in_date: null,
         consecutive_sign_days: 0
       }
 
-      const addRes = await db.collection('wdd-users').add({
-        data: newUser
-      })
+      // 用户创建 + 注册积分 + 邀请奖励 统一事务
+      const transaction = await db.startTransaction()
+      let addRes
+      try {
+        // 1. 创建用户
+        addRes = await transaction.collection('wdd-users').add({
+          data: newUser
+        })
 
-      userInfo = {
-        _id: addRes._id,
-        ...newUser
-      }
+        // 2. 注册积分流水
+        await transaction.collection('wdd-point-records').add({
+          data: {
+            user_id: addRes._id,
+            type: 'gain',
+            points: registerPoints,
+            description: '新用户注册奖励',
+            balance: registerPoints,
+            create_time: db.serverDate()
+          }
+        })
 
-      // 记录新用户积分流水（注册奖励）
-      await db.collection('wdd-point-records').add({
-        data: {
-          user_id: addRes._id,
-          type: 'gain',
-          points: 100,
-          description: '新用户注册奖励',
-          balance: 100,
-          create_time: db.serverDate()
-        }
-      })
-
-      // 如果有邀请人，处理邀请奖励
-      if (inviter) {
-        const transaction = await db.startTransaction()
-        try {
-          // 1. 给被邀请人添加邀请奖励流水
+        // 3. 邀请奖励（同一事务内）
+        if (inviter) {
           await transaction.collection('wdd-point-records').add({
             data: {
               user_id: addRes._id,
               type: 'invite',
               points: inviteBonus,
               description: '接受邀请奖励',
-              balance: 100 + inviteBonus,
+              balance: registerPoints + inviteBonus,
               create_time: db.serverDate()
             }
           })
 
-          // 2. 给邀请人增加积分
           await transaction.collection('wdd-users').doc(inviter._id).update({
             data: {
               total_points: _.inc(inviteBonus),
@@ -116,7 +136,6 @@ exports.main = async (event, context) => {
             }
           })
 
-          // 3. 给邀请人添加积分流水
           await transaction.collection('wdd-point-records').add({
             data: {
               user_id: inviter._id,
@@ -128,19 +147,6 @@ exports.main = async (event, context) => {
             }
           })
 
-          // 4. 给邀请人发送通知
-          await transaction.collection('wdd-notifications').add({
-            data: {
-              user_id: inviter._id,
-              type: 'points_received',
-              title: '邀请成功',
-              content: `您邀请的好友「${newUser.nickname}」已注册，获得${inviteBonus}积分奖励`,
-              is_read: false,
-              create_time: db.serverDate()
-            }
-          })
-
-          // 5. 记录邀请关系
           await transaction.collection('wdd-invite-records').add({
             data: {
               inviter_id: inviter._id,
@@ -150,12 +156,34 @@ exports.main = async (event, context) => {
               create_time: db.serverDate()
             }
           })
+        }
 
-          await transaction.commit()
-        } catch (err) {
-          await transaction.rollback()
-          console.error('处理邀请奖励失败:', err)
-          // 邀请失败不影响注册流程
+        await transaction.commit()
+      } catch (err) {
+        await transaction.rollback()
+        throw new Error('用户注册事务失败: ' + err.message)
+      }
+
+      userInfo = {
+        _id: addRes._id,
+        ...newUser
+      }
+
+      // 事务外：发送邀请通知（失败不影响注册结果）
+      if (inviter) {
+        try {
+          await db.collection('wdd-notifications').add({
+            data: {
+              user_id: inviter._id,
+              type: 'points_received',
+              title: '邀请成功',
+              content: `您邀请的好友「${newUser.nickname}」已注册，获得${inviteBonus}积分奖励`,
+              is_read: false,
+              create_time: db.serverDate()
+            }
+          })
+        } catch (notifyErr) {
+          console.error('发送邀请通知失败:', notifyErr)
         }
       }
     } else {

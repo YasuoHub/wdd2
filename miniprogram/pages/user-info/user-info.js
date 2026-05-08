@@ -1,11 +1,13 @@
 // 用户信息填写页面
 const app = getApp()
+const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 Page({
   data: {
     nickname: '',
     avatarUrl: '',
-    isLoading: false
+    isLoading: false,
+    privacyTip: '' // 隐私授权提示
   },
 
   onLoad() {
@@ -16,6 +18,24 @@ Page({
         nickname: userInfo.nickname || '',
         avatarUrl: userInfo.avatar || ''
       })
+    }
+
+    // 预检隐私授权状态（chooseAvatar 是组件级 open-type，无法前置拦截）
+    this.checkPrivacyStatus()
+  },
+
+  // 检查隐私授权状态
+  async checkPrivacyStatus() {
+    if (!wx.getPrivacySetting) return
+    try {
+      const res = await new Promise((resolve) => {
+        wx.getPrivacySetting({ success: resolve, fail: () => resolve({ needAuthorization: false }) })
+      })
+      if (res.needAuthorization) {
+        this.setData({ privacyTip: '首次使用需同意隐私协议，点击头像时会弹出授权提示' })
+      }
+    } catch (e) {
+      // 忽略错误
     }
   },
 

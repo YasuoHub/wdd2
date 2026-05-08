@@ -4,6 +4,7 @@
   "navigationBarTextStyle": "black",
   "backgroundColor": "#F0F8FF",
   "usingComponents": {
-    "empty": "/components/empty/empty"
+    "empty": "/components/empty/empty",
+    "error": "/components/error/error"
   }
 }

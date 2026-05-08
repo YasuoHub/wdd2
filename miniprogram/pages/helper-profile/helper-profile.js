@@ -1,5 +1,6 @@
 // 帮助者信息完善页面
 const app = getApp()
+const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 // 帮助类型选项
 const HELP_TYPES = [
@@ -138,6 +139,7 @@ Page({
     }
 
     try {
+      await requirePrivacyAuthorize()
       const res = await wx.chooseLocation({
         title: '选择常去地点'
       })
@@ -167,6 +169,10 @@ Page({
     } catch (err) {
       // 用户取消选择，不做处理
       if (err.errMsg && err.errMsg.includes('cancel')) return
+      if (err.errno === 112) {
+        wx.showToast({ title: '定位服务暂不可用', icon: 'none' })
+        return
+      }
       console.error('选择地点失败:', err)
       wx.showToast({
         title: '选择地点失败',

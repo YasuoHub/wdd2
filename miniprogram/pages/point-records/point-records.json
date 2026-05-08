@@ -4,6 +4,7 @@
   "navigationBarTextStyle": "black",
   "usingComponents": {
     "loading": "/components/loading/loading",
-    "empty": "/components/empty/empty"
+    "empty": "/components/empty/empty",
+    "error": "/components/error/error"
   }
 }

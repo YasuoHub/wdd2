@@ -1,6 +1,7 @@
 // 发布求助页面 - 金额支付版
 const app = getApp()
 const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
+const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 // 求助类型配置
 const NEED_TYPES = [
@@ -89,13 +90,18 @@ Page({
   // 初始化地图中心点
   async initMapCenter() {
     try {
+      await requirePrivacyAuthorize()
       const res = await wx.getLocation({ type: 'gcj02' })
       this.setData({
         longitude: res.longitude,
         latitude: res.latitude
       })
     } catch (err) {
-      console.log('获取当前位置失败，使用默认位置')
+      if (err.errno === 112) {
+        console.error('【定位失败】小程序后台《隐私保护指引》未配置"位置信息"权限，errno: 112')
+      } else {
+        console.log('获取当前位置失败，使用默认位置')
+      }
     }
   },
 
@@ -127,7 +133,14 @@ Page({
   },
 
   // 选择地点
-  goToLocationPicker() {
+  async goToLocationPicker() {
+    try {
+      await requirePrivacyAuthorize()
+    } catch (err) {
+      const msg = err.errno === 112 ? '定位服务暂不可用' : '需要同意隐私协议'
+      wx.showToast({ title: msg, icon: 'none' })
+      return
+    }
     wx.chooseLocation({
       latitude: this.data.latitude,
       longitude: this.data.longitude,
@@ -152,6 +165,7 @@ Page({
   // 获取当前位置
   async getCurrentLocation() {
     try {
+      await requirePrivacyAuthorize()
       const res = await wx.getLocation({ type: 'gcj02' })
       this.setData({
         longitude: res.longitude,
@@ -159,27 +173,31 @@ Page({
       })
       await this.reverseGeocode(res.longitude, res.latitude)
     } catch (err) {
-      wx.showToast({ title: '定位失败，请手动输入', icon: 'none' })
+      const msg = err.errno === 112
+        ? '定位服务暂不可用'
+        : (err._privacyDenied ? '需要同意隐私协议' : '定位失败，请手动输入')
+      wx.showToast({ title: msg, icon: 'none' })
     }
   },
 
-  // 逆向地理编码
-  reverseGeocode(longitude, latitude) {
-    const QQ_MAP_KEY = 'LTXBZ-6QBEW-T7CRL-YCDUQ-WHXFK-GSFRJ'
-    wx.request({
-      url: `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${QQ_MAP_KEY}&get_poi=0`,
-      success: (res) => {
-        if (res.data.status === 0 && res.data.result) {
-          const result = res.data.result
-          const addressName = result.formatted_addresses?.recommend
-            || result.formatted_addresses?.standard_address
-            || result.address
-            || '未知位置'
-          this.setData({ locationName: addressName })
-          this.checkCanPublish()
+  // 逆向地理编码（通过云函数代理，避免 Key 泄露）
+  async reverseGeocode(longitude, latitude) {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-geo',
+        data: {
+          action: 'reverseGeocode',
+          longitude,
+          latitude
         }
+      })
+      if (result.code === 0 && result.data) {
+        this.setData({ locationName: result.data.address })
+        this.checkCanPublish()
       }
-    })
+    } catch (err) {
+      console.error('逆编码失败:', err)
+    }
   },
 
   // 地图点击
@@ -258,7 +276,13 @@ Page({
   },
 
   // 选择图片
-  chooseImage() {
+  async chooseImage() {
+    try {
+      await requirePrivacyAuthorize()
+    } catch (err) {
+      wx.showToast({ title: '需要同意隐私协议', icon: 'none' })
+      return
+    }
     const { images, maxImageCount } = this.data
     const remainCount = maxImageCount - images.length
     if (remainCount <= 0) {

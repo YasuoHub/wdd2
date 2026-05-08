@@ -17,6 +17,12 @@ App({
   },
 
   onLaunch() {
+    // release 包屏蔽业务日志
+    if (typeof __wxConfig !== 'undefined' && __wxConfig.envVersion === 'release') {
+      console.log = () => {}
+      console.info = () => {}
+    }
+
     // 初始化云开发
     wx.cloud.init({
       env: 'wdd-2grpiy1r6f9f4cf2',
@@ -61,6 +67,29 @@ App({
   // 获取/更新用户当前位置
   async updateUserLocation() {
     try {
+      // 1. 先检查隐私授权设置（微信 3.0.0+）
+      if (wx.getPrivacySetting) {
+        const privacyRes = await new Promise((resolve) => {
+          wx.getPrivacySetting({ success: resolve, fail: () => resolve({ needAuthorization: false }) })
+        })
+        // 需要授权但用户未同意时，尝试拉起授权弹窗
+        if (privacyRes.needAuthorization && wx.requirePrivacyAuthorize) {
+          try {
+            await new Promise((resolve, reject) => {
+              wx.requirePrivacyAuthorize({ success: resolve, fail: reject })
+            })
+          } catch (privacyErr) {
+            // 用户拒绝或后台未配置隐私指引
+            console.warn('隐私授权失败:', privacyErr.errMsg || privacyErr.message)
+            // errno 112 = 后台未配置隐私保护指引
+            if (privacyErr.errno === 112) {
+              console.error('【重要】请在微信公众平台后台配置《隐私保护指引》，声明"位置信息"权限')
+            }
+            throw { ...privacyErr, _privacyDenied: true }
+          }
+        }
+      }
+
       const res = await wx.getLocation({
         type: 'gcj02' // 国测局坐标系，与腾讯地图一致
       })
@@ -74,7 +103,12 @@ App({
       console.log('全局位置更新成功:', res.latitude, res.longitude)
       return this.globalData.userLocation
     } catch (err) {
-      console.error('获取用户位置失败:', err)
+      // errno 112 = 后台未配置隐私保护指引
+      if (err.errno === 112) {
+        console.error('获取位置失败：小程序后台《隐私保护指引》未配置"位置信息"权限')
+      } else {
+        console.error('获取用户位置失败:', err.errMsg || err.message || err)
+      }
       // 抛出错误让调用者知道位置获取失败
       throw err
     }
@@ -85,13 +119,26 @@ App({
     return this.globalData.userLocation
   },
 
-  // 获取系统信息
+  // 获取系统信息（使用新 API，兼容旧版）
   getSystemInfo() {
-    wx.getSystemInfo({
-      success: (res) => {
-        this.globalData.systemInfo = res
+    const gather = () => {
+      const info = {}
+      try {
+        if (wx.getDeviceInfo) Object.assign(info, wx.getDeviceInfo())
+        if (wx.getWindowInfo) Object.assign(info, wx.getWindowInfo())
+        if (wx.getAppBaseInfo) Object.assign(info, wx.getAppBaseInfo())
+      } catch (e) {
+        // 低版本兜底
       }
-    })
+      if (Object.keys(info).length > 0) {
+        this.globalData.systemInfo = info
+      } else if (wx.getSystemInfoSync) {
+        try {
+          this.globalData.systemInfo = wx.getSystemInfoSync()
+        } catch (e) {}
+      }
+    }
+    gather()
   },
 
   // 检查登录状态

@@ -480,7 +480,7 @@ button::after {
   page {
     font-size: 26rpx;
   }
-  :root {
+  page {
     --space-md: 24rpx;
     --space-lg: 32rpx;
   }

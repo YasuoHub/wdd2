@@ -1,5 +1,6 @@
 // 聊天页面逻辑
 const app = getApp()
+const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 Page({
   data: {
@@ -57,7 +58,7 @@ Page({
 
   onLoad(options) {
     // 获取页面参数
-    const { needId, isSeeker } = options
+    const { needId } = options
 
     // 关键：立即保存当前页面任务ID到实例变量，确保后续所有操作使用正确的ID
     this.currentNeedId = needId
@@ -65,7 +66,6 @@ Page({
     // 重置页面状态，防止数据串扰
     this.setData({
       'task._id': needId,
-      isSeeker: isSeeker === 'true',
       userInfo: app.globalData.userInfo,
       messages: [], // 清空消息列表
       inputValue: '',
@@ -428,6 +428,7 @@ Page({
             locationName: taskData.location_name,
             images: taskData.images || []
           },
+          isSeeker: result.data.role === 'seeker',
           otherUser: result.data.otherUser
         })
 
@@ -968,7 +969,7 @@ Page({
   },
 
   // 选择图片
-  chooseImage(e) {
+  async chooseImage(e) {
     const source = e.currentTarget.dataset.source
 
     // 检查任务状态
@@ -977,6 +978,14 @@ Page({
         title: '任务已结束，无法发送图片',
         icon: 'none'
       })
+      return
+    }
+
+    try {
+      await requirePrivacyAuthorize()
+    } catch (err) {
+      const msg = err.errno === 112 ? '发送图片暂不可用' : '需要同意隐私协议'
+      wx.showToast({ title: msg, icon: 'none' })
       return
     }
 

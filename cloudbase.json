@@ -1,0 +1,35 @@
+{
+  "envId": "wdd-2grpiy1r6f9f4cf2",
+  "functionRoot": "cloudfunctions",
+  "functions": [],
+  "database": {
+    "indexes": [
+      {
+        "collectionName": "wdd-need-takers",
+        "name": "need_id_unique",
+        "unique": true,
+        "keys": [
+          { "name": "need_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-needs",
+        "name": "status_expire_time",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "expire_time", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-messages",
+        "name": "need_id_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "need_id", "direction": "asc" },
+          { "name": "create_time", "direction": "asc" }
+        ]
+      }
+    ]
+  }
+}

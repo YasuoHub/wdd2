@@ -75,12 +75,12 @@ const PLATFORM_RULES = {
   },
 
   // 任务默认有效期（分钟）
-  DEFAULT_EXPIRE_MINUTES: 60,
+  DEFAULT_EXPIRE_MINUTES: 30,
 
   // 任务有效期选项（分钟）
   EXPIRE_OPTIONS: [
-    { value: 30, label: '30分钟', recommended: false },
-    { value: 60, label: '1小时', recommended: true },
+    { value: 30, label: '30分钟', recommended: true },
+    { value: 60, label: '1小时', recommended: false },
     { value: 120, label: '2小时', recommended: false },
     { value: 240, label: '4小时', recommended: false },
     { value: 720, label: '12小时', recommended: false },

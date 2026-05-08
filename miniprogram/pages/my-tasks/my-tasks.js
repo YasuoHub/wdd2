@@ -206,7 +206,7 @@ Page({
   goToChat(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
-      url: `/pages/chat/chat?needId=${id}&isSeeker=false`
+      url: `/pages/chat/chat?needId=${id}`
     })
   },
 

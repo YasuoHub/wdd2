@@ -364,7 +364,7 @@ Page({
         // 跳转到聊天页
         setTimeout(() => {
           wx.navigateTo({
-            url: `/pages/chat/chat?needId=${needId}&isSeeker=false`
+            url: `/pages/chat/chat?needId=${needId}`
           })
         }, 1000)
       } else {

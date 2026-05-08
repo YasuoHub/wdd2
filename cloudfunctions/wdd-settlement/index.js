@@ -5,10 +5,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 平台费率从数据库 wdd-config 集合动态读取（见 completeTask 函数）
-// 此处保留 platformRules 的引用以便未来扩展
-// const { MoneyUtils } = require('./platformRules')
-
 // 主入口
 exports.main = async (event, context) => {
   const { action } = event
@@ -161,31 +157,6 @@ async function completeTask(event, OPENID) {
       }
     })
 
-    // 8. 保留积分流水记录（兼容旧数据）
-    await transaction.collection('wdd-point-records').add({
-      data: {
-        user_id: need.user_id,
-        type: 'task_pay',
-        points: -(need.points || 0),
-        balance: seeker.total_points || 0,
-        description: `任务「${need.type_name || '求助'}」支出`,
-        need_id: needId,
-        create_time: new Date()
-      }
-    })
-
-    await transaction.collection('wdd-point-records').add({
-      data: {
-        user_id: taker.taker_id,
-        type: 'task_reward',
-        points: need.points || 0,
-        balance: (takerUser.total_points || 0) + (need.points || 0),
-        description: `任务「${need.type_name || '求助'}」收入`,
-        need_id: needId,
-        create_time: new Date()
-      }
-    })
-
     // 提交事务
     await transaction.commit()
 
@@ -269,32 +240,7 @@ async function cancelTask(event, OPENID) {
       }
     })
 
-    // 2. 保留积分解冻逻辑（兼容旧数据）
-    if (needInTx.points > 0) {
-      const userResTx = await transaction.collection('wdd-users').doc(user._id).get()
-      const userInTx = userResTx.data
-      await transaction.collection('wdd-users').doc(user._id).update({
-        data: {
-          frozen_points: _.inc(-needInTx.points),
-          available_points: _.inc(needInTx.points),
-          update_time: new Date()
-        }
-      })
-
-      await transaction.collection('wdd-point-records').add({
-        data: {
-          user_id: currentUserId,
-          type: 'task_cancel',
-          points: needInTx.points,
-          balance: (userInTx.available_points || 0) + needInTx.points,
-          description: `任务「${needInTx.type_name || '求助'}」取消，积分退还`,
-          need_id: needId,
-          create_time: new Date()
-        }
-      })
-    }
-
-    // 3. 给求助者发送取消通知（退款结果在事务外处理）
+    // 2. 给求助者发送取消通知（退款结果在事务外处理）
     await transaction.collection('wdd-notifications').add({
       data: {
         user_id: currentUserId,
@@ -381,7 +327,7 @@ async function submitRating(event, OPENID) {
 
     // 验证权限
     const isSeeker = need.user_id === currentUserId
-    const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).get()
+    const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get()
     const taker = takerRes.data[0]
     const isTaker = taker && taker.taker_id === currentUserId
 

@@ -11,6 +11,17 @@
   margin-bottom: 60rpx;
 }
 
+.privacy-tip {
+  background: rgba(253, 203, 110, 0.2);
+  border: 2rpx solid rgba(253, 203, 110, 0.5);
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 26rpx;
+  color: #b7791f;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
 .title {
   font-size: 40rpx;
   font-weight: 600;

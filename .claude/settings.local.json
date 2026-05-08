@@ -9,7 +9,11 @@
       "Bash(node -c cloudfunctions/wdd-auto-cancel/index.js)",
       "WebSearch",
       "Bash(openssl x509 *)",
-      "WebFetch(domain:pay.weixin.qq.com)"
+      "WebFetch(domain:pay.weixin.qq.com)",
+      "WebFetch(domain:developers.weixin.qq.com)",
+      "Bash(git -C D:\\\\production\\\\brainstorm ls-files)",
+      "Bash(git mv *)",
+      "Bash(perl *)"
     ]
   }
 }

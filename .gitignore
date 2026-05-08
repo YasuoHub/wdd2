@@ -1,0 +1,12 @@
+node_modules/
+.cert/
+*.pem
+*.log
+*.tmp
+miniprogram/miniprogram_npm/
+cloudbase/src.zip
+cloudbase/node_modules/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

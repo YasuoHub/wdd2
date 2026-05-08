@@ -104,6 +104,7 @@ async function getTaskInfo(event, OPENID) {
     code: 0,
     data: {
       ...need,
+      role: isSeeker ? 'seeker' : 'taker',
       otherUser: otherUser ? {
         _id: otherUser._id,
         nickname: otherUser.nickname,
@@ -131,7 +132,7 @@ async function getMessages(event, OPENID) {
   }
 
   const need = needRes.data
-  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).get()
+  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get()
   const taker = takerRes.data[0]
 
   const isSeeker = need.user_id === currentUserId
@@ -239,7 +240,7 @@ async function sendMessage(event, OPENID) {
   }
 
   // 获取接单记录
-  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).get()
+  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get()
   const taker = takerRes.data[0]
 
   const isSeeker = need.user_id === currentUserId
@@ -252,24 +253,29 @@ async function sendMessage(event, OPENID) {
   // 确定接收者
   const receiverId = isSeeker ? taker.taker_id : need.user_id
 
-  // 文字消息内容安全检测
+  // 文字消息内容安全检测（v2）
   if (type === MSG_TYPE.TEXT) {
     try {
       const checkRes = await cloud.openapi.security.msgSecCheck({
-        content: content
+        content: content,
+        version: 2,
+        scene: 2,
+        openid: OPENID,
+        title: '问当地聊天'
       })
       if (checkRes.errCode !== 0) {
         return { code: -1, message: '消息包含敏感内容，无法发送' }
       }
     } catch (err) {
       console.error('内容安全检测失败:', err)
-      // 检测失败时继续发送，避免阻塞正常消息
+      return { code: -1, message: '内容审核失败，请稍后重试' }
     }
   }
 
-  // 图片消息：获取并计算显示尺寸
+  // 图片消息：内容安全检测 + 获取并计算显示尺寸
   let imageDisplayWidth = 0
   let imageDisplayHeight = 0
+  let checkTraceId = ''
 
   if (type === MSG_TYPE.IMAGE && imageUrl) {
     // 优先使用前端传来的图片尺寸
@@ -281,7 +287,19 @@ async function sendMessage(event, OPENID) {
     imageDisplayWidth = displaySize.width
     imageDisplayHeight = displaySize.height
 
-    console.log('图片尺寸:', originalWidth, 'x', originalHeight, '显示尺寸:', imageDisplayWidth, 'x', imageDisplayHeight)
+    // 异步图片内容安全检测
+    try {
+      const checkRes = await cloud.openapi.security.mediaCheckAsync({
+        media_type: 2,
+        media_url: imageUrl,
+        version: 2,
+        openid: OPENID,
+        scene: 2
+      })
+      checkTraceId = checkRes.trace_id || ''
+    } catch (err) {
+      console.error('图片安全检测提交失败:', err)
+    }
   }
 
   // 创建消息记录
@@ -297,6 +315,9 @@ async function sendMessage(event, OPENID) {
     // 图片显示尺寸（后端预计算）
     image_width: imageDisplayWidth,
     image_height: imageDisplayHeight,
+    // 图片内容安全审核 trace_id，用于回调关联
+    check_trace_id: checkTraceId,
+    status: 'normal',
     is_read: false,
     create_time: new Date()
   }

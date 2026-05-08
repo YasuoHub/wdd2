@@ -7,7 +7,7 @@ const db = cloud.database()
 const _ = db.command
 
 const axios = require('axios')
-const { MoneyUtils, PLATFORM_RULES } = require('./platformRules')
+const { loadFromDb, createMoneyUtils } = require('./platformRules')
 const { WECHATPAY_CONFIG } = require('./wechatpayConfig')
 const { callTransferBill, callQueryBillByOutNo, verifyCallbackSignature, decryptCallbackResource } = require('./transfer')
 
@@ -78,6 +78,9 @@ exports.main = async (event, context) => {
 async function applyWithdraw(event, OPENID) {
   const { amount } = event
 
+  const rules = await loadFromDb()
+  const MoneyUtils = createMoneyUtils(rules)
+
   if (!amount || amount <= 0) {
     return { code: -1, message: '提现金额必须大于0' }
   }
@@ -101,10 +104,10 @@ async function applyWithdraw(event, OPENID) {
 
   // 单日累计限额校验
   const dailyTotal = await sumTodayWithdrawAmount(OPENID)
-  if (dailyTotal + amount > PLATFORM_RULES.WITHDRAW_DAILY_LIMIT) {
+  if (dailyTotal + amount > rules.WITHDRAW_DAILY_LIMIT) {
     return {
       code: -1,
-      message: `超过单日提现限额 ¥${PLATFORM_RULES.WITHDRAW_DAILY_LIMIT}（今日已提现 ¥${dailyTotal}）`
+      message: `超过单日提现限额 ¥${rules.WITHDRAW_DAILY_LIMIT}（今日已提现 ¥${dailyTotal}）`
     }
   }
 
@@ -324,6 +327,8 @@ async function handleTransferError(withdraw, err) {
   const errCode = err.errCode || ''
   const errMessage = err.errMessage || err.message || '未知错误'
 
+  const rules = await loadFromDb()
+
   // 明确业务错误码（根据 v3 商家转账文档）
   const FATAL_ERROR_CODES = [
     'INVALID_REQUEST',
@@ -351,8 +356,8 @@ async function handleTransferError(withdraw, err) {
 
   // 系统错误/网络错误 → 排队重试
   const attempts = (withdraw.transfer_attempts || 0) + 1
-  const maxRetry = PLATFORM_RULES.MAX_TRANSFER_RETRY
-  const backoffList = PLATFORM_RULES.TRANSFER_BACKOFF_MINUTES
+  const maxRetry = rules.MAX_TRANSFER_RETRY
+  const backoffList = rules.TRANSFER_BACKOFF_MINUTES
 
   if (attempts >= maxRetry) {
     // 达到上限，转为 transfer_failed 等待人工介入（不自动回滚，避免微信侧实际打款成功导致重复退款）

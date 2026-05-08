@@ -1,10 +1,7 @@
 <!-- 任务详情页 -->
 <view class="container">
   <!-- 加载中 -->
-  <view wx:if="{{loading}}" class="loading">
-    <view class="loading-spinner"></view>
-    <text>加载中...</text>
-  </view>
+  <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 
   <!-- 任务内容 -->
   <block wx:elif="{{task}}">
@@ -99,8 +96,8 @@
         </view>
       </view>
 
-      <!-- 等待接单提示 -->
-      <view wx:if="{{task.status === 'pending' && !isSeeker}}" class="waiting-tip">
+      <!-- 等待接单提示（仅求助者可见） -->
+      <view wx:if="{{task.status === 'pending' && isSeeker}}" class="waiting-tip">
         <text>⏳ 等待有缘人接单...</text>
       </view>
     </view>

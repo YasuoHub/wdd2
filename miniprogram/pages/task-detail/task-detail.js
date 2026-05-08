@@ -1,6 +1,7 @@
 // 任务详情页
 const app = getApp()
 const { MoneyUtils, PLATFORM_RULES } = require('../../utils/platformRules')
+const { getByType, getByStatus } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -75,14 +76,17 @@ Page({
         const canCancel = isSeeker &&
                           task.status === 'pending'
 
-        // 状态文本映射
-        const statusTextMap = {
-          'pending': '待匹配',
-          'ongoing': '进行中',
-          'completed': '已完成',
-          'cancelled': '已取消'
+        // 本地兜底：type / status 字段缺失时补默认值
+        const typeInfo = getByType(task.type)
+        if (typeInfo) {
+          task.typeName = task.typeName || typeInfo.name
+          task.typeIcon = task.typeIcon || typeInfo.icon
+          task.typeColor = task.typeColor || typeInfo.color
+          task.typeBgColor = task.typeBgColor || typeInfo.bgColor
         }
-        task.statusText = statusTextMap[task.status] || task.status
+        const statusInfo = getByStatus(task.status)
+        task.statusText = statusInfo.text
+        task.statusIcon = statusInfo.icon
 
         // 计算金额显示值（避免WXML中写死比例）
         const rewardAmount = task.rewardAmount || 0
@@ -147,7 +151,7 @@ Page({
               // 进入聊天页
               setTimeout(() => {
                 wx.navigateTo({
-                  url: `/pages/chat/chat?needId=${this.data.needId}&isSeeker=false`
+                  url: `/pages/chat/chat?needId=${this.data.needId}`
                 })
               }, 1500)
             } else {
@@ -170,7 +174,7 @@ Page({
     if (!this.data.canChat) return
 
     wx.navigateTo({
-      url: `/pages/chat/chat?needId=${this.data.needId}&isSeeker=${this.data.isSeeker}`
+      url: `/pages/chat/chat?needId=${this.data.needId}`
     })
   },
 

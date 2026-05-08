@@ -1,0 +1,9 @@
+{
+  "name": "wdd-geo",
+  "version": "1.0.0",
+  "description": "地理位置逆编码云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -7,14 +7,13 @@ const db = cloud.database()
 const _ = db.command
 
 // 引入平台规则
-const { PLATFORM_RULES } = require('./platformRules')
+const { loadFromDb } = require('./platformRules')
 
 // 模拟支付开关：true=模拟支付（无需商户号），false=真实微信支付
 const MOCK_PAYMENT = false
 
-// 微信支付商户号（10位数字）
-// 请填入你在云开发控制台绑定的商户号，可从云开发 → 设置 → 微信支付 中查看
-const SUB_MCH_ID = '1112246384'
+// 微信支付商户号（10位数字），通过环境变量注入
+const SUB_MCH_ID = process.env.WECHATPAY_MCH_ID || ''
 
 // 主入口
 exports.main = async (event, context) => {
@@ -90,12 +89,14 @@ async function handlePayCallback(event) {
 async function createOrder(event, OPENID) {
   const { amount, description, metadata } = event
 
+  const rules = await loadFromDb()
+
   // 参数校验
   if (!amount || amount <= 0) {
     return { code: -1, message: '支付金额必须大于0' }
   }
-  if (amount < PLATFORM_RULES.MIN_REWARD_AMOUNT || amount > PLATFORM_RULES.MAX_REWARD_AMOUNT) {
-    return { code: -1, message: `支付金额必须在${PLATFORM_RULES.MIN_REWARD_AMOUNT}-${PLATFORM_RULES.MAX_REWARD_AMOUNT}元之间` }
+  if (amount < rules.MIN_REWARD_AMOUNT || amount > rules.MAX_REWARD_AMOUNT) {
+    return { code: -1, message: `支付金额必须在${rules.MIN_REWARD_AMOUNT}-${rules.MAX_REWARD_AMOUNT}元之间` }
   }
 
   // 获取用户信息
@@ -209,8 +210,17 @@ async function confirmPayment(event, OPENID) {
     const user = userRes.data[0]
 
     // 2. 计算过期时间
-    const expireMinutes = metadata.expireMinutes || 60
+    const rules = await loadFromDb()
+    const expireMinutes = metadata.expireMinutes || rules.DEFAULT_EXPIRE_MINUTES
     const expireTime = new Date(Date.now() + expireMinutes * 60 * 1000)
+
+    // location 强校验：缺少经纬度或名称直接拒绝
+    const loc = metadata.location
+    if (!loc || !Array.isArray(loc.coordinates) || loc.coordinates.length !== 2 ||
+        typeof loc.coordinates[0] !== 'number' || typeof loc.coordinates[1] !== 'number' ||
+        !loc.name || typeof loc.name !== 'string') {
+      throw new Error('LOCATION_REQUIRED')
+    }
 
     // 3. 创建任务
     const needRes = await transaction.collection('wdd-needs').add({
@@ -220,9 +230,9 @@ async function confirmPayment(event, OPENID) {
         user_avatar: user.avatar,
         location: {
           type: 'Point',
-          coordinates: metadata.location?.coordinates || [104.0668, 30.5728]
+          coordinates: loc.coordinates
         },
-        location_name: metadata.location?.name || '未知位置',
+        location_name: loc.name,
         type: metadata.type,
         type_name: metadata.typeName,
         description: metadata.description || '',

@@ -1,0 +1,9 @@
+{
+  "name": "wdd-msg-callback",
+  "version": "1.0.0",
+  "description": "内容安全审核回调处理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -8,6 +8,26 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 从 wdd-config 读取积分配置，未配置时使用默认值
+async function getPointsConfig() {
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get()
+    const cfg = configRes.data
+    if (cfg && cfg.points) {
+      return {
+        register: cfg.points.register ?? 100,
+        invite: cfg.points.invite ?? 50,
+        signInMap: cfg.points.signIn?.daily ?? [5, 10, 15, 20, 25, 30, 30]
+      }
+    }
+  } catch (e) {}
+  return {
+    register: 100,
+    invite: 50,
+    signInMap: [5, 10, 15, 20, 25, 30, 30]
+  }
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { action = 'sign' } = event
@@ -51,32 +71,30 @@ exports.main = async (event, context) => {
 
     const hasSignedToday = signRes.data.length > 0
 
+    const pointsCfg = await getPointsConfig()
+
     // 如果是检查动作，直接返回签到状态
     if (action === 'check') {
       // 计算今天应得积分
       const consecutiveDays = user.consecutive_sign_days || 0
       const lastSignDate = user.last_sign_in_date
-      let todayPoints = 5
+      let todayPoints = pointsCfg.signInMap[0]
       let willBeDay = 1
 
       if (lastSignDate) {
         const lastDate = new Date(lastSignDate)
         const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24))
         if (diffDays === 1) {
-          // 连续签到，今天是第 consecutiveDays + 1 天
           willBeDay = consecutiveDays + 1
         } else if (diffDays === 0) {
-          // 今天已签到，显示今天的实际获得
           willBeDay = consecutiveDays
         } else {
-          // 断签，重置为第1天
           willBeDay = 1
         }
       }
 
-      // 计算今天应得积分（第1-7天：5, 10, 15, 20, 25, 30, 30）
-      const pointsMap = [5, 10, 15, 20, 25, 30, 30]
-      todayPoints = pointsMap[Math.min(willBeDay - 1, 6)]
+      const signInMap = pointsCfg.signInMap
+      todayPoints = signInMap[Math.min(willBeDay - 1, signInMap.length - 1)]
 
       return {
         code: 0,
@@ -116,9 +134,9 @@ exports.main = async (event, context) => {
       consecutiveDays = 1
     }
 
-    // 计算签到积分（1-7天递增：5, 10, 15, 20, 25, 30, 30）
-    const pointsMap = [5, 10, 15, 20, 25, 30, 30]
-    const points = pointsMap[Math.min(consecutiveDays - 1, 6)]
+    // 计算签到积分（从配置读取）
+    const signInMap = pointsCfg.signInMap
+    const points = signInMap[Math.min(consecutiveDays - 1, signInMap.length - 1)]
 
     // 开始事务
     const transaction = await db.startTransaction()

@@ -76,8 +76,11 @@ exports.main = async (event, context) => {
     const transaction = await db.startTransaction()
 
     try {
-      // 1. 更新任务状态
-      await transaction.collection('wdd-needs').doc(needId).update({
+      // 1. 原子更新任务状态（仅在 status === 'pending' 时成功）
+      const updateRes = await transaction.collection('wdd-needs').where({
+        _id: needId,
+        status: 'pending'
+      }).update({
         data: {
           status: 'ongoing',
           taker_id: takerId,
@@ -88,7 +91,15 @@ exports.main = async (event, context) => {
         }
       })
 
-      // 2. 创建接单记录
+      if (updateRes.stats && updateRes.stats.updated === 0) {
+        await transaction.rollback()
+        return {
+          code: -1,
+          message: '该任务已被接单'
+        }
+      }
+
+      // 2. 创建接单记录（need_id 需有唯一索引防止并发重复）
       await transaction.collection('wdd-need-takers').add({
         data: {
           need_id: needId,

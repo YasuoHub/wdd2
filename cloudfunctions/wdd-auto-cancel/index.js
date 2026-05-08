@@ -84,10 +84,13 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 注意：进行中的任务（ongoing）不会被自动取消
-    // 任务被接单后，由求助者手动确认完成
+    // 3. 处理 ongoing 任务超时（资金死锁兜底）
+    const ongoingResults = await handleOngoingTimeouts(now)
+    results.ongoingUrged = ongoingResults.urged
+    results.ongoingAutoRefunded = ongoingResults.autoRefunded
+    results.ongoingErrors = ongoingResults.errors
 
-    // 3. 扫描待重试的提现（新版商家转账失败重试中）
+    // 4. 扫描待重试的提现（新版商家转账失败重试中）
     const pendingTransferRes = await db.collection('wdd-balance-records')
       .where({
         type: 'withdraw',
@@ -203,30 +206,7 @@ async function cancelPendingNeed(need) {
       }
     })
 
-    // 4. 保留积分解冻逻辑（兼容旧数据）
-    if (need.points > 0) {
-      await transaction.collection('wdd-users').doc(need.user_id).update({
-        data: {
-          frozen_points: _.inc(-need.points),
-          available_points: _.inc(need.points),
-          update_time: new Date()
-        }
-      })
-
-      await transaction.collection('wdd-point-records').add({
-        data: {
-          user_id: need.user_id,
-          type: 'task_cancel',
-          points: need.points,
-          description: `任务「${need.type_name || '求助'}」超时取消，积分退还`,
-          need_id: need._id,
-          balance: seeker.total_points || 0,
-          create_time: new Date()
-        }
-      })
-    }
-
-    // 5. 发送系统通知（退款结果在事务外处理，避免事务内调用云函数导致不一致）
+    // 4. 发送系统通知（退款结果在事务外处理，避免事务内调用云函数导致不一致）
     await transaction.collection('wdd-notifications').add({
       data: {
         user_id: need.user_id,
@@ -271,4 +251,195 @@ async function cancelPendingNeed(need) {
   }
 
   return result
+}
+
+// ongoing 任务超时处理
+// expire_time + 24h → 催办通知
+// expire_time + 72h → 自动退款 + taker 标记 failed
+async function handleOngoingTimeouts(now) {
+  const results = { urged: 0, autoRefunded: 0, errors: [] }
+
+  const urgeThreshold = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  const autoRefundThreshold = new Date(now.getTime() - 72 * 60 * 60 * 1000)
+
+  try {
+    // 查找 ongoing 且 expire_time 超过 24h 的任务
+    const expiredOngoingRes = await db.collection('wdd-needs')
+      .where({
+        status: 'ongoing',
+        expire_time: _.lt(urgeThreshold)
+      })
+      .get()
+
+    for (const need of expiredOngoingRes.data) {
+      try {
+        const expiredMs = now.getTime() - new Date(need.expire_time).getTime()
+        const expiredHours = expiredMs / (1000 * 60 * 60)
+
+        if (expiredHours >= 72) {
+          // 自动退款 + 标记 failed
+          const refundResult = await autoRefundOngoingNeed(need)
+          if (refundResult.success) {
+            results.autoRefunded++
+          }
+        } else if (expiredHours >= 24) {
+          // 催办通知（幂等：通过 need._id 查是否已发送）
+          const notified = await db.collection('wdd-notifications').where({
+            need_id: need._id,
+            type: 'ongoing_urge',
+            create_time: _.gte(urgeThreshold)
+          }).count()
+
+          if (notified.total === 0) {
+            await urgeTaskCompletion(need)
+            results.urged++
+          }
+        }
+      } catch (err) {
+        console.error(`处理 ongoing 超时任务失败 ${need._id}:`, err)
+        results.errors.push({ needId: need._id, error: err.message })
+      }
+    }
+  } catch (err) {
+    console.error('扫描 ongoing 超时任务失败:', err)
+  }
+
+  return results
+}
+
+// 双向推送催办通知
+async function urgeTaskCompletion(need) {
+  // 获取接单者
+  const takerRes = await db.collection('wdd-need-takers')
+    .where({ need_id: need._id })
+    .orderBy('create_time', 'desc')
+    .limit(1)
+    .get()
+  const taker = takerRes.data[0]
+
+  const messages = [
+    {
+      user_id: need.user_id,
+      type: 'ongoing_urge',
+      title: '任务已超时，请尽快处理',
+      content: `您的「${need.type_name || '求助'}」任务已过期超过 24 小时，请尽快确认完成或联系帮助者。`,
+      need_id: need._id,
+      is_read: false,
+      create_time: new Date()
+    }
+  ]
+
+  if (taker) {
+    messages.push({
+      user_id: taker.taker_id,
+      type: 'ongoing_urge',
+      title: '任务已超时，请尽快完成',
+      content: `您承接的「${need.type_name || '求助'}」任务已过期超过 24 小时，请尽快提供信息反馈。超时 72 小时将自动退款并标记失败。`,
+      need_id: need._id,
+      is_read: false,
+      create_time: new Date()
+    })
+  }
+
+  await Promise.all(messages.map(msg => db.collection('wdd-notifications').add({ data: msg })))
+}
+
+// 自动退款 ongoing 任务
+async function autoRefundOngoingNeed(need) {
+  const transaction = await db.startTransaction()
+  try {
+    // 原子更新：仅在 status === 'ongoing' 时生效
+    const updateRes = await transaction.collection('wdd-needs').where({
+      _id: need._id,
+      status: 'ongoing'
+    }).update({
+      data: {
+        status: 'cancelled',
+        cancel_time: new Date(),
+        cancel_reason: 'ongoing_timeout_auto_refund',
+        update_time: new Date()
+      }
+    })
+
+    if (updateRes.stats && updateRes.stats.updated === 0) {
+      await transaction.rollback()
+      return { success: false, reason: '状态已变更' }
+    }
+
+    // 获取接单者并标记 failed
+    const takerRes = await transaction.collection('wdd-need-takers')
+      .where({ need_id: need._id })
+      .orderBy('create_time', 'desc')
+      .limit(1)
+      .get()
+    const taker = takerRes.data[0]
+
+    if (taker) {
+      await transaction.collection('wdd-need-takers').doc(taker._id).update({
+        data: {
+          status: 'failed',
+          update_time: new Date()
+        }
+      })
+    }
+
+    // 通知双方
+    await transaction.collection('wdd-notifications').add({
+      data: {
+        user_id: need.user_id,
+        type: 'task_auto_cancelled',
+        title: '任务已自动取消并退款',
+        content: `您的「${need.type_name || '求助'}」任务因超时 72 小时未处理，已自动取消并原路退款。`,
+        need_id: need._id,
+        is_read: false,
+        create_time: new Date()
+      }
+    })
+
+    if (taker) {
+      await transaction.collection('wdd-notifications').add({
+        data: {
+          user_id: taker.taker_id,
+          type: 'task_failed',
+          title: '任务已标记失败',
+          content: `您承接的「${need.type_name || '求助'}」任务因超时未完成，已被标记失败。如有异议请联系客服申诉。`,
+          need_id: need._id,
+          is_read: false,
+          create_time: new Date()
+        }
+      })
+    }
+
+    await transaction.commit()
+  } catch (err) {
+    await transaction.rollback()
+    throw err
+  }
+
+  // 事务外调用退款
+  let refundAmount = 0
+  if (need.payment_order_id) {
+    try {
+      const orderRes = await db.collection('wdd-payment-orders').doc(need.payment_order_id).get()
+      const orderOpenid = orderRes.data ? orderRes.data.openid : null
+
+      const { result: refundRes } = await cloud.callFunction({
+        name: 'wdd-payment',
+        data: {
+          action: 'refundOrder',
+          orderId: need.payment_order_id,
+          openid: orderOpenid
+        }
+      })
+      if (refundRes.code === 0) {
+        refundAmount = refundRes.data ? refundRes.data.refundAmount || 0 : 0
+      } else {
+        console.error('ongoing 自动退款业务失败:', refundRes.message)
+      }
+    } catch (err) {
+      console.error('ongoing 自动退款调用失败:', err)
+    }
+  }
+
+  return { success: true, refundAmount }
 }
