@@ -470,7 +470,11 @@ async function sendSystemMessage(need, takerId, seekerId, takerIncome) {
         sender_id: seekerId,
         receiver_id: takerId,
         type: 'system',
-        content: `任务已完成，¥${takerIncome}已计入您的平台余额`,
+        // system_type/amount 用于前端按当前用户身份渲染不同文案
+        // content 作为兜底文案（旧版本客户端无法识别 system_type 时使用帮助者视角文案）
+        system_type: 'task_completed',
+        amount: takerIncome,
+        content: `任务已完成，¥${takerIncome}已计入帮助者的平台余额`,
         image_url: '',
         create_time: new Date()
       }

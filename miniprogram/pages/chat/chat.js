@@ -587,6 +587,14 @@ Page({
     const userInfo = this.data.userInfo
     const isSelf = msg.sender_id === userInfo._id
 
+    // 系统消息按当前用户身份渲染不同文案（求助者看"对方的"，帮助者看"您的"）
+    let displayContent = msg.content
+    if (msg.type === 'system' && msg.system_type === 'task_completed' && typeof msg.amount === 'number') {
+      displayContent = this.data.isSeeker
+        ? `任务已完成，¥${msg.amount}已计入对方的平台余额`
+        : `任务已完成，¥${msg.amount}已计入您的平台余额`
+    }
+
     // 处理时间显示
     const now = new Date()
     const msgTime = new Date(msg.create_time)
@@ -613,6 +621,7 @@ Page({
 
     return {
       ...msg,
+      content: displayContent,
       clientMsgId: msg.clientMsgId || msg.client_msg_id || msg._id,
       sendStatus: msg.sendStatus || 'sent',
       isSelf,
