@@ -41,8 +41,8 @@ Page({
     // 弹窗
     showCompleteModal: false,
 
-    // 任务卡片收起状态
-    isTaskCardCollapsed: false,
+    // 任务卡片更多菜单
+    showTaskMenu: false,
 
     // 工具栏展开状态
     isToolbarExpanded: false,
@@ -397,7 +397,7 @@ Page({
           'ongoing': { text: '进行中', class: 'ongoing' },
           'completed': { text: '已完成', class: 'completed' },
           'cancelled': { text: '已取消', class: 'cancelled' },
-          'breaking': { text: '客服审核中', class: 'breaking' }
+          'breaking': { text: '审核中', class: 'breaking' }
         }
 
         const typeMap = {
@@ -434,16 +434,14 @@ Page({
           isSeeker: result.data.role === 'seeker',
           otherUser: result.data.otherUser,
           showReportBtn: result.data.status === 'ongoing' &&
-            !result.data.was_reported &&
+            !result.data.myReportStatus.hasReport &&
             (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 2 * 60 * 60 * 1000))
         })
 
-        // 设置导航栏标题为聊天对象昵称 + 星级
+        // 设置导航栏标题为聊天对象昵称
         if (result.data.otherUser && result.data.otherUser.nickname) {
-          const other = result.data.otherUser
-          const ratingText = other.rating ? ` ★${other.rating.toFixed(1)}` : ''
           wx.setNavigationBarTitle({
-            title: other.nickname + ratingText
+            title: result.data.otherUser.nickname
           })
         }
 
@@ -1199,10 +1197,17 @@ Page({
     this.setData({ showCompleteModal: false })
   },
 
-  // 切换任务卡片收起/展开状态
-  toggleTaskCard() {
+  // 切换任务卡片更多菜单
+  toggleTaskMenu() {
     this.setData({
-      isTaskCardCollapsed: !this.data.isTaskCardCollapsed
+      showTaskMenu: !this.data.showTaskMenu
+    })
+  },
+
+  // 隐藏任务卡片更多菜单
+  hideTaskMenu() {
+    this.setData({
+      showTaskMenu: false
     })
   },
 

@@ -247,10 +247,22 @@ async function getMyNeeds(event, OPENID) {
     .limit(pageSize)
     .get()
 
+  // 预查询当前用户的 pending 举报和申诉记录
+  const myReportRes = await db.collection('wdd-reports').where({
+    reporter_openid: OPENID,
+    status: 'pending'
+  }).get()
+  const myAppealRes = await db.collection('wdd-appeals').where({
+    initiator_openid: OPENID,
+    status: 'pending'
+  }).get()
+  const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
+  const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
+
   // 格式化数据，并查询评价状态
   const list = await Promise.all(listRes.data.map(async (item) => {
     console.log('getMyNeeds - 原始数据 location_name:', item.location_name, 'location:', JSON.stringify(item.location))
-    const formatted = formatNeedItem(item)
+    const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds)
     console.log('getMyNeeds - 格式化后 locationName:', formatted.locationName)
 
     // 如果任务已完成，查询是否已评价
@@ -309,6 +321,18 @@ async function getMyTasks(event, OPENID) {
     .limit(pageSize)
     .get()
 
+  // 预查询当前用户的 pending 举报和申诉记录
+  const myReportRes = await db.collection('wdd-reports').where({
+    reporter_openid: OPENID,
+    status: 'pending'
+  }).get()
+  const myAppealRes = await db.collection('wdd-appeals').where({
+    initiator_openid: OPENID,
+    status: 'pending'
+  }).get()
+  const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
+  const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
+
   // 获取关联的任务详情，并查询评价状态
   const tasks = await Promise.all(takerRes.data.map(async (taker) => {
     const needRes = await db.collection('wdd-needs').doc(taker.need_id).get()
@@ -333,7 +357,7 @@ async function getMyTasks(event, OPENID) {
       seeker_avatar: need.user_avatar
     }
 
-    const formatted = formatNeedItem(item)
+    const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds)
 
     // 如果任务已完成，查询是否已评价
     if (taker.status === 'completed') {
@@ -580,7 +604,7 @@ function sortByNearestLocation(needs, frequentLocations) {
 }
 
 // 格式化任务项
-function formatNeedItem(item, userProfile) {
+function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds) {
   // 计算剩余时间
   let remainTime = ''
   if (item.expire_time && (item.status === 'pending' || item.status === 'ongoing')) {
@@ -643,12 +667,11 @@ function formatNeedItem(item, userProfile) {
     takerNickname: item.taker_nickname,
     taker_avatar: item.taker_avatar,
     expireTime: item.expire_time,
-    createTime: formatTime(item.create_time),
+    createTime: formatDateTime(item.create_time),
     hasRated: item.has_rated || false,
-    hasReport: item.has_report || false,
-    hasAppeal: item.has_appeal || false,
-    wasReported: item.was_reported || false,
-    wasAppealed: item.was_appealed || false
+    // 当前用户个人的举报/申诉状态（用户级别）
+    hasMyReport: myReportNeedIds ? myReportNeedIds.has(item._id) : false,
+    hasMyAppeal: myAppealNeedIds ? myAppealNeedIds.has(item._id) : false
   }
 }
 

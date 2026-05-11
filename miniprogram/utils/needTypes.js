@@ -8,13 +8,7 @@ const NEED_TYPES = [
   { type: 'other', id: 'other', name: '其他', icon: '📝', color: '#A8C4D4', lightColor: '#C4D8E5', bgColor: 'rgba(168, 230, 207, 0.15)' }
 ]
 
-// 状态映射
-const STATUS_MAP = {
-  pending: { text: '待匹配', class: 'pending', icon: '⏳' },
-  ongoing: { text: '进行中', class: 'ongoing', icon: '🤝' },
-  completed: { text: '已完成', class: 'completed', icon: '✅' },
-  cancelled: { text: '已取消', class: 'cancelled', icon: '❌' }
-}
+const { STATUS_MAP } = require('../config/types')
 
 // 按 type 查找
 function getByType(type) {

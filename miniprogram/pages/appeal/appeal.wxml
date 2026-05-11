@@ -1,13 +1,17 @@
 <view class="container">
-  <!-- 补充材料模式：显示对方申诉摘要 -->
-  <block wx:if="{{mode === 'supplement' && opponentInfo}}">
+  <!-- 补充材料模式：显示任务摘要 -->
+  <block wx:if="{{mode === 'supplement' && taskSummary}}">
     <view class="opponent-card">
-      <view class="opponent-title">对方申诉摘要</view>
-      <view class="opponent-type">类型：{{opponentInfo.type}}</view>
-      <view class="opponent-reason">理由：{{opponentInfo.reason}}</view>
-      <view class="opponent-images" wx:if="{{opponentInfo.images.length > 0}}">
-        <image wx:for="{{opponentInfo.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewOpponentImage" data-url="{{item}}" />
+      <view class="opponent-title">任务摘要</view>
+      <view class="opponent-row">
+        <text class="opponent-label">任务类型</text>
+        <text class="opponent-value">{{taskSummary.typeName || taskSummary.type || '未知'}}</text>
       </view>
+      <view class="opponent-row">
+        <text class="opponent-label">任务悬赏</text>
+        <text class="opponent-value">¥{{taskSummary.rewardAmount || 0}}</text>
+      </view>
+      <button class="detail-btn" bindtap="goToTaskDetail">查看任务详情 ›</button>
       <view class="countdown-wrap">
         <text class="countdown-label">剩余时间：</text>
         <text class="countdown-value {{!canSupplement ? 'timeout' : ''}}">{{supplementCountdown}}</text>
@@ -17,7 +21,8 @@
 
   <!-- 表单视图 -->
   <block wx:if="{{!isSubmitted}}">
-    <!-- 申诉类型 -->
+    <!-- 申诉类型（仅发起模式可见） -->
+    <block wx:if="{{mode !== 'supplement'}}">
     <view class="form-group">
       <text class="form-label">申诉类型<text class="required">*</text></text>
       <picker bindchange="onTypeChange" range="{{appealTypes}}">
@@ -27,13 +32,14 @@
         </view>
       </picker>
     </view>
+    </block>
 
-    <!-- 申诉理由 -->
+    <!-- 申诉理由 / 情况说明 -->
     <view class="form-group">
-      <text class="form-label">申诉理由<text class="required">*</text></text>
+      <text class="form-label">{{mode === 'supplement' ? '情况说明' : '申诉理由'}}<text class="required">*</text></text>
       <view class="textarea-wrap">
         <textarea
-          placeholder="请详细描述申诉理由，5~300字"
+          placeholder="{{mode === 'supplement' ? '请详细说明情况，5~300字' : '请详细描述申诉理由，5~300字'}}"
           maxlength="300"
           bindinput="onReasonInput"
           value="{{reason}}"
@@ -42,7 +48,7 @@
       <view class="word-count {{wordCount > 300 ? 'error' : ''}}">{{wordCount}}/300</view>
     </view>
 
-    <!-- 证据图片 -->
+    <!-- 证据截图 -->
     <view class="form-group">
       <text class="form-label">证据截图<text class="required">*</text></text>
       <view class="image-upload">
@@ -87,7 +93,7 @@
     <view class="modal-content">
       <view class="modal-title">确认提交申诉</view>
       <view class="modal-body">
-        提交申诉后，任务将进入客服评审状态，永久关闭双方聊天功能，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在提交后5分钟内撤销本次申诉，撤销后恢复正常任务流程。
+        提交申诉后，任务将进入客服评审状态，将关闭双方聊天通道，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在提交后5分钟内撤销本次申诉，撤销后恢复正常任务流程。
       </view>
       <view class="modal-footer">
         <button class="modal-btn cancel" bindtap="hideConfirm">取消</button>

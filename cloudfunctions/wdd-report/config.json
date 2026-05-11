@@ -3,5 +3,10 @@
     "openapi": [
       "security.msgSecCheck"
     ]
-  }
+  },
+  "triggers": [{
+    "name": "reportSupplementTimeout",
+    "type": "timer",
+    "config": "0 */10 * * * * *"
+  }]
 }

@@ -1,27 +1,65 @@
 <view class="container">
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
-
-  <view wx:elif="{{tickets.length === 0}}" class="empty">
-    <text>暂无待处理工单</text>
-  </view>
-
-  <view wx:else class="ticket-list">
-    <view wx:for="{{tickets}}" wx:key="_id" class="ticket-card" bindtap="goToDetail" data-id="{{item._id}}">
-      <view class="ticket-header">
-        <text class="ticket-type {{item.type}}">{{item.type === 'report' ? '举报' : '申诉'}}</text>
-        <text class="ticket-status {{item.status}}">{{item.status === 'pending' ? '待处理' : '已处理'}}</text>
-      </view>
-      <view class="ticket-title">{{item.taskTitle}}</view>
-      <view class="ticket-meta">
-        <text>编号：{{item.taskNumber}}</text>
-        <text>悬赏：¥{{item.rewardAmount}}</text>
-      </view>
-      <view class="ticket-users">
-        <text>求助者：{{item.seekerNickname}}</text>
-        <text>帮助者：{{item.takerNickname}}</text>
-      </view>
-      <view class="ticket-time">工单生成时间：{{item.createTimeFormatted}}</view>
-      <view wx:if="{{item.supplementStatus}}" class="supplement-tag">{{item.supplementStatus}}</view>
+  <!-- Tab 栏（始终显示） -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" bindtap="onTabChange" data-tab="pending">
+      <text>未处理</text>
     </view>
+    <view class="tab-item {{activeTab === 'resolved' ? 'active' : ''}}" bindtap="onTabChange" data-tab="resolved">
+      <text>已处理</text>
+    </view>
+    <view class="tab-indicator {{activeTab === 'pending' ? 'left' : 'right'}}"></view>
   </view>
+
+  <!-- 未处理列表 -->
+  <scroll-view wx:if="{{activeTab === 'pending'}}" class="scroll-list" scroll-y bindscrolltolower="onScrollToLower" lower-threshold="100">
+    <view wx:if="{{pendingLoading && pendingTickets.length === 0}}" class="loading">加载中...</view>
+    <view wx:elif="{{pendingTickets.length === 0}}" class="empty">暂无待处理工单</view>
+    <view wx:else class="ticket-list">
+      <view wx:for="{{pendingTickets}}" wx:key="_id" class="ticket-card" bindtap="goToDetail" data-id="{{item._id}}">
+        <view class="ticket-header">
+          <text class="ticket-type {{item.type}}">{{item.type === 'report' ? '举报' : '申诉'}}</text>
+          <text class="ticket-status pending">待处理</text>
+        </view>
+        <view class="ticket-title">{{item.taskTitle}}</view>
+        <view class="ticket-meta">
+          <text>编号：{{item.taskNumber}}</text>
+          <text>悬赏：¥{{item.rewardAmount}}</text>
+        </view>
+        <view class="ticket-users">
+          <text>求助者：{{item.seekerNickname}}</text>
+          <text>帮助者：{{item.takerNickname}}</text>
+        </view>
+        <view class="ticket-time">工单生成时间：{{item.createTimeFormatted}}</view>
+        <view wx:if="{{item.supplementStatus}}" class="supplement-tag">{{item.supplementStatus}}</view>
+      </view>
+      <view wx:if="{{pendingLoadingMore}}" class="loading-more">加载更多...</view>
+      <view wx:elif="{{!pendingHasMore && pendingTickets.length > 0}}" class="no-more">没有更多了</view>
+    </view>
+  </scroll-view>
+
+  <!-- 已处理列表 -->
+  <scroll-view wx:elif="{{activeTab === 'resolved'}}" class="scroll-list" scroll-y bindscrolltolower="onScrollToLower" lower-threshold="100">
+    <view wx:if="{{resolvedLoading && resolvedTickets.length === 0}}" class="loading">加载中...</view>
+    <view wx:elif="{{resolvedTickets.length === 0}}" class="empty">暂无已处理工单</view>
+    <view wx:else class="ticket-list">
+      <view wx:for="{{resolvedTickets}}" wx:key="_id" class="ticket-card" bindtap="goToDetail" data-id="{{item._id}}">
+        <view class="ticket-header">
+          <text class="ticket-type {{item.type}}">{{item.type === 'report' ? '举报' : '申诉'}}</text>
+          <text class="ticket-status resolved">已处理</text>
+        </view>
+        <view class="ticket-title">{{item.taskTitle}}</view>
+        <view class="ticket-meta">
+          <text>编号：{{item.taskNumber}}</text>
+          <text>悬赏：¥{{item.rewardAmount}}</text>
+        </view>
+        <view class="ticket-users">
+          <text>求助者：{{item.seekerNickname}}</text>
+          <text>帮助者：{{item.takerNickname}}</text>
+        </view>
+        <view class="ticket-time">工单生成时间：{{item.createTimeFormatted}}</view>
+      </view>
+      <view wx:if="{{resolvedLoadingMore}}" class="loading-more">加载更多...</view>
+      <view wx:elif="{{!resolvedHasMore && resolvedTickets.length > 0}}" class="no-more">没有更多了</view>
+    </view>
+  </scroll-view>
 </view>

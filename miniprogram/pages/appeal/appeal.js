@@ -35,6 +35,7 @@ Page({
     countdownText: '05:00',
     countdownSeconds: 300,
     opponentInfo: null,
+    taskSummary: null,
     supplementDeadline: null,
     supplementCountdown: '',
     canSupplement: false
@@ -61,6 +62,7 @@ Page({
         const data = result.data
         this.setData({
           opponentInfo: data.initiator,
+          taskSummary: data.taskInfo,
           supplementDeadline: data.supplementDeadline,
           canSupplement: data.canSupplement,
           isLoading: false
@@ -145,7 +147,7 @@ Page({
 
   showConfirm() {
     const { selectedTypeValue, reason, images, mode } = this.data
-    if (!selectedTypeValue) { wx.showToast({ title: '请选择申诉类型', icon: 'none' }); return }
+    if (mode !== 'supplement' && !selectedTypeValue) { wx.showToast({ title: '请选择申诉类型', icon: 'none' }); return }
     if (reason.length < 5) { wx.showToast({ title: '申诉理由至少5个字', icon: 'none' }); return }
     if (images.length === 0) { wx.showToast({ title: '请上传至少1张证据图片', icon: 'none' }); return }
     if (mode === 'initiate') {
@@ -164,7 +166,10 @@ Page({
     wx.showLoading({ title: '提交中...' })
     try {
       const action = mode === 'initiate' ? 'submitAppeal' : 'submitSupplement'
-      const params = { action, needId, appealType: selectedTypeValue, reason, images }
+      const params = { action, needId, reason, images }
+      if (mode === 'initiate') {
+        params.appealType = selectedTypeValue
+      }
       if (mode === 'supplement') {
         const detailRes = await wx.cloud.callFunction({
           name: 'wdd-appeal', data: { action: 'getAppealDetail', needId }
@@ -239,7 +244,19 @@ Page({
     })
   },
 
+  previewOpponentImage(e) {
+    const { url } = e.currentTarget.dataset
+    const { opponentInfo } = this.data
+    const urls = opponentInfo && opponentInfo.images ? opponentInfo.images : [url]
+    wx.previewImage({ current: url, urls })
+  },
+
   goBack() { wx.navigateBack() },
+
+  goToTaskDetail() {
+    const { needId } = this.data
+    wx.navigateTo({ url: `/pages/task-detail/task-detail?id=${needId}` })
+  },
 
   onUnload() {
     if (this.countdownTimer) clearInterval(this.countdownTimer)

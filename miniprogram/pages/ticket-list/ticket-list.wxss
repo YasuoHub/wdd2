@@ -1,14 +1,31 @@
 page { background: var(--bg-secondary); }
-.container { padding: 20rpx; }
+.container { display: flex; flex-direction: column; height: 100vh; }
+
 .loading, .empty { text-align: center; padding: 60rpx; color: var(--text-tertiary); font-size: 28rpx; }
-.ticket-list { display: flex; flex-direction: column; gap: 20rpx; }
+
+/* Tab 栏 */
+.tab-bar { display: flex; position: relative; background: #fff; padding: 0 40rpx; height: 88rpx; flex-shrink: 0; }
+.tab-item { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 30rpx; color: var(--text-secondary); position: relative; z-index: 1; }
+.tab-item.active { color: var(--primary-color, #07c160); font-weight: 600; }
+.tab-indicator { position: absolute; left: 40rpx; bottom: 0; width: calc(50% - 40rpx); height: 4rpx; background: var(--primary-color, #07c160); transition: transform 0.3s; border-radius: 2rpx; }
+.tab-indicator.left { transform: translateX(0); }
+.tab-indicator.right { transform: translateX(100%); }
+
+/* 滚动列表 */
+.scroll-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+.ticket-list { display: flex; flex-direction: column; gap: 20rpx; padding: 20rpx; }
 .ticket-card { background: #fff; border-radius: 20rpx; padding: 28rpx; }
 .ticket-header { display: flex; justify-content: space-between; margin-bottom: 16rpx; }
 .ticket-type { font-size: 24rpx; padding: 4rpx 16rpx; border-radius: 12rpx; font-weight: 600; }
 .ticket-type.report { background: rgba(231,76,60,0.1); color: #e74c3c; }
 .ticket-type.appeal { background: rgba(243,156,18,0.1); color: #f39c12; }
-.ticket-status { font-size: 24rpx; color: var(--text-tertiary); }
+.ticket-status { font-size: 24rpx; }
+.ticket-status.pending { color: #e67e22; }
+.ticket-status.resolved { color: var(--text-tertiary); }
 .ticket-title { font-size: 30rpx; font-weight: 600; color: var(--text-primary); margin-bottom: 12rpx; }
 .ticket-meta, .ticket-users { display: flex; gap: 24rpx; font-size: 26rpx; color: var(--text-secondary); margin-bottom: 8rpx; }
 .ticket-time { font-size: 24rpx; color: var(--text-tertiary); margin-top: 12rpx; }
 .supplement-tag { font-size: 24rpx; color: #3498db; margin-top: 12rpx; padding: 6rpx 16rpx; background: rgba(52,152,219,0.1); border-radius: 12rpx; display: inline-block; }
+
+.loading-more, .no-more { text-align: center; padding: 30rpx 0; font-size: 26rpx; color: var(--text-tertiary); }

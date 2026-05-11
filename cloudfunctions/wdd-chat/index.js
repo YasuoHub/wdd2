@@ -100,6 +100,31 @@ async function getTaskInfo(event, OPENID) {
     otherUser = otherUserRes.data || null
   }
 
+  // 查询当前用户对该任务的举报/申诉状态
+  let myReport = null
+  let myAppeal = null
+  try {
+    const reportRes = await db.collection('wdd-reports').where({
+      need_id: needId,
+      reporter_openid: OPENID,
+      status: 'pending'
+    }).orderBy('create_time', 'desc').limit(1).get()
+    if (reportRes.data.length > 0) {
+      myReport = reportRes.data[0]
+    }
+  } catch (e) {}
+
+  try {
+    const appealRes = await db.collection('wdd-appeals').where({
+      need_id: needId,
+      initiator_openid: OPENID,
+      status: 'pending'
+    }).orderBy('create_time', 'desc').limit(1).get()
+    if (appealRes.data.length > 0) {
+      myAppeal = appealRes.data[0]
+    }
+  } catch (e) {}
+
   return {
     code: 0,
     data: {
@@ -109,14 +134,20 @@ async function getTaskInfo(event, OPENID) {
         _id: otherUser._id,
         nickname: otherUser.nickname,
         avatar: otherUser.avatar,
-        rating: otherUser.rating || 5.0,
-        rating_count: otherUser.rating_count || 0
       } : null,
-      // 举报/申诉相关字段
-      was_reported: need.was_reported || false,
-      was_appealed: need.was_appealed || false,
-      has_report: need.has_report || false,
-      has_appeal: need.has_appeal || false
+      // 当前用户的举报/申诉状态（个人级别）
+      myReportStatus: myReport ? {
+        hasReport: true,
+        reportId: myReport._id,
+        reportType: myReport.report_type,
+        createTime: myReport.create_time
+      } : { hasReport: false },
+      myAppealStatus: myAppeal ? {
+        hasAppeal: true,
+        appealId: myAppeal._id,
+        appealType: myAppeal.initiator_type,
+        createTime: myAppeal.create_time
+      } : { hasAppeal: false }
     }
   }
 }

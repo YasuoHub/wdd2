@@ -1,25 +1,13 @@
 // 我的接单列表页面逻辑
 const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
+const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
 
 const FILTER_MAP = {
-  'all': { text: '', status: ['ongoing', 'completed'] },
+  'all': { text: '', status: ['ongoing', 'completed', 'breaking'] },
   'ongoing': { text: '进行中', status: ['ongoing'] },
-  'completed': { text: '已完成', status: ['completed'] }
-}
-
-const STATUS_MAP = {
-  'ongoing': { text: '进行中', class: 'ongoing' },
-  'completed': { text: '已完成', class: 'completed' }
-}
-
-const TYPE_MAP = {
-  'weather': { name: '实时天气', icon: '🌤️', color: '#74B9FF', bgColor: 'rgba(116, 185, 255, 0.15)' },
-  'traffic': { name: '道路拥堵', icon: '🚗', color: '#FDCB6E', bgColor: 'rgba(253, 203, 110, 0.15)' },
-  'shop': { name: '店铺营业', icon: '🏪', color: '#A29BFE', bgColor: 'rgba(162, 155, 254, 0.15)' },
-  'parking': { name: '停车场空位', icon: '🅿️', color: '#81ECEC', bgColor: 'rgba(129, 236, 236, 0.15)' },
-  'queue': { name: '排队情况', icon: '👥', color: '#FD79A8', bgColor: 'rgba(253, 121, 168, 0.15)' },
-  'other': { name: '其他', icon: '💬', color: '#A8E6CF', bgColor: 'rgba(168, 230, 207, 0.15)' }
+  'completed': { text: '已完成', status: ['completed'] },
+  'breaking': { text: '审核中', status: ['breaking'] }
 }
 
 Page({
@@ -174,8 +162,7 @@ Page({
     const expireTime = item.expireTime ? new Date(item.expireTime) : (item.expire_time ? new Date(item.expire_time) : null)
     const appealDeadline = expireTime ? new Date(expireTime.getTime() + 2 * 60 * 60 * 1000) : null
     const showAppealBtn = item.status === 'ongoing' &&
-      !item.hasAppeal &&
-      !item.wasAppealed &&
+      !item.hasMyAppeal &&
       appealDeadline &&
       now <= appealDeadline
 

@@ -89,8 +89,15 @@ async function submitAppeal(event, OPENID) {
   if (['breaking', 'completed', 'cancelled'].includes(need.status)) {
     return { code: -1, message: '当前任务状态不允许申诉' }
   }
-  if (need.was_appealed) {
-    return { code: -1, message: '该任务已发起过申诉，不可重复提交' }
+
+  // 检查当前用户是否已对该任务有 pending 的申诉
+  const existingAppealRes = await db.collection('wdd-appeals').where({
+    need_id: needId,
+    initiator_openid: OPENID,
+    status: 'pending'
+  }).get()
+  if (existingAppealRes.data.length > 0) {
+    return { code: -1, message: '您已对该任务发起过申诉，不可重复提交' }
   }
 
   // 时效校验：仅允许在 expire_time 或 expire_time + 2小时 内提交
@@ -164,7 +171,6 @@ async function submitAppeal(event, OPENID) {
       data: {
         status: 'breaking',
         has_appeal: true,
-        was_appealed: true,
         update_time: new Date()
       }
     })
@@ -255,14 +261,38 @@ async function cancelAppeal(event, OPENID) {
       }
     })
 
-    // 3. 恢复任务状态
-    await transaction.collection('wdd-needs').doc(appeal.need_id).update({
-      data: {
-        status: 'ongoing',
-        has_appeal: false,
-        update_time: new Date()
+    // 3. 检查是否还有其他 pending 的举报或申诉工单
+    const otherPendingAppeal = await db.collection('wdd-appeals').where({
+      need_id: appeal.need_id,
+      status: 'pending',
+      _id: _.neq(appealId)
+    }).count()
+    const otherPendingReport = await db.collection('wdd-reports').where({
+      need_id: appeal.need_id,
+      status: 'pending'
+    }).count()
+
+    // 只有在没有其他 pending 工单时才恢复任务状态
+    if (otherPendingAppeal.total === 0 && otherPendingReport.total === 0) {
+      await transaction.collection('wdd-needs').doc(appeal.need_id).update({
+        data: {
+          status: 'ongoing',
+          has_appeal: false,
+          has_report: false,
+          update_time: new Date()
+        }
+      })
+    } else {
+      // 还有其他 pending 工单，只清除 has_appeal 标记（如果也没有其他 pending 申诉）
+      if (otherPendingAppeal.total === 0) {
+        await transaction.collection('wdd-needs').doc(appeal.need_id).update({
+          data: {
+            has_appeal: false,
+            update_time: new Date()
+          }
+        })
       }
-    })
+    }
 
     await transaction.commit()
 
@@ -281,11 +311,8 @@ async function cancelAppeal(event, OPENID) {
 async function submitSupplement(event, OPENID) {
   const { appealId, appealType, reason, images } = event
 
-  if (!appealId || !appealType || !reason) {
+  if (!appealId || !reason) {
     return { code: -1, message: '参数不完整' }
-  }
-  if (!APPEAL_TYPE_MAP[appealType]) {
-    return { code: -1, message: '申诉类型无效' }
   }
   if (reason.length < 5 || reason.length > 300) {
     return { code: -1, message: '申诉理由需在5~300字之间' }
@@ -343,29 +370,20 @@ async function submitSupplement(event, OPENID) {
   }
 
   // 更新申诉记录
-  await db.collection('wdd-appeals').doc(appealId).update({
-    data: {
-      supplement_id: user._id,
-      supplement_type: appealType,
-      supplement_reason: reason,
-      supplement_images: images || [],
-      has_supplement: true,
-      update_time: new Date()
-    }
-  })
+  const supplementData = {
+    supplement_id: user._id,
+    supplement_reason: reason,
+    supplement_images: images || [],
+    has_supplement: true,
+    update_time: new Date()
+  }
+  // 如果传了申诉类型，也保存
+  if (appealType && APPEAL_TYPE_MAP[appealType]) {
+    supplementData.supplement_type = appealType
+  }
 
-  // 向发起方发送站内消息通知
-  await db.collection('wdd-notifications').add({
-    data: {
-      user_id: appeal.initiator_id,
-      type: 'appeal_reminder',
-      title: '申诉提醒',
-      content: `您发起申诉的任务，对方已补充提交申诉材料，平台将综合双方材料进行仲裁。`,
-      need_id: appeal.need_id,
-      appeal_id: appealId,
-      is_read: false,
-      create_time: new Date()
-    }
+  await db.collection('wdd-appeals').doc(appealId).update({
+    data: supplementData
   })
 
   return {
@@ -389,7 +407,7 @@ async function getAppealDetail(event, OPENID) {
   }
   const user = userRes.data[0]
 
-  // 获取申诉记录
+  // 获取申诉记录（不限发起方，补充方也需要查询）
   const appealRes = await db.collection('wdd-appeals').where({
     need_id: needId
   }).orderBy('create_time', 'desc').limit(1).get()
@@ -414,6 +432,24 @@ async function getAppealDetail(event, OPENID) {
     supplementUser = supplementRes ? supplementRes.data : null
   }
 
+  // 查询任务摘要信息
+  let taskInfo = null
+  try {
+    const needRes = await db.collection('wdd-needs').doc(needId).get()
+    if (needRes.data) {
+      const need = needRes.data
+      taskInfo = {
+        _id: need._id,
+        type: need.type,
+        typeName: need.type_name || need.typeName || '',
+        rewardAmount: need.reward_amount || need.rewardAmount || 0,
+        status: need.status
+      }
+    }
+  } catch (err) {
+    console.error('获取任务摘要失败:', err)
+  }
+
   // 计算是否可以补充材料
   const now = new Date()
   const deadline = new Date(appeal.supplement_deadline)
@@ -433,6 +469,7 @@ async function getAppealDetail(event, OPENID) {
     data: {
       hasAppeal: true,
       appealId: appeal._id,
+      taskInfo: taskInfo,
       status: appeal.status,
       initiator: {
         id: appeal.initiator_id,
@@ -485,19 +522,6 @@ async function checkSupplementTimeout(event) {
         }
       })
 
-      // 向发起方发送站内消息通知
-      await db.collection('wdd-notifications').add({
-        data: {
-          user_id: appeal.initiator_id,
-          type: 'appeal_reminder',
-          title: '申诉提醒',
-          content: `您发起申诉的任务，对方未在24小时内补充申诉材料，视为放弃申诉，平台将尽快依据您提交的材料完成仲裁。`,
-          need_id: appeal.need_id,
-          appeal_id: appeal._id,
-          is_read: false,
-          create_time: new Date()
-        }
-      })
 
       results.push({ appealId: appeal._id, status: 'timeout_marked' })
     } catch (err) {
@@ -534,12 +558,28 @@ async function sendAppealNotice(need, initiatorId, appealId) {
       return
     }
 
+    // 获取发起人信息
+    const initiatorRes = await db.collection('wdd-users').doc(initiatorId).get().catch(() => null)
+    const initiatorNickname = initiatorRes ? initiatorRes.data.nickname : '对方'
+
+    // 获取申诉记录以取得申诉类型
+    const appealRes = await db.collection('wdd-appeals').doc(appealId).get().catch(() => null)
+    const appealType = appealRes ? appealRes.data.initiator_type : ''
+    const appealTypeLabel = getAppealTypeLabel(appealType)
+
+    // 格式化时间
+    const now = new Date()
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+    // 任务编号（后8位大写）
+    const taskNumber = need._id.slice(-8).toUpperCase()
+
     await db.collection('wdd-notifications').add({
       data: {
         user_id: otherUserId,
         type: 'appeal_notice',
         title: '申诉通知',
-        content: `您参与的任务「${need.type_name || '求助'}」已被对方发起申诉，请在24小时内补充提交申诉材料，超时未提交将视为放弃申诉权利，平台将仅依据对方材料进行仲裁。`,
+        content: `【申诉通知】用户"${initiatorNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起申诉，申诉类型：${appealTypeLabel}。请在24小时内补充提交申诉材料，超时未提交将视为放弃申诉权利，平台将仅依据对方材料进行仲裁。`,
         need_id: need._id,
         appeal_id: appealId,
         is_read: false,

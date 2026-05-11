@@ -4,6 +4,14 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+// 格式化日期
+function formatDate(date) {
+  if (!date) return ''
+  const d = new Date(date)
+  const pad = n => n.toString().padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 // 从 wdd-config 获取客服白名单
 async function getCustomerServiceOpenids() {
   try {
@@ -58,21 +66,22 @@ async function getTicketList(event, OPENID) {
   const { status = 'pending', page = 1, pageSize = 20 } = event
 
   // 构建查询条件
-  const where = { status }
-  if (status === 'pending') {
-    // 待处理包含 pending 和超时未处理的
-  }
+  const queryStatus = status === 'pending' ? 'pending' : 'resolved'
+  const where = { status: queryStatus }
 
-  // 查询工单
+  // 查询工单（多取一条判断是否有更多）
   const ticketRes = await db.collection('wdd-tickets')
     .where(where)
-    .orderBy('create_time', 'asc') // 先按创建时间正序（早创建的先处理）
+    .orderBy('create_time', 'desc')
     .skip((page - 1) * pageSize)
-    .limit(pageSize)
+    .limit(pageSize + 1)
     .get()
 
-  // 获取关联的任务信息（用于排序和展示）
-  const tickets = await Promise.all(ticketRes.data.map(async (ticket) => {
+  const hasMore = ticketRes.data.length > pageSize
+  const listData = hasMore ? ticketRes.data.slice(0, pageSize) : ticketRes.data
+
+  // 获取关联的任务信息
+  const tickets = await Promise.all(listData.map(async (ticket) => {
     // 获取任务信息
     const needRes = await db.collection('wdd-needs').doc(ticket.need_id).get().catch(() => null)
     const need = needRes ? needRes.data : null
@@ -95,7 +104,7 @@ async function getTicketList(event, OPENID) {
       }
     }
 
-    // 获取申诉补充状态（如果是申诉工单）
+    // 获取申诉/举报补充状态
     let supplementStatus = ''
     if (ticket.type === 'appeal' && ticket.appeal_id) {
       const appealRes = await db.collection('wdd-appeals').doc(ticket.appeal_id).get().catch(() => null)
@@ -104,6 +113,18 @@ async function getTicketList(event, OPENID) {
         if (appeal.has_supplement) {
           supplementStatus = '对方已补充材料'
         } else if (appeal.is_supplement_timeout) {
+          supplementStatus = '对方超时未补充'
+        } else {
+          supplementStatus = '等待对方补充'
+        }
+      }
+    } else if (ticket.type === 'report' && ticket.report_id) {
+      const reportRes = await db.collection('wdd-reports').doc(ticket.report_id).get().catch(() => null)
+      if (reportRes && reportRes.data) {
+        const report = reportRes.data
+        if (report.has_supplement) {
+          supplementStatus = '对方已补充材料'
+        } else if (report.is_supplement_timeout) {
           supplementStatus = '对方超时未补充'
         } else {
           supplementStatus = '等待对方补充'
@@ -123,22 +144,16 @@ async function getTicketList(event, OPENID) {
       seekerNickname: seeker ? seeker.nickname : '未知用户',
       takerNickname: taker ? taker.nickname : '未知用户',
       supplementStatus,
-      createTime: ticket.create_time
+      createTime: ticket.create_time,
+      createTimeFormatted: formatDate(ticket.create_time)
     }
   }))
-
-  // 按任务过期时间倒序排列（剩余时间越短越靠前）
-  tickets.sort((a, b) => {
-    const timeA = a.expireTime ? new Date(a.expireTime).getTime() : 0
-    const timeB = b.expireTime ? new Date(b.expireTime).getTime() : 0
-    return timeA - timeB
-  })
 
   return {
     code: 0,
     data: {
       list: tickets,
-      total: tickets.length
+      hasMore
     }
   }
 }
@@ -199,7 +214,14 @@ async function getTicketDetail(event, OPENID) {
         reason: report.reason,
         images: report.images || [],
         reporterNickname: reporterRes ? reporterRes.data.nickname : '未知用户',
-        createTime: report.create_time
+        createTime: report.create_time,
+        supplement: report.has_supplement ? {
+          type: report.supplement_type,
+          reason: report.supplement_reason,
+          images: report.supplement_images || []
+        } : null,
+        supplementDeadline: report.supplement_deadline,
+        isSupplementTimeout: report.is_supplement_timeout
       }
     }
   }

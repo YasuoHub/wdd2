@@ -320,7 +320,8 @@ Page({
       'pending': '待匹配',
       'ongoing': '进行中',
       'completed': '已完成',
-      'cancelled': '已取消'
+      'cancelled': '已取消',
+      'breaking': '审核中'
     }
     return statusMap[status] || status
   },
@@ -332,9 +333,89 @@ Page({
       'task_cancelled': '❌',
       'task_matched': '🎯',
       'points_received': '💰',
-      'system': '📢'
+      'system': '📢',
+      'appeal_notice': '⚖️',
+      'report_notice': '🚨',
+      'appeal_reminder': '⏰',
+      'report_reminder': '⏰',
+      'arbitration_result': '✅'
     }
     return iconMap[type] || '📢'
+  },
+
+  // 点击系统通知
+  onSystemNotificationTap(e) {
+    const item = e.currentTarget.dataset.item
+    if (!item) return
+
+    const { type, need_id, appeal_id, report_id } = item
+
+    // 标记已读
+    this.markNotificationAsRead(item._id)
+
+    // 更新本地状态为已读
+    const systemList = this.data.systemList.map(s => {
+      if (s._id === item._id) {
+        return { ...s, is_read: true }
+      }
+      return s
+    })
+    const newSystemUnread = Math.max(0, this.data.systemUnread - 1)
+    this.setData({
+      systemList,
+      systemUnread: newSystemUnread,
+      unreadCount: this.data.seekerChatUnread + this.data.helperChatUnread + newSystemUnread
+    }, () => {
+      this.updateTabBarBadge()
+    })
+
+    switch (type) {
+      case 'appeal_notice':
+        wx.navigateTo({
+          url: `/pages/appeal/appeal?needId=${need_id}&mode=supplement`
+        })
+        break
+      case 'report_notice':
+        wx.navigateTo({
+          url: `/pages/report/report?needId=${need_id}&mode=supplement`
+        })
+        break
+      case 'appeal_reminder':
+        if (appeal_id) {
+          wx.navigateTo({
+            url: `/pages/appeal/appeal?needId=${need_id}&mode=supplement`
+          })
+        }
+        break
+      case 'report_reminder':
+        if (report_id) {
+          wx.navigateTo({
+            url: `/pages/report/report?needId=${need_id}&mode=supplement`
+          })
+        }
+        break
+      case 'arbitration_result':
+        wx.switchTab({ url: '/pages/my-needs/my-needs' })
+        break
+      default:
+        // 不跳转
+        break
+    }
+  },
+
+  // 标记单条通知为已读
+  async markNotificationAsRead(notificationId) {
+    try {
+      await wx.cloud.callFunction({
+        name: 'wdd-notify',
+        data: {
+          action: 'markAsRead',
+          notificationId
+        }
+      })
+    } catch (err) {
+      console.error('标记已读失败:', err)
+    }
   },
 
 })

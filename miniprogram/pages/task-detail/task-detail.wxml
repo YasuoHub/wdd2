@@ -8,10 +8,7 @@
     <!-- 任务状态卡片 -->
     <view class="status-card {{task.status}}">
       <view class="status-icon">
-        <text wx:if="{{task.status === 'pending'}}">⏳</text>
-        <text wx:elif="{{task.status === 'ongoing'}}">🤝</text>
-        <text wx:elif="{{task.status === 'completed'}}">✅</text>
-        <text wx:elif="{{task.status === 'cancelled'}}">❌</text>
+        <text>{{task.statusIcon}}</text>
       </view>
       <view class="status-info">
         <text class="status-text">{{task.statusText}}</text>
@@ -21,16 +18,17 @@
 
     <!-- 任务信息卡片 -->
     <view class="info-card">
-      <!-- 类型标签 -->
-      <view class="type-tag" style="background: {{task.bgColor}}; color: {{task.color}};">
-        <text class="type-icon">{{task.typeIcon}}</text>
-        <text>{{task.typeName}}</text>
-      </view>
+      <!-- 类型 + 悬赏金额 同排 -->
+      <view class="info-header">
+        <view class="type-tag" style="background: {{task.bgColor}}; color: {{task.color}};">
+          <text class="type-icon">{{task.typeIcon}}</text>
+          <text>{{task.typeName}}</text>
+        </view>
 
-      <!-- 悬赏金额 -->
-      <view class="amount-badge">
-        <text class="amount-symbol">¥</text>
-        <text class="amount-value">{{task.rewardAmount || 0}}</text>
+        <view class="amount-badge">
+          <text class="amount-symbol">¥</text>
+          <text class="amount-value">{{task.rewardAmount || 0}}</text>
+        </view>
       </view>
 
       <!-- 描述 -->
@@ -63,9 +61,9 @@
           <text class="location-name">{{task.locationName || '未知位置'}}</text>
           <text class="location-arrow">›</text>
         </view>
-        <view class="location-actions">
-          <button class="action-btn small" bindtap="copyLocation">复制地址</button>
-          <button class="action-btn small primary" bindtap="previewLocation">查看地图</button>
+        <view class="order-id-block">
+          <text class="order-id-label">任务单号</text>
+          <text class="order-id-value">{{task._id}}</text>
         </view>
       </view>
     </view>

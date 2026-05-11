@@ -92,6 +92,23 @@ exports.main = async (event, context) => {
     }
     results.push({ step: '积分字段迁移为金额', updated: migratedCount })
 
+    // 5. 为 wdd-reports 集合新增 supplement 相关字段（兼容旧数据）
+    const reportSupplementRes = await db.collection('wdd-reports').where({
+      supplement_deadline: db.command.exists(false)
+    }).update({
+      data: {
+        supplement_id: null,
+        supplement_type: null,
+        supplement_reason: null,
+        supplement_images: [],
+        supplement_deadline: db.command.set(null),
+        has_supplement: false,
+        is_supplement_timeout: false,
+        update_time: db.serverDate()
+      }
+    })
+    results.push({ step: '举报表补充材料字段初始化', updated: reportSupplementRes.stats ? reportSupplementRes.stats.updated : 0 })
+
     return {
       code: 0,
       message: '数据库初始化完成',

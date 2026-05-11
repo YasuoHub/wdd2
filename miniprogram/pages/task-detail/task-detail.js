@@ -318,22 +318,6 @@ Page({
     })
   },
 
-  // 复制位置
-  copyLocation() {
-    const { locationName } = this.data.task
-    if (!locationName) {
-      wx.showToast({ title: '暂无位置信息', icon: 'none' })
-      return
-    }
-
-    wx.setClipboardData({
-      data: locationName,
-      success: () => {
-        wx.showToast({ title: '已复制地址', icon: 'none' })
-      }
-    })
-  },
-
   // 预览任务图片
   previewTaskImages(e) {
     const { index } = e.currentTarget.dataset

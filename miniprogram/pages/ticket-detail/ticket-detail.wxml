@@ -57,6 +57,10 @@
     <view class="section" wx:if="{{reportDetail}}">
       <view class="section-title">举报详情</view>
       <view class="info-row">
+        <text class="label">举报人</text>
+        <text class="value">{{reportDetail.reporterNickname}}</text>
+      </view>
+      <view class="info-row">
         <text class="label">类型</text>
         <text class="value">{{reportDetail.type}}</text>
       </view>
@@ -67,6 +71,22 @@
       <view class="images-row" wx:if="{{reportDetail.images.length > 0}}">
         <image wx:for="{{reportDetail.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{reportDetail.images}}" />
       </view>
+
+      <!-- 被举报方反驳材料 -->
+      <block wx:if="{{reportDetail.supplement}}">
+        <view class="divider"></view>
+        <view class="info-row">
+          <text class="label">对方反驳</text>
+          <text class="value">{{reportDetail.supplement.type}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">理由</text>
+          <view class="value pre-wrap">{{reportDetail.supplement.reason}}</view>
+        </view>
+        <view class="images-row" wx:if="{{reportDetail.supplement.images.length > 0}}">
+          <image wx:for="{{reportDetail.supplement.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{reportDetail.supplement.images}}" />
+        </view>
+      </block>
     </view>
 
     <!-- 申诉详情 -->

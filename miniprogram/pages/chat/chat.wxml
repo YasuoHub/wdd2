@@ -1,68 +1,36 @@
 <!-- 聊天页面 -->
 <view class="chat-container">
-  <!-- 任务信息卡片 -->
-  <view class="task-card {{isTaskCardCollapsed ? 'collapsed' : ''}}">
-
-    <!-- 收起状态：只显示类型和积分，以及展开按钮 -->
-    <view wx:if="{{isTaskCardCollapsed}}" class="task-card-collapsed" bindtap="toggleTaskCard">
-      <view class="collapsed-left">
-        <text class="type-icon">{{task.typeIcon}}</text>
-        <text class="type-name">{{task.typeName}}</text>
-        <text class="task-points-mini">¥{{task.rewardAmount || 0}}</text>
-      </view>
-      <view class="expand-btn">
-        <text class="expand-icon">▼</text>
+  <!-- 任务卡片区域（含下拉菜单） -->
+  <view class="task-card-wrapper">
+    <!-- 任务信息卡片（仅收起样式） -->
+    <view class="task-card collapsed">
+      <view class="task-card-collapsed">
+        <view class="collapsed-left">
+          <text class="type-icon">{{task.typeIcon}}</text>
+          <text class="type-name">{{task.typeName}}</text>
+          <text class="location-name">{{task.locationName || ''}}</text>
+          <text class="task-points-mini">¥{{task.rewardAmount || 0}}</text>
+        </view>
+        <view class="more-btn" catchtap="toggleTaskMenu">
+          <text class="more-icon">⋮</text>
+        </view>
       </view>
     </view>
 
-    <!-- 展开状态：显示完整信息 -->
-    <block wx:else>
-      <view class="task-header">
-        <view class="task-type">
-          <text class="type-icon">{{task.typeIcon}}</text>
-          <text class="type-name">{{task.typeName}}</text>
-        </view>
-        <view class="task-meta">
-          <view class="task-status {{task.status}}">{{task.statusText}}</view>
-          <view class="task-points">¥{{task.rewardAmount || 0}}</view>
-          <!-- 举报按钮（仅在任务进行中且可举报时显示） -->
-          <view wx:if="{{showReportBtn}}" class="report-btn" bindtap="goToReport">
-            <text>🚨</text>
-          </view>
-          <!-- 完成按钮（仅在任务进行中且是求助者时显示） -->
-          <view wx:if="{{isSeeker && task.status === 'ongoing'}}" class="complete-btn" bindtap="showCompleteConfirm">
-            <text class="complete-icon">✓</text>
-            <text>完成</text>
-          </view>
-        </view>
-      </view>
-      <view class="task-location" bindtap="openLocation" wx:if="{{task.location && task.location.name}}">
-        <text class="location-icon">📍</text>
-        <text class="location-name">{{task.location.name}}</text>
-      </view>
-      <view class="task-content" bindtap="goToTaskDetail">{{task.description}}</view>
+    <!-- 下拉菜单遮罩 -->
+    <view class="task-menu-mask {{showTaskMenu ? 'show' : ''}}" catchtap="hideTaskMenu"></view>
 
-      <!-- 求助图片 -->
-      <view class="task-images" wx:if="{{task.images && task.images.length > 0}}">
-        <view class="images-list">
-          <image
-            wx:for="{{task.images}}"
-            wx:key="index"
-            class="task-image"
-            src="{{item}}"
-            mode="aspectFill"
-            bindtap="previewTaskImages"
-            data-index="{{index}}"
-          />
-        </view>
+    <!-- 下拉菜单内容 -->
+    <view class="task-menu-content {{showTaskMenu ? 'show' : ''}}">
+      <view class="menu-item" catchtap="goToReport">
+        <text class="menu-item-icon">🚨</text>
+        <text class="menu-item-text">举报</text>
       </view>
-
-      <!-- 收起按钮 -->
-      <view class="collapse-btn" bindtap="toggleTaskCard">
-        <text class="collapse-icon">▲</text>
-        <text class="collapse-text">收起</text>
+      <view class="menu-item" catchtap="goToTaskDetail">
+        <text class="menu-item-icon">📋</text>
+        <text class="menu-item-text">详情</text>
       </view>
-    </block>
+    </view>
   </view>
 
   <!-- 消息列表 -->
@@ -168,7 +136,7 @@
   <view class="input-area">
     <!-- breaking 状态：客服审核中，禁止发消息 -->
     <view wx:if="{{task.status === 'breaking'}}" class="task-ended-bar breaking-bar">
-      <text class="task-ended-text">客服审核中，暂时无法发送消息</text>
+      <text class="task-ended-text">审核中</text>
     </view>
 
     <!-- 任务已结束：显示提示 -->

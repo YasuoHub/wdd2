@@ -40,9 +40,30 @@ const APPEAL_TYPE_MAP = {
   malicious_rejection: '求助者恶意驳回已完成的信息帮助'
 }
 
+// 状态映射
+const STATUS_MAP = {
+  pending: { text: '待匹配', class: 'pending', icon: '⏳' },
+  ongoing: { text: '进行中', class: 'ongoing', icon: '🤝' },
+  completed: { text: '已完成', class: 'completed', icon: '✅' },
+  cancelled: { text: '已取消', class: 'cancelled', icon: '❌' },
+  breaking: { text: '审核中', class: 'breaking', icon: '⏳' }
+}
+
+// 任务类型映射
+const TYPE_MAP = {
+  weather: { name: '实时天气', icon: '🌤️', color: '#74B9FF', bgColor: 'rgba(116, 185, 255, 0.15)' },
+  traffic: { name: '道路拥堵', icon: '🚗', color: '#FDCB6E', bgColor: 'rgba(253, 203, 110, 0.15)' },
+  shop: { name: '店铺营业', icon: '🏪', color: '#A29BFE', bgColor: 'rgba(162, 155, 254, 0.15)' },
+  parking: { name: '停车场空位', icon: '🅿️', color: '#81ECEC', bgColor: 'rgba(129, 236, 236, 0.15)' },
+  queue: { name: '排队情况', icon: '👥', color: '#FD79A8', bgColor: 'rgba(253, 121, 168, 0.15)' },
+  other: { name: '其他', icon: '💬', color: '#A8E6CF', bgColor: 'rgba(168, 230, 207, 0.15)' }
+}
+
 module.exports = {
   REPORT_TYPES,
   REPORT_TYPE_MAP,
   REPORT_TYPE_LABELS,
-  APPEAL_TYPE_MAP
+  APPEAL_TYPE_MAP,
+  STATUS_MAP,
+  TYPE_MAP
 }

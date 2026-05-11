@@ -312,3 +312,104 @@ page {
   background: var(--primary-color);
   color: #fff;
 }
+
+/* 对方举报摘要卡片（补充材料模式） */
+.opponent-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  border-left: 8rpx solid #ff6b6b;
+}
+
+.opponent-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid var(--border-color);
+}
+
+.opponent-row {
+  display: flex;
+  margin-bottom: 16rpx;
+  align-items: flex-start;
+}
+
+.opponent-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 160rpx;
+}
+
+.opponent-value {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  flex: 1;
+  word-break: break-all;
+}
+
+.opponent-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.opponent-images image {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+}
+
+.countdown-wrap {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid var(--border-color);
+  display: flex;
+  align-items: center;
+}
+
+.countdown-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.countdown-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #e74c3c;
+  margin-left: 12rpx;
+  font-family: monospace;
+}
+
+.countdown-value.timeout {
+  color: #999;
+}
+
+/* 任务摘要详情按钮 */
+.detail-btn {
+  display: block;
+  width: 100%;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+  font-size: 28rpx;
+  border-radius: 16rpx;
+  margin: 16rpx 0 0;
+  padding: 0;
+  border: none;
+}
+
+.detail-btn::after {
+  border: none;
+}
+
+/* 已提交的补充材料卡片 */
+.my-supplement {
+  border-left-color: #2ecc71;
+}

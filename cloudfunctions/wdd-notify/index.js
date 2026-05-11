@@ -76,7 +76,7 @@ async function getChatSessions(userId) {
     // 用户作为求助者的任务
     db.collection('wdd-needs').where({
       user_id: userId,
-      status: _.in(['ongoing', 'completed'])
+      status: _.in(['ongoing', 'completed', 'breaking'])
     }).get(),
     // 用户作为帮助者的任务
     db.collection('wdd-need-takers').where({

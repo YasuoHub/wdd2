@@ -138,6 +138,8 @@
           wx:for="{{systemList}}"
           wx:key="_id"
           class="system-card {{!item.is_read ? 'unread' : ''}}"
+          bindtap="onSystemNotificationTap"
+          data-item="{{item}}"
         >
           <view class="system-icon-wrapper">
             <view class="system-icon">{{item.icon}}</view>
