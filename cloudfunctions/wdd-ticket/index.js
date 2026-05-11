@@ -168,6 +168,7 @@ async function getTicketDetail(event, OPENID) {
   // 获取双方用户信息
   let seeker = null
   let taker = null
+  let takerRecord = null
   if (need) {
     const seekerRes = await db.collection('wdd-users').doc(need.user_id).get().catch(() => null)
     seeker = seekerRes ? seekerRes.data : null
@@ -178,7 +179,8 @@ async function getTicketDetail(event, OPENID) {
       .limit(1)
       .get()
     if (takerRes.data.length > 0) {
-      const takerUserRes = await db.collection('wdd-users').doc(takerRes.data[0].taker_id).get().catch(() => null)
+      takerRecord = takerRes.data[0]
+      const takerUserRes = await db.collection('wdd-users').doc(takerRecord.taker_id).get().catch(() => null)
       taker = takerUserRes ? takerUserRes.data : null
     }
   }
@@ -244,7 +246,8 @@ async function getTicketDetail(event, OPENID) {
         status: need.status,
         locationName: need.location_name,
         expireTime: need.expire_time,
-        createTime: need.create_time
+        createTime: need.create_time,
+        takeTime: takerRecord ? takerRecord.create_time : null
       } : null,
       seeker: seeker ? {
         _id: seeker._id,
@@ -317,63 +320,101 @@ async function submitArbitration(event, OPENID) {
     .get()
   const takerRecord = takerRes.data[0]
 
-  // 开启事务
+  // 取消任务和完成任务都需要帮助者存在
+  if ((taskResult === 'cancelled' || taskResult === 'completed' || taskResult === 'partial') && !takerRecord) {
+    return { code: -1, message: '该任务无接单记录，无法裁决' }
+  }
+
+  // 事务开始前预读所有需要的数据（平台费率、用户余额）
+  // 避免事务内混用 db/transaction 或 update 后再 get 同一文档
+  let feeRate = 0.15
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get()
+    feeRate = configRes.data.platform_fee_rate || 0.15
+  } catch (e) {}
+
+  // 预读用户当前余额，用于流水记录
+  let seekerCurrentBalance = 0
+  let takerCurrentBalance = 0
+  try {
+    const seekerUserRes = await db.collection('wdd-users').doc(need.user_id).get()
+    seekerCurrentBalance = seekerUserRes.data.balance || 0
+  } catch (e) {}
+  if (takerRecord) {
+    try {
+      const takerUserRes = await db.collection('wdd-users').doc(takerRecord.taker_id).get()
+      takerCurrentBalance = takerUserRes.data.balance || 0
+    } catch (e) {}
+  }
+
+  const rewardAmount = need.reward_amount || 0
+
+  // 3. 根据裁决结果处理资金和任务状态
+  let seekerRefund = 0
+  let takerIncome = 0
+  let platformFee = 0
+  let finalStatus = ''
+  let seekerNewBalance = seekerCurrentBalance
+  let takerNewBalance = takerCurrentBalance
+
+  if (taskResult === 'cancelled') {
+    seekerRefund = rewardAmount
+    takerIncome = 0
+    platformFee = 0
+    finalStatus = 'cancelled'
+    seekerNewBalance = Math.round((seekerCurrentBalance + seekerRefund) * 100) / 100
+  } else if (taskResult === 'completed') {
+    platformFee = Math.round(rewardAmount * feeRate * 100) / 100
+    takerIncome = Math.round((rewardAmount - platformFee) * 100) / 100
+    seekerRefund = 0
+    finalStatus = 'completed'
+    takerNewBalance = Math.round((takerCurrentBalance + takerIncome) * 100) / 100
+  } else if (taskResult === 'partial') {
+    const takerRawIncome = Math.round(rewardAmount * partialPercent / 100 * 100) / 100
+    platformFee = Math.round(takerRawIncome * feeRate * 100) / 100
+    takerIncome = Math.round((takerRawIncome - platformFee) * 100) / 100
+    seekerRefund = Math.round((rewardAmount - takerRawIncome) * 100) / 100
+    finalStatus = 'completed'
+    takerNewBalance = Math.round((takerCurrentBalance + takerIncome) * 100) / 100
+    seekerNewBalance = Math.round((seekerCurrentBalance + seekerRefund) * 100) / 100
+  }
+
+  // 开启事务 —— 事务中只进行纯粹的写操作，不再有任何读操作
   const transaction = await db.startTransaction()
 
   try {
     // 1. 更新工单状态
+    // 使用 _.set 直接设置整个 result 对象，避免 result 为 null 时点路径报错 PathNotViable
     await transaction.collection('wdd-tickets').doc(ticketId).update({
       data: {
         status: 'resolved',
         handler_id: OPENID,
-        result: {
+        result: _.set({
           task_result: taskResult,
           partial_percent: taskResult === 'partial' ? partialPercent : null,
           ban_info: banInfo || null
-        },
+        }),
         resolve_time: new Date(),
         update_time: new Date()
       }
     })
 
-    // 2. 读取平台费率
-    let feeRate = 0.15
-    try {
-      const configRes = await db.collection('wdd-config').doc('platform').get()
-      feeRate = configRes.data.platform_fee_rate || 0.15
-    } catch (e) {}
-
-    const rewardAmount = need.reward_amount || 0
-
-    // 3. 根据裁决结果处理资金和任务状态
-    let seekerRefund = 0
-    let takerIncome = 0
-    let platformFee = 0
-    let finalStatus = ''
-
     if (taskResult === 'cancelled') {
-      // 取消任务：全额退款给求助者
-      seekerRefund = rewardAmount
-      takerIncome = 0
-      platformFee = 0
-      finalStatus = 'cancelled'
-
-      // 更新求助者余额
+      // 更新求助者余额（使用预计算的值，避免事务内 get）
       await transaction.collection('wdd-users').doc(need.user_id).update({
         data: {
-          balance: _.inc(seekerRefund),
+          balance: seekerNewBalance,
           update_time: new Date()
         }
       })
 
-      // 创建退款流水
-      const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
+      // 创建退款流水（使用预计算的余额）
       await transaction.collection('wdd-balance-records').add({
         data: {
           user_id: need.user_id,
           type: 'arbitration_refund',
           amount: seekerRefund,
-          balance: latestSeekerRes.data.balance || seekerRefund,
+          balance: seekerNewBalance,
           description: `客服裁决：任务取消，全额退款`,
           need_id: need._id,
           create_time: new Date()
@@ -389,29 +430,22 @@ async function submitArbitration(event, OPENID) {
       })
 
     } else if (taskResult === 'completed') {
-      // 完成任务：正常结算
-      platformFee = Math.round(rewardAmount * feeRate * 100) / 100
-      takerIncome = Math.round((rewardAmount - platformFee) * 100) / 100
-      seekerRefund = 0
-      finalStatus = 'completed'
-
       // 更新帮助者余额
       await transaction.collection('wdd-users').doc(takerRecord.taker_id).update({
         data: {
-          balance: _.inc(takerIncome),
+          balance: takerNewBalance,
           total_earned: _.inc(takerIncome),
           update_time: new Date()
         }
       })
 
       // 创建收入流水
-      const latestTakerRes = await transaction.collection('wdd-users').doc(takerRecord.taker_id).get()
       await transaction.collection('wdd-balance-records').add({
         data: {
           user_id: takerRecord.taker_id,
           type: 'task_income',
           amount: takerIncome,
-          balance: latestTakerRes.data.balance || takerIncome,
+          balance: takerNewBalance,
           description: `客服裁决：任务完成收入`,
           need_id: need._id,
           create_time: new Date()
@@ -436,17 +470,10 @@ async function submitArbitration(event, OPENID) {
       })
 
     } else if (taskResult === 'partial') {
-      // 部分完成：按比例分配
-      const takerRawIncome = Math.round(rewardAmount * partialPercent / 100 * 100) / 100
-      platformFee = Math.round(takerRawIncome * feeRate * 100) / 100
-      takerIncome = Math.round((takerRawIncome - platformFee) * 100) / 100
-      seekerRefund = Math.round((rewardAmount - takerRawIncome) * 100) / 100
-      finalStatus = 'completed'
-
       // 更新帮助者余额
       await transaction.collection('wdd-users').doc(takerRecord.taker_id).update({
         data: {
-          balance: _.inc(takerIncome),
+          balance: takerNewBalance,
           total_earned: _.inc(takerIncome),
           update_time: new Date()
         }
@@ -455,32 +482,31 @@ async function submitArbitration(event, OPENID) {
       // 更新求助者余额（退款部分）
       await transaction.collection('wdd-users').doc(need.user_id).update({
         data: {
-          balance: _.inc(seekerRefund),
+          balance: seekerNewBalance,
           update_time: new Date()
         }
       })
 
-      // 创建流水
-      const latestTakerRes = await transaction.collection('wdd-users').doc(takerRecord.taker_id).get()
+      // 创建帮助者收入流水
       await transaction.collection('wdd-balance-records').add({
         data: {
           user_id: takerRecord.taker_id,
           type: 'task_income',
           amount: takerIncome,
-          balance: latestTakerRes.data.balance || takerIncome,
+          balance: takerNewBalance,
           description: `客服裁决：部分完成(${partialPercent}%)收入`,
           need_id: need._id,
           create_time: new Date()
         }
       })
 
-      const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
+      // 创建求助者退款流水
       await transaction.collection('wdd-balance-records').add({
         data: {
           user_id: need.user_id,
           type: 'arbitration_refund',
           amount: seekerRefund,
-          balance: latestSeekerRes.data.balance || seekerRefund,
+          balance: seekerNewBalance,
           description: `客服裁决：部分完成，剩余退款`,
           need_id: need._id,
           create_time: new Date()
@@ -545,7 +571,7 @@ async function submitArbitration(event, OPENID) {
     }
 
   } catch (err) {
-    await transaction.rollback()
+    try { await transaction.rollback() } catch (rollbackErr) {}
     throw err
   }
 }

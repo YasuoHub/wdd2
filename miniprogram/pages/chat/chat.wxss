@@ -154,6 +154,9 @@
   line-height: 1.6;
   color: var(--text-primary);
   padding-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 完成按钮 */

@@ -13,7 +13,11 @@
       "WebFetch(domain:developers.weixin.qq.com)",
       "Bash(git -C D:\\\\production\\\\brainstorm ls-files)",
       "Bash(git mv *)",
-      "Bash(perl *)"
+      "Bash(perl *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git show *)",
+      "Bash(git checkout *)"
     ]
   }
 }

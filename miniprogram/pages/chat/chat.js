@@ -1,6 +1,7 @@
 // 聊天页面逻辑
 const app = getApp()
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
+const DateUtil = require('../../utils/dateUtil')
 
 Page({
   data: {
@@ -607,12 +608,12 @@ Page({
     const msgTime = new Date(msg.create_time)
     let timeText = ''
 
-    if (this.isSameDay(now, msgTime)) {
-      timeText = this.formatTime(msgTime)
-    } else if (this.isYesterday(now, msgTime)) {
-      timeText = '昨天 ' + this.formatTime(msgTime)
+    if (DateUtil.isSameDay(now, msgTime)) {
+      timeText = DateUtil.formatTime(msgTime)
+    } else if (DateUtil.isYesterday(now, msgTime)) {
+      timeText = '昨天 ' + DateUtil.formatTime(msgTime)
     } else {
-      timeText = this.formatDate(msgTime) + ' ' + this.formatTime(msgTime)
+      timeText = DateUtil.formatDate(msgTime) + ' ' + DateUtil.formatTime(msgTime)
     }
 
     // 判断是否显示时间分割线
@@ -907,7 +908,7 @@ Page({
       create_time: now.toISOString(),
       isSelf: true,
       senderAvatar: userInfo.avatar,
-      timeText: this.formatTime(now),
+      timeText: DateUtil.formatTime(now),
       showTime: showTime,
       sendStatus: 'sending'
     }
@@ -1058,7 +1059,7 @@ Page({
       create_time: now.toISOString(),
       isSelf: true,
       senderAvatar: userInfo.avatar,
-      timeText: this.formatTime(now),
+      timeText: DateUtil.formatTime(now),
       showTime: showTime,
       isLocalImage: true,
       sendStatus: 'sending',
@@ -1305,6 +1306,15 @@ Page({
     })
   },
 
+  // 跳转任务详情
+  goToTaskDetail() {
+    const { task } = this.data
+    if (!task._id) return
+    wx.navigateTo({
+      url: `/pages/task-detail/task-detail?id=${task._id}`
+    })
+  },
+
   // 跳转对方公开资料
   goToPublicProfile() {
     const { otherUser } = this.data
@@ -1350,30 +1360,6 @@ Page({
     }
   },
 
-  // 辅助函数：是否为同一天
-  isSameDay(date1, date2) {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate()
-  },
-
-  // 辅助函数：是否为昨天
-  isYesterday(date1, date2) {
-    const yesterday = new Date(date1)
-    yesterday.setDate(yesterday.getDate() - 1)
-    return this.isSameDay(yesterday, date2)
-  },
-  // 辅助函数：格式化时间
-  formatTime(date) {
-    const hours = date.getHours().toString().padStart(2, '0')
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    return `${hours}:${minutes}`
-  },
-
-  // 辅助函数：格式化日期
-  formatDate(date) {
-    return `${date.getMonth() + 1}月${date.getDate()}日`
-  },
 
   // 生成稳定的客户端消息ID（用于列表渲染key，避免发送确认后闪烁）
   generateClientMsgId() {

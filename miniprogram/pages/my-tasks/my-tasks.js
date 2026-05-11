@@ -1,5 +1,6 @@
 // 我的接单列表页面逻辑
 const app = getApp()
+const DateUtil = require('../../utils/dateUtil')
 
 const FILTER_MAP = {
   'all': { text: '', status: ['ongoing', 'completed'] },
@@ -165,7 +166,7 @@ Page({
     // 优先使用后端已格式化的 createTime
     let createTime = item.createTime
     if (!createTime && item.create_time) {
-      createTime = this.formatTime(item.create_time)
+      createTime = DateUtil.formatRelativeTime(item.create_time)
     }
 
     // 申诉按钮显示条件
@@ -250,21 +251,6 @@ Page({
     wx.switchTab({
       url: '/pages/task-hall/task-hall'
     })
-  },
-
-  // 格式化时间
-  formatTime(date) {
-    if (!date) return ''
-    const now = new Date()
-    const time = new Date(date)
-    const diff = now - time
-    const minutes = Math.floor(diff / (1000 * 60))
-
-    if (minutes < 1) return '刚刚'
-    if (minutes < 60) return `${minutes}分钟前`
-    if (minutes < 1440) return `${Math.floor(minutes / 60)}小时前`
-    if (minutes < 10080) return `${Math.floor(minutes / 1440)}天前`
-    return `${time.getMonth() + 1}月${time.getDate()}日`
   },
 
   // 模拟数据

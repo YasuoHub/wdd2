@@ -1,5 +1,6 @@
 // 消息中心页面逻辑
 const app = getApp()
+const DateUtil = require('../../utils/dateUtil')
 
 Page({
   data: {
@@ -208,7 +209,7 @@ Page({
         // 分离求助聊天和帮助聊天
         const chatList = result.data.chatList.map(item => ({
           ...item,
-          lastTime: this.formatTime(item.lastTime),
+          lastTime: DateUtil.formatRelativeTime(item.lastTime),
           statusText: this.getStatusText(item.needStatus)
         }))
 
@@ -223,7 +224,7 @@ Page({
         const systemList = result.data.systemList.map(item => ({
           ...item,
           icon: this.getNotificationIcon(item.type),
-          timeText: this.formatTime(item.create_time)
+          timeText: DateUtil.formatRelativeTime(item.create_time)
         }))
 
         const systemUnread = result.data.systemUnread || 0
@@ -336,49 +337,4 @@ Page({
     return iconMap[type] || '📢'
   },
 
-  // 格式化时间
-  formatTime(date) {
-    if (!date) return ''
-
-    const now = new Date()
-    const msgTime = new Date(date)
-    const diff = now.getTime() - msgTime.getTime()
-
-    // 小于1分钟
-    if (diff < 60000) {
-      return '刚刚'
-    }
-
-    // 小于1小时
-    if (diff < 3600000) {
-      return Math.floor(diff / 60000) + '分钟前'
-    }
-
-    // 小于24小时
-    if (diff < 86400000) {
-      return Math.floor(diff / 3600000) + '小时前'
-    }
-
-    // 昨天
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
-    if (this.isSameDay(yesterday, msgTime)) {
-      return '昨天'
-    }
-
-    // 小于7天
-    if (diff < 604800000) {
-      return Math.floor(diff / 86400000) + '天前'
-    }
-
-    // 更早
-    return `${msgTime.getMonth() + 1}月${msgTime.getDate()}日`
-  },
-
-  // 是否为同一天
-  isSameDay(date1, date2) {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate()
-  }
 })

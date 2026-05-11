@@ -1,5 +1,5 @@
 <!-- 任务详情页 -->
-<view class="container">
+<view class="container" style="padding-bottom: {{pagePaddingBottom}}rpx;">
   <!-- 加载中 -->
   <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 

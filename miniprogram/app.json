@@ -2,7 +2,6 @@
   "requiredBackgroundModes": [],
   "lazyCodeLoading": "requiredComponents",
   "libVersion": "2.32.3",
-  "__usePrivacyCheck__": true,
   "pages": [
     "pages/index/index",
     "pages/publish/publish",

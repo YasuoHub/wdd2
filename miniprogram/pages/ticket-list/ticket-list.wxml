@@ -20,6 +20,7 @@
         <text>求助者：{{item.seekerNickname}}</text>
         <text>帮助者：{{item.takerNickname}}</text>
       </view>
+      <view class="ticket-time">工单生成时间：{{item.createTimeFormatted}}</view>
       <view wx:if="{{item.supplementStatus}}" class="supplement-tag">{{item.supplementStatus}}</view>
     </view>
   </view>

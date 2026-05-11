@@ -26,6 +26,7 @@ exports.main = async (event, context) => {
     if (action === 'isCustomerService') {
       const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
       const csOpenids = configRes && configRes.data ? (configRes.data.customer_service_openids || []) : []
+      console.log('判断客服id:', OPENID, csOpenids)
       return {
         code: 0,
         data: { isCustomerService: OPENID ? csOpenids.includes(OPENID) : false },

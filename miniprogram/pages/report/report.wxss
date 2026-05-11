@@ -1,6 +1,7 @@
 /* 举报页面样式 */
 page {
   background: var(--bg-secondary);
+  --primary-color: #5db8e6;
 }
 
 .container {
@@ -144,21 +145,25 @@ page {
 
 /* 底部按钮 */
 .submit-btn {
-  margin-top: 40rpx;
-  height: 96rpx;
-  background: var(--primary-color);
+  margin-top: 48rpx;
+  margin-bottom: 40rpx;
+  height: 104rpx;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
   color: #fff;
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 600;
-  border-radius: 48rpx;
+  border-radius: 52rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(255, 107, 107, 0.35);
+  letter-spacing: 4rpx;
 }
 
 .submit-btn.disabled {
-  background: var(--border-color);
-  color: var(--text-tertiary);
+  background: linear-gradient(135deg, #ccc 0%, #bbb 100%);
+  color: #fff;
+  box-shadow: none;
 }
 
 /* 提交成功页 */

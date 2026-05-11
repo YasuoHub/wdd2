@@ -6,7 +6,6 @@
 .container {
   min-height: 100vh;
   background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, #F5FAFF 100%);
-  padding-bottom: 200rpx;
   position: relative;
   box-sizing: border-box;
   width: 100%;
@@ -166,6 +165,7 @@
   color: var(--text-primary);
   line-height: 1.7;
   display: block;
+  word-break: break-all;
 }
 
 /* 图片区域 */

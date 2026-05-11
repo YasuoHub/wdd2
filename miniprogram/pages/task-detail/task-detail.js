@@ -94,6 +94,10 @@ Page({
         task._platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
         task._takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
 
+        // 根据底部操作栏按钮数量动态计算 padding-bottom
+        // 进行中求助者有两个按钮，需要更大空间
+        const pagePaddingBottom = (canChat && canComplete) ? 320 : 200
+
         this.setData({
           task,
           isSeeker,
@@ -102,6 +106,7 @@ Page({
           canChat,
           canComplete,
           canCancel,
+          pagePaddingBottom,
           loading: false
         })
       } else {

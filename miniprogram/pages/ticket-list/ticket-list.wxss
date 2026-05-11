@@ -10,4 +10,5 @@ page { background: var(--bg-secondary); }
 .ticket-status { font-size: 24rpx; color: var(--text-tertiary); }
 .ticket-title { font-size: 30rpx; font-weight: 600; color: var(--text-primary); margin-bottom: 12rpx; }
 .ticket-meta, .ticket-users { display: flex; gap: 24rpx; font-size: 26rpx; color: var(--text-secondary); margin-bottom: 8rpx; }
+.ticket-time { font-size: 24rpx; color: var(--text-tertiary); margin-top: 12rpx; }
 .supplement-tag { font-size: 24rpx; color: #3498db; margin-top: 12rpx; padding: 6rpx 16rpx; background: rgba(52,152,219,0.1); border-radius: 12rpx; display: inline-block; }

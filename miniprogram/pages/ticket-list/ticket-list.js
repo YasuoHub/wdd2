@@ -1,3 +1,5 @@
+const DateUtil = require('../../utils/dateUtil')
+
 Page({
   data: {
     tickets: [],
@@ -45,7 +47,11 @@ Page({
         data: { action: 'getTicketList', status: 'pending' }
       })
       if (result.code === 0) {
-        this.setData({ tickets: result.data.list || [] })
+        const tickets = (result.data.list || []).map(item => ({
+          ...item,
+          createTimeFormatted: DateUtil.formatDateTime(item.createTime)
+        }))
+        this.setData({ tickets })
       }
     } catch (err) {
       wx.showToast({ title: '加载失败', icon: 'none' })

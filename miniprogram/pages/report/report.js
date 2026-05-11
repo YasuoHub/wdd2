@@ -1,21 +1,5 @@
 const app = getApp()
-
-// 举报类型映射（value → label），提交时传 value，展示用 label）
-const REPORT_TYPES = [
-  { value: 'offline_transaction', label: '诱导线下私下交易' },
-  { value: 'verbal_abuse', label: '言语辱骂、骚扰人身攻击' },
-  { value: 'fraud', label: '虚假承诺、恶意骗单' },
-  { value: 'delay', label: '敷衍沟通、故意拖延进度' },
-  { value: 'sensitive_content', label: '发布违规敏感内容' },
-  { value: 'malicious_difficulty', label: '恶意刁难、无故拖延不配合' },
-  { value: 'other_violation', label: '其他违规行为' },
-  { value: 'false_info', label: '提供虚假实时信息（谎报天气/拥堵/营业状态）' },
-  { value: 'location_mismatch', label: '接单后定位不符、不在求助地点' },
-  { value: 'no_response', label: '恶意接单后不回复、不提供帮助' }
-]
-
-// 仅 label 数组，用于 picker 的 range
-const REPORT_TYPE_LABELS = REPORT_TYPES.map(t => t.label)
+const { REPORT_TYPES, REPORT_TYPE_LABELS } = require('../../config/types')
 
 Page({
   data: {
@@ -69,12 +53,21 @@ Page({
       return
     }
 
-    wx.chooseImage({
+    wx.chooseMedia({
       count: 3 - images.length,
+      mediaType: ['image'],
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: (res) => {
-        this.uploadImages(res.tempFilePaths)
+        const filePaths = res.tempFiles.map(f => f.tempFilePath)
+        this.uploadImages(filePaths)
+      },
+      fail: (err) => {
+        console.error('选择图片失败:', err)
+        if (err.errMsg && err.errMsg.includes('cancel')) {
+          return
+        }
+        wx.showToast({ title: '选择图片失败，请重试', icon: 'none' })
       }
     })
   },

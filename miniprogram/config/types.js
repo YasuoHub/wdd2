@@ -1,0 +1,48 @@
+/**
+ * 举报/申诉类型共用配置
+ * 集中管理类型定义，供前端各页面共用
+ */
+
+// 举报类型列表（value → label）
+const REPORT_TYPES = [
+  { value: 'offline_transaction', label: '诱导线下私下交易' },
+  { value: 'verbal_abuse', label: '言语辱骂、骚扰人身攻击' },
+  { value: 'fraud', label: '虚假承诺、恶意骗单' },
+  { value: 'delay', label: '敷衍沟通、故意拖延进度' },
+  { value: 'sensitive_content', label: '发布违规敏感内容' },
+  { value: 'malicious_difficulty', label: '恶意刁难、无故拖延不配合' },
+  { value: 'other_violation', label: '其他违规行为' },
+  { value: 'false_info', label: '提供虚假实时信息（谎报天气/拥堵/营业状态）' },
+  { value: 'location_mismatch', label: '接单后定位不符、不在求助地点' },
+  { value: 'no_response', label: '恶意接单后不回复、不提供帮助' }
+]
+
+// 举报类型映射（value → label），用于根据英文值查找中文名
+const REPORT_TYPE_MAP = {}
+REPORT_TYPES.forEach(t => {
+  REPORT_TYPE_MAP[t.value] = t.label
+})
+
+// 仅 label 数组，用于 picker 的 range 属性
+const REPORT_TYPE_LABELS = REPORT_TYPES.map(t => t.label)
+
+// 申诉类型映射（value → label）
+const APPEAL_TYPE_MAP = {
+  unjust_rejection: '任务已完成被无故驳回',
+  lost_contact: '对方失联拒不验收结算',
+  unfair_judgment: '任务判定结果不合理',
+  amount_dispute: '悬赏金额结算有异议',
+  malicious_report: '被对方恶意举报诬陷',
+  unjust_deduction: '保证金/权益无故被扣',
+  other_dispute: '其他任务纠纷申诉',
+  false_helper_info: '帮助者提供虚假信息导致任务无效',
+  helper_location_mismatch: '帮助者定位不符无法完成帮助',
+  malicious_rejection: '求助者恶意驳回已完成的信息帮助'
+}
+
+module.exports = {
+  REPORT_TYPES,
+  REPORT_TYPE_MAP,
+  REPORT_TYPE_LABELS,
+  APPEAL_TYPE_MAP
+}

@@ -11,7 +11,7 @@
       </view>
       <view class="info-row">
         <text class="label">描述</text>
-        <text class="value">{{task.description}}</text>
+        <view class="value pre-wrap">{{task.description}}</view>
       </view>
       <view class="info-row">
         <text class="label">悬赏</text>
@@ -20,6 +20,14 @@
       <view class="info-row">
         <text class="label">位置</text>
         <text class="value">{{task.locationName}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">发布时间</text>
+        <text class="value">{{task.createTimeFormatted}}</text>
+      </view>
+      <view class="info-row" wx:if="{{task.takeTimeFormatted}}">
+        <text class="label">接单时间</text>
+        <text class="value">{{task.takeTimeFormatted}}</text>
       </view>
     </view>
 
@@ -36,6 +44,15 @@
       </view>
     </view>
 
+    <!-- 聊天入口 -->
+    <view class="section chat-entry" wx:if="{{task}}" bindtap="goToChat">
+      <view class="chat-entry-content">
+        <text class="chat-icon">💬</text>
+        <text class="chat-text">查看双方聊天记录</text>
+        <text class="chat-arrow">›</text>
+      </view>
+    </view>
+
     <!-- 举报详情 -->
     <view class="section" wx:if="{{reportDetail}}">
       <view class="section-title">举报详情</view>
@@ -45,7 +62,7 @@
       </view>
       <view class="info-row">
         <text class="label">理由</text>
-        <text class="value">{{reportDetail.reason}}</text>
+        <view class="value pre-wrap">{{reportDetail.reason}}</view>
       </view>
       <view class="images-row" wx:if="{{reportDetail.images.length > 0}}">
         <image wx:for="{{reportDetail.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{reportDetail.images}}" />
@@ -65,7 +82,7 @@
       </view>
       <view class="info-row">
         <text class="label">理由</text>
-        <text class="value">{{appealDetail.initiator.reason}}</text>
+        <view class="value pre-wrap">{{appealDetail.initiator.reason}}</view>
       </view>
       <view class="images-row" wx:if="{{appealDetail.initiator.images.length > 0}}">
         <image wx:for="{{appealDetail.initiator.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{appealDetail.initiator.images}}" />
@@ -80,7 +97,7 @@
         </view>
         <view class="info-row">
           <text class="label">理由</text>
-          <text class="value">{{appealDetail.supplement.reason}}</text>
+          <view class="value pre-wrap">{{appealDetail.supplement.reason}}</view>
         </view>
         <view class="images-row" wx:if="{{appealDetail.supplement.images.length > 0}}">
           <image wx:for="{{appealDetail.supplement.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{appealDetail.supplement.images}}" />

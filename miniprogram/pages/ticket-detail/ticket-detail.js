@@ -1,3 +1,6 @@
+const { REPORT_TYPE_MAP, APPEAL_TYPE_MAP } = require('../../config/types')
+const DateUtil = require('../../utils/dateUtil')
+
 Page({
   data: {
     ticketId: '',
@@ -33,9 +36,32 @@ Page({
       })
       if (result.code === 0) {
         const data = result.data
+
+        // 转换举报类型为中文
+        if (data.reportDetail && data.reportDetail.type) {
+          data.reportDetail.type = REPORT_TYPE_MAP[data.reportDetail.type] || data.reportDetail.type
+        }
+
+        // 转换申诉类型为中文
+        if (data.appealDetail) {
+          if (data.appealDetail.initiator && data.appealDetail.initiator.type) {
+            data.appealDetail.initiator.type = APPEAL_TYPE_MAP[data.appealDetail.initiator.type] || data.appealDetail.initiator.type
+          }
+          if (data.appealDetail.supplement && data.appealDetail.supplement.type) {
+            data.appealDetail.supplement.type = APPEAL_TYPE_MAP[data.appealDetail.supplement.type] || data.appealDetail.supplement.type
+          }
+        }
+
+        // 格式化任务时间
+        const task = data.task ? {
+          ...data.task,
+          createTimeFormatted: DateUtil.formatDateTime(data.task.createTime),
+          takeTimeFormatted: DateUtil.formatDateTime(data.task.takeTime)
+        } : null
+
         this.setData({
           ticket: data.ticket,
-          task: data.task,
+          task,
           seeker: data.seeker,
           taker: data.taker,
           reportDetail: data.reportDetail,
@@ -140,5 +166,17 @@ Page({
     const { url } = e.currentTarget.dataset
     const urls = e.currentTarget.dataset.urls || [url]
     wx.previewImage({ current: url, urls })
+  },
+
+  // 跳转到聊天页面
+  goToChat() {
+    const { task } = this.data
+    if (!task || !task._id) {
+      wx.showToast({ title: '任务信息缺失', icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url: `/pages/chat/chat?needId=${task._id}`
+    })
   }
 })

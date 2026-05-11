@@ -40,7 +40,7 @@
         <text class="location-icon">📍</text>
         <text class="location-name">{{task.location.name}}</text>
       </view>
-      <view class="task-content">{{task.description}}</view>
+      <view class="task-content" bindtap="goToTaskDetail">{{task.description}}</view>
 
       <!-- 求助图片 -->
       <view class="task-images" wx:if="{{task.images && task.images.length > 0}}">
