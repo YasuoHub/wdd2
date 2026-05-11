@@ -18,7 +18,7 @@
 
     <!-- 帮助者信息 -->
     <view class="section" wx:if="{{userInfo.helpTypes.length > 0}}">
-      <view class="section-title">提供的服务类型</view>
+      <view class="section-title">提供帮助</view>
       <view class="tag-list">
         <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">
           <text>{{item.icon}}</text>
@@ -28,15 +28,15 @@
     </view>
 
     <view class="section" wx:if="{{userInfo.frequentLocations.length > 0}}">
-      <view class="section-title">主要活跃地区</view>
+      <view class="section-title">帮助范围</view>
       <view class="location-list">
-        <view wx:for="{{userInfo.frequentLocations}}" wx:key="index" class="location-item">
+        <view wx:for="{{userInfo.frequentLocations}}" wx:key="index"
+          class="location-item {{item.latitude && item.longitude ? 'clickable' : ''}}"
+          bindtap="{{item.latitude && item.longitude ? 'goToLocation' : ''}}"
+          data-index="{{index}}">
           <view class="location-info">
             <text class="location-icon">📍</text>
             <text class="location-name">{{item.name || '未知地点'}}</text>
-          </view>
-          <view wx:if="{{item.latitude && item.longitude}}" class="location-btn" bindtap="goToLocation" data-index="{{index}}">
-            <text>查看地图</text>
           </view>
         </view>
       </view>
