@@ -108,9 +108,12 @@ async function getChatSessions(userId) {
     // 判断是否求助者
     const isSeeker = need.user_id === userId
 
-    // 获取最新消息
+    // 获取最新消息（排除系统消息）
     const lastMessageRes = await db.collection('wdd-messages')
-      .where({ need_id: needId })
+      .where({
+        need_id: needId,
+        type: _.neq('system')
+      })
       .orderBy('create_time', 'desc')
       .limit(1)
       .get()
