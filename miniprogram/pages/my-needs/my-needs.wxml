@@ -24,6 +24,13 @@
       已完成
     </view>
     <view
+      class="tab {{currentFilter === 'breaking' ? 'active' : ''}}"
+      bindtap="switchFilter"
+      data-filter="breaking"
+    >
+      审核中
+    </view>
+    <view
       class="tab {{currentFilter === 'cancelled' ? 'active' : ''}}"
       bindtap="switchFilter"
       data-filter="cancelled"
