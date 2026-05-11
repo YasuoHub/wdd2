@@ -30,6 +30,20 @@ exports.main = async (event, context) => {
     })
     results.push({ step: '用户表金额字段初始化', updated: userUpdateRes.stats.updated || 0 })
 
+    // 2.5 为用户表新增信誉分、封禁状态、评分字段
+    const userStatusRes = await db.collection('wdd-users').where({
+      credit_score: db.command.exists(false)
+    }).update({
+      data: {
+        credit_score: 100,      // 信誉分，满分100，初始100
+        ban_status: null,       // 封禁状态：null=正常，对象={reason, end_time}
+        rating: 5.0,            // 平均评价星级，初始5.0
+        rating_count: 0,        // 评价总数，初始0
+        update_time: db.serverDate()
+      }
+    })
+    results.push({ step: '用户表信誉分/封禁/评分字段初始化', updated: userStatusRes.stats.updated || 0 })
+
     // 3. 为任务表新增金额字段
     const needUpdateRes = await db.collection('wdd-needs').where({
       reward_amount: db.command.exists(false)
@@ -44,6 +58,18 @@ exports.main = async (event, context) => {
       }
     })
     results.push({ step: '任务表金额字段初始化', updated: needUpdateRes.stats.updated || 0 })
+
+    // 3.5 为任务表新增举报/申诉标记字段
+    const needFlagRes = await db.collection('wdd-needs').where({
+      was_reported: db.command.exists(false)
+    }).update({
+      data: {
+        was_reported: false,    // 是否曾发起过举报（含已撤销的，防止再次发起）
+        was_appealed: false,    // 是否曾发起过申诉（含已撤销的，防止再次发起）
+        update_time: db.serverDate()
+      }
+    })
+    results.push({ step: '任务表举报申诉标记字段初始化', updated: needFlagRes.stats.updated || 0 })
 
     // 4. 将现有任务的 points 字段迁移到 reward_amount（10积分=1元）
     // 云开发不支持 update 中使用聚合表达式，改为循环处理

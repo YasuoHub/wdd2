@@ -22,7 +22,19 @@
   - 文件：`cloudfunctions/wdd-login/index.js`
   - 在返回的 userInfo 中增加 `credit_score`、`ban_status`
 
-- [ ] **1.7** 部署并执行 `wdd-db-init` 云函数，初始化所有新集合和字段
+- [ ] **1.6** 确认现有帮助者信息字段，缺失则补充初始化（已手动确认，字段已有）
+  - 文件：`cloudfunctions/wdd-db-init/index.js`
+  - `help_types`：用户选择的服务类型数组（复用现有帮助者信息，无需新增编辑入口）
+  - `frequent_locations`：主要活跃地区数组（同上）
+  - `rating`：平均评价星级（初始 5.0）
+  - `rating_count`：评价总数（初始 0）
+
+- [ ] **1.7** 修改 `wdd-db-init`，`wdd-needs` 集合新增字段
+  - `was_reported`：布尔值，是否曾发起过举报（含已撤销的，防止再次发起）
+  - `was_appealed`：布尔值，是否曾发起过申诉（含已撤销的，防止再次发起）
+  - 注：`expire_time` 字段已存在，复用该字段用于申诉时效判断和客服工单排序
+
+- [ ] **1.8** 部署并执行 `wdd-db-init` 云函数，初始化所有新集合和字段
 
 ---
 
@@ -47,6 +59,15 @@
   - 文件：`cloudfunctions/wdd-auto-cancel/index.js`
   - 自动取消逻辑中不处理 status = 'breaking' 的任务
 
+- [ ] **2.5** 修改 `wdd-chat` 云函数，返回对方用户 `rating`
+  - 文件：`cloudfunctions/wdd-chat/index.js`
+  - `getTaskInfo` 中联合查询对方用户的 `rating`、`rating_count`
+
+- [ ] **2.6** 修改 `pages/chat/chat`，展示对方星级评价
+  - 文件：`miniprogram/pages/chat/chat.js`、`chat.wxml`
+  - 顶部信息栏对方头像旁显示星级（如 ★4.8）
+  - 点击头像跳转公开资料页
+
 ---
 
 ## 批次3：举报 + 申诉 + 双方申诉机制
@@ -54,28 +75,47 @@
 - [ ] **3.1** 创建 `wdd-report` 云函数
   - 文件：`cloudfunctions/wdd-report/index.js`
   - action：submitReport（提交举报）
-    - 校验：任务不能已有举报，任务状态不能是 breaking
+    - 前置校验：任务不能已有举报，任务状态不能是 breaking，was_reported=true 时禁止
+    - 时效校验：仅允许在 `expired_at` 或 `expired_at + 2小时` 内提交
+    - 内容安全：调用微信 `msgSecCheck` 审核文字内容，图片需先上传后审核
     - 创建 wdd-reports 记录
     - 创建 wdd-tickets 记录（type='report'）
-    - 更新 wdd-needs：status='breaking', has_report=true
+    - 更新 wdd-needs：status='breaking', has_report=true, was_reported=true
+  - action：cancelReport（撤销举报，5分钟内可撤销1次）
+    - 校验：当前用户是发起者、创建时间在 5 分钟内、工单状态为 pending
+    - 更新 wdd-reports.status='cancelled'
+    - 更新 wdd-needs：status='ongoing', has_report=false
+    - 更新 wdd-tickets.status='closed'
+    - 不重置 was_reported（防止再次发起）
   - action：getReportStatus（查询举报状态）
 
 - [ ] **3.2** 创建举报表单页面 `pages/report/report`
   - 文件：`miniprogram/pages/report/report.js`、`report.wxml`、`report.wxss`、`report.json`
-  - 下拉选择举报类型（7个选项）
+  - 下拉选择举报类型（10个选项，见需求文档 3.3）
   - 多行输入举报理由（5~300字限制）
   - 图片上传组件（最多3张，至少1张）
   - 提交前弹窗确认文案
+  - 提交成功后：显示"5分钟内可撤销"提示，底部显示「撤销举报」按钮（带 MM:SS 倒计时）
+  - 倒计时结束后撤销按钮自动隐藏
+  - 点击撤销后二次确认弹窗，确认后调用 cancelReport
   - 提交后跳转回聊天页或上一页
 
 - [ ] **3.3** 创建 `wdd-appeal` 云函数
   - 文件：`cloudfunctions/wdd-appeal/index.js`
   - action：submitAppeal（提交申诉）
-    - 校验：任务不能已有申诉，不能是 breaking/completed/cancelled 状态
+    - 前置校验：任务不能已有申诉，不能是 breaking/completed/cancelled 状态，was_appealed=true 时禁止
+    - 时效校验：仅允许在 `expired_at` 或 `expired_at + 2小时` 内提交
+    - 内容安全：调用微信 `msgSecCheck` 审核文字内容和图片
     - 创建 wdd-appeals 记录（设置 supplement_deadline = now + 24h）
     - 创建 wdd-tickets 记录（type='appeal'）
-    - 更新 wdd-needs：status='breaking', has_appeal=true
+    - 更新 wdd-needs：status='breaking', has_appeal=true, was_appealed=true
     - 向另一方发送站内消息（直接写入 wdd-notifications，type='appeal_notice'）
+  - action：cancelAppeal（撤销申诉，5分钟内可撤销1次）
+    - 校验：当前用户是发起者、创建时间在 5 分钟内、工单状态为 pending
+    - 更新 wdd-appeals.status='cancelled'
+    - 更新 wdd-needs：status='ongoing', has_appeal=false
+    - 更新 wdd-tickets.status='closed'
+    - 不重置 was_appealed（防止再次发起）
   - action：submitSupplement（补充申诉材料）
     - 校验：在 supplement_deadline 之前，且对方未补充过
     - 更新 wdd-appeals（supplement_* 字段）
@@ -88,8 +128,10 @@
 - [ ] **3.4** 创建申诉表单页面 `pages/appeal/appeal`
   - 文件：`miniprogram/pages/appeal/appeal.js`、`appeal.wxml`、`appeal.wxss`、`appeal.json`
   - 支持两种模式：发起申诉 / 补充材料（通过页面参数区分）
-  - 表单结构与举报一致：类型下拉+理由+图片上传
-  - 补充材料模式：显示剩余时间倒计时
+  - 表单结构与举报一致：类型下拉（10个选项，见需求文档 4.3）+ 理由 + 图片上传
+  - 发起申诉模式：提交成功后显示"5分钟内可撤销"提示和「撤销申诉」按钮（带倒计时）
+  - 补充材料模式：显示剩余时间倒计时，不可撤销
+  - 点击撤销后二次确认弹窗，确认后调用 cancelAppeal
 
 - [ ] **3.5** 创建申诉通知详情页 `pages/appeal-notice/appeal-notice`
   - 文件：`miniprogram/pages/appeal-notice/appeal-notice.js` 等
@@ -100,13 +142,18 @@
 
 - [ ] **3.6** 修改 `pages/my-needs/my-needs`，增加申诉入口
   - 文件：`miniprogram/pages/my-needs/my-needs.js`、`my-needs.wxml`
-  - ongoing 状态的任务显示申诉按钮
-  - 已完结 / breaking / has_appeal=true 时隐藏
+  - 申诉按钮显示条件（需同时满足）：
+    - status = 'ongoing'
+    - has_appeal = false
+    - was_appealed = false（含已撤销的也禁止再次发起）
+    - 当前时间 ≤ `expired_at + 2小时`（时效限制）
+  - status 为 completed/cancelled/breaking 时隐藏
   - 点击跳转 `pages/appeal/appeal?mode=initiate&needId=xxx`
 
 - [ ] **3.7** 修改 `pages/my-tasks/my-tasks`，增加申诉入口
   - 文件：`miniprogram/pages/my-tasks/my-tasks.js`、`my-tasks.wxml`
-  - 逻辑同 my-needs，帮助者视角
+  - 逻辑同 my-needs（3.6），帮助者视角
+  - 申诉按钮显示条件：status='ongoing'、has_appeal=false、was_appealed=false、当前时间 ≤ expired_at + 2小时
 
 - [ ] **3.8** 配置云函数定时触发器（可选）
   - 文件：`cloudfunctions/wdd-appeal/config.json`
@@ -115,6 +162,19 @@
 
 - [ ] **3.9** 在 `pages/messages/messages.js` 中增加新通知类型的图标映射
   - 新增：'appeal_notice'、'appeal_reminder'、'arbitration_result'
+
+- [ ] **3.10** 修改 `pages/chat/chat` 举报入口逻辑（补充）
+  - 文件：`miniprogram/pages/chat/chat.js`、`chat.wxml`
+  - 举报按钮显示条件：status='ongoing'、was_reported=false、当前时间 ≤ expired_at + 2小时
+  - was_reported=true（含已撤销）时隐藏举报按钮
+
+- [ ] **3.11** 修改 `pages/chat/chat` 点击头像跳转公开资料
+  - 文件：`miniprogram/pages/chat/chat.js`、`chat.wxml`
+  - 聊天页面中对方头像可点击，跳转 `pages/public-profile/public-profile?userId=xxx`
+
+- [ ] **3.12** 修改 `wdd-get-needs` 云函数，返回申诉/举报标识
+  - 文件：`cloudfunctions/wdd-get-needs/index.js`
+  - `getMyNeeds` 和 `getMyTasks` 返回中增加 `was_reported`、`was_appealed` 字段
 
 ---
 
@@ -141,12 +201,16 @@
   - 接单前检查用户 ban_status 和 credit_score
   - 服务端兜底校验，防止绕过前端
 
+- [ ] **4.5** 修改 `pages/task-hall/task-hall` 列表页拦截
+  - 文件：`miniprogram/pages/task-hall/task-hall.js`
+  - 封禁用户/信誉分 0 分用户进入任务大厅时弹窗提示并阻止接单
+
 ---
 
 ## 批次5：客服系统
 
 - [ ] **5.1** 配置客服白名单
-  - 文件：`cloudfunctions/wdd-get-config/index.js`
+  - 文件：`cloudfunctions/wdd-config/index.js`
   - 在 wdd-config/platform 文档中增加 `customer_service_openids` 数组
   - 提供 action：isCustomerService(OPENID) 判断是否客服
 
@@ -161,6 +225,7 @@
   - action：getTicketList（获取工单列表）
     - 仅客服可调用
     - 返回待处理工单，含任务标题、编号、发起时间、纠纷状态、双方昵称
+    - 按关联任务的 `expired_at` 倒序排列（剩余有效期越短越靠前）
     - 双人申诉工单标注对方补充状态
   - action：getTicketDetail（获取工单详情）
     - 返回：任务完整信息 + 举报/申诉详情 + 双方申诉材料 + 聊天记录摘要
@@ -192,6 +257,7 @@
   - 弹窗内容：
     - 任务流转结果下拉：取消任务 / 完成任务 / 部分完成
     - 部分完成时显示分账档位：10% / 30% / 50% / 70%
+    - 悬赏金额 ≤5 元时：隐藏「部分完成」选项和分账比例，仅可选择取消/完成
     - 账号封禁下拉：1天 / 1周 / 1个月 / 1年 / 永久封禁
     - 扣减信誉分：自动显示（取消→帮助者-10；完成→求助者-10；部分→不扣）
     - 警告提醒：自动提示（无需选择）
@@ -211,6 +277,17 @@
     - 完成任务：正常结算逻辑（同 completeTask）
     - 部分完成：按 partialPercent 比例发放给帮助者，剩余退回求助者
     - 使用事务保证资金一致性
+
+- [ ] **5.9** 客服工单超时自动裁决机制
+  - 方式：云函数定时触发器（每 30 分钟检查一次）
+  - 超时时长：48 小时（工单创建后 48 小时客服未处理）
+  - 自动裁决逻辑：
+    - 裁决结果：取消任务
+    - 悬赏金额全额原路退回求助者余额
+    - 双方均不扣减信誉分
+    - 更新 wdd-tickets.status='resolved'，result 标记为 auto_cancelled
+    - 向双方发送站内消息说明超时自动裁决
+  - 文件：`cloudfunctions/wdd-ticket/index.js` 新增 action 或单独定时触发云函数
 
 ---
 
@@ -240,6 +317,39 @@
   - 为 'arbitration_result' 增加专属图标和展示样式
   - 点击通知可跳转相关任务详情
 
+- [ ] **6.6** 修改 `wdd-login` 云函数，返回新增字段
+  - 文件：`cloudfunctions/wdd-login/index.js`
+  - 返回 userInfo 中增加：help_types、frequent_locations、rating、rating_count
+
+---
+
+## 批次7：撤销功能
+
+- [ ] **7.1** `wdd-report` 云函数增加 `cancelReport` action
+  - 文件：`cloudfunctions/wdd-report/index.js`
+  - 校验：当前用户是举报发起者、创建时间在 5 分钟内、工单状态为 pending
+  - 更新：wdd-reports.status='cancelled'
+  - 更新：wdd-needs.status='ongoing', wdd-needs.has_report=false
+  - 更新：wdd-tickets.status='closed'
+  - 不重置 was_reported（防止再次发起）
+  - 返回：撤销成功，任务恢复进行中状态
+
+- [ ] **7.2** `wdd-appeal` 云函数增加 `cancelAppeal` action
+  - 文件：`cloudfunctions/wdd-appeal/index.js`
+  - 校验：当前用户是申诉发起者、创建时间在 5 分钟内、工单状态为 pending
+  - 更新：wdd-appeals.status='cancelled'
+  - 更新：wdd-needs.status='ongoing', wdd-needs.has_appeal=false
+  - 更新：wdd-tickets.status='closed'
+  - 不重置 was_appealed（防止再次发起）
+  - 返回：撤销成功
+
+- [ ] **7.3** 前端撤销 UI 组件
+  - 文件：`miniprogram/components/cancel-countdown/cancel-countdown`（或内嵌在提交成功页）
+  - 举报/申诉提交成功页底部显示「撤销」按钮
+  - 带 5 分钟倒计时（MM:SS 格式），倒计时结束后按钮自动隐藏
+  - 点击撤销后二次确认弹窗："撤销后任务将恢复正常，但不可再次发起举报/申诉，确认撤销？"
+  - 确认后调用对应云函数 cancelReport / cancelAppeal
+
 ---
 
 ## 回归测试清单
@@ -253,7 +363,12 @@
 
 ### 边界情况测试
 - [ ] 重复举报/申诉：已有举报的任务再次举报 → 按钮隐藏/返回错误
+- [ ] 撤销后再次发起：撤销举报/申诉后，对应按钮隐藏，再次点击提示不可发起
+- [ ] 5分钟撤销倒计时：提交后4分59秒可撤销，5分01秒撤销按钮消失
+- [ ] 时效限制测试：expired_at + 2小时01分后，举报/申诉按钮隐藏
 - [ ] breaking 状态发消息：聊天输入框隐藏，发送接口拒绝
 - [ ] 客服裁决后资金计算精度：确认四舍五入正确
 - [ ] 永久封禁日期：前端读取 9999-12-31 显示「永久封禁」
 - [ ] 站内消息未读数：新增通知类型正确计入未读总数
+- [ ] 客服超时自动裁决：工单创建48小时后客服未处理，系统自动取消并退款
+- [ ] ≤5元隐藏部分完成：悬赏5元时，客服裁决弹窗仅显示取消/完成选项

@@ -90,7 +90,11 @@ exports.main = async (event, context) => {
         create_time: db.serverDate(),
         update_time: db.serverDate(),
         last_sign_in_date: null,
-        consecutive_sign_days: 0
+        consecutive_sign_days: 0,
+        credit_score: 100,
+        ban_status: null,
+        rating: 5.0,
+        rating_count: 0
       }
 
       // 用户创建 + 注册积分 + 邀请奖励 统一事务
@@ -225,6 +229,10 @@ exports.main = async (event, context) => {
           frozen_points: userInfo.frozen_points,
           role: userInfo.role,
           consecutive_sign_days: userInfo.consecutive_sign_days,
+          credit_score: userInfo.credit_score || 100,
+          ban_status: userInfo.ban_status || null,
+          rating: userInfo.rating || 5.0,
+          rating_count: userInfo.rating_count || 0,
           // 帮助者资料（直接字段）
           help_willingness: userInfo.help_willingness || '',
           frequent_locations: userInfo.frequent_locations || [],
