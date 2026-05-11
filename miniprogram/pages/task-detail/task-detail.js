@@ -178,6 +178,15 @@ Page({
     })
   },
 
+  // 跳转公开资料页
+  goToPublicProfile(e) {
+    const { userid } = e.currentTarget.dataset
+    if (!userid) return
+    wx.navigateTo({
+      url: `/pages/public-profile/public-profile?userId=${userid}`
+    })
+  },
+
   // 确认完成
   completeTask() {
     if (!this.data.canComplete) return

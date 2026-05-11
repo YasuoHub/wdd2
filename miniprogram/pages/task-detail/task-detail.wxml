@@ -75,7 +75,7 @@
       <!-- 求助者信息 -->
       <view class="user-section">
         <text class="section-title">🙏 求助者</text>
-        <view class="user-info">
+        <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.user_id}}">
           <image class="user-avatar" src="{{task.user_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
           <view class="user-meta">
             <text class="user-name">{{task.user_nickname || '匿名用户'}}</text>
@@ -87,7 +87,7 @@
       <!-- 帮助者信息（如果有） -->
       <view wx:if="{{task.taker_id}}" class="user-section">
         <text class="section-title">🤗 帮助者</text>
-        <view class="user-info">
+        <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.taker_id}}">
           <image class="user-avatar" src="{{task.taker_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
           <view class="user-meta">
             <text class="user-name">{{task.taker_nickname || '匿名用户'}}</text>

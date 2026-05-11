@@ -37,11 +37,17 @@ Page({
         .limit(3)
         .get()
 
+      const rating = user.rating || 5.0
+      const fullStars = Math.floor(rating)
+      const starsStr = '★★★★★'.slice(0, fullStars)
+
       this.setData({
         userInfo: {
           avatar: user.avatar || '',
           nickname: user.nickname || '未知用户',
-          rating: user.rating || 5.0,
+          rating: rating,
+          ratingFormatted: rating.toFixed(1),
+          ratingStars: starsStr,
           ratingCount: user.rating_count || 0,
           helpTypes: user.help_types || [],
           frequentLocations: user.frequent_locations || []

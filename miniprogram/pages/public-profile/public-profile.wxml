@@ -10,8 +10,8 @@
       </view>
       <view class="nickname">{{userInfo.nickname}}</view>
       <view class="rating-wrap">
-        <text class="stars">{{'★'.repeat(Math.floor(userInfo.rating))}}</text>
-        <text class="rating-num">{{userInfo.rating.toFixed(1)}}</text>
+        <text class="stars">{{userInfo.ratingStars}}</text>
+        <text class="rating-num">{{userInfo.ratingFormatted}}</text>
         <text class="rating-count">({{userInfo.ratingCount}}条评价)</text>
       </view>
     </view>
