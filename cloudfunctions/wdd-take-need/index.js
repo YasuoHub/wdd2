@@ -37,6 +37,27 @@ exports.main = async (event, context) => {
     const taker = userRes.data[0]
     const takerId = taker._id
 
+    // 服务端校验：封禁状态
+    if (taker.ban_status) {
+      const now = new Date()
+      const endTime = new Date(taker.ban_status.end_time)
+      if (now < endTime) {
+        const isPermanent = endTime.getFullYear() >= 9999
+        return {
+          code: -1,
+          message: isPermanent ? '您的账号已被永久封禁' : `您的账号已被封禁，预计 ${endTime.getFullYear()}年${endTime.getMonth() + 1}月${endTime.getDate()}日 可正常使用`
+        }
+      }
+    }
+
+    // 服务端校验：信誉分
+    if (taker.credit_score === 0) {
+      return {
+        code: -1,
+        message: '您的信誉分已扣至0分，已限制发单及接单权限'
+      }
+    }
+
     // 查询任务
     const needRes = await db.collection('wdd-needs').doc(needId).get()
     const need = needRes.data

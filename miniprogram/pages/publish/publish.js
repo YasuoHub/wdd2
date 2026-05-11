@@ -351,6 +351,30 @@ Page({
   async handlePublish() {
     if (this.data.isPublishing) return
 
+    // 检查用户封禁状态和信誉分
+    const userInfo = app.globalData.userInfo
+    if (userInfo.ban_status) {
+      const now = new Date()
+      const endTime = new Date(userInfo.ban_status.end_time)
+      if (now < endTime) {
+        const isPermanent = endTime.getFullYear() >= 9999
+        wx.showModal({
+          title: '账号限制',
+          content: isPermanent ? '您的账号已被永久封禁' : `您的账号已被封禁，预计 ${endTime.getFullYear()}年${endTime.getMonth() + 1}月${endTime.getDate()}日 可正常使用`,
+          showCancel: false
+        })
+        return
+      }
+    }
+    if (userInfo.credit_score === 0) {
+      wx.showModal({
+        title: '账号限制',
+        content: '您的信誉分已扣至0分，已限制发单及接单权限',
+        showCancel: false
+      })
+      return
+    }
+
     const { locationName, selectedType, rewardAmount, description, selectedTime } = this.data
 
     // 前置校验
