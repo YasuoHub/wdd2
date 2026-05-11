@@ -15,6 +15,12 @@ page { background: var(--bg-secondary); }
 .tag-list { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .tag { padding: 10rpx 24rpx; background: rgba(116,185,255,0.15); color: #74b9ff; border-radius: 28rpx; font-size: 26rpx; }
 .tag.location { background: rgba(168,230,207,0.3); color: #2ecc71; }
+.location-list { display: flex; flex-direction: column; gap: 16rpx; }
+.location-item { display: flex; align-items: center; justify-content: space-between; padding: 20rpx; background: var(--bg-secondary); border-radius: 16rpx; }
+.location-info { display: flex; align-items: center; gap: 12rpx; flex: 1; }
+.location-icon { font-size: 28rpx; }
+.location-name { font-size: 28rpx; color: var(--text-primary); }
+.location-btn { padding: 10rpx 24rpx; background: var(--primary-color); color: #fff; border-radius: 28rpx; font-size: 24rpx; }
 .rating-list { display: flex; flex-direction: column; gap: 20rpx; }
 .rating-item { padding: 20rpx; background: var(--bg-secondary); border-radius: 16rpx; }
 .rating-stars { font-size: 24rpx; color: #f1c40f; margin-bottom: 8rpx; }

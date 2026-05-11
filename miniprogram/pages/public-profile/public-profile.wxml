@@ -20,14 +20,25 @@
     <view class="section" wx:if="{{userInfo.helpTypes.length > 0}}">
       <view class="section-title">提供的服务类型</view>
       <view class="tag-list">
-        <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">{{item}}</view>
+        <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">
+          <text>{{item.icon}}</text>
+          <text style="margin-left: 8rpx;">{{item.name}}</text>
+        </view>
       </view>
     </view>
 
     <view class="section" wx:if="{{userInfo.frequentLocations.length > 0}}">
       <view class="section-title">主要活跃地区</view>
-      <view class="tag-list">
-        <view wx:for="{{userInfo.frequentLocations}}" wx:key="index" class="tag location">{{item}}</view>
+      <view class="location-list">
+        <view wx:for="{{userInfo.frequentLocations}}" wx:key="index" class="location-item">
+          <view class="location-info">
+            <text class="location-icon">📍</text>
+            <text class="location-name">{{item.name || '未知地点'}}</text>
+          </view>
+          <view wx:if="{{item.latitude && item.longitude}}" class="location-btn" bindtap="goToLocation" data-index="{{index}}">
+            <text>查看地图</text>
+          </view>
+        </view>
       </view>
     </view>
 
