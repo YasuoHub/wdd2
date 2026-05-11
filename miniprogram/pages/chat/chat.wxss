@@ -552,6 +552,17 @@
   border-radius: var(--radius-full);
 }
 
+/* breaking 状态提示条 */
+.task-ended-bar.breaking-bar {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1rpx solid rgba(255, 193, 7, 0.3);
+}
+
+.task-ended-bar.breaking-bar .task-ended-text {
+  color: #f39c12;
+  font-weight: 500;
+}
+
 .task-ended-text {
   font-size: 28rpx;
   color: var(--text-light);

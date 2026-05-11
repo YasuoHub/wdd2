@@ -394,7 +394,8 @@ Page({
           'pending': { text: '待匹配', class: '' },
           'ongoing': { text: '进行中', class: 'ongoing' },
           'completed': { text: '已完成', class: 'completed' },
-          'cancelled': { text: '已取消', class: 'cancelled' }
+          'cancelled': { text: '已取消', class: 'cancelled' },
+          'breaking': { text: '客服审核中', class: 'breaking' }
         }
 
         const typeMap = {
@@ -432,10 +433,12 @@ Page({
           otherUser: result.data.otherUser
         })
 
-        // 设置导航栏标题为聊天对象昵称
+        // 设置导航栏标题为聊天对象昵称 + 星级
         if (result.data.otherUser && result.data.otherUser.nickname) {
+          const other = result.data.otherUser
+          const ratingText = other.rating ? ` ★${other.rating.toFixed(1)}` : ''
           wx.setNavigationBarTitle({
-            title: result.data.otherUser.nickname
+            title: other.nickname + ratingText
           })
         }
 

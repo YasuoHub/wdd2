@@ -108,8 +108,15 @@ async function getTaskInfo(event, OPENID) {
       otherUser: otherUser ? {
         _id: otherUser._id,
         nickname: otherUser.nickname,
-        avatar: otherUser.avatar
-      } : null
+        avatar: otherUser.avatar,
+        rating: otherUser.rating || 5.0,
+        rating_count: otherUser.rating_count || 0
+      } : null,
+      // 举报/申诉相关字段
+      was_reported: need.was_reported || false,
+      was_appealed: need.was_appealed || false,
+      has_report: need.has_report || false,
+      has_appeal: need.has_appeal || false
     }
   }
 }
@@ -235,6 +242,9 @@ async function sendMessage(event, OPENID) {
   const need = needRes.data
 
   // 检查任务状态
+  if (need.status === 'breaking') {
+    return { code: -1, message: '任务已进入客服审核，无法发送消息' }
+  }
   if (need.status !== 'ongoing') {
     return { code: -1, message: '任务已结束，无法发送消息' }
   }

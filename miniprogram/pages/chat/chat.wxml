@@ -162,8 +162,13 @@
 
   <!-- 底部操作栏 -->
   <view class="input-area">
+    <!-- breaking 状态：客服审核中，禁止发消息 -->
+    <view wx:if="{{task.status === 'breaking'}}" class="task-ended-bar breaking-bar">
+      <text class="task-ended-text">客服审核中，暂时无法发送消息</text>
+    </view>
+
     <!-- 任务已结束：显示提示 -->
-    <view wx:if="{{task.status !== 'ongoing'}}" class="task-ended-bar">
+    <view wx:elif="{{task.status !== 'ongoing'}}" class="task-ended-bar">
       <text class="task-ended-text">任务已结束</text>
     </view>
 

@@ -644,7 +644,11 @@ function formatNeedItem(item, userProfile) {
     taker_avatar: item.taker_avatar,
     expireTime: item.expire_time,
     createTime: formatTime(item.create_time),
-    hasRated: item.has_rated || false
+    hasRated: item.has_rated || false,
+    hasReport: item.has_report || false,
+    hasAppeal: item.has_appeal || false,
+    wasReported: item.was_reported || false,
+    wasAppealed: item.was_appealed || false
   }
 }
 
