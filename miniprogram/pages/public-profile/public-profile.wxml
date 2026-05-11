@@ -1,0 +1,50 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <block wx:else>
+    <!-- 用户基本信息 -->
+    <view class="profile-card" wx:if="{{userInfo}}">
+      <view class="avatar-wrap">
+        <image wx:if="{{userInfo.avatar}}" class="avatar" src="{{userInfo.avatar}}" mode="aspectFill"/>
+        <view wx:else class="avatar-default">{{userInfo.nickname[0] || '?'}}</view>
+      </view>
+      <view class="nickname">{{userInfo.nickname}}</view>
+      <view class="rating-wrap">
+        <text class="stars">{{'★'.repeat(Math.floor(userInfo.rating))}}</text>
+        <text class="rating-num">{{userInfo.rating.toFixed(1)}}</text>
+        <text class="rating-count">({{userInfo.ratingCount}}条评价)</text>
+      </view>
+    </view>
+
+    <!-- 帮助者信息 -->
+    <view class="section" wx:if="{{userInfo.helpTypes.length > 0}}">
+      <view class="section-title">提供的服务类型</view>
+      <view class="tag-list">
+        <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="section" wx:if="{{userInfo.frequentLocations.length > 0}}">
+      <view class="section-title">主要活跃地区</view>
+      <view class="tag-list">
+        <view wx:for="{{userInfo.frequentLocations}}" wx:key="index" class="tag location">{{item}}</view>
+      </view>
+    </view>
+
+    <!-- 最近五星好评 -->
+    <view class="section" wx:if="{{ratings.length > 0}}">
+      <view class="section-title">最近五星好评</view>
+      <view class="rating-list">
+        <view wx:for="{{ratings}}" wx:key="_id" class="rating-item">
+          <view class="rating-stars">★★★★★</view>
+          <text wx:if="{{item.comment}}" class="rating-comment">{{item.comment}}</text>
+          <text wx:else class="rating-comment empty">用户未留下文字评价</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{ratings.length === 0}}">
+      <text>暂无评价记录</text>
+    </view>
+  </block>
+</view>

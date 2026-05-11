@@ -1305,6 +1305,15 @@ Page({
     })
   },
 
+  // 跳转对方公开资料
+  goToPublicProfile() {
+    const { otherUser } = this.data
+    if (!otherUser || !otherUser._id) return
+    wx.navigateTo({
+      url: `/pages/public-profile/public-profile?userId=${otherUser._id}`
+    })
+  },
+
   // 打开地图查看位置
   openLocation() {
     const location = this.data.task.location

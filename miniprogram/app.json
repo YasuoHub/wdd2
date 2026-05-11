@@ -25,7 +25,8 @@
     "pages/appeal/appeal",
     "pages/appeal-notice/appeal-notice",
     "pages/ticket-list/ticket-list",
-    "pages/ticket-detail/ticket-detail"
+    "pages/ticket-detail/ticket-detail",
+    "pages/public-profile/public-profile"
   ],
   "window": {
     "backgroundTextStyle": "light",

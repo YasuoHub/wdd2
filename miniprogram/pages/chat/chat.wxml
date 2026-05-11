@@ -104,7 +104,7 @@
         <!-- 普通消息：原有逻辑 -->
         <block wx:else>
           <!-- 对方头像 -->
-          <view wx:if="{{!item.isSelf}}" class="avatar">
+          <view wx:if="{{!item.isSelf}}" class="avatar" bindtap="goToPublicProfile">
             <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
             <text wx:else>{{item.senderName ? item.senderName[0] : '?'}}</text>
           </view>
