@@ -1,0 +1,13 @@
+page { background: var(--bg-secondary); }
+.container { padding: 20rpx; }
+.loading, .empty { text-align: center; padding: 60rpx; color: var(--text-tertiary); font-size: 28rpx; }
+.ticket-list { display: flex; flex-direction: column; gap: 20rpx; }
+.ticket-card { background: #fff; border-radius: 20rpx; padding: 28rpx; }
+.ticket-header { display: flex; justify-content: space-between; margin-bottom: 16rpx; }
+.ticket-type { font-size: 24rpx; padding: 4rpx 16rpx; border-radius: 12rpx; font-weight: 600; }
+.ticket-type.report { background: rgba(231,76,60,0.1); color: #e74c3c; }
+.ticket-type.appeal { background: rgba(243,156,18,0.1); color: #f39c12; }
+.ticket-status { font-size: 24rpx; color: var(--text-tertiary); }
+.ticket-title { font-size: 30rpx; font-weight: 600; color: var(--text-primary); margin-bottom: 12rpx; }
+.ticket-meta, .ticket-users { display: flex; gap: 24rpx; font-size: 26rpx; color: var(--text-secondary); margin-bottom: 8rpx; }
+.supplement-tag { font-size: 24rpx; color: #3498db; margin-top: 12rpx; padding: 6rpx 16rpx; background: rgba(52,152,219,0.1); border-radius: 12rpx; display: inline-block; }

@@ -9,7 +9,8 @@ Page({
     signPoints: 5,
     myNeedsCount: 0,
     myTasksCount: 0,
-    showInviteModal: false
+    showInviteModal: false,
+    isCustomerService: false
   },
 
   onLoad() {
@@ -97,6 +98,9 @@ Page({
         })
         // 更新全局数据
         app.updateUserInfo(freshUserInfo)
+
+        // 检查是否为客服
+        this.checkCustomerService()
       }
     } catch (err) {
       console.error('获取最新用户信息失败:', err)
@@ -293,6 +297,28 @@ Page({
     if (!this.checkLoginAndShowTip()) return
     wx.navigateTo({
       url: '/pages/helper-profile/helper-profile?edit=true'
+    })
+  },
+
+  // 检查是否为客服
+  async checkCustomerService() {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-config',
+        data: { action: 'isCustomerService' }
+      })
+      if (result.code === 0) {
+        this.setData({ isCustomerService: result.data.isCustomerService })
+      }
+    } catch (err) {
+      console.error('检查客服身份失败:', err)
+    }
+  },
+
+  // 跳转客服工单列表
+  goToTicketList() {
+    wx.navigateTo({
+      url: '/pages/ticket-list/ticket-list'
     })
   },
 

@@ -122,6 +122,23 @@
     </view>
   </view>
 
+  <!-- 客服入口（仅客服可见）-->
+  <view wx:if="{{isCustomerService}}" class="menu-section">
+    <view class="menu-title">客服系统</view>
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goToTicketList">
+        <view class="menu-icon-wrapper" style="background: rgba(231, 76, 60, 0.15);">
+          <text class="menu-icon">🎧</text>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">客服工单处理</text>
+          <text class="menu-desc">处理举报和申诉工单</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
   <view class="menu-section">
     <view class="menu-title">其他</view>
     <view class="menu-list">

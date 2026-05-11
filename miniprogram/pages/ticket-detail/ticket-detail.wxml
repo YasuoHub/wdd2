@@ -1,0 +1,159 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <block wx:else>
+    <!-- 任务信息 -->
+    <view class="section" wx:if="{{task}}">
+      <view class="section-title">任务信息</view>
+      <view class="info-row">
+        <text class="label">类型</text>
+        <text class="value">{{task.typeName}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">描述</text>
+        <text class="value">{{task.description}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">悬赏</text>
+        <text class="value">¥{{task.rewardAmount}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">位置</text>
+        <text class="value">{{task.locationName}}</text>
+      </view>
+    </view>
+
+    <!-- 用户信息 -->
+    <view class="section" wx:if="{{seeker || taker}}">
+      <view class="section-title">双方信息</view>
+      <view class="user-row" wx:if="{{seeker}}">
+        <text class="label">求助者</text>
+        <text class="value">{{seeker.nickname}} (信誉分: {{seeker.creditScore}})</text>
+      </view>
+      <view class="user-row" wx:if="{{taker}}">
+        <text class="label">帮助者</text>
+        <text class="value">{{taker.nickname}} (信誉分: {{taker.creditScore}})</text>
+      </view>
+    </view>
+
+    <!-- 举报详情 -->
+    <view class="section" wx:if="{{reportDetail}}">
+      <view class="section-title">举报详情</view>
+      <view class="info-row">
+        <text class="label">类型</text>
+        <text class="value">{{reportDetail.type}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">理由</text>
+        <text class="value">{{reportDetail.reason}}</text>
+      </view>
+      <view class="images-row" wx:if="{{reportDetail.images.length > 0}}">
+        <image wx:for="{{reportDetail.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{reportDetail.images}}" />
+      </view>
+    </view>
+
+    <!-- 申诉详情 -->
+    <view class="section" wx:if="{{appealDetail}}">
+      <view class="section-title">申诉详情</view>
+      <view class="info-row">
+        <text class="label">发起方</text>
+        <text class="value">{{appealDetail.initiator.nickname}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">类型</text>
+        <text class="value">{{appealDetail.initiator.type}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">理由</text>
+        <text class="value">{{appealDetail.initiator.reason}}</text>
+      </view>
+      <view class="images-row" wx:if="{{appealDetail.initiator.images.length > 0}}">
+        <image wx:for="{{appealDetail.initiator.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{appealDetail.initiator.images}}" />
+      </view>
+
+      <!-- 补充材料 -->
+      <block wx:if="{{appealDetail.supplement}}">
+        <view class="divider"></view>
+        <view class="info-row">
+          <text class="label">对方补充</text>
+          <text class="value">{{appealDetail.supplement.type}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">理由</text>
+          <text class="value">{{appealDetail.supplement.reason}}</text>
+        </view>
+        <view class="images-row" wx:if="{{appealDetail.supplement.images.length > 0}}">
+          <image wx:for="{{appealDetail.supplement.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{appealDetail.supplement.images}}" />
+        </view>
+      </block>
+    </view>
+
+    <!-- 处理裁决按钮 -->
+    <view class="action-bar" wx:if="{{ticket && ticket.status === 'pending'}}">
+      <button class="arbitrate-btn" bindtap="showArbitrate">处理裁决</button>
+    </view>
+  </block>
+
+  <!-- 裁决弹窗 -->
+  <view class="modal {{showArbitrateModal ? 'show' : ''}}" wx:if="{{showArbitrateModal}}">
+    <view class="modal-mask" bindtap="hideArbitrate"></view>
+    <view class="modal-content">
+      <view class="modal-title">处理裁决</view>
+
+      <!-- 任务流转结果 -->
+      <view class="form-row">
+        <text class="form-label">裁决结果</text>
+        <picker bindchange="onTaskResultChange" range="{{['取消任务', '完成任务', '部分完成']}}">
+          <view class="picker">
+            <text>{{taskResult === 'cancelled' ? '取消任务' : taskResult === 'completed' ? '完成任务' : taskResult === 'partial' ? '部分完成' : '请选择'}}</text>
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 分账比例（仅部分完成时显示） -->
+      <view class="form-row" wx:if="{{taskResult === 'partial' && task && task.rewardAmount > 5}}">
+        <text class="form-label">分账比例</text>
+        <picker bindchange="onPartialChange" range="{{['10%', '30%', '50%', '70%']}}">
+          <view class="picker">
+            <text>{{partialPercent}}%</text>
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 信誉分提示 -->
+      <view class="credit-hint">
+        <text wx:if="{{taskResult === 'cancelled'}}">帮助者信誉分 -10</text>
+        <text wx:elif="{{taskResult === 'completed'}}">求助者信誉分 -10</text>
+        <text wx:elif="{{taskResult === 'partial'}}">双方均不扣信誉分</text>
+      </view>
+
+      <!-- 封禁 -->
+      <view class="form-row">
+        <text class="form-label">封禁对象</text>
+        <picker bindchange="onBanTargetChange" range="{{['不封禁', '求助者', '帮助者', '双方']}}">
+          <view class="picker">
+            <text>{{banTarget === 'none' ? '不封禁' : banTarget === 'seeker' ? '求助者' : banTarget === 'taker' ? '帮助者' : '双方'}}</text>
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-row" wx:if="{{banTarget !== 'none'}}">
+        <text class="form-label">封禁时长</text>
+        <picker bindchange="onBanDurationChange" range="{{['1天', '1周', '1个月', '1年', '永久封禁']}}">
+          <view class="picker">
+            <text>{{banDuration === '1d' ? '1天' : banDuration === '1w' ? '1周' : banDuration === '1m' ? '1个月' : banDuration === '1y' ? '1年' : '永久封禁'}}</text>
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="modal-footer">
+        <button class="modal-btn cancel" bindtap="hideArbitrate">取消</button>
+        <button class="modal-btn confirm" bindtap="submitArbitrate">确认裁决</button>
+      </view>
+    </view>
+  </view>
+</view>

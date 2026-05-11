@@ -17,25 +17,38 @@ const DEFAULT_CONFIG = {
 }
 
 exports.main = async (event, context) => {
+  const { action } = event
+  const wxContext = cloud.getWXContext()
+  const OPENID = wxContext.OPENID
+
   try {
+    // isCustomerService  action
+    if (action === 'isCustomerService') {
+      const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
+      const csOpenids = configRes && configRes.data ? (configRes.data.customer_service_openids || []) : []
+      return {
+        code: 0,
+        data: { isCustomerService: OPENID ? csOpenids.includes(OPENID) : false },
+        message: 'success'
+      }
+    }
+
+    // 默认：返回平台配置
     let config = null
 
     try {
       const res = await db.collection('wdd-config').doc('platform').get()
       config = res.data
     } catch (dbErr) {
-      // 文档不存在或其他数据库错误，使用默认值
       console.warn('wdd-config/platform 不存在，使用默认配置:', dbErr.message)
       config = null
     }
 
-    // 合并默认值与数据库值（数据库值优先）
     const result = {
       ...DEFAULT_CONFIG,
       ...config
     }
 
-    // 移除数据库内部字段（如 _openid 等）
     delete result._openid
 
     return {

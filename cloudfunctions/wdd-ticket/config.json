@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "autoCancelTimeout",
+      "type": "timer",
+      "config": "0 */30 * * * *"
+    }
+  ]
+}

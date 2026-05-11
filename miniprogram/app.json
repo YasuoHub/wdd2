@@ -23,7 +23,9 @@
     "pages/withdraw/withdraw",
     "pages/report/report",
     "pages/appeal/appeal",
-    "pages/appeal-notice/appeal-notice"
+    "pages/appeal-notice/appeal-notice",
+    "pages/ticket-list/ticket-list",
+    "pages/ticket-detail/ticket-detail"
   ],
   "window": {
     "backgroundTextStyle": "light",
