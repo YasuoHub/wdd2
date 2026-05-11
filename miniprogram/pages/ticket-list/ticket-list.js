@@ -18,7 +18,7 @@ Page({
   async checkAuth() {
     try {
       const { result } = await wx.cloud.callFunction({
-        name: 'wdd-config',
+        name: 'wdd-get-config',
         data: { action: 'isCustomerService' }
       })
       if (result.code === 0 && result.data.isCustomerService) {
