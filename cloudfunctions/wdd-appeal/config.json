@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "checkSupplementTimeout",
+      "type": "timer",
+      "config": "0 */10 * * * *"
+    }
+  ]
+}

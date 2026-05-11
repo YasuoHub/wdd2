@@ -1,0 +1,68 @@
+/* 申诉页面样式 - 复用 report 页面样式 */
+@import "../report/report.wxss";
+
+/* 对方申诉摘要卡片 */
+.opponent-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  border-left: 6rpx solid #e74c3c;
+}
+
+.opponent-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #e74c3c;
+  margin-bottom: 20rpx;
+}
+
+.opponent-type {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.opponent-reason {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}
+
+.opponent-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.opponent-images image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+}
+
+.countdown-wrap {
+  display: flex;
+  align-items: center;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--border-color);
+}
+
+.countdown-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.countdown-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #e74c3c;
+  margin-left: 12rpx;
+}
+
+.countdown-value.timeout {
+  color: var(--text-tertiary);
+}

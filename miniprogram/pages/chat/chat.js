@@ -21,6 +21,7 @@ Page({
     userInfo: null,
     isSeeker: false,
     otherUser: null,
+    showReportBtn: false,
 
     // 消息相关
     messages: [],
@@ -430,7 +431,10 @@ Page({
             images: taskData.images || []
           },
           isSeeker: result.data.role === 'seeker',
-          otherUser: result.data.otherUser
+          otherUser: result.data.otherUser,
+          showReportBtn: result.data.status === 'ongoing' &&
+            !result.data.was_reported &&
+            (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 2 * 60 * 60 * 1000))
         })
 
         // 设置导航栏标题为聊天对象昵称 + 星级
@@ -1290,6 +1294,15 @@ Page({
         icon: 'none'
       })
     }
+  },
+
+  // 跳转举报页面
+  goToReport() {
+    const { task } = this.data
+    if (!task._id) return
+    wx.navigateTo({
+      url: `/pages/report/report?needId=${task._id}`
+    })
   },
 
   // 打开地图查看位置

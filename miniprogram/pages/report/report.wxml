@@ -1,0 +1,82 @@
+<view class="container">
+  <!-- 表单视图 -->
+  <block wx:if="{{!isSubmitted}}">
+    <!-- 举报类型 -->
+    <view class="form-group">
+      <text class="form-label">举报类型<text class="required">*</text></text>
+      <picker bindchange="onTypeChange" range="{{reportTypes}}">
+        <view class="picker-wrap">
+          <text class="picker-text {{selectedTypeValue ? '' : 'placeholder'}}">{{selectedTypeLabel || '请选择举报类型'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 举报理由 -->
+    <view class="form-group">
+      <text class="form-label">举报理由<text class="required">*</text></text>
+      <view class="textarea-wrap">
+        <textarea
+          placeholder="请详细描述举报理由，5~300字"
+          maxlength="300"
+          bindinput="onReasonInput"
+          value="{{reason}}"
+        />
+      </view>
+      <view class="word-count {{wordCount > 300 ? 'error' : ''}}">{{wordCount}}/300</view>
+    </view>
+
+    <!-- 证据图片 -->
+    <view class="form-group">
+      <text class="form-label">证据截图<text class="required">*</text></text>
+      <view class="image-upload">
+        <view wx:for="{{images}}" wx:key="index" class="image-item">
+          <image src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" />
+          <view class="remove-btn" catchtap="removeImage" data-index="{{index}}">×</view>
+        </view>
+        <view wx:if="{{images.length < 3}}" class="upload-btn" bindtap="chooseImage">
+          <text class="upload-icon">+</text>
+          <text class="upload-text">上传图片</text>
+        </view>
+      </view>
+      <text class="upload-tip">最多上传3张，至少上传1张</text>
+    </view>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn {{isSubmitting ? 'disabled' : ''}}" bindtap="showConfirm" disabled="{{isSubmitting}}">
+      {{isSubmitting ? '提交中...' : '提交举报'}}
+    </button>
+  </block>
+
+  <!-- 提交成功视图 -->
+  <block wx:else>
+    <view class="success-wrap">
+      <view class="success-icon">✓</view>
+      <view class="success-title">举报提交成功</view>
+      <view class="success-desc">平台将依据您提交的证据进行仲裁处理，请耐心等待</view>
+
+      <!-- 倒计时撤销 -->
+      <view wx:if="{{canCancel}}" class="countdown-bar">
+        <text class="countdown-text">{{countdownText}} 内可撤销</text>
+      </view>
+
+      <button wx:if="{{canCancel}}" class="cancel-btn" bindtap="cancelReport">撤销举报</button>
+      <button class="back-btn" bindtap="goBack">返回</button>
+    </view>
+  </block>
+
+  <!-- 确认弹窗 -->
+  <view class="modal {{showConfirmModal ? 'show' : ''}}" wx:if="{{showConfirmModal}}">
+    <view class="modal-mask" bindtap="hideConfirm"></view>
+    <view class="modal-content">
+      <view class="modal-title">确认提交举报</view>
+      <view class="modal-body">
+        提交举报后，任务将进入客服评审状态，永久关闭双方聊天功能，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在提交后5分钟内撤销本次举报，撤销后恢复正常任务流程。
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn cancel" bindtap="hideConfirm">取消</button>
+        <button class="modal-btn confirm" bindtap="submitReport">确认提交</button>
+      </view>
+    </view>
+  </view>
+</view>

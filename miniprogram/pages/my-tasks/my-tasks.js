@@ -168,6 +168,16 @@ Page({
       createTime = this.formatTime(item.create_time)
     }
 
+    // 申诉按钮显示条件
+    const now = new Date()
+    const expireTime = item.expireTime ? new Date(item.expireTime) : (item.expire_time ? new Date(item.expire_time) : null)
+    const appealDeadline = expireTime ? new Date(expireTime.getTime() + 2 * 60 * 60 * 1000) : null
+    const showAppealBtn = item.status === 'ongoing' &&
+      !item.hasAppeal &&
+      !item.wasAppealed &&
+      appealDeadline &&
+      now <= appealDeadline
+
     return {
       ...item,
       typeName: typeInfo.name,
@@ -179,7 +189,8 @@ Page({
       locationName: item.locationName || '未知位置',
       seekerNickname: item.seeker_nickname || item.seekerNickname || '匿名用户',
       remainTime,
-      createTime
+      createTime,
+      showAppealBtn
     }
   },
 
@@ -207,6 +218,14 @@ Page({
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
       url: `/pages/chat/chat?needId=${id}`
+    })
+  },
+
+  // 跳转申诉页面
+  goToAppeal(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({
+      url: `/pages/appeal/appeal?mode=initiate&needId=${id}`
     })
   },
 

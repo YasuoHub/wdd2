@@ -180,6 +180,22 @@
   color: white;
 }
 
+/* 举报按钮 */
+.report-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52rpx;
+  height: 52rpx;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 50%;
+  margin-left: 8rpx;
+}
+
+.report-btn text {
+  font-size: 28rpx;
+}
+
 .task-points {
   font-size: 20rpx;
   font-weight: 700;

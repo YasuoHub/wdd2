@@ -20,7 +20,10 @@
     "pages/helper-profile/helper-profile",
     "pages/publish-success/publish-success",
     "pages/wallet/wallet",
-    "pages/withdraw/withdraw"
+    "pages/withdraw/withdraw",
+    "pages/report/report",
+    "pages/appeal/appeal",
+    "pages/appeal-notice/appeal-notice"
   ],
   "window": {
     "backgroundTextStyle": "light",

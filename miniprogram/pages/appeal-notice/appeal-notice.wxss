@@ -1,0 +1,109 @@
+/* 申诉通知详情页样式 */
+page {
+  background: var(--bg-secondary);
+}
+
+.container {
+  padding: 30rpx;
+}
+
+.loading-wrap {
+  text-align: center;
+  padding: 60rpx;
+  font-size: 28rpx;
+  color: var(--text-tertiary);
+}
+
+.opponent-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  border-left: 6rpx solid #e74c3c;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #e74c3c;
+  margin-bottom: 24rpx;
+}
+
+.info-row {
+  margin-bottom: 20rpx;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: var(--text-tertiary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.info-value.reason {
+  font-weight: normal;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.images-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.images-wrap image {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+}
+
+.countdown-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.countdown-label {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.countdown-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #e74c3c;
+}
+
+.countdown-value.timeout {
+  color: var(--text-tertiary);
+}
+
+.action-btn {
+  height: 96rpx;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40rpx;
+}
+
+.action-btn.disabled {
+  background: var(--border-color);
+  color: var(--text-tertiary);
+}

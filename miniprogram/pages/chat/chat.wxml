@@ -25,6 +25,10 @@
         <view class="task-meta">
           <view class="task-status {{task.status}}">{{task.statusText}}</view>
           <view class="task-points">¥{{task.rewardAmount || 0}}</view>
+          <!-- 举报按钮（仅在任务进行中且可举报时显示） -->
+          <view wx:if="{{showReportBtn}}" class="report-btn" bindtap="goToReport">
+            <text>🚨</text>
+          </view>
           <!-- 完成按钮（仅在任务进行中且是求助者时显示） -->
           <view wx:if="{{isSeeker && task.status === 'ongoing'}}" class="complete-btn" bindtap="showCompleteConfirm">
             <text class="complete-icon">✓</text>

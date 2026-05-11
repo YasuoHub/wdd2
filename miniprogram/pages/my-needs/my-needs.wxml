@@ -79,6 +79,9 @@
 
         <!-- 操作按钮 -->
         <view wx:if="{{item.status === 'ongoing' || item.status === 'pending'}}" class="card-actions">
+          <view wx:if="{{item.status === 'ongoing' && item.showAppealBtn}}" class="action-btn warning" catchtap="goToAppeal" data-id="{{item._id}}">
+            申诉
+          </view>
           <view wx:if="{{item.status === 'ongoing'}}" class="action-btn primary" catchtap="goToChat" data-id="{{item._id}}">
             进入聊天
           </view>
