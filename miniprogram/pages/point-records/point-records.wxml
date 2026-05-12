@@ -15,18 +15,6 @@
       <text class="total-unit">积分</text>
     </view>
 
-    <view class="points-detail">
-      <view class="detail-item">
-        <text class="detail-label">可用</text>
-        <text class="detail-value available">{{currentPoints.available}}</text>
-      </view>
-      <view class="detail-divider"></view>
-      <view class="detail-item">
-        <text class="detail-label">冻结</text>
-        <text class="detail-value frozen">{{currentPoints.frozen}}</text>
-      </view>
-    </view>
-
     <view class="points-hint">
       <text class="hint-text">💡 积分可兑换免单券、提现免手续费券等权益（开发中），不可提现、无现金价值</text>
     </view>
@@ -52,7 +40,7 @@
         wx:key="_id"
       >
         <view class="record-icon" style="background-color: {{item.typeColor}}20; color: {{item.typeColor}}">
-          <text>{{item.type === 'task_pay' || item.type === 'freeze' ? '−' : '+'}}</text>
+          <text>{{item.icon}}</text>
         </view>
 
         <view class="record-content">

@@ -57,6 +57,33 @@ page {
   background: var(--border-color);
   margin: 20rpx 0;
 }
+.status-section {
+  padding: 24rpx 28rpx;
+}
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.status-label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.status-badge {
+  font-size: 26rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 24rpx;
+  font-weight: 500;
+}
+.status-badge.pending {
+  color: #e67e22;
+  background: rgba(230, 126, 34, 0.1);
+}
+.status-badge.resolved {
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+}
 .chat-entry {
   padding: 0;
   overflow: hidden;

@@ -157,7 +157,6 @@ exports.main = async (event, context) => {
       await transaction.collection('wdd-users').doc(userId).update({
         data: {
           total_points: _.inc(points),
-          available_points: _.inc(points),
           consecutive_sign_days: consecutiveDays,
           last_sign_in_date: todayStr,
           update_time: db.serverDate()

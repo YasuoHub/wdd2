@@ -1,7 +1,7 @@
 <!-- 聊天页面 -->
 <view class="chat-container">
   <!-- 任务卡片区域（含下拉菜单） -->
-  <view class="task-card-wrapper">
+  <view class="task-card-wrapper" wx:if="{{!isCustomerServiceMode}}">
     <!-- 任务信息卡片（仅收起样式） -->
     <view class="task-card collapsed">
       <view class="task-card-collapsed">
@@ -22,6 +22,10 @@
 
     <!-- 下拉菜单内容 -->
     <view class="task-menu-content {{showTaskMenu ? 'show' : ''}}">
+      <view wx:if="{{isSeeker && task.status === 'ongoing'}}" class="menu-item" catchtap="onCompleteMenuTap">
+        <text class="menu-item-icon">✅</text>
+        <text class="menu-item-text">完成</text>
+      </view>
       <view class="menu-item" catchtap="goToReport">
         <text class="menu-item-icon">🚨</text>
         <text class="menu-item-text">举报</text>
@@ -133,7 +137,7 @@
   </view>
 
   <!-- 底部操作栏 -->
-  <view class="input-area">
+  <view class="input-area" wx:if="{{!isCustomerServiceMode}}">
     <!-- breaking 状态：客服审核中，禁止发消息 -->
     <view wx:if="{{task.status === 'breaking'}}" class="task-ended-bar breaking-bar">
       <text class="task-ended-text">审核中</text>

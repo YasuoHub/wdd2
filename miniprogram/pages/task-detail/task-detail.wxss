@@ -51,6 +51,10 @@
   background: linear-gradient(180deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
 }
 
+.status-card.breaking::before {
+  background: linear-gradient(180deg, #E6A23C 0%, #F0C040 100%);
+}
+
 .status-icon {
   font-size: 52rpx;
   margin-right: 24rpx;
@@ -477,4 +481,10 @@
   background: rgba(255, 140, 105, 0.1);
   color: var(--danger-color);
   border: 2rpx solid rgba(255, 140, 105, 0.15);
+}
+
+.status-tip.warning {
+  background: rgba(230, 162, 60, 0.1);
+  color: #E6A23C;
+  border: 2rpx solid rgba(230, 162, 60, 0.15);
 }

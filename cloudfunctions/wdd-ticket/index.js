@@ -209,11 +209,25 @@ async function getTicketDetail(event, OPENID) {
     if (reportRes && reportRes.data) {
       const report = reportRes.data
       const reporterRes = await db.collection('wdd-users').doc(report.reporter_id).get().catch(() => null)
+
+      // 计算被举报人昵称：任务双方中非举报人的那一方
+      let reportedNickname = '未知用户'
+      if (need) {
+        if (report.reporter_id === need.user_id) {
+          // 求助者是举报人，被举报人是帮助者
+          reportedNickname = taker ? taker.nickname : '未知用户'
+        } else {
+          // 帮助者是举报人，被举报人是求助者
+          reportedNickname = seeker ? seeker.nickname : '未知用户'
+        }
+      }
+
       reportDetail = {
         type: report.report_type,
         reason: report.reason,
         images: report.images || [],
         reporterNickname: reporterRes ? reporterRes.data.nickname : '未知用户',
+        reportedNickname,
         createTime: report.create_time,
         supplement: report.has_supplement ? {
           type: report.supplement_type,

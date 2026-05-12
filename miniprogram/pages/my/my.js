@@ -207,7 +207,6 @@ Page({
         const userInfo = {
           ...this.data.userInfo,
           total_points: this.data.userInfo.total_points + points,
-          available_points: this.data.userInfo.available_points + points,
           consecutive_sign_days: consecutiveDays
         }
 

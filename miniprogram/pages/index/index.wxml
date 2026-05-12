@@ -52,7 +52,7 @@
       </view>
     </view>
 
-    <view wx:if="{{isLoggedIn && userInfo.available_points < 10}}" class="points-tip">
+    <view wx:if="{{isLoggedIn && userInfo.total_points < 10}}" class="points-tip">
       积分不足？去<text class="link" bindtap="goToSignIn">签到</text>获取积分
     </view>
   </view>

@@ -176,7 +176,7 @@ Page({
       return
     }
     wx.navigateTo({
-      url: `/pages/chat/chat?needId=${task._id}`
+      url: `/pages/chat/chat?needId=${task._id}&from=ticket`
     })
   }
 })

@@ -204,7 +204,6 @@ Page({
         // 更新本地数据
         const userInfo = this.data.userInfo
         userInfo.total_points += points
-        userInfo.available_points += points
         userInfo.consecutive_sign_days = consecutiveDays
 
         this.setData({

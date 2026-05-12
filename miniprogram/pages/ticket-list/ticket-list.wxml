@@ -29,7 +29,7 @@
           <text>求助者：{{item.seekerNickname}}</text>
           <text>帮助者：{{item.takerNickname}}</text>
         </view>
-        <view class="ticket-time">工单生成时间：{{item.createTimeFormatted}}</view>
+        <view class="ticket-time">生成时间：{{item.createTimeFormatted}}</view>
         <view wx:if="{{item.supplementStatus}}" class="supplement-tag">{{item.supplementStatus}}</view>
       </view>
       <view wx:if="{{pendingLoadingMore}}" class="loading-more">加载更多...</view>
@@ -56,7 +56,7 @@
           <text>求助者：{{item.seekerNickname}}</text>
           <text>帮助者：{{item.takerNickname}}</text>
         </view>
-        <view class="ticket-time">工单生成时间：{{item.createTimeFormatted}}</view>
+        <view class="ticket-time">生成时间：{{item.createTimeFormatted}}</view>
       </view>
       <view wx:if="{{resolvedLoadingMore}}" class="loading-more">加载更多...</view>
       <view wx:elif="{{!resolvedHasMore && resolvedTickets.length > 0}}" class="no-more">没有更多了</view>

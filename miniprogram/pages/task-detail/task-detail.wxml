@@ -155,6 +155,11 @@
       </button>
     </view>
 
+    <!-- 审核中提示 -->
+    <view wx:if="{{task.status === 'breaking'}}" class="status-tip warning">
+      <text>⏳ 任务正在审核中，暂不可操作</text>
+    </view>
+
     <!-- 已完成/已取消提示 -->
     <view wx:if="{{task.status === 'completed'}}" class="status-tip success">
       <text>✅ 任务已完成</text>

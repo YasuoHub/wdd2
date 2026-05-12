@@ -23,12 +23,7 @@
       <view class="balance-divider"></view>
       <view class="balance-item">
         <text class="balance-value points">{{userInfo.total_points || 0}}</text>
-        <text class="balance-label">总积分</text>
-      </view>
-      <view class="balance-divider"></view>
-      <view class="balance-item">
-        <text class="balance-value available">{{userInfo.available_points || 0}}</text>
-        <text class="balance-label">可用积分</text>
+        <text class="balance-label">积分</text>
       </view>
     </view>
 

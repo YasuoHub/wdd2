@@ -355,8 +355,6 @@ async function getUserInfo(OPENID) {
           nickname: user.nickname,
           avatar: user.avatar,
           total_points: user.total_points,
-          available_points: user.available_points,
-          frozen_points: user.frozen_points,
           balance: user.balance || 0,
           total_earned: user.total_earned || 0,
           total_withdrawn: user.total_withdrawn || 0,

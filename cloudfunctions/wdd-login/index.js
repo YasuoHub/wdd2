@@ -82,8 +82,6 @@ exports.main = async (event, context) => {
         nickname: event.nickname || '微信用户',
         avatar: event.avatar || '',
         total_points: registerPoints + inviteBonus,
-        available_points: registerPoints + inviteBonus,
-        frozen_points: 0,
         role: 'both',
         inviter_id: inviter ? inviter._id : null,
         invite_count: 0,
@@ -134,7 +132,6 @@ exports.main = async (event, context) => {
           await transaction.collection('wdd-users').doc(inviter._id).update({
             data: {
               total_points: _.inc(inviteBonus),
-              available_points: _.inc(inviteBonus),
               invite_count: _.inc(1),
               update_time: db.serverDate()
             }
@@ -225,8 +222,6 @@ exports.main = async (event, context) => {
           nickname: userInfo.nickname,
           avatar: userInfo.avatar,
           total_points: userInfo.total_points,
-          available_points: userInfo.available_points,
-          frozen_points: userInfo.frozen_points,
           role: userInfo.role,
           consecutive_sign_days: userInfo.consecutive_sign_days,
           credit_score: userInfo.credit_score || 100,

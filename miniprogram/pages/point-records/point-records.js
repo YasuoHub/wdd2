@@ -5,9 +5,7 @@ Page({
   data: {
     // 积分信息
     currentPoints: {
-      total: 0,
-      available: 0,
-      frozen: 0
+      total: 0
     },
 
     // 记录列表

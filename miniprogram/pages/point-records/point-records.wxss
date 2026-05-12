@@ -107,21 +107,6 @@
   font-weight: 700;
 }
 
-.detail-value.available {
-  color: #fff;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
-}
-
-.detail-value.frozen {
-  color: #FFF5E6;
-}
-
-.detail-divider {
-  width: 2rpx;
-  height: 64rpx;
-  background: rgba(255, 255, 255, 0.25);
-}
-
 .points-hint {
   display: flex;
   align-items: center;

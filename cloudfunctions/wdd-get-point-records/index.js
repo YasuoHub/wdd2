@@ -122,9 +122,7 @@ async function getPointRecords(userId, page, pageSize, user) {
       hasMore: page * pageSize < total,
       // 当前积分信息
       currentPoints: {
-        total: user.total_points,
-        available: user.available_points,
-        frozen: user.frozen_points
+        total: user.total_points
       }
     }
   }
@@ -191,11 +189,6 @@ function formatPointRecord(item) {
   // 类型映射
   const typeMap = {
     'gain': { label: '获得', color: '#07c160', icon: '+' },
-    'freeze': { label: '冻结', color: '#ff9500', icon: '-' },
-    'unfreeze': { label: '解冻', color: '#07c160', icon: '+' },
-    'task_pay': { label: '任务支出', color: '#ff3b30', icon: '-' },
-    'task_reward': { label: '任务收入', color: '#07c160', icon: '+' },
-    'task_cancel': { label: '任务取消', color: '#07c160', icon: '+' },
     'invite': { label: '邀请奖励', color: '#07c160', icon: '+' }
   }
 

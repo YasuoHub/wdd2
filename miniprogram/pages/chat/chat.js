@@ -55,15 +55,21 @@ Page({
 
     // 轮询备用（当watch不工作时使用）
     messagePollingInterval: null,
-    lastWatchActivity: null
+    lastWatchActivity: null,
+
+    // 客服查看模式
+    isCustomerServiceMode: false
   },
 
   onLoad(options) {
     // 获取页面参数
-    const { needId } = options
+    const { needId, from } = options
 
     // 关键：立即保存当前页面任务ID到实例变量，确保后续所有操作使用正确的ID
     this.currentNeedId = needId
+
+    // 判断是否客服查看模式（从工单页面进入）
+    const isCustomerServiceMode = from === 'ticket'
 
     // 重置页面状态，防止数据串扰
     this.setData({
@@ -71,7 +77,8 @@ Page({
       userInfo: app.globalData.userInfo,
       messages: [], // 清空消息列表
       inputValue: '',
-      lastMessageId: ''
+      lastMessageId: '',
+      isCustomerServiceMode
     })
 
     // 重置已处理消息ID集合
@@ -412,6 +419,8 @@ Page({
         const typeInfo = typeMap[taskData.type] || typeMap['other']
         const statusInfo = statusMap[taskData.status] || statusMap['pending']
 
+        const isCustomerServiceMode = this.data.isCustomerServiceMode
+
         this.setData({
           task: {
             _id: taskData._id,
@@ -431,15 +440,17 @@ Page({
             locationName: taskData.location_name,
             images: taskData.images || []
           },
-          isSeeker: result.data.role === 'seeker',
-          otherUser: result.data.otherUser,
-          showReportBtn: result.data.status === 'ongoing' &&
+          isSeeker: !isCustomerServiceMode && result.data.role === 'seeker',
+          otherUser: isCustomerServiceMode ? null : result.data.otherUser,
+          showReportBtn: !isCustomerServiceMode && result.data.status === 'ongoing' &&
             !result.data.myReportStatus.hasReport &&
             (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 2 * 60 * 60 * 1000))
         })
 
-        // 设置导航栏标题为聊天对象昵称
-        if (result.data.otherUser && result.data.otherUser.nickname) {
+        // 设置导航栏标题
+        if (isCustomerServiceMode) {
+          wx.setNavigationBarTitle({ title: '查看聊天记录' })
+        } else if (result.data.otherUser && result.data.otherUser.nickname) {
           wx.setNavigationBarTitle({
             title: result.data.otherUser.nickname
           })
@@ -1190,6 +1201,14 @@ Page({
   // 显示完成任务确认
   showCompleteConfirm() {
     this.setData({ showCompleteModal: true })
+  },
+
+  // 从任务菜单点击完成：先关菜单，再开确认弹窗
+  onCompleteMenuTap() {
+    this.setData({
+      showTaskMenu: false,
+      showCompleteModal: true
+    })
   },
 
   // 隐藏完成任务确认

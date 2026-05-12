@@ -33,6 +33,22 @@ function calculateDisplaySize(width, height) {
   }
 }
 
+// 从 wdd-config 获取客服白名单
+async function getCustomerServiceOpenids() {
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get()
+    return configRes.data.customer_service_openids || []
+  } catch (e) {
+    return []
+  }
+}
+
+// 判断是否为客服
+async function isCustomerService(OPENID) {
+  const csOpenids = await getCustomerServiceOpenids()
+  return csOpenids.includes(OPENID)
+}
+
 
 // 主入口
 exports.main = async (event, context) => {
@@ -76,19 +92,32 @@ async function getTaskInfo(event, OPENID) {
     return { code: -1, message: '任务不存在' }
   }
 
-  // 检查权限（只有求助者或接单者可以查看）
-  const isSeeker = need.user_id === currentUserId
-
   // 获取接单记录
   const takerRes = await db.collection('wdd-need-takers').where({
     need_id: needId
   }).get()
   const taker = takerRes.data[0]
 
+  const isSeeker = need.user_id === currentUserId
   const isTaker = taker && taker.taker_id === currentUserId
+  const isCs = await isCustomerService(OPENID)
 
-  if (!isSeeker && !isTaker) {
+  if (!isSeeker && !isTaker && !isCs) {
     return { code: -1, message: '无权查看此任务' }
+  }
+
+  // 客服模式：返回简化信息
+  if (isCs) {
+    return {
+      code: 0,
+      data: {
+        ...need,
+        role: 'customer_service',
+        otherUser: null,
+        myReportStatus: { hasReport: false },
+        myAppealStatus: { hasAppeal: false }
+      }
+    }
   }
 
   // 获取对方用户信息
@@ -175,8 +204,9 @@ async function getMessages(event, OPENID) {
 
   const isSeeker = need.user_id === currentUserId
   const isTaker = taker && taker.taker_id === currentUserId
+  const isCs = await isCustomerService(OPENID)
 
-  if (!isSeeker && !isTaker) {
+  if (!isSeeker && !isTaker && !isCs) {
     return { code: -1, message: '无权查看消息' }
   }
 
@@ -220,8 +250,10 @@ async function getMessages(event, OPENID) {
   // 反转顺序（按时间正序排列）
   const messages = msgRes.data.reverse()
 
-  // 标记消息为已读
-  await markMessagesAsRead(needId, currentUserId)
+  // 标记消息为已读（客服不需要）
+  if (!isCs) {
+    await markMessagesAsRead(needId, currentUserId)
+  }
 
   return {
     code: 0,

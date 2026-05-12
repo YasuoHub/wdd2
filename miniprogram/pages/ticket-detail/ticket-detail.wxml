@@ -2,6 +2,14 @@
   <view wx:if="{{loading}}" class="loading">加载中...</view>
 
   <block wx:else>
+    <!-- 工单状态 -->
+    <view class="section status-section" wx:if="{{ticket}}">
+      <view class="status-header">
+        <text class="status-label">工单状态</text>
+        <text class="status-badge {{ticket.status}}">{{ticket.status === 'pending' ? '待处理' : '已处理'}}</text>
+      </view>
+    </view>
+
     <!-- 任务信息 -->
     <view class="section" wx:if="{{task}}">
       <view class="section-title">任务信息</view>
@@ -11,7 +19,7 @@
       </view>
       <view class="info-row">
         <text class="label">描述</text>
-        <view class="value pre-wrap">{{task.description}}</view>
+        <view class="value pre-wrap">{{task.description || '无'}}</view>
       </view>
       <view class="info-row">
         <text class="label">悬赏</text>
@@ -76,8 +84,8 @@
       <block wx:if="{{reportDetail.supplement}}">
         <view class="divider"></view>
         <view class="info-row">
-          <text class="label">对方反驳</text>
-          <text class="value">{{reportDetail.supplement.type}}</text>
+          <text class="label">被举报人</text>
+          <text class="value">{{reportDetail.reportedNickname}}</text>
         </view>
         <view class="info-row">
           <text class="label">理由</text>
