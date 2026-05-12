@@ -77,30 +77,28 @@ exports.main = async (event, context) => {
 async function getTaskInfo(event, OPENID) {
   const { needId } = event
 
-  // 获取当前用户
-  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  // 第一批并行：当前用户 + 任务详情 + 接单记录 + 客服身份判断
+  // 这四项互不依赖，可同时发起
+  const [userRes, needRes, takerRes, isCs] = await Promise.all([
+    db.collection('wdd-users').where({ openid: OPENID }).get(),
+    db.collection('wdd-needs').doc(needId).get().catch(() => null),
+    db.collection('wdd-need-takers').where({ need_id: needId }).get(),
+    isCustomerService(OPENID)
+  ])
+
   if (userRes.data.length === 0) {
     return { code: -1, message: '用户不存在' }
   }
   const currentUserId = userRes.data[0]._id
 
-  // 获取任务详情
-  const needRes = await db.collection('wdd-needs').doc(needId).get()
-  const need = needRes.data
-
-  if (!need) {
+  if (!needRes || !needRes.data) {
     return { code: -1, message: '任务不存在' }
   }
-
-  // 获取接单记录
-  const takerRes = await db.collection('wdd-need-takers').where({
-    need_id: needId
-  }).get()
+  const need = needRes.data
   const taker = takerRes.data[0]
 
   const isSeeker = need.user_id === currentUserId
   const isTaker = taker && taker.taker_id === currentUserId
-  const isCs = await isCustomerService(OPENID)
 
   if (!isSeeker && !isTaker && !isCs) {
     return { code: -1, message: '无权查看此任务' }
@@ -120,39 +118,28 @@ async function getTaskInfo(event, OPENID) {
     }
   }
 
-  // 获取对方用户信息
+  // 第二批并行：对方用户 + 举报状态 + 申诉状态
   const otherUserId = isSeeker ? taker?.taker_id : need.user_id
-  let otherUser = null
 
-  if (otherUserId) {
-    const otherUserRes = await db.collection('wdd-users').doc(otherUserId).get()
-    otherUser = otherUserRes.data || null
-  }
-
-  // 查询当前用户对该任务的举报/申诉状态
-  let myReport = null
-  let myAppeal = null
-  try {
-    const reportRes = await db.collection('wdd-reports').where({
+  const [otherUserRes, reportRes, appealRes] = await Promise.all([
+    otherUserId
+      ? db.collection('wdd-users').doc(otherUserId).get().catch(() => null)
+      : Promise.resolve(null),
+    db.collection('wdd-reports').where({
       need_id: needId,
       reporter_openid: OPENID,
       status: 'pending'
-    }).orderBy('create_time', 'desc').limit(1).get()
-    if (reportRes.data.length > 0) {
-      myReport = reportRes.data[0]
-    }
-  } catch (e) {}
-
-  try {
-    const appealRes = await db.collection('wdd-appeals').where({
+    }).orderBy('create_time', 'desc').limit(1).get().catch(() => ({ data: [] })),
+    db.collection('wdd-appeals').where({
       need_id: needId,
       initiator_openid: OPENID,
       status: 'pending'
-    }).orderBy('create_time', 'desc').limit(1).get()
-    if (appealRes.data.length > 0) {
-      myAppeal = appealRes.data[0]
-    }
-  } catch (e) {}
+    }).orderBy('create_time', 'desc').limit(1).get().catch(() => ({ data: [] }))
+  ])
+
+  const otherUser = otherUserRes && otherUserRes.data ? otherUserRes.data : null
+  const myReport = reportRes.data.length > 0 ? reportRes.data[0] : null
+  const myAppeal = appealRes.data.length > 0 ? appealRes.data[0] : null
 
   return {
     code: 0,
@@ -185,74 +172,65 @@ async function getTaskInfo(event, OPENID) {
 async function getMessages(event, OPENID) {
   const { needId, limit = 20, beforeTime, afterTime } = event
 
-  // 获取当前用户
-  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  // 构建消息查询条件 - 必须同时满足 need_id 和 create_time（分页用）
+  let msgQuery
+  if (beforeTime && afterTime) {
+    msgQuery = db.collection('wdd-messages').where({
+      need_id: needId,
+      create_time: _.and(_.gt(new Date(afterTime)), _.lt(new Date(beforeTime)))
+    })
+  } else if (beforeTime) {
+    msgQuery = db.collection('wdd-messages').where({
+      need_id: needId,
+      create_time: _.lt(new Date(beforeTime))
+    })
+  } else if (afterTime) {
+    msgQuery = db.collection('wdd-messages').where({
+      need_id: needId,
+      create_time: _.gt(new Date(afterTime))
+    })
+  } else {
+    msgQuery = db.collection('wdd-messages').where({
+      need_id: needId
+    })
+  }
+
+  // 鉴权 + 消息查询全部并行（消息查询失败由 catch 兜底，鉴权失败再统一拒绝）
+  const [userRes, needRes, takerRes, isCs, msgRes] = await Promise.all([
+    db.collection('wdd-users').where({ openid: OPENID }).get(),
+    db.collection('wdd-needs').doc(needId).get().catch(() => null),
+    db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get(),
+    isCustomerService(OPENID),
+    msgQuery.orderBy('create_time', 'desc').limit(limit).get()
+  ])
+
   if (userRes.data.length === 0) {
     return { code: -1, message: '用户不存在' }
   }
   const currentUserId = userRes.data[0]._id
 
-  // 验证权限
-  const needRes = await db.collection('wdd-needs').doc(needId).get().catch(() => null)
   if (!needRes || !needRes.data) {
     return { code: -1, message: '任务不存在' }
   }
-
   const need = needRes.data
-  const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get()
   const taker = takerRes.data[0]
 
   const isSeeker = need.user_id === currentUserId
   const isTaker = taker && taker.taker_id === currentUserId
-  const isCs = await isCustomerService(OPENID)
 
   if (!isSeeker && !isTaker && !isCs) {
     return { code: -1, message: '无权查看消息' }
   }
 
-  // 构建查询条件 - 必须同时满足 need_id 和 create_time（分页用）
-  let query
-  if (beforeTime && afterTime) {
-    // 既指定了beforeTime又指定了afterTime（用于获取中间段消息，一般不会用到）
-    console.log('查询条件: need_id=', needId, ', create_time between', afterTime, 'and', beforeTime)
-    query = db.collection('wdd-messages').where({
-      need_id: needId,
-      create_time: _.and(_.gt(new Date(afterTime)), _.lt(new Date(beforeTime)))
-    })
-  } else if (beforeTime) {
-    // 向上滚动加载历史消息（比beforeTime更早的消息）
-    console.log('查询条件: need_id=', needId, ', create_time <', beforeTime)
-    query = db.collection('wdd-messages').where({
-      need_id: needId,
-      create_time: _.lt(new Date(beforeTime))
-    })
-  } else if (afterTime) {
-    // 轮询获取新消息（比afterTime更晚的消息）
-    console.log('查询条件: need_id=', needId, ', create_time >', afterTime)
-    query = db.collection('wdd-messages').where({
-      need_id: needId,
-      create_time: _.gt(new Date(afterTime))
-    })
-  } else {
-    // 首次加载，无时间限制
-    console.log('查询条件: need_id=', needId, ', 无时间限制')
-    query = db.collection('wdd-messages').where({
-      need_id: needId
-    })
-  }
-
-  // 执行查询
-  const msgRes = await query
-    .orderBy('create_time', 'desc')
-    .limit(limit)
-    .get()
-
   // 反转顺序（按时间正序排列）
   const messages = msgRes.data.reverse()
 
-  // 标记消息为已读（客服不需要）
+  // 标记已读 fire-and-forget：不 await，主流程立即返回。
+  // 标记失败不影响用户阅读消息。
   if (!isCs) {
-    await markMessagesAsRead(needId, currentUserId)
+    markMessagesAsRead(needId, currentUserId).catch(err => {
+      console.error('异步标记已读失败:', err)
+    })
   }
 
   return {
@@ -419,21 +397,16 @@ async function sendMessage(event, OPENID) {
 }
 
 // 标记消息为已读
+// 单次批量 update，无需逐条循环。
 async function markMessagesAsRead(needId, userId) {
   try {
-    const unreadMessages = await db.collection('wdd-messages').where({
+    await db.collection('wdd-messages').where({
       need_id: needId,
       receiver_id: userId,
       is_read: false
-    }).get()
-
-    const updatePromises = unreadMessages.data.map(msg => {
-      return db.collection('wdd-messages').doc(msg._id).update({
-        data: { is_read: true }
-      })
+    }).update({
+      data: { is_read: true }
     })
-
-    await Promise.all(updatePromises)
   } catch (err) {
     console.error('标记已读失败:', err)
   }

@@ -229,6 +229,14 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* 已折叠超过30天的任务 - 底部提示 */
+.hidden-tip {
+  padding: 32rpx 0 64rpx;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 24rpx;
+}
+
 /* 聊天列表 */
 .chat-list {
   display: flex;

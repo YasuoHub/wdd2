@@ -1006,3 +1006,61 @@
   text-align: center;
   line-height: 1.5;
 }
+
+/* 首屏骨架屏 */
+.chat-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+  padding: 24rpx 0;
+}
+
+.skel-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.skel-row.self {
+  flex-direction: row-reverse;
+}
+
+.skel-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.06) 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skel-bubble {
+  height: 72rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.09) 50%, rgba(0, 0, 0, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+.skel-bubble-sm {
+  width: 200rpx;
+}
+
+.skel-bubble-md {
+  width: 320rpx;
+}
+
+.skel-bubble-lg {
+  width: 460rpx;
+  height: 120rpx;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

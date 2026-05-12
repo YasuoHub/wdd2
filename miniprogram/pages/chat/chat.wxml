@@ -52,6 +52,26 @@
     bindscroll="onScroll"
   >
 
+    <!-- 首屏骨架屏：仅在加载中且没有任何消息时显示 -->
+    <view wx:if="{{loading && messages.length === 0}}" class="chat-skeleton">
+      <view class="skel-row other">
+        <view class="skel-avatar"></view>
+        <view class="skel-bubble skel-bubble-md"></view>
+      </view>
+      <view class="skel-row self">
+        <view class="skel-bubble skel-bubble-sm"></view>
+        <view class="skel-avatar"></view>
+      </view>
+      <view class="skel-row other">
+        <view class="skel-avatar"></view>
+        <view class="skel-bubble skel-bubble-lg"></view>
+      </view>
+      <view class="skel-row self">
+        <view class="skel-bubble skel-bubble-md"></view>
+        <view class="skel-avatar"></view>
+      </view>
+    </view>
+
     <!-- 消息项 -->
     <view
       wx:for="{{messages}}"

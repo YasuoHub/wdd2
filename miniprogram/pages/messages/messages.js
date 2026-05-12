@@ -20,6 +20,10 @@ Page({
     // 系统通知列表
     systemList: [],
 
+    // 被 30 天规则隐藏的会话数（分求助/帮助两侧，>0 才显示底部提示）
+    hiddenSeekerCount: 0,
+    hiddenHelperCount: 0,
+
     // 系统通知弹窗
     showSystemModal: false,
 
@@ -39,7 +43,9 @@ Page({
         unreadCount: 0,
         seekerChatUnread: 0,
         helperChatUnread: 0,
-        systemUnread: 0
+        systemUnread: 0,
+        hiddenSeekerCount: 0,
+        hiddenHelperCount: 0
       })
     } else {
       this.loadMessages(true)
@@ -69,7 +75,9 @@ Page({
         unreadCount: 0,
         seekerChatUnread: 0,
         helperChatUnread: 0,
-        systemUnread: 0
+        systemUnread: 0,
+        hiddenSeekerCount: 0,
+        hiddenHelperCount: 0
       }, () => {
         // 清除 TabBar 角标
         wx.removeTabBarBadge({ index: 2 })
@@ -236,7 +244,9 @@ Page({
           seekerChatUnread,
           helperChatUnread,
           systemUnread,
-          unreadCount: seekerChatUnread + helperChatUnread + systemUnread
+          unreadCount: seekerChatUnread + helperChatUnread + systemUnread,
+          hiddenSeekerCount: result.data.hiddenSeekerCount || 0,
+          hiddenHelperCount: result.data.hiddenHelperCount || 0
         }, () => {
           // 更新 TabBar 徽章
           this.updateTabBarBadge()
@@ -261,7 +271,9 @@ Page({
         unreadCount: 0,
         seekerChatUnread: 0,
         helperChatUnread: 0,
-        systemUnread: 0
+        systemUnread: 0,
+        hiddenSeekerCount: 0,
+        hiddenHelperCount: 0
       })
     }
   },

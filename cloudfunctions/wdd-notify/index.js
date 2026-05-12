@@ -9,6 +9,38 @@ const db = cloud.database()
 const _ = db.command
 const $ = db.command.aggregate
 
+// 消息列表会话可见周期：已完成 / 已取消任务在终态时间 + N 天内可见
+const MESSAGE_LIST_VISIBLE_DAYS = 30
+
+// 判断会话是否应该出现在消息列表里
+// 规则：
+//   - pending / ongoing / breaking：始终保留（进行中或仲裁中）
+//   - completed：complete_time + N 天内可见
+//   - cancelled / expired：cancel_time + N 天内可见
+//   - 终态字段缺失：依次回退到 update_time、create_time
+function isSessionVisible(need) {
+  if (!need || !need.status) return true
+
+  const ongoingStatus = ['pending', 'ongoing', 'breaking']
+  if (ongoingStatus.includes(need.status)) return true
+
+  const now = Date.now()
+  const cutoffMs = MESSAGE_LIST_VISIBLE_DAYS * 86400000
+
+  let endTime = null
+  if (need.status === 'completed') {
+    endTime = need.complete_time
+  } else if (need.status === 'cancelled' || need.status === 'expired') {
+    endTime = need.cancel_time
+  }
+  // 老数据兜底
+  if (!endTime) endTime = need.update_time
+  if (!endTime) endTime = need.create_time
+  if (!endTime) return true // 完全没有时间字段，保守显示
+
+  return (now - new Date(endTime).getTime()) <= cutoffMs
+}
+
 // 主入口
 exports.main = async (event, context) => {
   const { action } = event
@@ -48,7 +80,8 @@ async function getMessageList(OPENID) {
   const userId = userRes.data[0]._id
 
   // 1. 获取聊天会话列表
-  const chatSessions = await getChatSessions(userId)
+  const chatData = await getChatSessions(userId)
+  const chatSessions = chatData.sessions
 
   // 2. 获取系统通知列表
   const systemList = await getSystemNotifications(userId)
@@ -64,7 +97,10 @@ async function getMessageList(OPENID) {
       systemList: systemList,
       chatUnread,
       systemUnread,
-      unreadCount: chatUnread + systemUnread
+      unreadCount: chatUnread + systemUnread,
+      // 被 30 天规则隐藏的会话数（分求助/帮助两侧），前端用于决定底部提示是否显示
+      hiddenSeekerCount: chatData.hiddenSeekerCount,
+      hiddenHelperCount: chatData.hiddenHelperCount
     }
   }
 }
@@ -84,24 +120,59 @@ async function getChatSessions(userId) {
     }).get()
   ])
 
-  const myNeeds = needsRes.data
+  // 求助者侧：分原始和可见,差值即"隐藏数"
+  const allMyNeeds = needsRes.data
+  const myNeeds = allMyNeeds.filter(isSessionVisible)
+  const hiddenSeekerCount = allMyNeeds.length - myNeeds.length
   const myTakers = takersRes.data
 
-  // 获取所有相关的need_id
-  const needIds = [
+  // 帮助者侧需要再拉一次 need 详情（接单记录里没有 status / complete_time）
+  // 复用求助侧已经拉到的 need：dedup 用 allMyNeeds（含被隐藏的也算"已查过"）
+  const allMyNeedsIdSet = new Set(allMyNeeds.map(n => n._id))
+  const takerExtraIds = myTakers
+    .map(t => t.need_id)
+    .filter(id => !allMyNeedsIdSet.has(id))
+
+  // 批量拉取帮助者侧任务详情
+  let takerNeedsMap = new Map()
+  if (takerExtraIds.length > 0) {
+    const takerNeedsRes = await db.collection('wdd-needs').where({
+      _id: _.in(takerExtraIds)
+    }).get()
+    takerNeedsRes.data.forEach(n => takerNeedsMap.set(n._id, n))
+  }
+
+  // 帮助者侧统计可见 / 隐藏
+  let hiddenHelperCount = 0
+  const visibleHelperNeedIds = []
+  myTakers.forEach(t => {
+    const need = allMyNeeds.find(n => n._id === t.need_id) || takerNeedsMap.get(t.need_id)
+    if (!need) return // need 不存在(已删)不计入"隐藏"
+    if (isSessionVisible(need)) {
+      visibleHelperNeedIds.push(t.need_id)
+    } else {
+      hiddenHelperCount++
+    }
+  })
+
+  // 合并所有需要展示的 needId
+  const visibleNeedIds = [
     ...myNeeds.map(n => n._id),
-    ...myTakers.map(t => t.need_id)
+    ...visibleHelperNeedIds
   ]
 
-  if (needIds.length === 0) {
-    return []
+  if (visibleNeedIds.length === 0) {
+    return {
+      sessions: [],
+      hiddenSeekerCount,
+      hiddenHelperCount
+    }
   }
 
   // 获取每个会话的最新消息和未读数
-  const sessions = await Promise.all(needIds.map(async (needId) => {
-    // 获取任务信息
-    const need = myNeeds.find(n => n._id === needId) ||
-      await db.collection('wdd-needs').doc(needId).get().then(res => res.data)
+  const sessions = await Promise.all(visibleNeedIds.map(async (needId) => {
+    // 获取任务信息：优先从已查过的两个 map 中取，避免再发 DB 请求
+    const need = myNeeds.find(n => n._id === needId) || takerNeedsMap.get(needId)
 
     if (!need) return null
 
@@ -178,9 +249,13 @@ async function getChatSessions(userId) {
   }))
 
   // 过滤null，按最后消息时间排序
-  return sessions
-    .filter(s => s !== null)
-    .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime))
+  return {
+    sessions: sessions
+      .filter(s => s !== null)
+      .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime)),
+    hiddenSeekerCount,
+    hiddenHelperCount
+  }
 }
 
 // 获取系统通知列表

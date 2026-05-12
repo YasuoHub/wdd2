@@ -2,6 +2,7 @@
 const app = getApp()
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
 const DateUtil = require('../../utils/dateUtil')
+const chatCache = require('../../utils/chatCache')
 
 Page({
   data: {
@@ -58,7 +59,10 @@ Page({
     lastWatchActivity: null,
 
     // 客服查看模式
-    isCustomerServiceMode: false
+    isCustomerServiceMode: false,
+
+    // 首屏加载状态（用于骨架屏显示）
+    loading: true
   },
 
   onLoad(options) {
@@ -71,43 +75,102 @@ Page({
     // 判断是否客服查看模式（从工单页面进入）
     const isCustomerServiceMode = from === 'ticket'
 
-    // 重置页面状态，防止数据串扰
-    this.setData({
-      'task._id': needId,
+    // 先尝试读本地缓存：命中则立即渲染，跳过骨架屏
+    // 客服查看模式不复用缓存（避免越权状态泄露）
+    let cached = null
+    if (!isCustomerServiceMode) {
+      cached = chatCache.readCache(needId)
+    }
+
+    const initialData = {
       userInfo: app.globalData.userInfo,
       messages: [], // 清空消息列表
       inputValue: '',
       lastMessageId: '',
-      isCustomerServiceMode
-    })
+      isCustomerServiceMode,
+      loading: true
+    }
+    // 缓存里更早的消息（loadMessages 首次只拉最新 20 条，
+    // 网络数据回来后需要把这部分老历史 merge 回来,避免列表跳变变短）
+    let cachedOlderSnapshot = null
+    if (cached && cached.taskMeta && cached.taskMeta.task) {
+      // 缓存命中：先渲染缓存的任务信息和消息，骨架屏直接关闭
+      // 强制 task._id = needId,防御缓存数据与路由参数不一致
+      initialData.task = { ...cached.taskMeta.task, _id: needId }
+      initialData.isSeeker = !!cached.taskMeta.isSeeker
+      initialData.otherUser = cached.taskMeta.otherUser || null
+      initialData.showReportBtn = !!cached.taskMeta.showReportBtn
+      initialData.messages = Array.isArray(cached.messages) ? cached.messages : []
+      initialData.loading = false
+      // 缓存数据进入后,首屏直接落到底部
+      initialData.lastMessageId = 'bottom-anchor'
+      cachedOlderSnapshot = initialData.messages.slice()
+    } else {
+      // 缓存未命中:至少把 task._id 占位,避免 loadTaskInfo 前空数据
+      initialData['task._id'] = needId
+    }
 
-    // 重置已处理消息ID集合
-    this.processedMessageIds = new Set()
+    this.setData(initialData)
+
+    // 重置已处理消息ID集合（带上缓存里的，防止 watch / 网络回调重复添加）
+    this.processedMessageIds = new Set(initialData.messages.map(m => m._id).filter(Boolean))
 
     // 获取 scroll-view 高度
     this.getScrollViewHeight()
 
-    // 串行加载，避免同时发起多个云函数调用
-    this.loadTaskInfo().then((result) => {
-      // 如果加载失败，不继续
-      if (!result || result.code !== 0) return
+    // 并行加载任务信息和历史消息，DB RTT 减半
+    Promise.all([this.loadTaskInfo(), this.loadMessages()]).then(([taskResult, msgResult]) => {
       // 关键校验：页面可能已经切换，检查任务ID是否一致
       if (this.currentNeedId !== needId) return
-      // 任务信息加载完成后再加载消息
-      return this.loadMessages()
-    }).then((result) => {
-      // 如果加载消息失败，不启动监听
-      if (!result || result.code !== 0) return
-      // 关键校验：页面可能已经切换，检查任务ID是否一致
-      if (this.currentNeedId !== needId) return
+      // 任意一项失败则不再启动监听
+      if (!taskResult || taskResult.code !== 0) return
+      if (!msgResult || msgResult.code !== 0) return
+
+      // 合并缓存中网络范围之外的老历史，防止 setData 覆盖导致列表变短
+      if (cachedOlderSnapshot && cachedOlderSnapshot.length > 0) {
+        const networkMessages = this.data.messages
+        const networkIds = new Set(networkMessages.map(m => m._id).filter(Boolean))
+        const olderFromCache = cachedOlderSnapshot.filter(m =>
+          m._id && !String(m._id).startsWith('temp_') && !networkIds.has(m._id)
+        )
+        if (olderFromCache.length > 0) {
+          // 按时间升序合并，重新格式化 showTime
+          const combined = [...olderFromCache, ...networkMessages].sort(
+            (a, b) => new Date(a.create_time) - new Date(b.create_time)
+          )
+          const reformatted = combined.map((msg, i) =>
+            this.formatMessage(msg, i === 0 ? null : combined[i - 1])
+          )
+          // 把缓存里恢复回来的 _id 也加入已处理集合
+          reformatted.forEach(m => {
+            if (m._id) this.processedMessageIds.add(m._id)
+          })
+          this.setData({ messages: reformatted, lastMessageId: 'bottom-anchor' })
+        }
+      }
+
+      // 网络数据返回后,写回本地缓存（仅非客服模式）
+      if (!this.data.isCustomerServiceMode) {
+        chatCache.writeCache(needId, this.data.messages, {
+          task: this.data.task,
+          isSeeker: this.data.isSeeker,
+          otherUser: this.data.otherUser,
+          showReportBtn: this.data.showReportBtn
+        })
+      }
+
       // 历史消息加载完成后，开始监听新消息
       this.startMessageWatch().catch(err => {
         console.error('启动消息监听失败:', err)
-        // 监听失败时切换到轮询
         this.startMessagePolling()
       })
     }).catch(err => {
       console.error('初始化聊天页面失败:', err)
+    }).finally(() => {
+      // 仅当还在 loading 状态时才隐藏,避免缓存命中后的冗余 setData
+      if (this.currentNeedId === needId && this.data.loading) {
+        this.setData({ loading: false })
+      }
     })
   },
 
@@ -280,6 +343,17 @@ Page({
             }
             finalMessages = [...finalMessages, ...formattedNewDocs]
           }
+
+          // 写回本地缓存（与 watch 流程一致,防抖写入）
+          if (!this.data.isCustomerServiceMode) {
+            chatCache.scheduleWrite(currentNeedId, finalMessages, {
+              task: this.data.task,
+              isSeeker: this.data.isSeeker,
+              otherUser: this.data.otherUser,
+              showReportBtn: this.data.showReportBtn
+            })
+          }
+
           // 先更新消息，等渲染完成后再处理滚动和已读
           this.setData({
             messages: finalMessages
@@ -674,23 +748,6 @@ Page({
     // 初始化已处理消息ID集合（防止监听回调重复添加自己发的消息）
     this.processedMessageIds = new Set(this.data.messages.map(m => m._id))
 
-    // 开发环境日志（生产环境可注释掉）
-    // console.log('启动消息监听, needId:', needId)
-
-    // 可选诊断：只在消息数为0时执行（避免不必要的数据库查询）
-    let diagnosticMatchCount = -1 // -1 表示未执行诊断
-    if (this.data.messages.length === 0) {
-      try {
-        const diagnosticRes = await db.collection('wdd-messages')
-          .where({ need_id: String(needId) })
-          .limit(1)
-          .get()
-        diagnosticMatchCount = diagnosticRes.data.length
-      } catch (diagErr) {
-        // 静默失败，不影响主流程
-      }
-    }
-
     try {
       const listener = db.collection('wdd-messages')
         .where({
@@ -699,13 +756,7 @@ Page({
         .watch({
           onChange: (snapshot) => {
             if (snapshot.type === 'init') {
-              const matchCount = snapshot.docs ? snapshot.docs.length : 0
               this.setData({ lastWatchActivity: Date.now() })
-
-              // 诊断失败时提示
-              if (diagnosticMatchCount > 0 && matchCount === 0) {
-                console.warn('watch init 未匹配到消息，但诊断查询有结果，可能需要检查数据库权限')
-              }
               return
             }
 
@@ -795,6 +846,17 @@ Page({
                 }
                 finalMessages = [...finalMessages, ...formattedNewDocs]
               }
+
+              // 写回本地缓存（防抖,避免 watch 高频触发时频繁阻塞主线程）
+              if (!this.data.isCustomerServiceMode) {
+                chatCache.scheduleWrite(currentNeedId, finalMessages, {
+                  task: this.data.task,
+                  isSeeker: this.data.isSeeker,
+                  otherUser: this.data.otherUser,
+                  showReportBtn: this.data.showReportBtn
+                })
+              }
+
               // 先更新消息，等渲染完成后再处理滚动和已读
               this.setData({
                 messages: finalMessages
@@ -802,8 +864,25 @@ Page({
                 if (newDocs.length > 0) {
                   wx.nextTick(() => {
                     if (hasSystemMessage) {
-                      // 系统消息：刷新任务状态 + 自动滚动到底部 + 标记已读
-                      this.loadTaskInfo()
+                      // 系统消息:刷新任务状态,完成后同步缓存(避免下次进入读到陈旧 status)
+                      this.loadTaskInfo().then(() => {
+                        if (this.currentNeedId !== currentNeedId) return
+                        if (this.data.isCustomerServiceMode) return
+                        const newStatus = this.data.task && this.data.task.status
+                        if (newStatus === 'completed') {
+                          chatCache.markCompleted(currentNeedId)
+                        } else if (newStatus === 'cancelled' || newStatus === 'expired') {
+                          chatCache.invalidate(currentNeedId)
+                        } else {
+                          // 其他状态变化(如 breaking)也写一次,刷新缓存里的 taskMeta
+                          chatCache.scheduleWrite(currentNeedId, this.data.messages, {
+                            task: this.data.task,
+                            isSeeker: this.data.isSeeker,
+                            otherUser: this.data.otherUser,
+                            showReportBtn: this.data.showReportBtn
+                          })
+                        }
+                      })
                       this.setData({
                         lastMessageId: 'bottom-anchor',
                         newMessageCount: 0
@@ -1298,6 +1377,9 @@ Page({
           'task.status': 'completed',
           'task.statusText': '已完成'
         })
+
+        // 标记本地缓存为已完成，触发 FIFO 清理
+        chatCache.markCompleted(currentNeedId)
 
         // 设置刷新标记
         wx.setStorageSync('refreshMyNeeds', true)

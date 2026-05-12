@@ -34,7 +34,10 @@
   <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh">
     <!-- 求助聊天 -->
     <block wx:if="{{currentChatTab === 'seeker'}}">
-      <empty wx:if="{{seekerChatList.length === 0}}" type="normal" icon="🙏" title="暂无求助聊天" desc="你发布的求助将会在这里显示"></empty>
+      <block wx:if="{{seekerChatList.length === 0}}">
+        <empty type="normal" icon="🙏" title="暂无求助聊天" desc="你发布的求助将会在这里显示"></empty>
+        <view wx:if="{{hiddenSeekerCount > 0}}" class="hidden-tip">已折叠超过30天的任务</view>
+      </block>
 
       <view wx:else class="chat-list">
         <view
@@ -71,12 +74,16 @@
             </view>
           </view>
         </view>
+        <view wx:if="{{hiddenSeekerCount > 0}}" class="hidden-tip">已折叠超过30天的任务</view>
       </view>
     </block>
 
     <!-- 帮助聊天 -->
     <block wx:if="{{currentChatTab === 'helper'}}">
-      <empty wx:if="{{helperChatList.length === 0}}" type="normal" icon="🤗" title="暂无帮助聊天" desc="去任务大厅接单开始聊天吧" showBtn="true" btnText="去大厅" btnType="primary" bind:btnTap="goToHall"></empty>
+      <block wx:if="{{helperChatList.length === 0}}">
+        <empty type="normal" icon="🤗" title="暂无帮助聊天" desc="去任务大厅接单开始聊天吧" showBtn="true" btnText="去大厅" btnType="primary" bind:btnTap="goToHall"></empty>
+        <view wx:if="{{hiddenHelperCount > 0}}" class="hidden-tip">已折叠超过30天的任务</view>
+      </block>
 
       <view wx:else class="chat-list">
         <view
@@ -113,6 +120,7 @@
             </view>
           </view>
         </view>
+        <view wx:if="{{hiddenHelperCount > 0}}" class="hidden-tip">已折叠超过30天的任务</view>
       </view>
     </block>
   </scroll-view>
