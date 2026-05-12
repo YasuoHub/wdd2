@@ -17,28 +17,8 @@ const REPORT_TYPES = [
   { value: 'no_response', label: '恶意接单后不回复、不提供帮助' }
 ]
 
-// 举报类型映射（value → label），用于根据英文值查找中文名
-const REPORT_TYPE_MAP = {}
-REPORT_TYPES.forEach(t => {
-  REPORT_TYPE_MAP[t.value] = t.label
-})
-
 // 仅 label 数组，用于 picker 的 range 属性
 const REPORT_TYPE_LABELS = REPORT_TYPES.map(t => t.label)
-
-// 申诉类型映射（value → label）
-const APPEAL_TYPE_MAP = {
-  unjust_rejection: '任务已完成被无故驳回',
-  lost_contact: '对方失联拒不验收结算',
-  unfair_judgment: '任务判定结果不合理',
-  amount_dispute: '悬赏金额结算有异议',
-  malicious_report: '被对方恶意举报诬陷',
-  unjust_deduction: '保证金/权益无故被扣',
-  other_dispute: '其他任务纠纷申诉',
-  false_helper_info: '帮助者提供虚假信息导致任务无效',
-  helper_location_mismatch: '帮助者定位不符无法完成帮助',
-  malicious_rejection: '求助者恶意驳回已完成的信息帮助'
-}
 
 // 状态映射
 const STATUS_MAP = {
@@ -61,9 +41,7 @@ const TYPE_MAP = {
 
 module.exports = {
   REPORT_TYPES,
-  REPORT_TYPE_MAP,
   REPORT_TYPE_LABELS,
-  APPEAL_TYPE_MAP,
   STATUS_MAP,
   TYPE_MAP
 }

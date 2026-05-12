@@ -66,11 +66,12 @@
       <view class="section-title">举报详情</view>
       <view class="info-row">
         <text class="label">举报人</text>
+        <image wx:if="{{reportDetail.reporterAvatar}}" class="user-avatar-small" src="{{reportDetail.reporterAvatar}}" mode="aspectFill" />
         <text class="value">{{reportDetail.reporterNickname}}</text>
       </view>
       <view class="info-row">
         <text class="label">类型</text>
-        <text class="value">{{reportDetail.type}}</text>
+        <text class="value">{{reportDetail.typeLabel}}</text>
       </view>
       <view class="info-row">
         <text class="label">理由</text>
@@ -85,6 +86,7 @@
         <view class="divider"></view>
         <view class="info-row">
           <text class="label">被举报人</text>
+          <image wx:if="{{reportDetail.reportedAvatar}}" class="user-avatar-small" src="{{reportDetail.reportedAvatar}}" mode="aspectFill" />
           <text class="value">{{reportDetail.reportedNickname}}</text>
         </view>
         <view class="info-row">
@@ -106,7 +108,7 @@
       </view>
       <view class="info-row">
         <text class="label">类型</text>
-        <text class="value">{{appealDetail.initiator.type}}</text>
+        <text class="value">{{appealDetail.initiator.typeLabel}}</text>
       </view>
       <view class="info-row">
         <text class="label">理由</text>
@@ -121,7 +123,7 @@
         <view class="divider"></view>
         <view class="info-row">
           <text class="label">对方补充</text>
-          <text class="value">{{appealDetail.supplement.type}}</text>
+          <text class="value">{{appealDetail.supplement.typeLabel}}</text>
         </view>
         <view class="info-row">
           <text class="label">理由</text>
@@ -133,9 +135,9 @@
       </block>
     </view>
 
-    <!-- 处理裁决按钮 -->
+    <!-- 处理工单按钮 -->
     <view class="action-bar" wx:if="{{ticket && ticket.status === 'pending'}}">
-      <button class="arbitrate-btn" bindtap="showArbitrate">处理裁决</button>
+      <button class="arbitrate-btn" bindtap="showArbitrate">处理工单</button>
     </view>
   </block>
 
@@ -143,11 +145,11 @@
   <view class="modal {{showArbitrateModal ? 'show' : ''}}" wx:if="{{showArbitrateModal}}">
     <view class="modal-mask" bindtap="hideArbitrate"></view>
     <view class="modal-content">
-      <view class="modal-title">处理裁决</view>
+      <view class="modal-title">处理工单</view>
 
       <!-- 任务流转结果 -->
       <view class="form-row">
-        <text class="form-label">裁决结果</text>
+        <text class="form-label">处理结果</text>
         <picker bindchange="onTaskResultChange" range="{{['取消任务', '完成任务', '部分完成']}}">
           <view class="picker">
             <text>{{taskResult === 'cancelled' ? '取消任务' : taskResult === 'completed' ? '完成任务' : taskResult === 'partial' ? '部分完成' : '请选择'}}</text>
@@ -197,7 +199,7 @@
 
       <view class="modal-footer">
         <button class="modal-btn cancel" bindtap="hideArbitrate">取消</button>
-        <button class="modal-btn confirm" bindtap="submitArbitrate">确认裁决</button>
+        <button class="modal-btn confirm" bindtap="submitArbitrate">确认</button>
       </view>
     </view>
   </view>

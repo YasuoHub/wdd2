@@ -30,6 +30,13 @@
     >
       审核中
     </view>
+    <view
+      class="tab {{currentFilter === 'cancelled' ? 'active' : ''}}"
+      bindtap="switchFilter"
+      data-filter="cancelled"
+    >
+      已取消
+    </view>
   </view>
 
   <!-- 任务列表 -->
@@ -81,9 +88,6 @@
 
         <!-- 进行中按钮 -->
         <view wx:if="{{item.status === 'ongoing'}}" class="card-actions">
-          <view wx:if="{{item.showAppealBtn}}" class="action-btn warning" catchtap="goToAppeal" data-id="{{item.need_id}}">
-            申诉
-          </view>
           <view class="action-btn primary" catchtap="goToChat" data-id="{{item.need_id}}">
             进入聊天
           </view>
@@ -91,8 +95,18 @@
 
         <!-- 已完成任务按钮 -->
         <view wx:if="{{item.status === 'completed'}}" class="card-actions">
+          <view wx:if="{{item.showAppealBtn}}" class="action-btn warning" catchtap="goToAppeal" data-id="{{item.need_id}}">
+            申诉
+          </view>
           <view class="action-btn primary full-width" catchtap="goToChat" data-id="{{item.need_id}}">
             查看聊天
+          </view>
+        </view>
+
+        <!-- 已取消任务按钮（客服裁决取消可申诉） -->
+        <view wx:if="{{item.status === 'cancelled' && item.showAppealBtn}}" class="card-actions">
+          <view class="action-btn warning" catchtap="goToAppeal" data-id="{{item.need_id}}">
+            申诉
           </view>
         </view>
       </view>

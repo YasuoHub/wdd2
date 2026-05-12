@@ -104,14 +104,33 @@ async function getTaskInfo(event, OPENID) {
     return { code: -1, message: '无权查看此任务' }
   }
 
-  // 客服模式：返回简化信息
+  // 客服模式：返回双方用户信息
   if (isCs) {
+    const takerUserId = taker ? taker.taker_id : null
+    const userIds = [need.user_id, takerUserId].filter(Boolean)
+
+    // 查询双方用户信息
+    const participantsRes = await Promise.all(
+      userIds.map(uid => db.collection('wdd-users').doc(uid).get().catch(() => null))
+    )
+
+    const participants = {}
+    participantsRes.forEach((res, i) => {
+      if (res && res.data) {
+        participants[userIds[i]] = {
+          nickname: res.data.nickname || '',
+          avatar: res.data.avatar || ''
+        }
+      }
+    })
+
     return {
       code: 0,
       data: {
         ...need,
         role: 'customer_service',
         otherUser: null,
+        participants,
         myReportStatus: { hasReport: false },
         myAppealStatus: { hasAppeal: false }
       }

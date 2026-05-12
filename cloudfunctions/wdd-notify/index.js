@@ -30,7 +30,7 @@ function isSessionVisible(need) {
   let endTime = null
   if (need.status === 'completed') {
     endTime = need.complete_time
-  } else if (need.status === 'cancelled' || need.status === 'expired') {
+  } else if (need.status === 'cancelled') {
     endTime = need.cancel_time
   }
   // 老数据兜底

@@ -4,25 +4,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 举报类型映射（value → label），数据库存储 value，展示使用 label
-const REPORT_TYPE_MAP = {
-  offline_transaction: '诱导线下私下交易',
-  verbal_abuse: '言语辱骂、骚扰人身攻击',
-  fraud: '虚假承诺、恶意骗单',
-  delay: '敷衍沟通、故意拖延进度',
-  sensitive_content: '发布违规敏感内容',
-  malicious_difficulty: '恶意刁难、无故拖延不配合',
-  other_violation: '其他违规行为',
-  false_info: '提供虚假实时信息（谎报天气/拥堵/营业状态）',
-  location_mismatch: '接单后定位不符、不在求助地点',
-  no_response: '恶意接单后不回复、不提供帮助'
-}
-
-// 根据 value 获取 label
-function getReportTypeLabel(value) {
-  return REPORT_TYPE_MAP[value] || value
-}
-
 exports.main = async (event, context) => {
   const { action } = event
   const wxContext = cloud.getWXContext()
@@ -57,14 +38,11 @@ exports.main = async (event, context) => {
 
 // 提交举报
 async function submitReport(event, OPENID) {
-  const { needId, reportType, reason, images } = event
+  const { needId, reportType, reportTypeLabel, reason, images } = event
 
   // 参数校验
   if (!needId || !reportType || !reason) {
     return { code: -1, message: '参数不完整' }
-  }
-  if (!REPORT_TYPE_MAP[reportType]) {
-    return { code: -1, message: '举报类型无效' }
   }
   if (reason.length < 5 || reason.length > 300) {
     return { code: -1, message: '举报理由需在5~300字之间' }
@@ -87,9 +65,12 @@ async function submitReport(event, OPENID) {
   }
   const need = needRes.data
 
-  // 前置校验
+  // 前置校验：仅进行中和已完成的任务可举报
   if (need.status === 'breaking') {
     return { code: -1, message: '任务已进入客服审核状态' }
+  }
+  if (need.status !== 'ongoing' && need.status !== 'completed') {
+    return { code: -1, message: '当前任务状态不允许举报' }
   }
 
   // 检查当前用户是否已对该任务有 pending 的举报
@@ -140,6 +121,7 @@ async function submitReport(event, OPENID) {
         reporter_id: user._id,
         reporter_openid: OPENID,
         report_type: reportType,
+        report_type_label: reportTypeLabel || '',
         reason: reason,
         images: images || [],
         supplement_id: null,
@@ -150,6 +132,7 @@ async function submitReport(event, OPENID) {
         has_supplement: false,
         is_supplement_timeout: false,
         status: 'pending',
+        previous_task_status: need.status,
         create_time: now,
         update_time: now
       }
@@ -182,7 +165,7 @@ async function submitReport(event, OPENID) {
     await transaction.commit()
 
     // 4. 向被举报方发送站内消息通知（事务外）
-    await sendReportNotice(need, user._id, reportRes._id, reportType)
+    await sendReportNotice(need, user._id, reportRes._id, reportTypeLabel)
 
     return {
       code: 0,
@@ -280,7 +263,7 @@ async function cancelReport(event, OPENID) {
     if (otherPendingReport.total === 0 && otherPendingAppeal.total === 0) {
       await transaction.collection('wdd-needs').doc(report.need_id).update({
         data: {
-          status: 'ongoing',
+          status: report.previous_task_status || 'ongoing',
           has_report: false,
           has_appeal: false,
           update_time: new Date()
@@ -343,7 +326,7 @@ async function getReportStatus(event, OPENID) {
       reportId: report._id,
       status: report.status,
       reportTypeValue: report.report_type,
-      reportTypeLabel: getReportTypeLabel(report.report_type),
+      reportTypeLabel: report.report_type_label || report.report_type,
       reason: report.reason,
       createTime: report.create_time,
       canCancel: canCancel,
@@ -353,9 +336,8 @@ async function getReportStatus(event, OPENID) {
 }
 
 // 向任务另一方发送举报通知
-async function sendReportNotice(need, reporterId, reportId, reportType) {
+async function sendReportNotice(need, reporterId, reportId, reportTypeLabel) {
   try {
-    // 获取接单记录
     const takerRes = await db.collection('wdd-need-takers')
       .where({ need_id: need._id })
       .orderBy('create_time', 'desc')
@@ -363,7 +345,6 @@ async function sendReportNotice(need, reporterId, reportId, reportType) {
       .get()
     const taker = takerRes.data[0]
 
-    // 确定另一方用户ID
     const otherUserId = reporterId === need.user_id
       ? (taker ? taker.taker_id : null)
       : need.user_id
@@ -373,18 +354,14 @@ async function sendReportNotice(need, reporterId, reportId, reportType) {
       return
     }
 
-    // 获取举报人信息
     const reporterRes = await db.collection('wdd-users').doc(reporterId).get().catch(() => null)
     const reporterNickname = reporterRes ? reporterRes.data.nickname : '对方'
 
-    // 获取举报类型中文
-    const reportTypeLabel = getReportTypeLabel(reportType)
+    const label = reportTypeLabel || '其他违规行为'
 
-    // 格式化时间
     const now = new Date()
     const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 
-    // 任务编号（后8位大写）
     const taskNumber = need._id.slice(-8).toUpperCase()
 
     await db.collection('wdd-notifications').add({
@@ -392,7 +369,7 @@ async function sendReportNotice(need, reporterId, reportId, reportType) {
         user_id: otherUserId,
         type: 'report_notice',
         title: '举报通知',
-        content: `【举报通知】用户"${reporterNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起举报，举报类型：${reportTypeLabel}。请在24小时内提交反驳材料，超时未提交将视为放弃权利，平台将仅依据对方材料进行仲裁。`,
+        content: `【举报通知】用户"${reporterNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起举报，举报类型：${label}。请在24小时内提交反驳材料，超时未提交将视为放弃权利，平台将仅依据对方材料进行仲裁。`,
         need_id: need._id,
         report_id: reportId,
         is_read: false,
@@ -474,7 +451,7 @@ async function submitSupplement(event, OPENID) {
     has_supplement: true,
     update_time: new Date()
   }
-  if (reportType && REPORT_TYPE_MAP[reportType]) {
+  if (reportType) {
     supplementData.supplement_type = reportType
   }
 
@@ -576,7 +553,7 @@ async function getReportDetail(event, OPENID) {
         nickname: initiator ? initiator.nickname : '未知用户',
         avatar: initiator ? initiator.avatar : '',
         typeValue: report.report_type,
-        typeLabel: getReportTypeLabel(report.report_type),
+        typeLabel: report.report_type_label || report.report_type,
         reason: report.reason,
         images: report.images || []
       },

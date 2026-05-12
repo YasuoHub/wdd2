@@ -1,6 +1,7 @@
 // 消息中心页面逻辑
 const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
+const { STATUS_MAP } = require('../../config/types')
 
 Page({
   data: {
@@ -328,14 +329,8 @@ Page({
 
   // 获取状态文本
   getStatusText(status) {
-    const statusMap = {
-      'pending': '待匹配',
-      'ongoing': '进行中',
-      'completed': '已完成',
-      'cancelled': '已取消',
-      'breaking': '审核中'
-    }
-    return statusMap[status] || status
+    const info = STATUS_MAP[status]
+    return info ? info.text : status
   },
 
   // 获取通知图标
@@ -350,7 +345,8 @@ Page({
       'report_notice': '🚨',
       'appeal_reminder': '⏰',
       'report_reminder': '⏰',
-      'arbitration_result': '✅'
+      'arbitration_result': '✅',
+      'task_auto_completed': '✅'
     }
     return iconMap[type] || '📢'
   },

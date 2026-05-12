@@ -86,9 +86,6 @@
 
         <!-- 操作按钮 -->
         <view wx:if="{{item.status === 'ongoing' || item.status === 'pending'}}" class="card-actions">
-          <view wx:if="{{item.status === 'ongoing' && item.showAppealBtn}}" class="action-btn warning" catchtap="goToAppeal" data-id="{{item._id}}">
-            申诉
-          </view>
           <view wx:if="{{item.status === 'ongoing'}}" class="action-btn primary" catchtap="goToChat" data-id="{{item._id}}">
             进入聊天
           </view>
@@ -103,6 +100,9 @@
 
         <!-- 已完成任务按钮 -->
         <view wx:if="{{item.status === 'completed'}}" class="card-actions">
+          <view wx:if="{{item.showAppealBtn}}" class="action-btn warning" catchtap="goToAppeal" data-id="{{item._id}}">
+            申诉
+          </view>
           <view class="action-btn primary" catchtap="goToChat" data-id="{{item._id}}">
             查看聊天
           </view>
@@ -112,6 +112,13 @@
           </view>
           <view wx:else class="action-btn" catchtap="viewRating" data-id="{{item._id}}">
             查看评价
+          </view>
+        </view>
+
+        <!-- 已取消任务按钮（客服裁决取消可申诉） -->
+        <view wx:if="{{item.status === 'cancelled' && item.showAppealBtn}}" class="card-actions">
+          <view class="action-btn warning" catchtap="goToAppeal" data-id="{{item._id}}">
+            申诉
           </view>
         </view>
       </view>

@@ -218,6 +218,7 @@ Page({
       const params = { action, needId, reason, images }
       if (mode === 'initiate') {
         params.reportType = selectedTypeValue
+        params.reportTypeLabel = selectedTypeLabel
       }
       if (mode === 'supplement') {
         const detailRes = await wx.cloud.callFunction({

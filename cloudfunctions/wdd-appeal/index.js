@@ -4,25 +4,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 申诉类型映射（value → label），数据库存储 value，展示使用 label
-const APPEAL_TYPE_MAP = {
-  unjust_rejection: '任务已完成被无故驳回',
-  lost_contact: '对方失联拒不验收结算',
-  unfair_judgment: '任务判定结果不合理',
-  amount_dispute: '悬赏金额结算有异议',
-  malicious_report: '被对方恶意举报诬陷',
-  unjust_deduction: '保证金/权益无故被扣',
-  other_dispute: '其他任务纠纷申诉',
-  false_helper_info: '帮助者提供虚假信息导致任务无效',
-  helper_location_mismatch: '帮助者定位不符无法完成帮助',
-  malicious_rejection: '求助者恶意驳回已完成的信息帮助'
-}
-
-// 根据 value 获取 label
-function getAppealTypeLabel(value) {
-  return APPEAL_TYPE_MAP[value] || value
-}
-
 exports.main = async (event, context) => {
   const { action } = event
   const wxContext = cloud.getWXContext()
@@ -55,14 +36,11 @@ exports.main = async (event, context) => {
 
 // 提交申诉
 async function submitAppeal(event, OPENID) {
-  const { needId, appealType, reason, images, mode = 'initiate' } = event
+  const { needId, appealType, appealTypeLabel, reason, images, mode = 'initiate' } = event
 
   // 参数校验
   if (!needId || !appealType || !reason) {
     return { code: -1, message: '参数不完整' }
-  }
-  if (!APPEAL_TYPE_MAP[appealType]) {
-    return { code: -1, message: '申诉类型无效' }
   }
   if (reason.length < 5 || reason.length > 300) {
     return { code: -1, message: '申诉理由需在5~300字之间' }
@@ -85,8 +63,10 @@ async function submitAppeal(event, OPENID) {
   }
   const need = needRes.data
 
-  // 前置校验
-  if (['breaking', 'completed', 'cancelled'].includes(need.status)) {
+  // 前置校验：仅已完成 或 客服裁决取消 的任务可申诉
+  const isCompleted = need.status === 'completed'
+  const isArbitrationCancelled = need.status === 'cancelled' && need.cancel_reason === 'arbitration_cancelled'
+  if (!isCompleted && !isArbitrationCancelled) {
     return { code: -1, message: '当前任务状态不允许申诉' }
   }
 
@@ -100,10 +80,10 @@ async function submitAppeal(event, OPENID) {
     return { code: -1, message: '您已对该任务发起过申诉，不可重复提交' }
   }
 
-  // 时效校验：仅允许在 expire_time 或 expire_time + 2小时 内提交
+  // 时效校验：任务结束后 2 小时内可申诉
   const now = new Date()
-  const expireTime = new Date(need.expire_time)
-  const deadline = new Date(expireTime.getTime() + 2 * 60 * 60 * 1000)
+  const endTime = isCompleted ? new Date(need.complete_time) : new Date(need.cancel_time)
+  const deadline = new Date(endTime.getTime() + 2 * 60 * 60 * 1000)
   if (now > deadline) {
     return { code: -1, message: '申诉时效已过，任务结束后超过2小时无法申诉' }
   }
@@ -136,6 +116,7 @@ async function submitAppeal(event, OPENID) {
         initiator_id: user._id,
         initiator_openid: OPENID,
         initiator_type: appealType,
+        initiator_type_label: appealTypeLabel || '',
         initiator_reason: reason,
         initiator_images: images || [],
         supplement_id: null,
@@ -146,6 +127,7 @@ async function submitAppeal(event, OPENID) {
         has_supplement: false,
         is_supplement_timeout: false,
         status: 'pending',
+        previous_task_status: need.status,
         create_time: new Date(),
         update_time: new Date()
       }
@@ -276,7 +258,7 @@ async function cancelAppeal(event, OPENID) {
     if (otherPendingAppeal.total === 0 && otherPendingReport.total === 0) {
       await transaction.collection('wdd-needs').doc(appeal.need_id).update({
         data: {
-          status: 'ongoing',
+          status: appeal.previous_task_status || 'ongoing',
           has_appeal: false,
           has_report: false,
           update_time: new Date()
@@ -378,7 +360,7 @@ async function submitSupplement(event, OPENID) {
     update_time: new Date()
   }
   // 如果传了申诉类型，也保存
-  if (appealType && APPEAL_TYPE_MAP[appealType]) {
+  if (appealType) {
     supplementData.supplement_type = appealType
   }
 
@@ -476,7 +458,7 @@ async function getAppealDetail(event, OPENID) {
         nickname: initiator ? initiator.nickname : '未知用户',
         avatar: initiator ? initiator.avatar : '',
         typeValue: appeal.initiator_type,
-        typeLabel: getAppealTypeLabel(appeal.initiator_type),
+        typeLabel: appeal.initiator_type_label || appeal.initiator_type,
         reason: appeal.initiator_reason,
         images: appeal.initiator_images || []
       },
@@ -485,7 +467,7 @@ async function getAppealDetail(event, OPENID) {
         nickname: supplementUser ? supplementUser.nickname : '未知用户',
         avatar: supplementUser ? supplementUser.avatar : '',
         typeValue: appeal.supplement_type,
-        typeLabel: getAppealTypeLabel(appeal.supplement_type),
+        typeLabel: appeal.supplement_type_label || appeal.supplement_type,
         reason: appeal.supplement_reason,
         images: appeal.supplement_images || []
       } : null,
@@ -562,16 +544,13 @@ async function sendAppealNotice(need, initiatorId, appealId) {
     const initiatorRes = await db.collection('wdd-users').doc(initiatorId).get().catch(() => null)
     const initiatorNickname = initiatorRes ? initiatorRes.data.nickname : '对方'
 
-    // 获取申诉记录以取得申诉类型
+    // 获取申诉记录以取得申诉类型标签
     const appealRes = await db.collection('wdd-appeals').doc(appealId).get().catch(() => null)
-    const appealType = appealRes ? appealRes.data.initiator_type : ''
-    const appealTypeLabel = getAppealTypeLabel(appealType)
+    const label = appealRes ? (appealRes.data.initiator_type_label || appealRes.data.initiator_type) : '其他任务纠纷申诉'
 
-    // 格式化时间
     const now = new Date()
     const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 
-    // 任务编号（后8位大写）
     const taskNumber = need._id.slice(-8).toUpperCase()
 
     await db.collection('wdd-notifications').add({
@@ -579,7 +558,7 @@ async function sendAppealNotice(need, initiatorId, appealId) {
         user_id: otherUserId,
         type: 'appeal_notice',
         title: '申诉通知',
-        content: `【申诉通知】用户"${initiatorNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起申诉，申诉类型：${appealTypeLabel}。请在24小时内补充提交申诉材料，超时未提交将视为放弃申诉权利，平台将仅依据对方材料进行仲裁。`,
+        content: `【申诉通知】用户"${initiatorNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起申诉，申诉类型：${label}。请在24小时内补充提交申诉材料，超时未提交将视为放弃申诉权利，平台将仅依据对方材料进行仲裁。`,
         need_id: need._id,
         appeal_id: appealId,
         is_read: false,

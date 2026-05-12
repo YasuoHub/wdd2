@@ -3,6 +3,7 @@ const app = getApp()
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
 const DateUtil = require('../../utils/dateUtil')
 const chatCache = require('../../utils/chatCache')
+const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
 
 Page({
   data: {
@@ -60,6 +61,9 @@ Page({
 
     // 客服查看模式
     isCustomerServiceMode: false,
+
+    // 客服模式下：{ [userId]: { nickname, avatar } }
+    participants: {},
 
     // 首屏加载状态（用于骨架屏显示）
     loading: true
@@ -473,25 +477,8 @@ Page({
 
       if (result.code === 0) {
         const taskData = result.data
-        const statusMap = {
-          'pending': { text: '待匹配', class: '' },
-          'ongoing': { text: '进行中', class: 'ongoing' },
-          'completed': { text: '已完成', class: 'completed' },
-          'cancelled': { text: '已取消', class: 'cancelled' },
-          'breaking': { text: '审核中', class: 'breaking' }
-        }
-
-        const typeMap = {
-          'weather': { name: '实时天气', icon: '🌤️' },
-          'traffic': { name: '道路拥堵', icon: '🚗' },
-          'shop': { name: '店铺营业', icon: '🏪' },
-          'parking': { name: '停车场空位', icon: '🅿️' },
-          'queue': { name: '排队情况', icon: '👥' },
-          'other': { name: '其他', icon: '📌' }
-        }
-
-        const typeInfo = typeMap[taskData.type] || typeMap['other']
-        const statusInfo = statusMap[taskData.status] || statusMap['pending']
+        const typeInfo = TYPE_MAP[taskData.type] || TYPE_MAP['other']
+        const statusInfo = STATUS_MAP[taskData.status] || STATUS_MAP['pending']
 
         const isCustomerServiceMode = this.data.isCustomerServiceMode
 
@@ -516,6 +503,7 @@ Page({
           },
           isSeeker: !isCustomerServiceMode && result.data.role === 'seeker',
           otherUser: isCustomerServiceMode ? null : result.data.otherUser,
+          participants: isCustomerServiceMode ? (result.data.participants || {}) : {},
           showReportBtn: !isCustomerServiceMode && result.data.status === 'ongoing' &&
             !result.data.myReportStatus.hasReport &&
             (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 2 * 60 * 60 * 1000))
@@ -717,7 +705,16 @@ Page({
       sendStatus: msg.sendStatus || 'sent',
       isSelf,
       isSystem: msg.type === 'system',
-      senderAvatar: isSelf ? userInfo.avatar : (this.data.otherUser && this.data.otherUser.avatar) || '/images/default-avatar.png',
+      senderAvatar: isSelf
+        ? userInfo.avatar
+        : (this.data.participants && this.data.participants[msg.sender_id] && this.data.participants[msg.sender_id].avatar)
+          || (this.data.otherUser && this.data.otherUser.avatar)
+          || '/images/default-avatar.png',
+      senderName: isSelf
+        ? (userInfo.nickname || '我')
+        : (this.data.participants && this.data.participants[msg.sender_id]
+          ? this.data.participants[msg.sender_id].nickname
+          : (this.data.otherUser ? this.data.otherUser.nickname : '')),
       timeText,
       showTime,
       // 统一图片字段为 camelCase（优先使用已有的 imageUrl，否则从 image_url 转换）

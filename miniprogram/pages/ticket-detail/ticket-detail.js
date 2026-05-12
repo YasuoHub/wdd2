@@ -1,4 +1,3 @@
-const { REPORT_TYPE_MAP, APPEAL_TYPE_MAP } = require('../../config/types')
 const DateUtil = require('../../utils/dateUtil')
 
 Page({
@@ -36,21 +35,6 @@ Page({
       })
       if (result.code === 0) {
         const data = result.data
-
-        // 转换举报类型为中文
-        if (data.reportDetail && data.reportDetail.type) {
-          data.reportDetail.type = REPORT_TYPE_MAP[data.reportDetail.type] || data.reportDetail.type
-        }
-
-        // 转换申诉类型为中文
-        if (data.appealDetail) {
-          if (data.appealDetail.initiator && data.appealDetail.initiator.type) {
-            data.appealDetail.initiator.type = APPEAL_TYPE_MAP[data.appealDetail.initiator.type] || data.appealDetail.initiator.type
-          }
-          if (data.appealDetail.supplement && data.appealDetail.supplement.type) {
-            data.appealDetail.supplement.type = APPEAL_TYPE_MAP[data.appealDetail.supplement.type] || data.appealDetail.supplement.type
-          }
-        }
 
         // 格式化任务时间
         const task = data.task ? {
@@ -120,7 +104,7 @@ Page({
     const { ticketId, taskResult, partialPercent, banTarget, banDuration, task } = this.data
 
     if (!taskResult) {
-      wx.showToast({ title: '请选择裁决结果', icon: 'none' })
+      wx.showToast({ title: '请选择处理结果', icon: 'none' })
       return
     }
 

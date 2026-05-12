@@ -5,6 +5,7 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const _ = db.command
 
 exports.main = async (event, context) => {
   try {
@@ -43,6 +44,17 @@ exports.main = async (event, context) => {
       }
     })
     results.push({ step: '用户表信誉分/封禁/评分字段初始化', updated: userStatusRes.stats.updated || 0 })
+
+    // 修复已被 _.inc 扣成负分的用户（字段存在但值为负数）
+    const negativeCreditRes = await db.collection('wdd-users').where({
+      credit_score: _.lt(0)
+    }).update({
+      data: {
+        credit_score: 100,
+        update_time: db.serverDate()
+      }
+    })
+    results.push({ step: '修复负信誉分用户', updated: negativeCreditRes.stats.updated || 0 })
 
     // 3. 为任务表新增金额字段
     const needUpdateRes = await db.collection('wdd-needs').where({

@@ -233,7 +233,7 @@
     - 参数：ticketId, taskResult(cancelled/completed/partial), partialPercent, banInfo
     - 处理流程：
       1. 更新 wdd-tickets 为 resolved，记录 result
-      2. 更新 wdd-needs status（按裁决结果）
+      2. 更新 wdd-needs status（按处理结果）
       3. 调用 wdd-settlement 的 arbitrateSettle 处理资金
       4. 扣减信誉分（按规则：取消→帮助者-10；完成→求助者-10；部分→不扣）
       5. 如有封禁，更新 wdd-users.ban_status
@@ -251,7 +251,7 @@
   - 展示举报/申诉类型、理由、证据图片（可预览大图）
   - 双人申诉场景下，额外展示另一方补充材料
   - 「聊天详情」按钮，点击跳转 `pages/chat-view/chat-view`
-  - 底部固定「处理裁决」按钮
+  - 底部固定「处理工单」按钮
 
 - [ ] **5.6** 创建客服裁决弹窗组件（可在 ticket-detail 页面内实现）
   - 弹窗内容：
@@ -282,7 +282,7 @@
   - 方式：云函数定时触发器（每 30 分钟检查一次）
   - 超时时长：48 小时（工单创建后 48 小时客服未处理）
   - 自动裁决逻辑：
-    - 裁决结果：取消任务
+    - 处理结果：取消任务
     - 悬赏金额全额原路退回求助者余额
     - 双方均不扣减信誉分
     - 更新 wdd-tickets.status='resolved'，result 标记为 auto_cancelled
@@ -308,9 +308,9 @@
   - 文件：`miniprogram/pages/chat/chat.js`、`chat.wxml`
   - 聊天页面中对方头像可点击，跳转公开资料页
 
-- [ ] **6.4** 完善裁决结果站内消息文案
+- [ ] **6.4** 完善处理结果站内消息文案
   - 在 `wdd-ticket` 的 submitArbitration 中，向双方分别推送个性化通知
-  - 求助者文案：包含裁决结果、资金变动、信誉分变动、封禁信息
+  - 求助者文案：包含处理结果、资金变动、信誉分变动、封禁信息
   - 帮助者文案：同上，按角色区分
 
 - [ ] **6.5** 在 `pages/messages/messages.js` 中完善通知展示

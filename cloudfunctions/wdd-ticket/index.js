@@ -210,27 +210,34 @@ async function getTicketDetail(event, OPENID) {
       const report = reportRes.data
       const reporterRes = await db.collection('wdd-users').doc(report.reporter_id).get().catch(() => null)
 
-      // 计算被举报人昵称：任务双方中非举报人的那一方
+      // 计算被举报人昵称和头像：任务双方中非举报人的那一方
       let reportedNickname = '未知用户'
+      let reportedAvatar = ''
       if (need) {
         if (report.reporter_id === need.user_id) {
           // 求助者是举报人，被举报人是帮助者
           reportedNickname = taker ? taker.nickname : '未知用户'
+          reportedAvatar = taker ? taker.avatar || '' : ''
         } else {
           // 帮助者是举报人，被举报人是求助者
           reportedNickname = seeker ? seeker.nickname : '未知用户'
+          reportedAvatar = seeker ? seeker.avatar || '' : ''
         }
       }
 
       reportDetail = {
         type: report.report_type,
+        typeLabel: report.report_type_label || report.report_type,
         reason: report.reason,
         images: report.images || [],
         reporterNickname: reporterRes ? reporterRes.data.nickname : '未知用户',
+        reporterAvatar: reporterRes ? reporterRes.data.avatar || '' : '',
         reportedNickname,
+        reportedAvatar,
         createTime: report.create_time,
         supplement: report.has_supplement ? {
           type: report.supplement_type,
+          typeLabel: report.supplement_type_label || report.supplement_type,
           reason: report.supplement_reason,
           images: report.supplement_images || []
         } : null,
@@ -249,11 +256,13 @@ async function getTicketDetail(event, OPENID) {
         initiator: {
           nickname: initiatorRes ? initiatorRes.data.nickname : '未知用户',
           type: appeal.initiator_type,
+          typeLabel: appeal.initiator_type_label || appeal.initiator_type,
           reason: appeal.initiator_reason,
           images: appeal.initiator_images || []
         },
         supplement: appeal.has_supplement ? {
           type: appeal.supplement_type,
+          typeLabel: appeal.supplement_type_label || appeal.supplement_type,
           reason: appeal.supplement_reason,
           images: appeal.supplement_images || []
         } : null,
@@ -324,7 +333,7 @@ async function submitArbitration(event, OPENID) {
     return { code: -1, message: '参数不完整' }
   }
   if (!['cancelled', 'completed', 'partial'].includes(taskResult)) {
-    return { code: -1, message: '裁决结果无效' }
+    return { code: -1, message: '处理结果无效' }
   }
   if (taskResult === 'partial' && ![10, 30, 50, 70].includes(partialPercent)) {
     return { code: -1, message: '分账比例无效' }
@@ -385,7 +394,7 @@ async function submitArbitration(event, OPENID) {
 
   const rewardAmount = need.reward_amount || 0
 
-  // 3. 根据裁决结果处理资金和任务状态
+  // 3. 根据处理结果处理资金和任务状态
   let seekerRefund = 0
   let takerIncome = 0
   let platformFee = 0
@@ -461,6 +470,15 @@ async function submitArbitration(event, OPENID) {
       await transaction.collection('wdd-users').doc(takerRecord.taker_id).update({
         data: {
           credit_score: _.inc(-10),
+          update_time: new Date()
+        }
+      })
+
+      // 更新接单记录状态为 cancelled
+      await transaction.collection('wdd-need-takers').doc(takerRecord._id).update({
+        data: {
+          status: 'cancelled',
+          cancel_time: new Date(),
           update_time: new Date()
         }
       })
@@ -661,7 +679,7 @@ async function sendArbitrationNotifications(need, takerRecord, taskResult, parti
     data: {
       user_id: need.user_id,
       type: 'arbitration_result',
-      title: '客服裁决结果',
+      title: '客服处理结果',
       content: seekerContent,
       need_id: need._id,
       is_read: false,
@@ -675,7 +693,7 @@ async function sendArbitrationNotifications(need, takerRecord, taskResult, parti
       data: {
         user_id: takerRecord.taker_id,
         type: 'arbitration_result',
-        title: '客服裁决结果',
+        title: '客服处理结果',
         content: takerContent,
         need_id: need._id,
         is_read: false,

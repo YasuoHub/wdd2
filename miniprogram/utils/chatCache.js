@@ -83,7 +83,7 @@ function writeCache(needId, messages, taskMeta) {
 
   const status = taskMeta && taskMeta.task && taskMeta.task.status
   // 取消 / 过期不留缓存
-  if (status === 'cancelled' || status === 'expired') {
+  if (status === 'cancelled') {
     invalidate(needId)
     return
   }

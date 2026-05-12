@@ -350,8 +350,11 @@ async function getMyTasks(event, OPENID) {
       location_name: need.location_name,
       points: need.points,
       reward_amount: need.reward_amount || 0,
-      status: taker.status,
+      status: need.status,
       expire_time: need.expire_time,
+      complete_time: need.complete_time,
+      cancel_time: need.cancel_time,
+      cancel_reason: need.cancel_reason,
       create_time: taker.create_time,
       seeker_nickname: need.user_nickname,
       seeker_avatar: need.user_avatar
@@ -667,6 +670,9 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds) {
     takerNickname: item.taker_nickname,
     taker_avatar: item.taker_avatar,
     expireTime: item.expire_time,
+    completeTime: item.complete_time,
+    cancelTime: item.cancel_time,
+    cancelReason: item.cancel_reason,
     createTime: formatDateTime(item.create_time),
     hasRated: item.has_rated || false,
     // 当前用户个人的举报/申诉状态（用户级别）

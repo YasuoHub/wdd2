@@ -4,14 +4,13 @@ const app = getApp()
 const APPEAL_TYPES = [
   { value: 'unjust_rejection', label: '任务已完成被无故驳回' },
   { value: 'lost_contact', label: '对方失联拒不验收结算' },
-  { value: 'unfair_judgment', label: '任务判定结果不合理' },
   { value: 'amount_dispute', label: '悬赏金额结算有异议' },
   { value: 'malicious_report', label: '被对方恶意举报诬陷' },
-  { value: 'unjust_deduction', label: '保证金/权益无故被扣' },
-  { value: 'other_dispute', label: '其他任务纠纷申诉' },
   { value: 'false_helper_info', label: '帮助者提供虚假信息导致任务无效' },
   { value: 'helper_location_mismatch', label: '帮助者定位不符无法完成帮助' },
-  { value: 'malicious_rejection', label: '求助者恶意驳回已完成的信息帮助' }
+  { value: 'malicious_rejection', label: '求助者恶意驳回已完成的信息帮助' },
+  { value: 'unfair_judgment', label: '任务判定结果不合理' },
+  { value: 'other_dispute', label: '其他任务纠纷申诉' }
 ]
 
 // 仅 label 数组，用于 picker 的 range
@@ -169,6 +168,7 @@ Page({
       const params = { action, needId, reason, images }
       if (mode === 'initiate') {
         params.appealType = selectedTypeValue
+        params.appealTypeLabel = selectedTypeLabel
       }
       if (mode === 'supplement') {
         const detailRes = await wx.cloud.callFunction({

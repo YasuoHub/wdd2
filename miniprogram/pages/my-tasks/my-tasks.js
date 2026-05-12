@@ -4,10 +4,11 @@ const DateUtil = require('../../utils/dateUtil')
 const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
 
 const FILTER_MAP = {
-  'all': { text: '', status: ['ongoing', 'completed', 'breaking'] },
+  'all': { text: '', status: ['ongoing', 'completed', 'breaking', 'cancelled'] },
   'ongoing': { text: '进行中', status: ['ongoing'] },
   'completed': { text: '已完成', status: ['completed'] },
-  'breaking': { text: '审核中', status: ['breaking'] }
+  'breaking': { text: '审核中', status: ['breaking'] },
+  'cancelled': { text: '已取消', status: ['cancelled'] }
 }
 
 Page({
@@ -157,11 +158,13 @@ Page({
       createTime = DateUtil.formatRelativeTime(item.create_time)
     }
 
-    // 申诉按钮显示条件
+    // 申诉按钮显示条件：仅已完成 或 客服裁决取消
     const now = new Date()
-    const expireTime = item.expireTime ? new Date(item.expireTime) : (item.expire_time ? new Date(item.expire_time) : null)
-    const appealDeadline = expireTime ? new Date(expireTime.getTime() + 2 * 60 * 60 * 1000) : null
-    const showAppealBtn = item.status === 'ongoing' &&
+    const isCompleted = item.status === 'completed'
+    const isArbitrationCancelled = item.status === 'cancelled' && item.cancelReason === 'arbitration_cancelled'
+    const endTime = isCompleted ? item.completeTime : (isArbitrationCancelled ? item.cancelTime : null)
+    const appealDeadline = endTime ? new Date(new Date(endTime).getTime() + 2 * 60 * 60 * 1000) : null
+    const showAppealBtn = (isCompleted || isArbitrationCancelled) &&
       !item.hasMyAppeal &&
       appealDeadline &&
       now <= appealDeadline
