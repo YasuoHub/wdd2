@@ -504,9 +504,9 @@ Page({
           isSeeker: !isCustomerServiceMode && result.data.role === 'seeker',
           otherUser: isCustomerServiceMode ? null : result.data.otherUser,
           participants: isCustomerServiceMode ? (result.data.participants || {}) : {},
-          showReportBtn: !isCustomerServiceMode && result.data.status === 'ongoing' &&
+          showReportBtn: !isCustomerServiceMode && (result.data.status === 'ongoing' || result.data.status === 'completed') &&
             !result.data.myReportStatus.hasReport &&
-            (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 2 * 60 * 60 * 1000))
+            (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 72 * 60 * 60 * 1000))
         })
 
         // 设置导航栏标题

@@ -83,12 +83,12 @@ async function submitReport(event, OPENID) {
     return { code: -1, message: '您已对该任务发起过举报，不可重复提交' }
   }
 
-  // 时效校验：仅允许在 expire_time 或 expire_time + 2小时 内提交
+  // 时效校验：任务完成后 72 小时内可举报
   const now = new Date()
   const expireTime = new Date(need.expire_time)
-  const deadline = new Date(expireTime.getTime() + 2 * 60 * 60 * 1000)
+  const deadline = new Date(expireTime.getTime() + 72 * 60 * 60 * 1000)
   if (now > deadline) {
-    return { code: -1, message: '举报时效已过，任务结束后超过2小时无法举报' }
+    return { code: -1, message: '举报时效已过，任务完成后超过72小时无法举报' }
   }
 
   // 内容安全检测
