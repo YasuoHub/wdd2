@@ -213,6 +213,7 @@ function formatPointRecord(item) {
 }
 
 // 格式化时间（用于余额记录）
+// 注意：绝对时间分支强制按北京时间 UTC+8 输出，避免云函数环境时区为 UTC 导致时间差 8 小时
 function formatTime(date) {
   const d = new Date(date)
   const now = new Date()
@@ -228,19 +229,22 @@ function formatTime(date) {
     return Math.floor(diff / 86400000) + '天前'
   }
 
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const bj = new Date(d.getTime() + 8 * 60 * 60 * 1000)
+  const nowBj = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+  const year = bj.getUTCFullYear()
+  const month = String(bj.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(bj.getUTCDate()).padStart(2, '0')
+  const hours = String(bj.getUTCHours()).padStart(2, '0')
+  const minutes = String(bj.getUTCMinutes()).padStart(2, '0')
 
-  if (year === now.getFullYear()) {
+  if (year === nowBj.getUTCFullYear()) {
     return `${month}月${day}日 ${hours}:${minutes}`
   }
   return `${year}年${month}月${day}日 ${hours}:${minutes}`
 }
 
 // 格式化时间文本（用于积分记录，保持兼容）
+// 注意：超过 7 天的日期按北京时间 UTC+8 输出
 function formatTimeText(date) {
   const createTime = new Date(date)
   const now = new Date()
@@ -255,5 +259,6 @@ function formatTimeText(date) {
   } else if (diff < 604800000) {
     return Math.floor(diff / 86400000) + '天前'
   }
-  return `${createTime.getMonth() + 1}月${createTime.getDate()}日`
+  const bj = new Date(createTime.getTime() + 8 * 60 * 60 * 1000)
+  return `${bj.getUTCMonth() + 1}月${bj.getUTCDate()}日`
 }

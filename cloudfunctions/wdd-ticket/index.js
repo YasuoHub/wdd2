@@ -4,12 +4,14 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 格式化日期
+// 格式化日期（强制按北京时间 UTC+8 输出，避免云函数环境时区为 UTC 导致时间差 8 小时）
 function formatDate(date) {
   if (!date) return ''
   const d = new Date(date)
+  if (isNaN(d.getTime())) return ''
+  const bj = new Date(d.getTime() + 8 * 60 * 60 * 1000)
   const pad = n => n.toString().padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${bj.getUTCFullYear()}-${pad(bj.getUTCMonth() + 1)}-${pad(bj.getUTCDate())} ${pad(bj.getUTCHours())}:${pad(bj.getUTCMinutes())}`
 }
 
 // 从 wdd-config 获取客服白名单

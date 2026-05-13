@@ -678,14 +678,16 @@ function getWithdrawStatusText(status) {
   return statusMap[status] || status
 }
 
-// 格式化时间
+// 格式化时间（强制按北京时间 UTC+8 输出，避免云函数环境时区为 UTC 导致时间差 8 小时）
 function formatTime(date) {
   if (!date) return ''
   const d = new Date(date)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hour = String(d.getHours()).padStart(2, '0')
-  const minute = String(d.getMinutes()).padStart(2, '0')
+  if (isNaN(d.getTime())) return ''
+  const bj = new Date(d.getTime() + 8 * 60 * 60 * 1000)
+  const year = bj.getUTCFullYear()
+  const month = String(bj.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(bj.getUTCDate()).padStart(2, '0')
+  const hour = String(bj.getUTCHours()).padStart(2, '0')
+  const minute = String(bj.getUTCMinutes()).padStart(2, '0')
   return `${year}-${month}-${day} ${hour}:${minute}`
 }

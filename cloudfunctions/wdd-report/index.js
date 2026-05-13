@@ -360,7 +360,9 @@ async function sendReportNotice(need, reporterId, reportId, reportTypeLabel) {
     const label = reportTypeLabel || '其他违规行为'
 
     const now = new Date()
-    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    // 强制按北京时间 UTC+8 输出，避免云函数环境时区为 UTC 导致时间差 8 小时
+    const bj = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    const timeStr = `${bj.getUTCFullYear()}-${String(bj.getUTCMonth() + 1).padStart(2, '0')}-${String(bj.getUTCDate()).padStart(2, '0')} ${String(bj.getUTCHours()).padStart(2, '0')}:${String(bj.getUTCMinutes()).padStart(2, '0')}`
 
     const taskNumber = need._id.slice(-8).toUpperCase()
 
