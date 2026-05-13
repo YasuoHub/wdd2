@@ -24,7 +24,7 @@
     <view class="task-card" wx:if="{{task}}">
       <view class="task-header">
         <text class="task-type">{{task.typeName}}</text>
-        <text class="task-points">{{task.points}}积分</text>
+        <text class="task-points">¥{{task.price}}</text>
       </view>
       <text class="task-desc">{{task.description}}</text>
     </view>

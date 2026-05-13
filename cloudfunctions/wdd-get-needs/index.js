@@ -531,7 +531,7 @@ async function getRatingDetail(event, OPENID) {
         task: {
           typeName: typeMap[need.type] || '其他',
           description: need.description,
-          points: need.points
+          price: need.reward_amount || 0
         },
         targetUser: {
           nickname: targetUser.nickname || '未知用户',

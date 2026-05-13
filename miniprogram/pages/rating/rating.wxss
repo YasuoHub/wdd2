@@ -116,17 +116,6 @@
   z-index: 1;
 }
 
-.task-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6rpx;
-  background: linear-gradient(90deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
-  border-radius: 32rpx 32rpx 0 0;
-}
-
 .task-header {
   display: flex;
   justify-content: space-between;

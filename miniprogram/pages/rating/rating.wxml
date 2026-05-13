@@ -12,15 +12,6 @@
     </view>
   </view>
 
-  <!-- 任务信息 -->
-  <view class="task-card">
-    <view class="task-header">
-      <text class="task-type">{{task.typeName}}</text>
-      <text class="task-points">{{task.points}}积分</text>
-    </view>
-    <text class="task-desc">{{task.description}}</text>
-  </view>
-
   <!-- 星级评分 -->
   <view class="rating-section">
     <text class="rating-title">请对本次{{ratingType === 'seeker' ? '帮助' : '求助'}}进行评价</text>
@@ -35,7 +26,6 @@
         <text class="star-icon">{{rating >= item ? '★' : '☆'}}</text>
       </view>
     </view>
-    <text class="rating-text">{{ratingText}}</text>
   </view>
 
   <!-- 评价标签 -->
