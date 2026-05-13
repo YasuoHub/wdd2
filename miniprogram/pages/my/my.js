@@ -321,6 +321,22 @@ Page({
     })
   },
 
+  // 跳转到我的举报
+  goToMyReports() {
+    if (!this.checkLoginAndShowTip()) return
+    wx.navigateTo({
+      url: '/pages/my-reports/my-reports'
+    })
+  },
+
+  // 跳转到我的申诉
+  goToMyAppeals() {
+    if (!this.checkLoginAndShowTip()) return
+    wx.navigateTo({
+      url: '/pages/my-appeals/my-appeals'
+    })
+  },
+
   // 显示邀请弹窗
   showInviteModal() {
     if (!this.checkLoginAndShowTip()) return

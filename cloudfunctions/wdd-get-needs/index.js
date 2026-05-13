@@ -247,14 +247,12 @@ async function getMyNeeds(event, OPENID) {
     .limit(pageSize)
     .get()
 
-  // 预查询当前用户的 pending 举报和申诉记录
+  // 预查询当前用户的举报和申诉记录（含已撤销，一次机会用完即不再显示按钮）
   const myReportRes = await db.collection('wdd-reports').where({
-    reporter_openid: OPENID,
-    status: 'pending'
+    reporter_openid: OPENID
   }).get()
   const myAppealRes = await db.collection('wdd-appeals').where({
-    initiator_openid: OPENID,
-    status: 'pending'
+    initiator_openid: OPENID
   }).get()
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
@@ -321,14 +319,12 @@ async function getMyTasks(event, OPENID) {
     .limit(pageSize)
     .get()
 
-  // 预查询当前用户的 pending 举报和申诉记录
+  // 预查询当前用户的举报和申诉记录（含已撤销，一次机会用完即不再显示按钮）
   const myReportRes = await db.collection('wdd-reports').where({
-    reporter_openid: OPENID,
-    status: 'pending'
+    reporter_openid: OPENID
   }).get()
   const myAppealRes = await db.collection('wdd-appeals').where({
-    initiator_openid: OPENID,
-    status: 'pending'
+    initiator_openid: OPENID
   }).get()
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))

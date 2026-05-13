@@ -581,19 +581,42 @@ async function submitArbitration(event, OPENID) {
       // 部分完成：双方均不扣信誉分
     }
 
-    // 4. 更新任务状态
+    // 4. 更新对应的举报/申诉状态
+    if (ticket.type === 'report' && ticket.report_id) {
+      await transaction.collection('wdd-reports').doc(ticket.report_id).update({
+        data: {
+          status: 'resolved',
+          update_time: new Date()
+        }
+      })
+    } else if (ticket.type === 'appeal' && ticket.appeal_id) {
+      await transaction.collection('wdd-appeals').doc(ticket.appeal_id).update({
+        data: {
+          status: 'resolved',
+          update_time: new Date()
+        }
+      })
+    }
+
+    // 5. 更新任务状态（同时清除对应的举报/申诉标记）
+    const needUpdateData = {
+      status: finalStatus,
+      platform_fee: platformFee,
+      taker_income: takerIncome,
+      update_time: new Date(),
+      ...(taskResult === 'completed' ? { complete_time: new Date() } : {}),
+      ...(taskResult === 'cancelled' ? { cancel_time: new Date(), cancel_reason: 'arbitration_cancelled' } : {})
+    }
+    if (ticket.type === 'report') {
+      needUpdateData.has_report = false
+    } else if (ticket.type === 'appeal') {
+      needUpdateData.has_appeal = false
+    }
     await transaction.collection('wdd-needs').doc(need._id).update({
-      data: {
-        status: finalStatus,
-        platform_fee: platformFee,
-        taker_income: takerIncome,
-        update_time: new Date(),
-        ...(taskResult === 'completed' ? { complete_time: new Date() } : {}),
-        ...(taskResult === 'cancelled' ? { cancel_time: new Date(), cancel_reason: 'arbitration_cancelled' } : {})
-      }
+      data: needUpdateData
     })
 
-    // 5. 处理封禁
+    // 6. 处理封禁
     if (banInfo && banInfo.target !== 'none') {
       const banEndTime = calculateBanEndTime(banInfo.duration)
       const banData = {
@@ -617,7 +640,7 @@ async function submitArbitration(event, OPENID) {
 
     await transaction.commit()
 
-    // 6. 发送站内消息通知（事务外）
+    // 7. 发送站内消息通知（事务外）
     await sendArbitrationNotifications(need, takerRecord, taskResult, partialPercent, takerIncome, seekerRefund, banInfo)
 
     return {
@@ -750,14 +773,31 @@ async function autoCancelTimeout(event) {
           }
         })
 
-        // 更新任务状态
+        // 更新对应的举报/申诉状态
+        if (ticket.type === 'report' && ticket.report_id) {
+          await transaction.collection('wdd-reports').doc(ticket.report_id).update({
+            data: { status: 'resolved', update_time: new Date() }
+          })
+        } else if (ticket.type === 'appeal' && ticket.appeal_id) {
+          await transaction.collection('wdd-appeals').doc(ticket.appeal_id).update({
+            data: { status: 'resolved', update_time: new Date() }
+          })
+        }
+
+        // 更新任务状态（同时清除对应的举报/申诉标记）
+        const needUpdateData = {
+          status: 'cancelled',
+          cancel_time: new Date(),
+          cancel_reason: 'arbitration_timeout_auto_cancel',
+          update_time: new Date()
+        }
+        if (ticket.type === 'report') {
+          needUpdateData.has_report = false
+        } else if (ticket.type === 'appeal') {
+          needUpdateData.has_appeal = false
+        }
         await transaction.collection('wdd-needs').doc(need._id).update({
-          data: {
-            status: 'cancelled',
-            cancel_time: new Date(),
-            cancel_reason: 'arbitration_timeout_auto_cancel',
-            update_time: new Date()
-          }
+          data: needUpdateData
         })
 
         // 退款给求助者

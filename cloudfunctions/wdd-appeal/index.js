@@ -25,6 +25,10 @@ exports.main = async (event, context) => {
         return await getAppealDetail(event, OPENID)
       case 'checkSupplementTimeout':
         return await checkSupplementTimeout(event)
+      case 'getMyAppealList':
+        return await getMyAppealList(event, OPENID)
+      case 'getAppealDetailById':
+        return await getAppealDetailById(event, OPENID)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -70,14 +74,13 @@ async function submitAppeal(event, OPENID) {
     return { code: -1, message: '当前任务状态不允许申诉' }
   }
 
-  // 检查当前用户是否已对该任务有 pending 的申诉
+  // 检查当前用户是否已对该任务有过申诉（含已撤销，一次机会）
   const existingAppealRes = await db.collection('wdd-appeals').where({
     need_id: needId,
-    initiator_openid: OPENID,
-    status: 'pending'
+    initiator_openid: OPENID
   }).get()
   if (existingAppealRes.data.length > 0) {
-    return { code: -1, message: '您已对该任务发起过申诉，不可重复提交' }
+    return { code: -1, message: '您已对该任务发起过申诉（含已撤销），不可再次申诉' }
   }
 
   // 时效校验：任务结束后 2 小时内可申诉
@@ -153,6 +156,7 @@ async function submitAppeal(event, OPENID) {
       data: {
         status: 'breaking',
         has_appeal: true,
+        was_appealed: true,
         update_time: new Date()
       }
     })
@@ -506,6 +510,115 @@ async function checkSupplementTimeout(event) {
     code: 0,
     message: `检查了 ${appealRes.data.length} 条申诉，标记了 ${results.filter(r => r.status === 'timeout_marked').length} 条超时`,
     data: { results }
+  }
+}
+
+// 查询我的申诉列表
+async function getMyAppealList(event, OPENID) {
+  const { status, skip = 0, limit = 20 } = event
+
+  // 构建状态筛选
+  let statusFilter
+  if (status === 'pending') {
+    statusFilter = 'pending'
+  } else if (status === 'processed') {
+    statusFilter = _.in(['cancelled', 'resolved'])
+  } else {
+    return { code: -1, message: 'status 参数无效，可选值：pending / processed' }
+  }
+
+  // 查询申诉列表
+  const query = db.collection('wdd-appeals').where({
+    initiator_openid: OPENID,
+    status: statusFilter
+  }).orderBy('create_time', 'desc').skip(skip).limit(limit)
+
+  const countQuery = db.collection('wdd-appeals').where({
+    initiator_openid: OPENID,
+    status: statusFilter
+  }).count()
+
+  const [appealRes, countRes] = await Promise.all([query.get(), countQuery])
+
+  const list = appealRes.data
+  const hasMore = skip + list.length < countRes.total
+
+  if (list.length === 0) {
+    return { code: 0, data: { list: [], hasMore: false, total: 0 } }
+  }
+
+  // 批量查关联任务信息
+  const needIds = [...new Set(list.map(a => a.need_id))]
+  const needRes = await db.collection('wdd-needs').where({
+    _id: _.in(needIds)
+  }).get()
+  const needMap = {}
+  needRes.data.forEach(n => {
+    needMap[n._id] = {
+      type: n.type,
+      typeName: n.type_name || n.typeName || '',
+      rewardAmount: n.reward_amount || n.rewardAmount || 0
+    }
+  })
+
+  // 组装返回数据
+  const enrichedList = list.map(a => ({
+    _id: a._id,
+    needId: a.need_id,
+    appealType: a.initiator_type,
+    appealTypeLabel: a.initiator_type_label || a.initiator_type,
+    reason: a.initiator_reason,
+    images: a.initiator_images || [],
+    status: a.status,
+    createTime: a.create_time,
+    cancelTime: a.cancel_time || null,
+    updateTime: a.update_time,
+    taskInfo: needMap[a.need_id] || null
+  }))
+
+  return {
+    code: 0,
+    data: { list: enrichedList, hasMore, total: countRes.total }
+  }
+}
+
+// 按 ID 查询申诉详情
+async function getAppealDetailById(event, OPENID) {
+  const { appealId } = event
+
+  if (!appealId) {
+    return { code: -1, message: '申诉ID不能为空' }
+  }
+
+  const appealRes = await db.collection('wdd-appeals').doc(appealId).get()
+  if (!appealRes.data) {
+    return { code: -1, message: '申诉记录不存在' }
+  }
+  const appeal = appealRes.data
+
+  // 只允许申诉发起人查看
+  if (appeal.initiator_openid !== OPENID) {
+    return { code: -1, message: '无权查看此申诉' }
+  }
+
+  return {
+    code: 0,
+    data: {
+      _id: appeal._id,
+      needId: appeal.need_id,
+      appealType: appeal.initiator_type,
+      appealTypeLabel: appeal.initiator_type_label || appeal.initiator_type,
+      reason: appeal.initiator_reason,
+      images: appeal.initiator_images || [],
+      status: appeal.status,
+      createTime: appeal.create_time,
+      cancelTime: appeal.cancel_time || null,
+      updateTime: appeal.update_time,
+      hasSupplement: appeal.has_supplement || false,
+      supplementType: appeal.supplement_type || null,
+      supplementReason: appeal.supplement_reason || null,
+      supplementImages: appeal.supplement_images || []
+    }
   }
 }
 

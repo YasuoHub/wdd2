@@ -1,0 +1,163 @@
+/* 举报/申诉详情页样式 */
+
+.page-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background: linear-gradient(
+    180deg,
+    var(--bg-primary, #f0f8ff) 0%,
+    var(--bg-secondary, #e6f3ff) 30%,
+    var(--bg-tertiary, #e8f4fd) 70%,
+    #f5faff 100%
+  );
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 24rpx 32rpx 60rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.loading-wrap, .empty-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 200rpx 0;
+  color: var(--text-secondary);
+  font-size: 28rpx;
+}
+
+/* 状态标签 — 行内样式 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8rpx 16rpx;
+}
+
+.inline-status {
+  display: inline-block;
+  padding: 6rpx 20rpx;
+  border-radius: var(--radius-full, 9999rpx);
+  font-size: 22rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.inline-status.status-pending {
+  background: rgba(225, 112, 85, 0.1);
+  color: #e17055;
+}
+
+.inline-status.status-cancelled {
+  background: rgba(178, 190, 195, 0.12);
+  color: #636e72;
+}
+
+.inline-status.status-resolved {
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+}
+
+/* 区块 */
+.section {
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-card {
+  background: var(--bg-card, #fff);
+  border-radius: var(--radius-md, 28rpx);
+  padding: 28rpx;
+  box-shadow: var(--shadow-sm, 0 2rpx 12rpx rgba(93,184,230,0.08));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 信息行 */
+.info-row {
+  padding: 14rpx 0;
+}
+
+.info-row + .info-row {
+  border-top: 1rpx solid rgba(0, 0, 0, 0.04);
+}
+
+.info-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-bottom: 8rpx;
+}
+
+.info-value {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.type-tag {
+  display: inline-block;
+  padding: 6rpx 20rpx;
+  background: rgba(253, 121, 168, 0.1);
+  color: #e17055;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+}
+
+.type-tag.muted {
+  background: rgba(178, 190, 195, 0.12);
+  color: #636e72;
+}
+
+/* 图片 */
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.thumb {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  background: var(--bg-secondary);
+}
+
+/* 查看关联任务按钮 */
+.task-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  background: var(--bg-card, #fff);
+  border-radius: var(--radius-md, 28rpx);
+  padding: 28rpx;
+  font-size: 30rpx;
+  color: var(--sky-primary, #5db8e6);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm, 0 2rpx 12rpx rgba(93,184,230,0.08));
+}
+
+.task-link-btn-hover {
+  background: rgba(93, 184, 230, 0.08);
+}
+
+.link-arrow {
+  font-size: 34rpx;
+}

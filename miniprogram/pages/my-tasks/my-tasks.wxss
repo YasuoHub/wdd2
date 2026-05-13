@@ -173,6 +173,11 @@
   color: var(--fresh-green);
 }
 
+.status-badge.breaking {
+  background: rgba(255, 193, 7, 0.12);
+  color: #C7910B;
+}
+
 /* 求助者信息 */
 .seeker-info {
   display: flex;

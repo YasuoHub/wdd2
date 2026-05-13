@@ -1,0 +1,162 @@
+<!-- 我的申诉列表 -->
+<view class="page-bg"></view>
+
+<view class="container">
+  <view class="tab-wrap">
+    <view class="tab-bar">
+      <view
+        class="tab-item {{activeTab === 'pending' ? 'active' : ''}}"
+        data-tab="pending"
+        bindtap="switchTab"
+      >
+        <text>处理中</text>
+      </view>
+      <view
+        class="tab-item {{activeTab === 'processed' ? 'active' : ''}}"
+        data-tab="processed"
+        bindtap="switchTab"
+      >
+        <text>已处理</text>
+      </view>
+      <view class="tab-indicator {{activeTab === 'pending' ? 'left' : 'right'}}"></view>
+    </view>
+  </view>
+
+  <!-- 处理中 -->
+  <scroll-view
+    wx:if="{{activeTab === 'pending'}}"
+    class="list-scroll"
+    scroll-y
+    bindscrolltolower="loadMore"
+    lower-threshold="100"
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view wx:if="{{loading && pendingList.length === 0}}" class="skeleton-list">
+      <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-card">
+        <view class="sk-header">
+          <view class="sk-tag"></view>
+          <view class="sk-badge"></view>
+        </view>
+        <view class="sk-line long"></view>
+        <view class="sk-line short"></view>
+        <view class="sk-footer">
+          <view class="sk-time"></view>
+          <view class="sk-btns">
+            <view class="sk-btn"></view>
+            <view class="sk-btn"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:elif="{{pendingList.length === 0}}" class="empty-state">
+      <view class="empty-illustration">
+        <text class="empty-icon">📝</text>
+      </view>
+      <text class="empty-title">暂无处理中的申诉</text>
+      <text class="empty-desc">你提交的申诉会显示在这里</text>
+    </view>
+
+    <view wx:else class="card-list">
+      <view wx:for="{{pendingList}}" wx:key="_id" class="card">
+        <view class="card-accent" style="background: {{item.taskColor}};"></view>
+        <view class="card-main">
+          <view class="card-header">
+            <view class="type-tag-wrap">
+              <text class="type-tag">{{item.appealTypeLabel}}</text>
+            </view>
+          </view>
+          <view class="card-body">
+            <text class="reason-text">{{item.reason}}</text>
+          </view>
+          <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
+            <text class="task-icon">{{item.taskIcon}}</text>
+            <text class="task-type">{{item.taskInfo.typeName}}</text>
+            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{item.taskInfo.rewardAmount}}</text>
+          </view>
+          <view class="card-footer">
+            <text class="time-text">生成时间：{{item.createTimeText || ''}}</text>
+            <view class="card-actions">
+              <view class="btn btn-cancel" data-id="{{item._id}}" bindtap="cancelAppeal" hover-class="btn-cancel-hover">
+                <text>撤销</text>
+              </view>
+              <view class="btn btn-detail" data-id="{{item._id}}" bindtap="goDetail" hover-class="btn-detail-hover">
+                <text>详情</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!pendingHasMore && pendingList.length > 0}}" class="no-more">— 没有更多了 —</view>
+  </scroll-view>
+
+  <!-- 已处理 -->
+  <scroll-view
+    wx:if="{{activeTab === 'processed'}}"
+    class="list-scroll"
+    scroll-y
+    bindscrolltolower="loadMore"
+    lower-threshold="100"
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view wx:if="{{loading && processedList.length === 0}}" class="skeleton-list">
+      <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-card">
+        <view class="sk-header">
+          <view class="sk-tag"></view>
+          <view class="sk-badge"></view>
+        </view>
+        <view class="sk-line long"></view>
+        <view class="sk-line short"></view>
+        <view class="sk-footer">
+          <view class="sk-time"></view>
+          <view class="sk-btns">
+            <view class="sk-btn"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:elif="{{processedList.length === 0}}" class="empty-state">
+      <view class="empty-illustration">
+        <text class="empty-icon">✅</text>
+      </view>
+      <text class="empty-title">暂无已处理的申诉</text>
+      <text class="empty-desc">已处理的申诉会归档到这里</text>
+    </view>
+
+    <view wx:else class="card-list">
+      <view wx:for="{{processedList}}" wx:key="_id" class="card processed">
+        <view class="card-accent" style="background: {{item.status === 'cancelled' ? '#b2bec3' : item.taskColor}};"></view>
+        <view class="card-main">
+          <view class="card-header">
+            <view class="type-tag-wrap">
+              <text class="type-tag {{item.status === 'cancelled' ? 'cancelled' : ''}}">{{item.appealTypeLabel}}</text>
+            </view>
+          </view>
+          <view class="card-body">
+            <text class="reason-text">{{item.reason}}</text>
+          </view>
+          <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
+            <text class="task-icon">{{item.taskIcon}}</text>
+            <text class="task-type">{{item.taskInfo.typeName}}</text>
+            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{item.taskInfo.rewardAmount}}</text>
+          </view>
+          <view class="card-footer">
+            <text class="time-text">生成时间：{{item.createTimeText || ''}}</text>
+            <view class="card-actions">
+              <view class="btn btn-detail" data-id="{{item._id}}" bindtap="goDetail" hover-class="btn-detail-hover">
+                <text>详情</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!processedHasMore && processedList.length > 0}}" class="no-more">— 没有更多了 —</view>
+  </scroll-view>
+</view>

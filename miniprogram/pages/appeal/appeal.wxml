@@ -77,11 +77,6 @@
       <view class="success-title">申诉提交成功</view>
       <view class="success-desc">平台将依据您提交的证据进行仲裁处理，请耐心等待</view>
 
-      <!-- 倒计时撤销 -->
-      <view wx:if="{{canCancel}}" class="countdown-bar">
-        <text class="countdown-text">审核中，可随时撤销</text>
-      </view>
-
       <button wx:if="{{canCancel}}" class="cancel-btn" bindtap="cancelAppeal">撤销申诉</button>
       <button class="back-btn" bindtap="goBack">返回</button>
     </view>

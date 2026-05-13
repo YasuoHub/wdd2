@@ -1,0 +1,2 @@
+/* 我的申诉列表页样式 - 复用举报列表样式 */
+@import '../my-reports/my-reports.wxss';

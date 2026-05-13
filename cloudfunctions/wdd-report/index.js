@@ -27,6 +27,10 @@ exports.main = async (event, context) => {
         return await getReportDetail(event, OPENID)
       case 'checkSupplementTimeout':
         return await checkSupplementTimeout(event)
+      case 'getMyReportList':
+        return await getMyReportList(event, OPENID)
+      case 'getReportDetailById':
+        return await getReportDetailById(event, OPENID)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -73,14 +77,13 @@ async function submitReport(event, OPENID) {
     return { code: -1, message: '当前任务状态不允许举报' }
   }
 
-  // 检查当前用户是否已对该任务有 pending 的举报
+  // 检查当前用户是否已对该任务有过举报（含已撤销，一次机会）
   const existingReportRes = await db.collection('wdd-reports').where({
     need_id: needId,
-    reporter_openid: OPENID,
-    status: 'pending'
+    reporter_openid: OPENID
   }).get()
   if (existingReportRes.data.length > 0) {
-    return { code: -1, message: '您已对该任务发起过举报，不可重复提交' }
+    return { code: -1, message: '您已对该任务发起过举报（含已撤销），不可再次举报' }
   }
 
   // 时效校验：任务完成后 72 小时内可举报
@@ -158,6 +161,7 @@ async function submitReport(event, OPENID) {
       data: {
         status: 'breaking',
         has_report: true,
+        was_reported: true,
         update_time: new Date()
       }
     })
@@ -593,5 +597,114 @@ async function checkSupplementTimeout(event) {
     code: 0,
     message: `检查了 ${reportRes.data.length} 条举报，标记了 ${results.filter(r => r.status === 'timeout_marked').length} 条超时`,
     data: { results }
+  }
+}
+
+// 查询我的举报列表
+async function getMyReportList(event, OPENID) {
+  const { status, skip = 0, limit = 20 } = event
+
+  // 构建状态筛选
+  let statusFilter
+  if (status === 'pending') {
+    statusFilter = 'pending'
+  } else if (status === 'processed') {
+    statusFilter = _.in(['cancelled', 'resolved'])
+  } else {
+    return { code: -1, message: 'status 参数无效，可选值：pending / processed' }
+  }
+
+  // 查询举报列表
+  const query = db.collection('wdd-reports').where({
+    reporter_openid: OPENID,
+    status: statusFilter
+  }).orderBy('create_time', 'desc').skip(skip).limit(limit)
+
+  const countQuery = db.collection('wdd-reports').where({
+    reporter_openid: OPENID,
+    status: statusFilter
+  }).count()
+
+  const [reportRes, countRes] = await Promise.all([query.get(), countQuery])
+
+  const list = reportRes.data
+  const hasMore = skip + list.length < countRes.total
+
+  if (list.length === 0) {
+    return { code: 0, data: { list: [], hasMore: false, total: 0 } }
+  }
+
+  // 批量查关联任务信息
+  const needIds = [...new Set(list.map(r => r.need_id))]
+  const needRes = await db.collection('wdd-needs').where({
+    _id: _.in(needIds)
+  }).get()
+  const needMap = {}
+  needRes.data.forEach(n => {
+    needMap[n._id] = {
+      type: n.type,
+      typeName: n.type_name || n.typeName || '',
+      rewardAmount: n.reward_amount || n.rewardAmount || 0
+    }
+  })
+
+  // 组装返回数据
+  const enrichedList = list.map(r => ({
+    _id: r._id,
+    needId: r.need_id,
+    reportType: r.report_type,
+    reportTypeLabel: r.report_type_label || r.report_type,
+    reason: r.reason,
+    images: r.images || [],
+    status: r.status,
+    createTime: r.create_time,
+    cancelTime: r.cancel_time || null,
+    updateTime: r.update_time,
+    taskInfo: needMap[r.need_id] || null
+  }))
+
+  return {
+    code: 0,
+    data: { list: enrichedList, hasMore, total: countRes.total }
+  }
+}
+
+// 按 ID 查询举报详情
+async function getReportDetailById(event, OPENID) {
+  const { reportId } = event
+
+  if (!reportId) {
+    return { code: -1, message: '举报ID不能为空' }
+  }
+
+  const reportRes = await db.collection('wdd-reports').doc(reportId).get()
+  if (!reportRes.data) {
+    return { code: -1, message: '举报记录不存在' }
+  }
+  const report = reportRes.data
+
+  // 只允许举报发起人查看
+  if (report.reporter_openid !== OPENID) {
+    return { code: -1, message: '无权查看此举报' }
+  }
+
+  return {
+    code: 0,
+    data: {
+      _id: report._id,
+      needId: report.need_id,
+      reportType: report.report_type,
+      reportTypeLabel: report.report_type_label || report.report_type,
+      reason: report.reason,
+      images: report.images || [],
+      status: report.status,
+      createTime: report.create_time,
+      cancelTime: report.cancel_time || null,
+      updateTime: report.update_time,
+      hasSupplement: report.has_supplement || false,
+      supplementType: report.supplement_type || null,
+      supplementReason: report.supplement_reason || null,
+      supplementImages: report.supplement_images || []
+    }
   }
 }

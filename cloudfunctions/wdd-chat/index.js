@@ -146,13 +146,11 @@ async function getTaskInfo(event, OPENID) {
       : Promise.resolve(null),
     db.collection('wdd-reports').where({
       need_id: needId,
-      reporter_openid: OPENID,
-      status: 'pending'
+      reporter_openid: OPENID
     }).orderBy('create_time', 'desc').limit(1).get().catch(() => ({ data: [] })),
     db.collection('wdd-appeals').where({
       need_id: needId,
-      initiator_openid: OPENID,
-      status: 'pending'
+      initiator_openid: OPENID
     }).orderBy('create_time', 'desc').limit(1).get().catch(() => ({ data: [] }))
   ])
 

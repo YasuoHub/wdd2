@@ -222,6 +222,11 @@ page {
   color: #E86A4A;
 }
 
+.status-badge.breaking {
+  background: rgba(255, 193, 7, 0.12);
+  color: #C7910B;
+}
+
 /* 卡片内容 */
 .card-content {
   margin-bottom: 16rpx;
