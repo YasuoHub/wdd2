@@ -79,7 +79,7 @@
 
       <!-- 倒计时撤销 -->
       <view wx:if="{{canCancel}}" class="countdown-bar">
-        <text class="countdown-text">{{countdownText}} 内可撤销</text>
+        <text class="countdown-text">审核中，可随时撤销</text>
       </view>
 
       <button wx:if="{{canCancel}}" class="cancel-btn" bindtap="cancelAppeal">撤销申诉</button>
@@ -93,7 +93,7 @@
     <view class="modal-content">
       <view class="modal-title">确认提交申诉</view>
       <view class="modal-body">
-        提交申诉后，任务将进入客服评审状态，将关闭双方聊天通道，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在提交后5分钟内撤销本次申诉，撤销后恢复正常任务流程。
+        提交申诉后，任务将进入客服评审状态，将关闭双方聊天通道，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在客服处理前随时撤销本次申诉，撤销后恢复正常任务流程。
       </view>
       <view class="modal-footer">
         <button class="modal-btn cancel" bindtap="hideConfirm">取消</button>

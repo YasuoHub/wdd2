@@ -208,14 +208,7 @@ async function cancelReport(event, OPENID) {
     return { code: -1, message: '无权撤销此举报' }
   }
 
-  // 校验：创建时间在 5 分钟内
-  const createTime = new Date(report.create_time)
-  const now = new Date()
-  if (now.getTime() - createTime.getTime() > 5 * 60 * 1000) {
-    return { code: -1, message: '撤销时效已过，提交后超过5分钟无法撤销' }
-  }
-
-  // 校验：工单状态为 pending
+  // 校验：工单状态为 pending（客服未处理）
   const ticketRes = await db.collection('wdd-tickets').where({
     report_id: reportId
   }).get()
@@ -315,9 +308,7 @@ async function getReportStatus(event, OPENID) {
   }
 
   const report = reportRes.data[0]
-  const now = new Date()
-  const createTime = new Date(report.create_time)
-  const canCancel = report.status === 'pending' && (now.getTime() - createTime.getTime() <= 5 * 60 * 1000)
+  const canCancel = report.status === 'pending'
 
   return {
     code: 0,
@@ -329,8 +320,7 @@ async function getReportStatus(event, OPENID) {
       reportTypeLabel: report.report_type_label || report.report_type,
       reason: report.reason,
       createTime: report.create_time,
-      canCancel: canCancel,
-      cancelDeadline: new Date(createTime.getTime() + 5 * 60 * 1000)
+      canCancel: canCancel
     }
   }
 }
@@ -528,11 +518,9 @@ async function getReportDetail(event, OPENID) {
     !report.is_supplement_timeout &&
     now <= deadline
 
-  // 计算是否可以撤销
-  const createTime = new Date(report.create_time)
+  // 计算是否可以撤销（客服处理前随时可撤销）
   const canCancel = report.status === 'pending' &&
-    report.reporter_id === user._id &&
-    (now.getTime() - createTime.getTime() <= 5 * 60 * 1000)
+    report.reporter_id === user._id
 
   // 计算当前用户作为补充方的已提交材料
   let mySupplement = null
@@ -565,7 +553,6 @@ async function getReportDetail(event, OPENID) {
       isSupplementTimeout: report.is_supplement_timeout,
       canSupplement: canSupplement,
       canCancel: canCancel,
-      cancelDeadline: new Date(createTime.getTime() + 5 * 60 * 1000),
       createTime: report.create_time
     }
   }

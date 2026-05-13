@@ -203,14 +203,7 @@ async function cancelAppeal(event, OPENID) {
     return { code: -1, message: '无权撤销此申诉' }
   }
 
-  // 校验：创建时间在 5 分钟内
-  const createTime = new Date(appeal.create_time)
-  const now = new Date()
-  if (now.getTime() - createTime.getTime() > 5 * 60 * 1000) {
-    return { code: -1, message: '撤销时效已过，提交后超过5分钟无法撤销' }
-  }
-
-  // 校验：工单状态为 pending
+  // 校验：工单状态为 pending（客服未处理）
   const ticketRes = await db.collection('wdd-tickets').where({
     appeal_id: appealId
   }).get()
@@ -440,11 +433,9 @@ async function getAppealDetail(event, OPENID) {
     !appeal.is_supplement_timeout &&
     now <= deadline
 
-  // 计算是否可以撤销
-  const createTime = new Date(appeal.create_time)
+  // 计算是否可以撤销（客服处理前随时可撤销）
   const canCancel = appeal.status === 'pending' &&
-    appeal.initiator_id === user._id &&
-    (now.getTime() - createTime.getTime() <= 5 * 60 * 1000)
+    appeal.initiator_id === user._id
 
   return {
     code: 0,
@@ -475,7 +466,6 @@ async function getAppealDetail(event, OPENID) {
       isSupplementTimeout: appeal.is_supplement_timeout,
       canSupplement: canSupplement,
       canCancel: canCancel,
-      cancelDeadline: new Date(createTime.getTime() + 5 * 60 * 1000),
       createTime: appeal.create_time
     }
   }

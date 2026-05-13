@@ -18,8 +18,6 @@ Page({
     reportId: '',
     ticketId: '',
     canCancel: true,
-    countdownText: '05:00',
-    countdownSeconds: 300,
     // 补充材料模式
     opponentInfo: null,
     mySupplement: null,
@@ -240,10 +238,8 @@ Page({
             isSubmitted: true,
             reportId: result.data.reportId,
             ticketId: result.data.ticketId,
-            canCancel: true,
-            countdownSeconds: 300
+            canCancel: true
           })
-          this.startCountdown()
           // 通知上一页刷新
           const pages = getCurrentPages()
           const prevPage = pages[pages.length - 2]
@@ -261,30 +257,6 @@ Page({
       this.setData({ isSubmitting: false })
       wx.showToast({ title: err.message || '提交失败', icon: 'none' })
     }
-  },
-
-  // 启动倒计时
-  startCountdown() {
-    this.countdownTimer = setInterval(() => {
-      const { countdownSeconds } = this.data
-      if (countdownSeconds <= 1) {
-        clearInterval(this.countdownTimer)
-        this.setData({
-          canCancel: false,
-          countdownText: '00:00'
-        })
-        return
-      }
-
-      const newSeconds = countdownSeconds - 1
-      const minutes = Math.floor(newSeconds / 60).toString().padStart(2, '0')
-      const seconds = (newSeconds % 60).toString().padStart(2, '0')
-
-      this.setData({
-        countdownSeconds: newSeconds,
-        countdownText: `${minutes}:${seconds}`
-      })
-    }, 1000)
   },
 
   // 撤销举报
@@ -312,11 +284,6 @@ Page({
 
             if (result.code === 0) {
               wx.showToast({ title: '撤销成功', icon: 'success' })
-
-              // 清除倒计时
-              if (this.countdownTimer) {
-                clearInterval(this.countdownTimer)
-              }
 
               // 返回上一页
               setTimeout(() => {
@@ -353,9 +320,6 @@ Page({
   },
 
   onUnload() {
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer)
-    }
     if (this.supplementTimer) {
       clearInterval(this.supplementTimer)
     }

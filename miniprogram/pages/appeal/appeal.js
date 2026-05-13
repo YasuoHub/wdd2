@@ -31,8 +31,6 @@ Page({
     isSubmitted: false,
     appealId: '',
     canCancel: true,
-    countdownText: '05:00',
-    countdownSeconds: 300,
     opponentInfo: null,
     taskSummary: null,
     supplementDeadline: null,
@@ -184,8 +182,7 @@ Page({
       if (result.code === 0) {
         wx.showToast({ title: '提交成功', icon: 'success' })
         if (mode === 'initiate') {
-          this.setData({ isSubmitted: true, appealId: result.data.appealId, canCancel: true, countdownSeconds: 300 })
-          this.startCountdown()
+          this.setData({ isSubmitted: true, appealId: result.data.appealId, canCancel: true })
         } else {
           setTimeout(() => { wx.navigateBack() }, 1500)
         }
@@ -197,21 +194,6 @@ Page({
       this.setData({ isSubmitting: false })
       wx.showToast({ title: err.message || '提交失败', icon: 'none' })
     }
-  },
-
-  startCountdown() {
-    this.countdownTimer = setInterval(() => {
-      const { countdownSeconds } = this.data
-      if (countdownSeconds <= 1) {
-        clearInterval(this.countdownTimer)
-        this.setData({ canCancel: false, countdownText: '00:00' })
-        return
-      }
-      const newSeconds = countdownSeconds - 1
-      const minutes = Math.floor(newSeconds / 60).toString().padStart(2, '0')
-      const seconds = (newSeconds % 60).toString().padStart(2, '0')
-      this.setData({ countdownSeconds: newSeconds, countdownText: `${minutes}:${seconds}` })
-    }, 1000)
   },
 
   async cancelAppeal() {
@@ -230,7 +212,6 @@ Page({
             wx.hideLoading()
             if (result.code === 0) {
               wx.showToast({ title: '撤销成功', icon: 'success' })
-              if (this.countdownTimer) clearInterval(this.countdownTimer)
               setTimeout(() => { wx.navigateBack() }, 1500)
             } else {
               wx.showToast({ title: result.message || '撤销失败', icon: 'none' })
@@ -259,7 +240,6 @@ Page({
   },
 
   onUnload() {
-    if (this.countdownTimer) clearInterval(this.countdownTimer)
     if (this.supplementTimer) clearInterval(this.supplementTimer)
   }
 })
