@@ -104,8 +104,8 @@ async function getTaskInfo(event, OPENID) {
     return { code: -1, message: '无权查看此任务' }
   }
 
-  // 客服模式：返回双方用户信息
-  if (isCs) {
+  // 客服模式：纯客服（非任务参与者）返回双方信息，不含操作权限
+  if (isCs && !isSeeker && !isTaker) {
     const takerUserId = taker ? taker.taker_id : null
     const userIds = [need.user_id, takerUserId].filter(Boolean)
 
