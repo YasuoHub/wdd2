@@ -1404,6 +1404,7 @@ Page({
   goToReport() {
     const { task } = this.data
     if (!task._id) return
+    this.setData({ showTaskMenu: false })
     wx.navigateTo({
       url: `/pages/report/report?needId=${task._id}`
     })
@@ -1413,6 +1414,7 @@ Page({
   goToTaskDetail() {
     const { task } = this.data
     if (!task._id) return
+    this.setData({ showTaskMenu: false })
     wx.navigateTo({
       url: `/pages/task-detail/task-detail?id=${task._id}`
     })
