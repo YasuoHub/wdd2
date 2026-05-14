@@ -139,6 +139,7 @@ async function getTicketList(event, OPENID) {
       type: ticket.type,
       needId: ticket.need_id,
       status: ticket.status,
+      taskType: need ? need.type : '',
       taskTitle: need ? need.type_name : '未知任务',
       taskNumber: need ? need._id.toUpperCase() : '',
       rewardAmount: need ? need.reward_amount : 0,
