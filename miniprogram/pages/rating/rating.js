@@ -87,11 +87,11 @@ Page({
         // 根据评价类型确定评价对象
         const isSeeker = this.data.ratingType === 'seeker'
         const targetUser = isSeeker ? {
-          nickname: taskData.taker_nickname,
-          avatar: taskData.taker_avatar
+          nickname: taskData.takerNickname,
+          avatar: taskData.takerAvatar
         } : {
-          nickname: taskData.user_nickname,
-          avatar: taskData.user_avatar
+          nickname: taskData.seekerNickname,
+          avatar: taskData.seekerAvatar
         }
 
         this.setData({

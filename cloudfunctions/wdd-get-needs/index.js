@@ -9,6 +9,23 @@ const db = cloud.database()
 const _ = db.command
 const $ = db.command.aggregate
 
+// 批量获取用户头像和昵称
+async function batchGetUserMap(userIds) {
+  const map = new Map()
+  if (!userIds || userIds.length === 0) return map
+  const uniqueIds = [...new Set(userIds.filter(Boolean))]
+  if (uniqueIds.length === 0) return map
+  try {
+    const res = await db.collection('wdd-users')
+      .where({ _id: _.in(uniqueIds) })
+      .get()
+    res.data.forEach(u => map.set(u._id, { nickname: u.nickname, avatar: u.avatar }))
+  } catch (err) {
+    console.error('批量获取用户信息失败:', err)
+  }
+  return map
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { action } = event
@@ -190,8 +207,12 @@ async function getPublicNeeds(event, OPENID) {
   const endIndex = startIndex + pageSize
   const pagedList = list.slice(startIndex, endIndex)
 
+  // 批量查询用户最新头像和昵称
+  const userIds = [...new Set(pagedList.map(item => item.user_id).filter(Boolean))]
+  const userMap = await batchGetUserMap(userIds)
+
   // 格式化数据
-  const formattedList = pagedList.map(item => formatNeedItem(item, userProfile))
+  const formattedList = pagedList.map(item => formatNeedItem(item, userProfile, null, null, userMap))
 
   return {
     code: 0,
@@ -257,10 +278,14 @@ async function getMyNeeds(event, OPENID) {
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
 
+  // 批量查询求助者最新头像和昵称
+  const myNeedsUserIds = [...new Set(listRes.data.map(item => item.user_id).filter(Boolean))]
+  const myNeedsUserMap = await batchGetUserMap(myNeedsUserIds)
+
   // 格式化数据，并查询评价状态
   const list = await Promise.all(listRes.data.map(async (item) => {
     console.log('getMyNeeds - 原始数据 location_name:', item.location_name, 'location:', JSON.stringify(item.location))
-    const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds)
+    const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds, myNeedsUserMap)
     console.log('getMyNeeds - 格式化后 locationName:', formatted.locationName)
 
     // 如果任务已完成，查询是否已评价
@@ -329,10 +354,21 @@ async function getMyTasks(event, OPENID) {
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
 
-  // 获取关联的任务详情，并查询评价状态
+  // 批量获取关联的任务详情
+  const needIds = [...new Set(takerRes.data.map(t => t.need_id).filter(Boolean))]
+  const needsRes = await db.collection('wdd-needs')
+    .where({ _id: _.in(needIds) })
+    .get()
+  const needMap = new Map()
+  needsRes.data.forEach(n => needMap.set(n._id, n))
+
+  // 批量查询求助者最新头像和昵称
+  const seekerIds = [...new Set(needsRes.data.map(n => n.user_id).filter(Boolean))]
+  const tasksUserMap = await batchGetUserMap(seekerIds)
+
+  // 组装任务列表，并查询评价状态
   const tasks = await Promise.all(takerRes.data.map(async (taker) => {
-    const needRes = await db.collection('wdd-needs').doc(taker.need_id).get()
-    const need = needRes.data
+    const need = needMap.get(taker.need_id)
 
     if (!need) return null
 
@@ -352,11 +388,11 @@ async function getMyTasks(event, OPENID) {
       cancel_time: need.cancel_time,
       cancel_reason: need.cancel_reason,
       create_time: taker.create_time,
-      seeker_nickname: need.user_nickname,
-      seeker_avatar: need.user_avatar
+      seeker_nickname: (tasksUserMap.get(need.user_id))?.nickname || need.user_nickname,
+      seeker_avatar: (tasksUserMap.get(need.user_id))?.avatar || need.user_avatar
     }
 
-    const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds)
+    const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds, tasksUserMap)
 
     // 如果任务已完成，查询是否已评价
     if (taker.status === 'completed') {
@@ -428,15 +464,19 @@ async function getNeedDetail(event, OPENID) {
     // 格式化任务数据
     const formattedNeed = formatNeedItem(need)
 
+    // 批量查询求助者和帮助者最新头像和昵称
+    const detailUserIds = [need.user_id, need.taker_id].filter(Boolean)
+    const detailUserMap = await batchGetUserMap(detailUserIds)
+
     // 补充完整字段
     const detail = {
       ...formattedNeed,
       user_id: need.user_id,
-      user_nickname: need.user_nickname,
-      user_avatar: need.user_avatar,
+      user_nickname: (detailUserMap.get(need.user_id))?.nickname || need.user_nickname,
+      user_avatar: (detailUserMap.get(need.user_id))?.avatar || need.user_avatar,
       taker_id: need.taker_id,
-      taker_nickname: need.taker_nickname,
-      taker_avatar: need.taker_avatar,
+      taker_nickname: need.taker_id ? ((detailUserMap.get(need.taker_id))?.nickname || need.taker_nickname) : null,
+      taker_avatar: need.taker_id ? ((detailUserMap.get(need.taker_id))?.avatar || need.taker_avatar) : null,
       match_time: need.match_time,
       complete_time: need.complete_time,
       cancel_time: need.cancel_time,
@@ -606,7 +646,7 @@ function sortByNearestLocation(needs, frequentLocations) {
 }
 
 // 格式化任务项
-function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds) {
+function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, userMap) {
   // 计算剩余时间
   let remainTime = ''
   if (item.expire_time && (item.status === 'pending' || item.status === 'ongoing')) {
@@ -662,12 +702,12 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds) {
     status: item.status,
     distance: distance,
     remainTime: remainTime,
-    userNickname: item.user_nickname || item.seeker_nickname,
-    user_avatar: item.user_avatar || item.seeker_avatar,
-    seekerNickname: item.seeker_nickname,
-    seekerAvatar: item.seeker_avatar,
-    takerNickname: item.taker_nickname,
-    taker_avatar: item.taker_avatar,
+    userNickname: (userMap && userMap.get(item.user_id))?.nickname || item.user_nickname || item.seeker_nickname,
+    user_avatar: (userMap && userMap.get(item.user_id))?.avatar || item.user_avatar || item.seeker_avatar,
+    seekerNickname: (userMap && userMap.get(item.user_id))?.nickname || item.seeker_nickname || item.user_nickname,
+    seekerAvatar: (userMap && userMap.get(item.user_id))?.avatar || item.seeker_avatar || item.user_avatar,
+    takerNickname: (userMap && userMap.get(item.taker_id))?.nickname || item.taker_nickname,
+    taker_avatar: (userMap && userMap.get(item.taker_id))?.avatar || item.taker_avatar,
     expireTime: item.expire_time,
     completeTime: item.complete_time,
     cancelTime: item.cancel_time,

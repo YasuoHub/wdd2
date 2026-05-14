@@ -105,8 +105,6 @@ exports.main = async (event, context) => {
         data: {
           status: 'ongoing',
           taker_id: takerId,
-          taker_nickname: taker.nickname,
-          taker_avatar: taker.avatar,
           match_time: db.serverDate(),
           update_time: db.serverDate()
         }

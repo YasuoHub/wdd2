@@ -122,60 +122,63 @@ Page({
     // 获取 scroll-view 高度
     this.getScrollViewHeight()
 
-    // 并行加载任务信息和历史消息，DB RTT 减半
-    Promise.all([this.loadTaskInfo(), this.loadMessages()]).then(([taskResult, msgResult]) => {
-      // 关键校验：页面可能已经切换，检查任务ID是否一致
-      if (this.currentNeedId !== needId) return
-      // 任意一项失败则不再启动监听
-      if (!taskResult || taskResult.code !== 0) return
-      if (!msgResult || msgResult.code !== 0) return
+    // 先加载任务信息（含 otherUser/participants），再加载消息（formatMessage 需要前者）
+    ;(async () => {
+      try {
+        const taskResult = await this.loadTaskInfo()
+        if (this.currentNeedId !== needId) return
+        if (!taskResult || taskResult.code !== 0) return
 
-      // 合并缓存中网络范围之外的老历史，防止 setData 覆盖导致列表变短
-      if (cachedOlderSnapshot && cachedOlderSnapshot.length > 0) {
-        const networkMessages = this.data.messages
-        const networkIds = new Set(networkMessages.map(m => m._id).filter(Boolean))
-        const olderFromCache = cachedOlderSnapshot.filter(m =>
-          m._id && !String(m._id).startsWith('temp_') && !networkIds.has(m._id)
-        )
-        if (olderFromCache.length > 0) {
-          // 按时间升序合并，重新格式化 showTime
-          const combined = [...olderFromCache, ...networkMessages].sort(
-            (a, b) => new Date(a.create_time) - new Date(b.create_time)
+        const msgResult = await this.loadMessages()
+        if (this.currentNeedId !== needId) return
+        if (!msgResult || msgResult.code !== 0) return
+
+        // 合并缓存中网络范围之外的老历史，防止 setData 覆盖导致列表变短
+        if (cachedOlderSnapshot && cachedOlderSnapshot.length > 0) {
+          const networkMessages = this.data.messages
+          const networkIds = new Set(networkMessages.map(m => m._id).filter(Boolean))
+          const olderFromCache = cachedOlderSnapshot.filter(m =>
+            m._id && !String(m._id).startsWith('temp_') && !networkIds.has(m._id)
           )
-          const reformatted = combined.map((msg, i) =>
-            this.formatMessage(msg, i === 0 ? null : combined[i - 1])
-          )
-          // 把缓存里恢复回来的 _id 也加入已处理集合
-          reformatted.forEach(m => {
-            if (m._id) this.processedMessageIds.add(m._id)
+          if (olderFromCache.length > 0) {
+            // 按时间升序合并，重新格式化 showTime
+            const combined = [...olderFromCache, ...networkMessages].sort(
+              (a, b) => new Date(a.create_time) - new Date(b.create_time)
+            )
+            const reformatted = combined.map((msg, i) =>
+              this.formatMessage(msg, i === 0 ? null : combined[i - 1])
+            )
+            // 把缓存里恢复回来的 _id 也加入已处理集合
+            reformatted.forEach(m => {
+              if (m._id) this.processedMessageIds.add(m._id)
+            })
+            this.setData({ messages: reformatted, lastMessageId: 'bottom-anchor' })
+          }
+        }
+
+        // 网络数据返回后,写回本地缓存（仅非客服模式）
+        if (!this.data.isCustomerServiceMode) {
+          chatCache.writeCache(needId, this.data.messages, {
+            task: this.data.task,
+            isSeeker: this.data.isSeeker,
+            otherUser: this.data.otherUser,
+            showReportBtn: this.data.showReportBtn
           })
-          this.setData({ messages: reformatted, lastMessageId: 'bottom-anchor' })
+        }
+
+        // 历史消息加载完成后，开始监听新消息
+        this.startMessageWatch().catch(err => {
+          console.error('启动消息监听失败:', err)
+          this.startMessagePolling()
+        })
+      } catch (err) {
+        console.error('初始化聊天页面失败:', err)
+      } finally {
+        if (this.currentNeedId === needId && this.data.loading) {
+          this.setData({ loading: false })
         }
       }
-
-      // 网络数据返回后,写回本地缓存（仅非客服模式）
-      if (!this.data.isCustomerServiceMode) {
-        chatCache.writeCache(needId, this.data.messages, {
-          task: this.data.task,
-          isSeeker: this.data.isSeeker,
-          otherUser: this.data.otherUser,
-          showReportBtn: this.data.showReportBtn
-        })
-      }
-
-      // 历史消息加载完成后，开始监听新消息
-      this.startMessageWatch().catch(err => {
-        console.error('启动消息监听失败:', err)
-        this.startMessagePolling()
-      })
-    }).catch(err => {
-      console.error('初始化聊天页面失败:', err)
-    }).finally(() => {
-      // 仅当还在 loading 状态时才隐藏,避免缓存命中后的冗余 setData
-      if (this.currentNeedId === needId && this.data.loading) {
-        this.setData({ loading: false })
-      }
-    })
+    })()
   },
 
   onShow() {
@@ -501,10 +504,10 @@ Page({
             locationName: taskData.location_name,
             images: taskData.images || []
           },
-          isSeeker: !isCustomerServiceMode && result.data.role === 'seeker',
-          otherUser: isCustomerServiceMode ? null : result.data.otherUser,
-          participants: isCustomerServiceMode ? (result.data.participants || {}) : {},
-          showReportBtn: !isCustomerServiceMode && (result.data.status === 'ongoing' || result.data.status === 'completed') &&
+          isSeeker: result.data.role === 'seeker',
+          otherUser: result.data.otherUser || null,
+          participants: result.data.participants || {},
+          showReportBtn: (result.data.status === 'ongoing' || result.data.status === 'completed') &&
             !result.data.myReportStatus.hasReport &&
             (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 72 * 60 * 60 * 1000))
         })
@@ -707,14 +710,10 @@ Page({
       isSystem: msg.type === 'system',
       senderAvatar: isSelf
         ? userInfo.avatar
-        : (this.data.participants && this.data.participants[msg.sender_id] && this.data.participants[msg.sender_id].avatar)
-          || (this.data.otherUser && this.data.otherUser.avatar)
-          || '/images/default-avatar.png',
+        : this.getOtherSenderInfo(msg.sender_id).avatar,
       senderName: isSelf
         ? (userInfo.nickname || '我')
-        : (this.data.participants && this.data.participants[msg.sender_id]
-          ? this.data.participants[msg.sender_id].nickname
-          : (this.data.otherUser ? this.data.otherUser.nickname : '')),
+        : this.getOtherSenderInfo(msg.sender_id).nickname,
       timeText,
       showTime,
       // 统一图片字段为 camelCase（优先使用已有的 imageUrl，否则从 image_url 转换）
@@ -723,6 +722,18 @@ Page({
       imageWidth: msg.image_width || 0,
       imageHeight: msg.image_height || 0
     }
+  },
+
+  // 获取非己方发送者的头像和昵称
+  getOtherSenderInfo(senderId) {
+    const participant = this.data.participants && this.data.participants[senderId]
+    if (participant) {
+      return { avatar: participant.avatar || '/images/default-avatar.png', nickname: participant.nickname || '' }
+    }
+    if (this.data.otherUser) {
+      return { avatar: this.data.otherUser.avatar || '/images/default-avatar.png', nickname: this.data.otherUser.nickname || '' }
+    }
+    return { avatar: '/images/default-avatar.png', nickname: '' }
   },
 
   // 开始监听新消息

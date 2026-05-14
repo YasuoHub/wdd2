@@ -226,8 +226,6 @@ async function confirmPayment(event, OPENID) {
     const needRes = await transaction.collection('wdd-needs').add({
       data: {
         user_id: user._id,
-        user_nickname: user.nickname,
-        user_avatar: user.avatar,
         location: {
           type: 'Point',
           coordinates: loc.coordinates
@@ -247,8 +245,7 @@ async function confirmPayment(event, OPENID) {
         expire_time: expireTime,
         create_time: new Date(),
         update_time: new Date(),
-        taker_id: null,
-        taker_nickname: null
+        taker_id: null
       }
     })
 

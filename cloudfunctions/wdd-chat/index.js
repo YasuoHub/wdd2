@@ -105,7 +105,7 @@ async function getTaskInfo(event, OPENID) {
   }
 
   // 客服模式：纯客服（非任务参与者）返回双方信息，不含操作权限
-  if (isCs && !isSeeker && !isTaker) {
+  if (isCs) {
     const takerUserId = taker ? taker.taker_id : null
     const userIds = [need.user_id, takerUserId].filter(Boolean)
 
@@ -158,6 +158,22 @@ async function getTaskInfo(event, OPENID) {
   const myReport = reportRes.data.length > 0 ? reportRes.data[0] : null
   const myAppeal = appealRes.data.length > 0 ? appealRes.data[0] : null
 
+  const currentUser = userRes.data[0]
+
+  // 根据角色计算双方头像和昵称
+  let seekerNickname, seekerAvatar, takerNickname, takerAvatar
+  if (isSeeker) {
+    seekerNickname = currentUser.nickname
+    seekerAvatar = currentUser.avatar
+    takerNickname = otherUser?.nickname
+    takerAvatar = otherUser?.avatar
+  } else {
+    seekerNickname = otherUser?.nickname
+    seekerAvatar = otherUser?.avatar
+    takerNickname = currentUser.nickname
+    takerAvatar = currentUser.avatar
+  }
+
   return {
     code: 0,
     data: {
@@ -168,6 +184,10 @@ async function getTaskInfo(event, OPENID) {
         nickname: otherUser.nickname,
         avatar: otherUser.avatar,
       } : null,
+      seekerNickname,
+      seekerAvatar,
+      takerNickname,
+      takerAvatar,
       // 当前用户的举报/申诉状态（个人级别）
       myReportStatus: myReport ? {
         hasReport: true,
