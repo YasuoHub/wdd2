@@ -30,6 +30,9 @@ Page({
   onLoad(options) {
     const { needId, mode = 'initiate', reportId } = options
     this.setData({ needId, mode, reportId: reportId || '' })
+    wx.setNavigationBarTitle({
+      title: mode === 'supplement' ? '上传材料' : '举报'
+    })
     if (mode === 'supplement') {
       this.loadReportDetail()
     }

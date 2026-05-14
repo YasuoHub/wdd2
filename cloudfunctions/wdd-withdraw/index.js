@@ -137,26 +137,18 @@ async function applyWithdraw(event, OPENID) {
       }
     })
 
-    // 直接置为 processing 状态（跳过 pending 人工审批环节）
-    // 新版接口使用 out_bill_no，保留 out_batch_no 兼容旧数据
+    // 提现完整记录写入 wdd-withdraws（状态机、微信支付追踪等复杂字段）
     withdrawRecord = {
       _id: withdrawId,
       user_id: user._id,
       openid: OPENID,
-      type: 'withdraw',
-      amount: -amount,
-      balance: latestBalance - amount,
-      description: `提现 ¥${amount}`,
-      withdraw_amount: amount,
+      amount: amount,
       fee: fee,
       actual_amount: actualAmount,
       status: 'processing',
       out_bill_no: withdrawId,
-      out_batch_no: withdrawId,      // 兼容旧数据
       bill_id: null,
-      batch_id: null,                // 兼容旧数据
       state: null,
-      batch_status: null,            // 兼容旧数据
       package_info: null,
       transfer_attempts: 0,
       next_retry_time: null,
@@ -170,7 +162,20 @@ async function applyWithdraw(event, OPENID) {
       update_time: new Date()
     }
 
-    await transaction.collection('wdd-balance-records').add({ data: withdrawRecord })
+    await transaction.collection('wdd-withdraws').add({ data: withdrawRecord })
+
+    // 同步写入 wdd-balance-records 简化流水（供钱包流水列表展示）
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: user._id,
+        type: 'withdraw',
+        amount: -amount,
+        balance: latestBalance - amount,
+        description: `提现 ¥${amount}`,
+        withdraw_id: withdrawId,
+        create_time: new Date()
+      }
+    })
 
     await transaction.commit()
   } catch (err) {
@@ -201,8 +206,8 @@ async function queryWithdraws(event, OPENID) {
   const { page = 0, pageSize = 20 } = event
 
   try {
-    const withdrawRes = await db.collection('wdd-balance-records')
-      .where({ openid: OPENID, type: 'withdraw' })
+    const withdrawRes = await db.collection('wdd-withdraws')
+      .where({ openid: OPENID })
       .orderBy('apply_time', 'desc')
       .skip(page * pageSize)
       .limit(pageSize)
@@ -210,7 +215,7 @@ async function queryWithdraws(event, OPENID) {
 
     const records = withdrawRes.data.map(item => ({
       _id: item._id,
-      amount: item.withdraw_amount,
+      amount: item.amount,
       fee: item.fee,
       actualAmount: item.actual_amount,
       status: item.status,
@@ -238,7 +243,7 @@ async function getWithdrawStatus(event, OPENID) {
     return { code: -1, message: '提现ID不能为空' }
   }
 
-  const recordRes = await db.collection('wdd-balance-records').doc(withdrawId).get().catch(() => null)
+  const recordRes = await db.collection('wdd-withdraws').doc(withdrawId).get().catch(() => null)
   if (!recordRes || !recordRes.data) {
     return { code: -1, message: '提现记录不存在' }
   }
@@ -254,7 +259,7 @@ async function getWithdrawStatus(event, OPENID) {
   if (record.status === 'processing') {
     try {
       await queryTransferStatus({ withdrawId })
-      const refreshed = await db.collection('wdd-balance-records').doc(withdrawId).get()
+      const refreshed = await db.collection('wdd-withdraws').doc(withdrawId).get()
       if (refreshed && refreshed.data) record = refreshed.data
     } catch (err) {
       console.warn('主动查询转账单状态失败，返回数据库当前状态:', err.message)
@@ -293,12 +298,10 @@ async function executeTransfer(withdraw) {
     })
 
     // 成功受理（返回 package_info，需前端调起确认页面）
-    await db.collection('wdd-balance-records').doc(withdraw._id).update({
+    await db.collection('wdd-withdraws').doc(withdraw._id).update({
       data: {
         bill_id: result.billId,
-        batch_id: result.billId,          // 兼容旧数据
         state: result.state,
-        batch_status: result.state,       // 兼容旧数据
         package_info: result.packageInfo,
         last_transfer_error: null,
         update_time: new Date()
@@ -361,7 +364,7 @@ async function handleTransferError(withdraw, err) {
 
   if (attempts >= maxRetry) {
     // 达到上限，转为 transfer_failed 等待人工介入（不自动回滚，避免微信侧实际打款成功导致重复退款）
-    await db.collection('wdd-balance-records').doc(withdraw._id).update({
+    await db.collection('wdd-withdraws').doc(withdraw._id).update({
       data: {
         status: 'transfer_failed',
         transfer_attempts: attempts,
@@ -379,7 +382,7 @@ async function handleTransferError(withdraw, err) {
   const backoffMin = backoffList[attempts - 1] || backoffList[backoffList.length - 1]
   const nextRetryTime = new Date(Date.now() + backoffMin * 60 * 1000)
 
-  await db.collection('wdd-balance-records').doc(withdraw._id).update({
+  await db.collection('wdd-withdraws').doc(withdraw._id).update({
     data: {
       status: 'transfer_pending',
       transfer_attempts: attempts,
@@ -403,7 +406,7 @@ async function retryFailedTransfer(event) {
     return { code: -1, message: '提现ID不能为空' }
   }
 
-  const withdrawRes = await db.collection('wdd-balance-records').doc(withdrawId).get()
+  const withdrawRes = await db.collection('wdd-withdraws').doc(withdrawId).get()
   if (!withdrawRes.data) {
     return { code: -1, message: '提现记录不存在' }
   }
@@ -415,7 +418,7 @@ async function retryFailedTransfer(event) {
   }
 
   // 重新置为 processing，再次调用打款
-  await db.collection('wdd-balance-records').doc(withdrawId).update({
+  await db.collection('wdd-withdraws').doc(withdrawId).update({
     data: {
       status: 'processing',
       update_time: new Date()
@@ -432,7 +435,7 @@ async function queryTransferStatus(event) {
     return { code: -1, message: '提现ID不能为空' }
   }
 
-  const withdrawRes = await db.collection('wdd-balance-records').doc(withdrawId).get()
+  const withdrawRes = await db.collection('wdd-withdraws').doc(withdrawId).get()
   if (!withdrawRes.data) {
     return { code: -1, message: '提现记录不存在' }
   }
@@ -445,7 +448,7 @@ async function queryTransferStatus(event) {
 
     // 微信侧单据还未建立（刚提交几秒内常见）→ 跳过本次更新，等下次定时器再查
     if (!result) {
-      await db.collection('wdd-balance-records').doc(withdrawId).update({
+      await db.collection('wdd-withdraws').doc(withdrawId).update({
         data: { last_query_time: new Date(), update_time: new Date() }
       })
       return {
@@ -459,7 +462,6 @@ async function queryTransferStatus(event) {
     let newStatus = withdraw.status
     let updateData = {
       state: result.state,
-      batch_status: result.state,       // 兼容旧数据
       last_query_time: new Date(),
       update_time: new Date()
     }
@@ -479,7 +481,7 @@ async function queryTransferStatus(event) {
 
     updateData.status = newStatus
 
-    await db.collection('wdd-balance-records').doc(withdrawId).update({ data: updateData })
+    await db.collection('wdd-withdraws').doc(withdrawId).update({ data: updateData })
 
     return {
       code: 0,
@@ -545,7 +547,7 @@ async function handleTransferCallback(event) {
   }
 
   // out_bill_no 在 applyWithdraw 中等于 _id，可直接 doc().get()
-  const recordRes = await db.collection('wdd-balance-records').doc(outBillNo).get().catch(() => null)
+  const recordRes = await db.collection('wdd-withdraws').doc(outBillNo).get().catch(() => null)
   if (!recordRes || !recordRes.data) {
     return httpResponse(200, 'SUCCESS', 'record not found, ignored')
   }
@@ -554,11 +556,10 @@ async function handleTransferCallback(event) {
 
   // 成功到账
   if (state === 'SUCCESS') {
-    await db.collection('wdd-balance-records').doc(withdraw._id).update({
+    await db.collection('wdd-withdraws').doc(withdraw._id).update({
       data: {
         status: 'completed',
         state: state,
-        batch_status: state,
         payment_time: new Date(),
         update_time: new Date()
       }
@@ -579,10 +580,9 @@ async function handleTransferCallback(event) {
   }
 
   // 其他状态（ACCEPTED / WAIT_USER_CONFIRM / PROCESSING / TRANSFERING）仅记录
-  await db.collection('wdd-balance-records').doc(withdraw._id).update({
+  await db.collection('wdd-withdraws').doc(withdraw._id).update({
     data: {
       state: state,
-      batch_status: state,
       update_time: new Date()
     }
   })
@@ -603,7 +603,7 @@ async function rollbackWithdrawBalance(withdraw, reason) {
 
   try {
     // 事务内重新查记录，校验状态
-    const latestRecord = await transaction.collection('wdd-balance-records').doc(withdraw._id).get()
+    const latestRecord = await transaction.collection('wdd-withdraws').doc(withdraw._id).get()
     if (latestRecord.data.status === 'rejected' || latestRecord.data.status === 'completed') {
       await transaction.rollback()
       return { code: -1, message: `状态已变更（${latestRecord.data.status}），跳过回滚` }
@@ -612,14 +612,28 @@ async function rollbackWithdrawBalance(withdraw, reason) {
     // 余额回滚
     await transaction.collection('wdd-users').doc(withdraw.user_id).update({
       data: {
-        balance: _.inc(withdraw.withdraw_amount),
-        total_withdrawn: _.inc(-withdraw.withdraw_amount),
+        balance: _.inc(withdraw.amount),
+        total_withdrawn: _.inc(-withdraw.amount),
         update_time: new Date()
       }
     })
 
-    // 提现失败，直接删除记录，不在收支明细中展示
-    await transaction.collection('wdd-balance-records').doc(withdraw._id).remove()
+    // 更新 wdd-withdraws 状态为 rejected
+    await transaction.collection('wdd-withdraws').doc(withdraw._id).update({
+      data: {
+        status: 'rejected',
+        reject_reason: reason,
+        update_time: new Date()
+      }
+    })
+
+    // 删除 wdd-balance-records 中的简化流水（不在收支明细中展示）
+    const balanceRecordsRes = await transaction.collection('wdd-balance-records').where({
+      withdraw_id: withdraw._id
+    }).get()
+    if (balanceRecordsRes.data.length > 0) {
+      await transaction.collection('wdd-balance-records').doc(balanceRecordsRes.data[0]._id).remove()
+    }
 
     await transaction.commit()
 
@@ -640,16 +654,15 @@ async function sumTodayWithdrawAmount(openid) {
   const start = new Date()
   start.setHours(0, 0, 0, 0)
 
-  const res = await db.collection('wdd-balance-records')
+  const res = await db.collection('wdd-withdraws')
     .where({
       openid: openid,
-      type: 'withdraw',
       status: _.in(['processing', 'completed', 'transfer_pending']),
       apply_time: _.gte(start)
     })
     .get()
 
-  return res.data.reduce((sum, r) => sum + (r.withdraw_amount || 0), 0)
+  return res.data.reduce((sum, r) => sum + (r.amount || 0), 0)
 }
 
 // 生成提现单号

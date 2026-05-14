@@ -91,9 +91,8 @@ exports.main = async (event, context) => {
     results.ongoingErrors = ongoingResults.errors
 
     // 4. 扫描待重试的提现（新版商家转账失败重试中）
-    const pendingTransferRes = await db.collection('wdd-balance-records')
+    const pendingTransferRes = await db.collection('wdd-withdraws')
       .where({
-        type: 'withdraw',
         status: 'transfer_pending',
         next_retry_time: _.lte(now)
       })
@@ -126,9 +125,8 @@ exports.main = async (event, context) => {
     // 注：与 wdd-withdraw/platformRules.js 中 TRANSFER_QUERY_TIMEOUT_MINUTES 保持一致
     const queryTimeoutMin = 1
     const queryThreshold = new Date(now.getTime() - queryTimeoutMin * 60 * 1000)
-    const stuckProcessingRes = await db.collection('wdd-balance-records')
+    const stuckProcessingRes = await db.collection('wdd-withdraws')
       .where(_.and([
-        { type: 'withdraw' },
         { status: 'processing' },
         { update_time: _.lte(queryThreshold) },
         _.or([

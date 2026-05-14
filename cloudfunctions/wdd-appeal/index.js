@@ -115,12 +115,12 @@ async function submitAppeal(event, OPENID) {
     return { code: -1, message: '您已对该任务发起过申诉（含已撤销），不可再次申诉' }
   }
 
-  // 时效校验：任务结束后 2 小时内可申诉
+  // 时效校验：任务结束后 72 小时内可申诉
   const now = new Date()
   const endTime = isCompleted ? new Date(need.complete_time) : new Date(need.cancel_time)
-  const deadline = new Date(endTime.getTime() + 2 * 60 * 60 * 1000)
+  const deadline = new Date(endTime.getTime() + 72 * 60 * 60 * 1000)
   if (now > deadline) {
-    return { code: -1, message: '申诉时效已过，任务结束后超过2小时无法申诉' }
+    return { code: -1, message: '申诉时效已过，任务结束后超过72小时无法申诉' }
   }
 
   // 内容安全检测

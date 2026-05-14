@@ -676,6 +676,11 @@ Page({
         ? `任务已完成，¥${msg.amount}已计入对方的余额`
         : `任务已完成，¥${msg.amount}已计入您的余额`
     }
+    if (msg.type === 'system' && msg.system_type === 'report_filed') {
+      if (this.data.userInfo && msg.sender_id === this.data.userInfo._id) {
+        displayContent = '您已发起举报，聊天暂时不可用'
+      }
+    }
 
     // 处理时间显示
     const now = new Date()

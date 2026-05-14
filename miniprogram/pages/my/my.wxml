@@ -96,11 +96,11 @@
       </view>
       <view class="menu-item" bindtap="goToPointRecords">
         <view class="menu-icon-wrapper" style="background: rgba(253, 203, 110, 0.15);">
-          <text class="menu-icon">💰</text>
+          <text class="menu-icon">⭐</text>
         </view>
         <view class="menu-content">
-          <text class="menu-text">积分明细</text>
-          <text class="menu-desc">可兑换免单券、提现免手续费券等权益（开发中）</text>
+          <text class="menu-text">我的积分</text>
+          <text class="menu-desc">可兑换免单券、提现免手续费券等权益</text>
         </view>
         <text class="menu-arrow">›</text>
       </view>

@@ -101,6 +101,9 @@ async function submitReport(event, OPENID) {
     return { code: -1, message: '只有任务双方可以发起举报' }
   }
 
+  // 被举报方
+  const otherUserId = user._id === parties.seekerId ? parties.takerId : parties.seekerId
+
   // 前置校验：仅进行中和已完成的任务可举报
   if (need.status === 'breaking') {
     return { code: -1, message: '任务已进入客服审核状态' }
@@ -202,6 +205,25 @@ async function submitReport(event, OPENID) {
 
     // 4. 向被举报方发送站内消息通知（事务外）
     await sendReportNotice(need, user._id, reportRes._id, reportTypeLabel)
+
+    // 5. 向聊天插入系统消息（事务外，触发双方聊天页面实时刷新 breaking 状态）
+    if (otherUserId) {
+      try {
+        await db.collection('wdd-messages').add({
+          data: {
+            need_id: String(needId),
+            sender_id: user._id,
+            receiver_id: otherUserId,
+            type: 'system',
+            system_type: 'report_filed',
+            content: '对方已发起举报，聊天暂时不可用',
+            create_time: new Date()
+          }
+        })
+      } catch (err) {
+        console.error('插入举报系统消息失败:', err)
+      }
+    }
 
     return {
       code: 0,

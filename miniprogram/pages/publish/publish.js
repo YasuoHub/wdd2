@@ -84,7 +84,24 @@ Page({
     if (options.type) {
       this.autoSelectType(options.type)
     }
+    this.refreshPlatformConfig()
     this.updateAmountCalculation()
+  },
+
+  onShow() {
+    this.refreshPlatformConfig()
+    this.updateAmountCalculation()
+  },
+
+  // 从 PLATFORM_RULES 刷新平台配置（费率可能已被 app.js 异步加载更新）
+  refreshPlatformConfig() {
+    this.setData({
+      platformFeeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100),
+      feePolicy: PLATFORM_RULES.FEE_POLICY,
+      minRewardAmount: PLATFORM_RULES.MIN_REWARD_AMOUNT,
+      maxRewardAmount: PLATFORM_RULES.MAX_REWARD_AMOUNT,
+      withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT
+    })
   },
 
   // 初始化地图中心点

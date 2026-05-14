@@ -159,6 +159,25 @@
   color: #636e72;
 }
 
+/* 状态标签 */
+.status-tag {
+  display: inline-block;
+  padding: 6rpx 18rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
+.status-cancelled {
+  background: rgba(178, 190, 195, 0.15);
+  color: #636e72;
+}
+
+.status-resolved {
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+}
+
 /* 理由 */
 .card-body {
   margin-bottom: 16rpx;

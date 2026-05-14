@@ -148,6 +148,7 @@
             <view class="type-tag-wrap">
               <text class="type-tag {{item.status === 'cancelled' ? 'cancelled' : ''}}">{{item.reportTypeLabel}}</text>
             </view>
+            <text class="status-tag status-{{item.status}}">{{item.status === 'cancelled' ? '已撤销' : '已处理'}}</text>
           </view>
 
           <view class="card-body">

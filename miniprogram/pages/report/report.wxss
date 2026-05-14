@@ -1,41 +1,274 @@
-/* 举报页面样式 */
+/* 举报/上传材料页面样式 — 天空蓝主调，与全局风格统一 */
+
+/* ============================================
+   页面基础
+   ============================================ */
 page {
-  background: var(--bg-secondary);
-  --primary-color: #5db8e6;
+  background: var(--bg-primary);
+}
+
+.page-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 40%, var(--bg-primary) 100%);
 }
 
 .container {
-  padding: 30rpx;
+  position: relative;
+  z-index: 1;
+  padding: 24rpx 28rpx 80rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.form-group {
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 30rpx;
+/* ============================================
+   顶部横幅（补充材料模式）
+   ============================================ */
+.banner {
+  text-align: center;
+  padding: 48rpx 32rpx 40rpx;
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.banner-icon {
+  font-size: 72rpx;
+  margin-bottom: 20rpx;
+}
+
+.banner-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12rpx;
+  letter-spacing: 0.04em;
+}
+
+.banner-desc {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ============================================
+   卡片通用
+   ============================================ */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--shadow-sm);
+  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:nth-child(2) { animation-delay: 0.05s; }
+.card:nth-child(3) { animation-delay: 0.1s; }
+.card:nth-child(4) { animation-delay: 0.15s; }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  padding-bottom: 20rpx;
+  margin-bottom: 20rpx;
+  border-bottom: 1rpx solid var(--border-color);
+}
+
+.card-head-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.card-head-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-body {
+  padding: 0;
+}
+
+.card-foot {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--border-color);
+}
+
+/* 任务摘要卡片 — 天空蓝左边框 */
+.task-card {
+  border-left: 8rpx solid var(--sky-primary);
+}
+
+/* 已提交材料卡片 — 薄荷绿左边框 */
+.submitted-card {
+  border-left: 8rpx solid var(--fresh-mint);
+}
+
+/* ============================================
+   信息行
+   ============================================ */
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 0;
+}
+
+.info-row + .info-row {
+  border-top: 1rpx solid var(--border-color);
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.highlight-amount {
+  font-weight: 700;
+  color: var(--vitality-orange);
+  font-size: 30rpx;
+}
+
+/* 查看详情链接 */
+.detail-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: var(--sky-dark);
+  font-weight: 500;
+  padding: 8rpx 0;
+}
+
+.link-arrow {
+  font-size: 32rpx;
+  margin-left: 6rpx;
+}
+
+/* 倒计时 — 顶部醒目横幅 */
+.countdown-hero {
   margin-bottom: 24rpx;
+  padding: 28rpx 32rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  border: 2rpx solid rgba(93, 184, 230, 0.12);
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.countdown-hero.expired {
+  opacity: 0.55;
+}
+
+.countdown-hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.countdown-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.countdown-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  background: rgba(255, 107, 107, 0.08);
+  animation: breathe 1.5s ease-in-out infinite;
+}
+
+.countdown-hero.expired .countdown-icon {
+  background: rgba(0, 0, 0, 0.04);
+  animation: none;
+}
+
+.countdown-hero-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.countdown-hero-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--danger-color);
+  font-family: 'SF Mono', 'Menlo', monospace;
+  letter-spacing: 0.04em;
+}
+
+.countdown-hero.expired .countdown-hero-value {
+  color: var(--text-light);
+}
+
+/* 图片画廊 */
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.gallery-thumb {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 14rpx;
+  background: var(--bg-secondary);
+}
+
+/* ============================================
+   表单
+   ============================================ */
 .form-label {
+  display: flex;
+  align-items: center;
   font-size: 30rpx;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 20rpx;
-  display: block;
 }
 
-.form-label .required {
-  color: #e74c3c;
-  margin-left: 8rpx;
+.label-icon {
+  font-size: 30rpx;
+  margin-right: 10rpx;
+}
+
+.required {
+  color: var(--danger-color);
+  margin-left: 6rpx;
+  font-weight: 400;
 }
 
 /* 下拉选择 */
 .picker-wrap {
   height: 88rpx;
   background: var(--bg-secondary);
-  border-radius: 16rpx;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   padding: 0 24rpx;
+  border: 1rpx solid transparent;
+  transition: border-color 0.2s;
 }
 
 .picker-text {
@@ -49,37 +282,57 @@ page {
 }
 
 .picker-arrow {
-  font-size: 24rpx;
+  font-size: 28rpx;
   color: var(--text-tertiary);
+  font-weight: 300;
 }
 
 /* 文本输入 */
 .textarea-wrap {
   background: var(--bg-secondary);
-  border-radius: 16rpx;
-  padding: 20rpx;
+  border-radius: var(--radius-sm);
+  padding: 20rpx 24rpx;
+  border: 1rpx solid transparent;
 }
 
 .textarea-wrap textarea {
   width: 100%;
-  height: 240rpx;
+  min-height: 220rpx;
   font-size: 28rpx;
-  line-height: 1.6;
+  line-height: 1.7;
   color: var(--text-primary);
+  background: transparent;
+}
+
+.textarea-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14rpx;
+}
+
+.word-hint {
+  font-size: 22rpx;
+  color: var(--text-tertiary);
 }
 
 .word-count {
-  text-align: right;
   font-size: 24rpx;
   color: var(--text-tertiary);
-  margin-top: 12rpx;
+  font-family: 'SF Mono', 'Menlo', monospace;
 }
 
-.word-count.error {
-  color: #e74c3c;
+.word-count.over {
+  color: var(--danger-color);
 }
 
-/* 图片上传 */
+.word-max {
+  font-size: 22rpx;
+}
+
+/* ============================================
+   图片上传
+   ============================================ */
 .image-upload {
   display: flex;
   flex-wrap: wrap;
@@ -89,9 +342,10 @@ page {
 .image-item {
   width: 200rpx;
   height: 200rpx;
-  border-radius: 16rpx;
+  border-radius: var(--radius-sm);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .image-item image {
@@ -99,87 +353,129 @@ page {
   height: 100%;
 }
 
-.image-item .remove-btn {
+.remove-btn {
   position: absolute;
   top: 8rpx;
   right: 8rpx;
-  width: 40rpx;
-  height: 40rpx;
-  background: rgba(0,0,0,0.5);
+  width: 44rpx;
+  height: 44rpx;
+  background: rgba(0, 0, 0, 0.55);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.remove-btn text {
   color: #fff;
-  font-size: 24rpx;
+  font-size: 28rpx;
+  line-height: 1;
 }
 
 .upload-btn {
   width: 200rpx;
   height: 200rpx;
-  border-radius: 16rpx;
+  border-radius: var(--radius-sm);
   border: 2rpx dashed var(--border-color);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--bg-secondary);
+  transition: border-color 0.2s;
 }
 
-.upload-btn .upload-icon {
-  font-size: 48rpx;
-  color: var(--text-tertiary);
-  margin-bottom: 12rpx;
+.upload-btn:active {
+  border-color: var(--sky-primary);
+  background: rgba(93, 184, 230, 0.06);
 }
 
-.upload-btn .upload-text {
-  font-size: 24rpx;
-  color: var(--text-tertiary);
+.upload-icon {
+  font-size: 52rpx;
+  color: var(--text-light);
+  margin-bottom: 8rpx;
+  font-weight: 200;
+  line-height: 1;
 }
 
-.upload-tip {
-  font-size: 24rpx;
-  color: var(--text-tertiary);
+.upload-text {
+  font-size: 22rpx;
+  color: var(--text-light);
+}
+
+.upload-hint {
   margin-top: 16rpx;
+  font-size: 22rpx;
+  color: var(--text-tertiary);
 }
 
-/* 底部按钮 */
+/* ============================================
+   提交按钮 — 天空蓝渐变
+   ============================================ */
 .submit-btn {
-  margin-top: 48rpx;
+  margin-top: 36rpx;
   margin-bottom: 40rpx;
-  height: 104rpx;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  height: 100rpx;
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   color: #fff;
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 600;
-  border-radius: 52rpx;
+  border-radius: 50rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 107, 107, 0.35);
-  letter-spacing: 4rpx;
+  box-shadow: var(--shadow-sky);
+  letter-spacing: 0.06em;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.submit-btn::after {
+  border: none;
+}
+
+.submit-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.2);
 }
 
 .submit-btn.disabled {
-  background: linear-gradient(135deg, #ccc 0%, #bbb 100%);
+  background: linear-gradient(135deg, #c5d5e0 0%, #b8ccda 100%);
   color: #fff;
   box-shadow: none;
+  pointer-events: none;
 }
 
-/* 提交成功页 */
+/* ============================================
+   提交成功页
+   ============================================ */
 .success-wrap {
-  padding: 60rpx 40rpx;
+  padding: 80rpx 40rpx 40rpx;
   text-align: center;
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.success-icon-wrap {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32rpx;
+  box-shadow: var(--shadow-green);
 }
 
 .success-icon {
-  font-size: 120rpx;
-  margin-bottom: 30rpx;
+  font-size: 56rpx;
+  color: #fff;
+  font-weight: 700;
 }
 
 .success-title {
-  font-size: 40rpx;
-  font-weight: 600;
+  font-size: 38rpx;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 16rpx;
 }
@@ -188,30 +484,12 @@ page {
   font-size: 28rpx;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 40rpx;
-}
-
-.countdown-bar {
-  background: rgba(255,193,7,0.1);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 30rpx;
-}
-
-.countdown-text {
-  font-size: 28rpx;
-  color: #f39c12;
-}
-
-.countdown-time {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #e74c3c;
+  margin-bottom: 48rpx;
 }
 
 .cancel-btn {
   height: 88rpx;
-  background: #fff;
+  background: var(--bg-card);
   border: 2rpx solid var(--border-color);
   color: var(--text-primary);
   font-size: 30rpx;
@@ -220,20 +498,34 @@ page {
   align-items: center;
   justify-content: center;
   margin-bottom: 20rpx;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.cancel-btn::after {
+  border: none;
 }
 
 .back-btn {
   height: 88rpx;
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   color: #fff;
   font-size: 30rpx;
   border-radius: 44rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 600;
+  box-shadow: var(--shadow-sky);
 }
 
-/* 弹窗 */
+.back-btn::after {
+  border: none;
+}
+
+/* ============================================
+   确认弹窗
+   ============================================ */
 .modal {
   position: fixed;
   top: 0;
@@ -246,7 +538,7 @@ page {
   justify-content: center;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s;
+  transition: opacity 0.25s, visibility 0.25s;
 }
 
 .modal.show {
@@ -260,32 +552,39 @@ page {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .modal-content {
   position: relative;
   background: #fff;
-  border-radius: 24rpx;
-  width: 80%;
+  border-radius: var(--radius-md);
+  width: 82%;
   max-width: 600rpx;
-  padding: 40rpx;
+  padding: 44rpx 36rpx 32rpx;
   z-index: 1;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-icon {
+  font-size: 52rpx;
+  margin-bottom: 16rpx;
 }
 
 .modal-title {
-  font-size: 36rpx;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 24rpx;
+  font-size: 34rpx;
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 20rpx;
 }
 
 .modal-body {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
   margin-bottom: 32rpx;
+  text-align: left;
 }
 
 .modal-footer {
@@ -297,119 +596,47 @@ page {
   flex: 1;
   height: 80rpx;
   border-radius: 40rpx;
-  font-size: 30rpx;
+  font-size: 28rpx;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modal-btn:active {
+  transform: scale(0.96);
 }
 
 .modal-btn.cancel {
   background: var(--bg-secondary);
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
 .modal-btn.confirm {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   color: #fff;
 }
 
-/* 对方举报摘要卡片（补充材料模式） */
-.opponent-card {
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 30rpx;
-  margin-bottom: 24rpx;
-  border-left: 8rpx solid #ff6b6b;
+/* ============================================
+   动画
+   ============================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.opponent-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 20rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 2rpx solid var(--border-color);
-}
-
-.opponent-row {
-  display: flex;
-  margin-bottom: 16rpx;
-  align-items: flex-start;
-}
-
-.opponent-label {
-  font-size: 28rpx;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-  min-width: 160rpx;
-}
-
-.opponent-value {
-  font-size: 28rpx;
-  color: var(--text-primary);
-  flex: 1;
-  word-break: break-all;
-}
-
-.opponent-images {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-  margin-top: 16rpx;
-}
-
-.opponent-images image {
-  width: 180rpx;
-  height: 180rpx;
-  border-radius: 12rpx;
-}
-
-.countdown-wrap {
-  margin-top: 24rpx;
-  padding-top: 20rpx;
-  border-top: 2rpx solid var(--border-color);
-  display: flex;
-  align-items: center;
-}
-
-.countdown-label {
-  font-size: 28rpx;
-  color: var(--text-secondary);
-}
-
-.countdown-value {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #e74c3c;
-  margin-left: 12rpx;
-  font-family: monospace;
-}
-
-.countdown-value.timeout {
-  color: #999;
-}
-
-/* 任务摘要详情按钮 */
-.detail-btn {
-  display: block;
-  width: 100%;
-  height: 72rpx;
-  line-height: 72rpx;
-  text-align: center;
-  background: var(--bg-secondary);
-  color: var(--primary-color);
-  font-size: 28rpx;
-  border-radius: 16rpx;
-  margin: 16rpx 0 0;
-  padding: 0;
-  border: none;
-}
-
-.detail-btn::after {
-  border: none;
-}
-
-/* 已提交的补充材料卡片 */
-.my-supplement {
-  border-left-color: #2ecc71;
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12rpx rgba(255, 107, 107, 0);
+  }
 }

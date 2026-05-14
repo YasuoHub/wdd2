@@ -11,11 +11,11 @@
         <text class="opponent-label">任务悬赏</text>
         <text class="opponent-value">¥{{taskSummary.rewardAmount || 0}}</text>
       </view>
-      <button class="detail-btn" bindtap="goToTaskDetail">查看任务详情 ›</button>
       <view class="countdown-wrap">
         <text class="countdown-label">剩余时间：</text>
         <text class="countdown-value {{!canSupplement ? 'timeout' : ''}}">{{supplementCountdown}}</text>
       </view>
+      <button class="detail-btn" bindtap="goToTaskDetail">查看任务详情 ›</button>
     </view>
   </block>
 
