@@ -4,6 +4,34 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+async function getTaskParties(needId, loadedNeed) {
+  const need = loadedNeed || (await db.collection('wdd-needs').doc(needId).get()).data
+  if (!need) {
+    return { need: null, seekerId: null, takerId: null }
+  }
+
+  const takerRes = await db.collection('wdd-need-takers')
+    .where({ need_id: needId })
+    .orderBy('create_time', 'desc')
+    .limit(1)
+    .get()
+  const taker = takerRes.data[0] || null
+
+  return {
+    need,
+    seekerId: need.user_id,
+    takerId: taker ? taker.taker_id : null
+  }
+}
+
+function isTaskParticipant(userId, parties) {
+  return userId === parties.seekerId || userId === parties.takerId
+}
+
+function isCounterparty(userId, initiatorId, parties) {
+  return isTaskParticipant(userId, parties) && userId !== initiatorId
+}
+
 exports.main = async (event, context) => {
   const { action } = event
   const wxContext = cloud.getWXContext()
@@ -68,6 +96,10 @@ async function submitReport(event, OPENID) {
     return { code: -1, message: '任务不存在' }
   }
   const need = needRes.data
+  const parties = await getTaskParties(needId, need)
+  if (!isTaskParticipant(user._id, parties)) {
+    return { code: -1, message: '只有任务双方可以发起举报' }
+  }
 
   // 前置校验：仅进行中和已完成的任务可举报
   if (need.status === 'breaking') {
@@ -404,10 +436,25 @@ async function submitSupplement(event, OPENID) {
     return { code: -1, message: '举报记录不存在' }
   }
   const report = reportRes.data
+  if (report.status !== 'pending') {
+    return { code: -1, message: '举报已处理或已撤销，无法补充材料' }
+  }
 
-  // 校验：不是发起者（补充材料的是另一方）
-  if (report.reporter_id === user._id) {
-    return { code: -1, message: '举报发起方无需补充材料' }
+  const parties = await getTaskParties(report.need_id)
+  if (!parties.need) {
+    return { code: -1, message: '任务不存在' }
+  }
+
+  // 校验：补充材料者必须是任务另一方
+  if (!isCounterparty(user._id, report.reporter_id, parties)) {
+    return { code: -1, message: '只有被举报方可以补充材料' }
+  }
+
+  const ticketRes = await db.collection('wdd-tickets').where({
+    report_id: reportId
+  }).limit(1).get()
+  if (ticketRes.data.length === 0 || ticketRes.data[0].status !== 'pending') {
+    return { code: -1, message: '工单已处理，无法补充材料' }
   }
 
   // 校验：在补充截止时间之前
@@ -476,6 +523,14 @@ async function getReportDetail(event, OPENID) {
     return { code: -1, message: '用户不存在' }
   }
   const user = userRes.data[0]
+
+  const parties = await getTaskParties(needId)
+  if (!parties.need) {
+    return { code: -1, message: '任务不存在' }
+  }
+  if (!isTaskParticipant(user._id, parties)) {
+    return { code: -1, message: '无权查看此举报' }
+  }
 
   // 获取举报记录
   const reportRes = await db.collection('wdd-reports').where({

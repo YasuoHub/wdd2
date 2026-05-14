@@ -4,6 +4,34 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+async function getTaskParties(needId, loadedNeed) {
+  const need = loadedNeed || (await db.collection('wdd-needs').doc(needId).get()).data
+  if (!need) {
+    return { need: null, seekerId: null, takerId: null }
+  }
+
+  const takerRes = await db.collection('wdd-need-takers')
+    .where({ need_id: needId })
+    .orderBy('create_time', 'desc')
+    .limit(1)
+    .get()
+  const taker = takerRes.data[0] || null
+
+  return {
+    need,
+    seekerId: need.user_id,
+    takerId: taker ? taker.taker_id : null
+  }
+}
+
+function isTaskParticipant(userId, parties) {
+  return userId === parties.seekerId || userId === parties.takerId
+}
+
+function isCounterparty(userId, initiatorId, parties) {
+  return isTaskParticipant(userId, parties) && userId !== initiatorId
+}
+
 exports.main = async (event, context) => {
   const { action } = event
   const wxContext = cloud.getWXContext()
@@ -66,6 +94,10 @@ async function submitAppeal(event, OPENID) {
     return { code: -1, message: '任务不存在' }
   }
   const need = needRes.data
+  const parties = await getTaskParties(needId, need)
+  if (!isTaskParticipant(user._id, parties)) {
+    return { code: -1, message: '只有任务双方可以发起申诉' }
+  }
 
   // 前置校验：仅已完成 或 客服裁决取消 的任务可申诉
   const isCompleted = need.status === 'completed'
@@ -313,10 +345,25 @@ async function submitSupplement(event, OPENID) {
     return { code: -1, message: '申诉记录不存在' }
   }
   const appeal = appealRes.data
+  if (appeal.status !== 'pending') {
+    return { code: -1, message: '申诉已处理或已撤销，无法补充材料' }
+  }
 
-  // 校验：不是发起者（补充材料的是另一方）
-  if (appeal.initiator_id === user._id) {
-    return { code: -1, message: '申诉发起方无需补充材料' }
+  const parties = await getTaskParties(appeal.need_id)
+  if (!parties.need) {
+    return { code: -1, message: '任务不存在' }
+  }
+
+  // 校验：补充材料者必须是任务另一方
+  if (!isCounterparty(user._id, appeal.initiator_id, parties)) {
+    return { code: -1, message: '只有被申诉方可以补充材料' }
+  }
+
+  const ticketRes = await db.collection('wdd-tickets').where({
+    appeal_id: appealId
+  }).limit(1).get()
+  if (ticketRes.data.length === 0 || ticketRes.data[0].status !== 'pending') {
+    return { code: -1, message: '工单已处理，无法补充材料' }
   }
 
   // 校验：在补充截止时间之前
@@ -386,6 +433,14 @@ async function getAppealDetail(event, OPENID) {
   }
   const user = userRes.data[0]
 
+  const parties = await getTaskParties(needId)
+  if (!parties.need) {
+    return { code: -1, message: '任务不存在' }
+  }
+  if (!isTaskParticipant(user._id, parties)) {
+    return { code: -1, message: '无权查看此申诉' }
+  }
+
   // 获取申诉记录（不限发起方，补充方也需要查询）
   const appealRes = await db.collection('wdd-appeals').where({
     need_id: needId
@@ -432,7 +487,8 @@ async function getAppealDetail(event, OPENID) {
   // 计算是否可以补充材料
   const now = new Date()
   const deadline = new Date(appeal.supplement_deadline)
-  const canSupplement = appeal.initiator_id !== user._id &&
+  const canSupplement = appeal.status === 'pending' &&
+    appeal.initiator_id !== user._id &&
     !appeal.has_supplement &&
     !appeal.is_supplement_timeout &&
     now <= deadline

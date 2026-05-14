@@ -158,7 +158,7 @@ Page({
 
   async submitAppeal() {
     this.hideConfirm()
-    const { needId, selectedTypeValue, reason, images, mode } = this.data
+    const { needId, selectedTypeValue, selectedTypeLabel, reason, images, mode } = this.data
     this.setData({ isSubmitting: true })
     wx.showLoading({ title: '提交中...' })
     try {
