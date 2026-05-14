@@ -4,7 +4,7 @@
   <!-- 余额卡片 -->
   <view class="balance-card">
     <view class="balance-header">
-      <text class="balance-title">平台余额</text>
+      <text class="balance-title">余额</text>
       <view class="balance-rules" bindtap="showWithdrawRules">
         <text class="rules-icon">ℹ️</text>
         <text class="rules-text">提现规则</text>

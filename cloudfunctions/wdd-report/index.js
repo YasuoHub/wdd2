@@ -390,7 +390,7 @@ async function sendReportNotice(need, reporterId, reportId, reportTypeLabel) {
     const bj = new Date(now.getTime() + 8 * 60 * 60 * 1000)
     const timeStr = `${bj.getUTCFullYear()}-${String(bj.getUTCMonth() + 1).padStart(2, '0')}-${String(bj.getUTCDate()).padStart(2, '0')} ${String(bj.getUTCHours()).padStart(2, '0')}:${String(bj.getUTCMinutes()).padStart(2, '0')}`
 
-    const taskNumber = need._id.slice(-8).toUpperCase()
+    const taskNumber = need._id.toUpperCase()
 
     await db.collection('wdd-notifications').add({
       data: {
@@ -511,10 +511,10 @@ async function submitSupplement(event, OPENID) {
 
 // 查询举报详情（供前端补充模式使用）
 async function getReportDetail(event, OPENID) {
-  const { needId } = event
+  const { reportId } = event
 
-  if (!needId) {
-    return { code: -1, message: '任务ID不能为空' }
+  if (!reportId) {
+    return { code: -1, message: '举报ID不能为空' }
   }
 
   // 获取当前用户
@@ -524,6 +524,15 @@ async function getReportDetail(event, OPENID) {
   }
   const user = userRes.data[0]
 
+  // 按 reportId 精确查询
+  const reportRes = await db.collection('wdd-reports').doc(reportId).get()
+  if (!reportRes.data) {
+    return { code: -1, message: '举报记录不存在' }
+  }
+  const report = reportRes.data
+
+  // 校验任务参与者身份
+  const needId = report.need_id
   const parties = await getTaskParties(needId)
   if (!parties.need) {
     return { code: -1, message: '任务不存在' }
@@ -531,20 +540,6 @@ async function getReportDetail(event, OPENID) {
   if (!isTaskParticipant(user._id, parties)) {
     return { code: -1, message: '无权查看此举报' }
   }
-
-  // 获取举报记录
-  const reportRes = await db.collection('wdd-reports').where({
-    need_id: needId
-  }).orderBy('create_time', 'desc').limit(1).get()
-
-  if (reportRes.data.length === 0) {
-    return {
-      code: 0,
-      data: { hasReport: false }
-    }
-  }
-
-  const report = reportRes.data[0]
 
   // 查询发起方信息
   const initiatorRes = await db.collection('wdd-users').doc(report.reporter_id).get().catch(() => null)
@@ -755,11 +750,7 @@ async function getReportDetailById(event, OPENID) {
       status: report.status,
       createTime: report.create_time,
       cancelTime: report.cancel_time || null,
-      updateTime: report.update_time,
-      hasSupplement: report.has_supplement || false,
-      supplementType: report.supplement_type || null,
-      supplementReason: report.supplement_reason || null,
-      supplementImages: report.supplement_images || []
+      updateTime: report.update_time
     }
   }
 }

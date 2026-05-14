@@ -25,8 +25,19 @@ Page({
   },
 
   onShow() {
-    if (this.data.isCustomerService && this.data.pendingTickets.length === 0 && this.data.resolvedTickets.length === 0) {
-      this.loadTickets('pending', true)
+    if (this.data.isCustomerService) {
+      const app = getApp()
+      // 从详情页返回，有数据变更时需要刷新
+      if (app.globalData.ticketsNeedRefresh) {
+        app.globalData.ticketsNeedRefresh = false
+        this.loadTickets('pending', true)
+        this.loadTickets('resolved', true)
+        return
+      }
+      // 首次加载
+      if (this.data.pendingTickets.length === 0 && this.data.resolvedTickets.length === 0) {
+        this.loadTickets('pending', true)
+      }
     }
   },
 

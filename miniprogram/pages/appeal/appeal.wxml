@@ -19,8 +19,22 @@
     </view>
   </block>
 
+  <!-- 已提交的补充材料展示（只读） -->
+  <block wx:if="{{mySupplement}}">
+    <view class="opponent-card my-supplement">
+      <view class="opponent-title">我的补充材料</view>
+      <view class="opponent-row">
+        <text class="opponent-label">情况说明</text>
+        <text class="opponent-value">{{mySupplement.reason}}</text>
+      </view>
+      <view class="opponent-images" wx:if="{{mySupplement.images.length > 0}}">
+        <image wx:for="{{mySupplement.images}}" wx:key="index" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{mySupplement.images}}" />
+      </view>
+    </view>
+  </block>
+
   <!-- 表单视图 -->
-  <block wx:if="{{!isSubmitted}}">
+  <block wx:if="{{!isSubmitted && !(mode === 'supplement' && mySupplement)}}">
     <!-- 申诉类型（仅发起模式可见） -->
     <block wx:if="{{mode !== 'supplement'}}">
     <view class="form-group">
@@ -88,7 +102,7 @@
     <view class="modal-content">
       <view class="modal-title">确认提交申诉</view>
       <view class="modal-body">
-        提交申诉后，任务将进入客服评审状态，将关闭双方聊天通道，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在客服处理前随时撤销本次申诉，撤销后恢复正常任务流程。
+        提交申诉后，任务将进入客服评审状态，平台将依据证据进行仲裁处理。请如实填写理由并上传证据，您可在客服处理前随时撤销本次申诉，撤销后任务将恢复正常流程。
       </view>
       <view class="modal-footer">
         <button class="modal-btn cancel" bindtap="hideConfirm">取消</button>

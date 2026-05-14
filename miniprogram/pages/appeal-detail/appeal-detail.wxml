@@ -43,35 +43,6 @@
       </view>
     </view>
 
-    <!-- 补充材料 -->
-    <view wx:if="{{detail.hasSupplement}}" class="section">
-      <view class="section-title">对方补充材料</view>
-      <view class="section-card">
-        <view wx:if="{{detail.supplementType}}" class="info-row">
-          <text class="info-label">说明类型</text>
-          <text class="info-value type-tag muted">{{detail.supplementType}}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">情况说明</text>
-          <text class="info-value">{{detail.supplementReason}}</text>
-        </view>
-        <view wx:if="{{detail.supplementImages.length > 0}}" class="info-row">
-          <text class="info-label">补充图片</text>
-          <view class="image-gallery">
-            <image
-              wx:for="{{detail.supplementImages}}"
-              wx:key="index"
-              class="thumb"
-              src="{{item}}"
-              mode="aspectFill"
-              data-url="{{item}}"
-              bindtap="previewImage"
-            />
-          </view>
-        </view>
-      </view>
-    </view>
-
     <!-- 查看关联任务 -->
     <view class="section">
       <view class="task-link-btn" bindtap="goToTask" hover-class="task-link-btn-hover">

@@ -228,8 +228,8 @@ Page({
         })
 
         // 设置刷新标记
-        wx.setStorageSync('refreshMyNeeds', true)
-        wx.setStorageSync('refreshMyTasks', true)
+        app.globalData.refreshMyNeeds = true
+        app.globalData.refreshMyTasks = true
 
         // 跳转到评价页
         setTimeout(() => {
@@ -286,7 +286,7 @@ Page({
           duration: 2500
         })
         // 设置刷新标记
-        wx.setStorageSync('refreshMyNeeds', true)
+        app.globalData.refreshMyNeeds = true
         this.loadTaskDetail()
       } else {
         throw new Error(result.message)

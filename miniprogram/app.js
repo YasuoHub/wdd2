@@ -13,7 +13,13 @@ App({
     // 消息中心页面刷新回调
     messagePageRefreshCallback: null,
     // 平台全局配置（费率等）
-    platformConfig: null
+    platformConfig: null,
+    // 工单列表是否需要刷新
+    ticketsNeedRefresh: false,
+    // 我的求助列表是否需要刷新
+    refreshMyNeeds: false,
+    // 我的接单列表是否需要刷新
+    refreshMyTasks: false
   },
 
   onLaunch() {

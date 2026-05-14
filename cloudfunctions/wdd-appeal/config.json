@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "openapi": [
+      "security.msgSecCheck"
+    ]
+  },
   "triggers": [
     {
       "name": "checkSupplementTimeout",

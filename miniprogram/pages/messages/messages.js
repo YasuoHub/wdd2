@@ -380,25 +380,25 @@ Page({
     switch (type) {
       case 'appeal_notice':
         wx.navigateTo({
-          url: `/pages/appeal/appeal?needId=${need_id}&mode=supplement`
+          url: `/pages/appeal/appeal?needId=${need_id}&mode=supplement&appealId=${appeal_id || ''}`
         })
         break
       case 'report_notice':
         wx.navigateTo({
-          url: `/pages/report/report?needId=${need_id}&mode=supplement`
+          url: `/pages/report/report?needId=${need_id}&mode=supplement&reportId=${report_id || ''}`
         })
         break
       case 'appeal_reminder':
         if (appeal_id) {
           wx.navigateTo({
-            url: `/pages/appeal/appeal?needId=${need_id}&mode=supplement`
+            url: `/pages/appeal/appeal?needId=${need_id}&mode=supplement&appealId=${appeal_id}`
           })
         }
         break
       case 'report_reminder':
         if (report_id) {
           wx.navigateTo({
-            url: `/pages/report/report?needId=${need_id}&mode=supplement`
+            url: `/pages/report/report?needId=${need_id}&mode=supplement&reportId=${report_id}`
           })
         }
         break

@@ -39,32 +39,33 @@ Page({
   },
 
   onLoad(options) {
-    const { needId, mode = 'initiate' } = options
-    this.setData({ needId, mode })
+    const { needId, mode = 'initiate', appealId } = options
+    this.setData({ needId, mode, appealId: appealId || '' })
     if (mode === 'supplement') {
       this.loadAppealDetail()
     }
   },
 
   async loadAppealDetail() {
-    const { needId } = this.data
+    const { needId, appealId } = this.data
     wx.showLoading({ title: '加载中...' })
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-appeal',
-        data: { action: 'getAppealDetail', needId }
+        data: { action: 'getAppealDetail', needId, appealId }
       })
       wx.hideLoading()
       if (result.code === 0 && result.data.hasAppeal) {
         const data = result.data
         this.setData({
           opponentInfo: data.initiator,
+          mySupplement: data.mySupplement || null,
           taskSummary: data.taskInfo,
           supplementDeadline: data.supplementDeadline,
-          canSupplement: data.canSupplement,
+          canSupplement: data.canSupplement && !data.mySupplement,
           isLoading: false
         })
-        if (data.canSupplement) this.startSupplementCountdown()
+        if (data.canSupplement && !data.mySupplement) this.startSupplementCountdown()
       }
     } catch (err) {
       wx.hideLoading()
@@ -169,12 +170,7 @@ Page({
         params.appealTypeLabel = selectedTypeLabel
       }
       if (mode === 'supplement') {
-        const detailRes = await wx.cloud.callFunction({
-          name: 'wdd-appeal', data: { action: 'getAppealDetail', needId }
-        })
-        if (detailRes.result.code === 0 && detailRes.result.data.hasAppeal) {
-          params.appealId = detailRes.result.data.appealId
-        }
+        params.appealId = this.data.appealId
       }
       const { result } = await wx.cloud.callFunction({ name: 'wdd-appeal', data: params })
       wx.hideLoading()
@@ -183,6 +179,8 @@ Page({
         wx.showToast({ title: '提交成功', icon: 'success' })
         if (mode === 'initiate') {
           this.setData({ isSubmitted: true, appealId: result.data.appealId, canCancel: true })
+          app.globalData.refreshMyNeeds = true
+          app.globalData.refreshMyTasks = true
         } else {
           setTimeout(() => { wx.navigateBack() }, 1500)
         }
@@ -212,6 +210,8 @@ Page({
             wx.hideLoading()
             if (result.code === 0) {
               wx.showToast({ title: '撤销成功', icon: 'success' })
+              app.globalData.refreshMyNeeds = true
+              app.globalData.refreshMyTasks = true
               setTimeout(() => { wx.navigateBack() }, 1500)
             } else {
               wx.showToast({ title: result.message || '撤销失败', icon: 'none' })
@@ -230,6 +230,12 @@ Page({
     const { opponentInfo } = this.data
     const urls = opponentInfo && opponentInfo.images ? opponentInfo.images : [url]
     wx.previewImage({ current: url, urls })
+  },
+
+  previewImage(e) {
+    const { url, urls } = e.currentTarget.dataset
+    const urlsList = urls || [url]
+    wx.previewImage({ current: url, urls: urlsList })
   },
 
   goBack() { wx.navigateBack() },

@@ -302,14 +302,14 @@
           <text class="rule-icon">✅</text>
           <view class="rule-content">
             <text class="rule-title">任务完成</text>
-            <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入平台余额。</text>
+            <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入余额。</text>
           </view>
         </view>
         <view class="rule-item">
           <text class="rule-icon">🏦</text>
           <view class="rule-content">
             <text class="rule-title">提现规则</text>
-            <text class="rule-desc">平台余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>
+            <text class="rule-desc">余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>
           </view>
         </view>
       </view>

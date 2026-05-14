@@ -134,6 +134,8 @@ Page({
 
       if (result.code === 0) {
         wx.showToast({ title: '裁决已提交', icon: 'success' })
+        const app = getApp()
+        app.globalData.ticketsNeedRefresh = true
         setTimeout(() => { wx.navigateBack() }, 1500)
       } else {
         wx.showToast({ title: result.message || '提交失败', icon: 'none' })

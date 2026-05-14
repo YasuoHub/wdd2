@@ -44,9 +44,9 @@ Page({
       return
     }
     // 如果标记需要刷新，或者数据为空，则重新加载
-    if (this.data.needs.length === 0 || wx.getStorageSync('refreshMyNeeds')) {
+    if (this.data.needs.length === 0 || app.globalData.refreshMyNeeds) {
       this.refreshData()
-      wx.removeStorageSync('refreshMyNeeds')
+      app.globalData.refreshMyNeeds = false
     }
   },
 
@@ -269,7 +269,7 @@ Page({
           duration: 2500
         })
         // 设置刷新标记
-        wx.setStorageSync('refreshMyNeeds', true)
+        app.globalData.refreshMyNeeds = true
         this.refreshData()
       } else {
         throw new Error(result.message)

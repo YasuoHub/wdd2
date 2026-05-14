@@ -21,7 +21,7 @@ exports.main = async (event, context) => {
       balance: db.command.exists(false)
     }).update({
       data: {
-        balance: 0,           // 平台余额（元）
+        balance: 0,           // 余额（元）
         frozen_balance: 0,    // 冻结金额（元）
         total_earned: 0,      // 累计收入（元）
         total_withdrawn: 0,   // 累计提现（元）

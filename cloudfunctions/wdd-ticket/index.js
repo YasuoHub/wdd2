@@ -140,7 +140,7 @@ async function getTicketList(event, OPENID) {
       needId: ticket.need_id,
       status: ticket.status,
       taskTitle: need ? need.type_name : '未知任务',
-      taskNumber: need ? need._id.slice(-8).toUpperCase() : '',
+      taskNumber: need ? need._id.toUpperCase() : '',
       rewardAmount: need ? need.reward_amount : 0,
       expireTime: need ? need.expire_time : null,
       seekerNickname: seeker ? seeker.nickname : '未知用户',
@@ -677,14 +677,14 @@ async function sendArbitrationNotifications(need, takerRecord, taskResult, parti
   let takerContent = ''
 
   if (taskResult === 'cancelled') {
-    seekerContent = `客服已裁决：任务取消，悬赏金额¥${seekerRefund}已退回您的平台余额。帮助者信誉分-10。`
+    seekerContent = `客服已裁决：任务取消，悬赏金额¥${seekerRefund}已退回您的余额。帮助者信誉分-10。`
     takerContent = `客服已裁决：任务取消，您未获得收入。您的信誉分-10。`
   } else if (taskResult === 'completed') {
     seekerContent = `客服已裁决：任务完成。帮助者获得¥${takerIncome}（已扣除平台服务费）。您的信誉分-10。`
-    takerContent = `客服已裁决：任务完成，您获得¥${takerIncome}（已扣除平台服务费），已计入平台余额。求助者信誉分-10。`
+    takerContent = `客服已裁决：任务完成，您获得¥${takerIncome}（已扣除平台服务费），已计入余额。求助者信誉分-10。`
   } else if (taskResult === 'partial') {
-    seekerContent = `客服已裁决：部分完成(${partialPercent}%)。帮助者获得¥${takerIncome}，剩余¥${seekerRefund}已退回您的平台余额。双方均不扣信誉分。`
-    takerContent = `客服已裁决：部分完成(${partialPercent}%)，您获得¥${takerIncome}，已计入平台余额。双方均不扣信誉分。`
+    seekerContent = `客服已裁决：部分完成(${partialPercent}%)。帮助者获得¥${takerIncome}，剩余¥${seekerRefund}已退回您的余额。双方均不扣信誉分。`
+    takerContent = `客服已裁决：部分完成(${partialPercent}%)，您获得¥${takerIncome}，已计入余额。双方均不扣信誉分。`
   }
 
   // 封禁信息

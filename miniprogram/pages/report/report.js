@@ -28,20 +28,20 @@ Page({
   },
 
   onLoad(options) {
-    const { needId, mode = 'initiate' } = options
-    this.setData({ needId, mode })
+    const { needId, mode = 'initiate', reportId } = options
+    this.setData({ needId, mode, reportId: reportId || '' })
     if (mode === 'supplement') {
       this.loadReportDetail()
     }
   },
 
   async loadReportDetail() {
-    const { needId } = this.data
+    const { needId, reportId } = this.data
     wx.showLoading({ title: '加载中...' })
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-report',
-        data: { action: 'getReportDetail', needId }
+        data: { action: 'getReportDetail', needId, reportId }
       })
       wx.hideLoading()
       if (result.code === 0 && result.data.hasReport) {
@@ -219,12 +219,7 @@ Page({
         params.reportTypeLabel = selectedTypeLabel
       }
       if (mode === 'supplement') {
-        const detailRes = await wx.cloud.callFunction({
-          name: 'wdd-report', data: { action: 'getReportDetail', needId }
-        })
-        if (detailRes.result.code === 0 && detailRes.result.data.hasReport) {
-          params.reportId = detailRes.result.data.reportId
-        }
+        params.reportId = this.data.reportId
       }
       const { result } = await wx.cloud.callFunction({ name: 'wdd-report', data: params })
 

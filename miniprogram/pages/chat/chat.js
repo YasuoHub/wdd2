@@ -670,8 +670,8 @@ Page({
     let displayContent = msg.content
     if (msg.type === 'system' && msg.system_type === 'task_completed' && typeof msg.amount === 'number') {
       displayContent = this.data.isSeeker
-        ? `任务已完成，¥${msg.amount}已计入对方的平台余额`
-        : `任务已完成，¥${msg.amount}已计入您的平台余额`
+        ? `任务已完成，¥${msg.amount}已计入对方的余额`
+        : `任务已完成，¥${msg.amount}已计入您的余额`
     }
 
     // 处理时间显示
@@ -1379,8 +1379,8 @@ Page({
         chatCache.markCompleted(currentNeedId)
 
         // 设置刷新标记
-        wx.setStorageSync('refreshMyNeeds', true)
-        wx.setStorageSync('refreshMyTasks', true)
+        app.globalData.refreshMyNeeds = true
+        app.globalData.refreshMyTasks = true
 
         // 跳转到评价页面
         setTimeout(() => {

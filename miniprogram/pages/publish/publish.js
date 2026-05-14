@@ -465,7 +465,7 @@ Page({
 
       if (confirmResult.code === 0) {
         // 设置刷新标记
-        wx.setStorageSync('refreshMyNeeds', true)
+        app.globalData.refreshMyNeeds = true
         wx.setStorageSync('forceRefreshIndex', true)
         wx.setStorageSync('forceRefreshTaskHall', true)
 

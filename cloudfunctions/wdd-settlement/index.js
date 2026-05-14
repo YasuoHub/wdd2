@@ -430,7 +430,7 @@ async function sendCompletionNotification(takerId, need, takerIncome) {
         user_id: takerId,
         type: 'task_completed',
         title: '任务已完成',
-        content: `你帮助完成的「${need.type_name || '求助'}」任务已确认完成，¥${takerIncome}已计入您的平台余额`,
+        content: `你帮助完成的「${need.type_name || '求助'}」任务已确认完成，¥${takerIncome}已计入您的余额`,
         need_id: need._id,
         is_read: false,
         create_time: new Date()
@@ -474,7 +474,7 @@ async function sendSystemMessage(need, takerId, seekerId, takerIncome) {
         // content 作为兜底文案（旧版本客户端无法识别 system_type 时使用帮助者视角文案）
         system_type: 'task_completed',
         amount: takerIncome,
-        content: `任务已完成，¥${takerIncome}已计入帮助者的平台余额`,
+        content: `任务已完成，¥${takerIncome}已计入帮助者的余额`,
         image_url: '',
         create_time: new Date()
       }

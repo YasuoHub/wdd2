@@ -420,10 +420,10 @@ async function submitSupplement(event, OPENID) {
 
 // 查询申诉详情
 async function getAppealDetail(event, OPENID) {
-  const { needId } = event
+  const { appealId } = event
 
-  if (!needId) {
-    return { code: -1, message: '任务ID不能为空' }
+  if (!appealId) {
+    return { code: -1, message: '申诉ID不能为空' }
   }
 
   // 获取当前用户
@@ -433,6 +433,15 @@ async function getAppealDetail(event, OPENID) {
   }
   const user = userRes.data[0]
 
+  // 按 appealId 精确查询
+  const appealRes = await db.collection('wdd-appeals').doc(appealId).get()
+  if (!appealRes.data) {
+    return { code: -1, message: '申诉记录不存在' }
+  }
+  const appeal = appealRes.data
+
+  // 校验任务参与者身份
+  const needId = appeal.need_id
   const parties = await getTaskParties(needId)
   if (!parties.need) {
     return { code: -1, message: '任务不存在' }
@@ -440,20 +449,6 @@ async function getAppealDetail(event, OPENID) {
   if (!isTaskParticipant(user._id, parties)) {
     return { code: -1, message: '无权查看此申诉' }
   }
-
-  // 获取申诉记录（不限发起方，补充方也需要查询）
-  const appealRes = await db.collection('wdd-appeals').where({
-    need_id: needId
-  }).orderBy('create_time', 'desc').limit(1).get()
-
-  if (appealRes.data.length === 0) {
-    return {
-      code: 0,
-      data: { hasAppeal: false }
-    }
-  }
-
-  const appeal = appealRes.data[0]
 
   // 查询发起方信息
   const initiatorRes = await db.collection('wdd-users').doc(appeal.initiator_id).get().catch(() => null)
@@ -497,6 +492,16 @@ async function getAppealDetail(event, OPENID) {
   const canCancel = appeal.status === 'pending' &&
     appeal.initiator_id === user._id
 
+  // 计算当前用户作为补充方的已提交材料
+  let mySupplement = null
+  if (appeal.has_supplement && appeal.supplement_id === user._id) {
+    mySupplement = {
+      type: appeal.supplement_type,
+      reason: appeal.supplement_reason,
+      images: appeal.supplement_images || []
+    }
+  }
+
   return {
     code: 0,
     data: {
@@ -513,6 +518,7 @@ async function getAppealDetail(event, OPENID) {
         reason: appeal.initiator_reason,
         images: appeal.initiator_images || []
       },
+      mySupplement: mySupplement,
       supplement: appeal.has_supplement ? {
         id: appeal.supplement_id,
         nickname: supplementUser ? supplementUser.nickname : '未知用户',
@@ -669,11 +675,7 @@ async function getAppealDetailById(event, OPENID) {
       status: appeal.status,
       createTime: appeal.create_time,
       cancelTime: appeal.cancel_time || null,
-      updateTime: appeal.update_time,
-      hasSupplement: appeal.has_supplement || false,
-      supplementType: appeal.supplement_type || null,
-      supplementReason: appeal.supplement_reason || null,
-      supplementImages: appeal.supplement_images || []
+      updateTime: appeal.update_time
     }
   }
 }
@@ -712,7 +714,7 @@ async function sendAppealNotice(need, initiatorId, appealId) {
     const bj = new Date(now.getTime() + 8 * 60 * 60 * 1000)
     const timeStr = `${bj.getUTCFullYear()}-${String(bj.getUTCMonth() + 1).padStart(2, '0')}-${String(bj.getUTCDate()).padStart(2, '0')} ${String(bj.getUTCHours()).padStart(2, '0')}:${String(bj.getUTCMinutes()).padStart(2, '0')}`
 
-    const taskNumber = need._id.slice(-8).toUpperCase()
+    const taskNumber = need._id.toUpperCase()
 
     await db.collection('wdd-notifications').add({
       data: {

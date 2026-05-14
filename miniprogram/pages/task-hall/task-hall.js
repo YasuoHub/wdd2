@@ -383,7 +383,7 @@ Page({
         this.loadTasks(true)
 
         // 设置刷新标记，返回时刷新"我的接单"页面
-        wx.setStorageSync('refreshMyTasks', true)
+        app.globalData.refreshMyTasks = true
 
         // 跳转到聊天页
         setTimeout(() => {

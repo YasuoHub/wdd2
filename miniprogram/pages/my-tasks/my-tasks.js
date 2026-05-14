@@ -49,9 +49,9 @@ Page({
       return
     }
     // 如果标记需要刷新，或者数据为空，则重新加载
-    if (this.data.tasks.length === 0 || wx.getStorageSync('refreshMyTasks')) {
+    if (this.data.tasks.length === 0 || app.globalData.refreshMyTasks) {
       this.refreshData()
-      wx.removeStorageSync('refreshMyTasks')
+      app.globalData.refreshMyTasks = false
     }
   },
 

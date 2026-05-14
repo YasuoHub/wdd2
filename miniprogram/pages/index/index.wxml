@@ -119,7 +119,7 @@
     </view>
 
     <!-- 空状态 -->
-    <empty wx:elif="{{nearbyEmpty}}" type="card" icon="🌸" title="附近5公里内暂无求助任务" desc="成都地区的实时求助信息" showBtn="true" btnText="去大厅看看" btnType="primary" bind:btnTap="goToTaskHall"></empty>
+    <empty wx:elif="{{nearbyEmpty}}" type="card" icon="🌸" title="暂无求助任务" desc="周围地区的实时求助信息" showBtn="true" btnText="去大厅看看" btnType="primary" bind:btnTap="goToTaskHall"></empty>
   </view>
 
   <!-- 底部装饰 -->

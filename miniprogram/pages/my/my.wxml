@@ -18,7 +18,7 @@
     <view class="balance-section" bindtap="goToWallet">
       <view class="balance-item">
         <text class="balance-value">¥{{money.format(userInfo.balance)}}</text>
-        <text class="balance-label">平台余额</text>
+        <text class="balance-label">余额</text>
       </view>
       <view class="balance-divider"></view>
       <view class="balance-item">
