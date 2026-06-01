@@ -1,0 +1,49 @@
+.bar-chart {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.bar-label {
+  width: 140rpx;
+  font-size: 24rpx;
+  color: var(--text-primary, #333);
+  text-align: right;
+  padding-right: 16rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.bar-track {
+  flex: 1;
+  height: 28rpx;
+  background: var(--bg-tertiary, #f0f0f0);
+  border-radius: 14rpx;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 14rpx;
+  background: linear-gradient(90deg, #5DB8E6, #3a8fd4);
+  transition: width 0.5s ease;
+  min-width: 4rpx;
+}
+.bar-value {
+  width: 80rpx;
+  font-size: 24rpx;
+  color: var(--text-secondary, #666);
+  text-align: right;
+  padding-left: 12rpx;
+  flex-shrink: 0;
+}
+.empty-tip {
+  text-align: center;
+  color: #999;
+  font-size: 26rpx;
+  padding: 40rpx 0;
+}

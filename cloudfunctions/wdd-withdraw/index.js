@@ -13,24 +13,31 @@ const { callTransferBill, callQueryBillByOutNo, verifyCallbackSignature, decrypt
 
 // 主入口
 exports.main = async (event, context) => {
-  // 打印出口IP（用于配置微信支付IP白名单）
-  const ipServices = [
-    'https://httpbin.org/ip',
-    'https://api.ipify.org?format=json',
-    'https://ifconfig.me/ip'
-  ]
-  for (const url of ipServices) {
-    try {
-      const ipRes = await axios.get(url, { timeout: 5000 })
-      const ip = ipRes.data.origin || ipRes.data.ip || ipRes.data
-      if (ip) {
-        console.log('云函数出口IP:', ip)
-        break
-      }
-    } catch (e) {
-      console.log(`获取出口IP失败(${url}):`, e.message)
-    }
-  }
+  // ========================================
+  // 出口 IP 检测（已注释）
+  // ========================================
+  // 用途：微信支付商户平台要求配置 API 调用来源 IP 白名单，
+  //       云函数的出口 IP 是固定的，只需在首次配置白名单时获取一次。
+  // 使用方法：临时取消注释 → 部署云函数 → 调用一次 → 查看日志中的 IP →
+  //          将 IP 填入微信支付商户后台"API安全 → IP白名单" → 重新注释 → 重新部署。
+  // 删除影响：不影响提现功能；IP 已在白名单中则无需再获取。
+  // const ipServices = [
+  //   'https://httpbin.org/ip',
+  //   'https://api.ipify.org?format=json',
+  //   'https://ifconfig.me/ip'
+  // ]
+  // for (const url of ipServices) {
+  //   try {
+  //     const ipRes = await axios.get(url, { timeout: 5000 })
+  //     const ip = ipRes.data.origin || ipRes.data.ip || ipRes.data
+  //     if (ip) {
+  //       console.log('云函数出口IP:', ip)
+  //       break
+  //     }
+  //   } catch (e) {
+  //     console.log(`获取出口IP失败(${url}):`, e.message)
+  //   }
+  // }
 
   // 微信支付回调通过云函数 HTTP 触发器接入，event 格式为 { path, httpMethod, headers, body, ... }
   // 没有 action 字段 + 有 httpMethod 时识别为 HTTP 回调
@@ -76,7 +83,7 @@ exports.main = async (event, context) => {
 
 // 申请提现 → 即时打款（无人工审批环节）
 async function applyWithdraw(event, OPENID) {
-  const { amount } = event
+  const { amount, applicationId } = event
 
   const rules = await loadFromDb()
   const MoneyUtils = createMoneyUtils(rules)
@@ -96,6 +103,30 @@ async function applyWithdraw(event, OPENID) {
   }
 
   const user = userRes.data[0]
+
+  // 如果传入了 applicationId，校验该申请是否已审批通过且未提现
+  let approvedApplication = null
+  if (applicationId) {
+    const appRes = await db.collection('wdd-withdraw-applications').doc(applicationId).get().catch(() => null)
+    if (!appRes || !appRes.data) {
+      return { code: -1, message: '提现申请记录不存在' }
+    }
+    if (appRes.data.user_id !== user._id) {
+      return { code: -1, message: '无权操作此申请' }
+    }
+    if (appRes.data.status !== 'approved') {
+      return { code: -1, message: '该提现申请尚未通过审批' }
+    }
+    if (appRes.data.withdraw_status === 'withdrawn') {
+      return { code: -1, message: '该申请已提现，请勿重复操作' }
+    }
+    approvedApplication = appRes.data
+
+    // 提现金额不能超过申请金额
+    if (Math.abs(amount - approvedApplication.amount) > 0.01) {
+      return { code: -1, message: `提现金额需与申请金额一致（¥${approvedApplication.amount}）` }
+    }
+  }
 
   const withdrawCheck = MoneyUtils.checkCanWithdraw(user.balance || 0)
   if (!withdrawCheck.canWithdraw) {
@@ -186,6 +217,20 @@ async function applyWithdraw(event, OPENID) {
 
   // 事务外发起真实打款（事务内调用外部 API 会拖长事务、增加风险）
   const transferResult = await executeTransfer(withdrawRecord)
+
+  // 打款成功后，才将关联的提现申请标记为已提现（避免打款失败时申请记录已错误标记）
+  if (approvedApplication && transferResult.code === 0) {
+    await db.collection('wdd-withdraw-applications').doc(approvedApplication._id).update({
+      data: {
+        withdraw_status: 'withdrawn',
+        withdraw_id: withdrawId,
+        withdraw_time: new Date(),
+        update_time: new Date()
+      }
+    }).catch(err => {
+      console.error('更新提现申请状态失败:', err)
+    })
+  }
   return {
     code: transferResult.code,
     message: transferResult.message,

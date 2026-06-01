@@ -1,0 +1,136 @@
+<view class="container">
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" bindtap="onTabChange" data-tab="pending">
+      <text>待处理</text>
+    </view>
+    <view class="tab-item {{activeTab === 'resolved' ? 'active' : ''}}" bindtap="onTabChange" data-tab="resolved">
+      <text>已处理</text>
+    </view>
+    <view class="tab-indicator {{activeTab === 'pending' ? 'left' : 'right'}}"></view>
+  </view>
+
+  <!-- 待处理列表 -->
+  <scroll-view wx:if="{{activeTab === 'pending'}}" class="scroll-list" scroll-y bindscrolltolower="onScrollToLower" lower-threshold="100">
+    <view wx:if="{{pendingLoading && pendingApplications.length === 0}}" class="loading">加载中...</view>
+    <view wx:elif="{{pendingApplications.length === 0}}" class="empty">暂无待处理申请</view>
+    <view wx:else class="application-list">
+      <view wx:for="{{pendingApplications}}" wx:key="_id" class="application-card">
+        <view class="card-left left-pending"></view>
+        <view class="card-body">
+          <!-- 用户信息行 -->
+          <view class="card-user-row">
+            <image wx:if="{{item.avatar}}" class="user-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="user-avatar-default">👤</view>
+            <text class="user-name">{{item.nickname}}</text>
+            <view class="status-tag status-pending">待审批</view>
+          </view>
+          <!-- 提现金额 -->
+          <view class="card-amount-row">
+            <text class="amount-label">提现金额</text>
+            <text class="amount-value">¥{{item.amount}}</text>
+          </view>
+          <!-- 到账金额 -->
+          <view class="card-info-row">
+            <text class="info-label">预计到账</text>
+            <text class="info-value">¥{{item.actualAmount}}</text>
+          </view>
+          <view class="card-info-row">
+            <text class="info-label">手续费</text>
+            <text class="info-value fee">¥{{item.fee}}</text>
+          </view>
+          <!-- 底部 -->
+          <view class="card-footer">
+            <text class="footer-time">🕐 {{item.applyTime}}</text>
+            <view class="approve-btn" bindtap="showApproveModal" data-id="{{item._id}}">审批</view>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{pendingLoadingMore}}" class="loading-more">加载更多...</view>
+      <view wx:elif="{{!pendingHasMore && pendingApplications.length > 0}}" class="no-more">没有更多了</view>
+    </view>
+  </scroll-view>
+
+  <!-- 已处理列表 -->
+  <scroll-view wx:elif="{{activeTab === 'resolved'}}" class="scroll-list" scroll-y bindscrolltolower="onScrollToLower" lower-threshold="100">
+    <view wx:if="{{resolvedLoading && resolvedApplications.length === 0}}" class="loading">加载中...</view>
+    <view wx:elif="{{resolvedApplications.length === 0}}" class="empty">暂无已处理申请</view>
+    <view wx:else class="application-list">
+      <view wx:for="{{resolvedApplications}}" wx:key="_id" class="application-card resolved">
+        <view class="card-left {{item.status === 'approved' ? 'left-approved' : 'left-rejected'}}"></view>
+        <view class="card-body">
+          <!-- 用户信息行 -->
+          <view class="card-user-row">
+            <image wx:if="{{item.avatar}}" class="user-avatar" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:else class="user-avatar-default">👤</view>
+            <text class="user-name">{{item.nickname}}</text>
+            <view class="status-tag {{item.status === 'approved' ? 'status-approved' : 'status-rejected'}}">{{item.statusText}}</view>
+          </view>
+          <!-- 提现金额 -->
+          <view class="card-amount-row">
+            <text class="amount-label">提现金额</text>
+            <text class="amount-value">¥{{item.amount}}</text>
+          </view>
+          <!-- 驳回理由 -->
+          <view wx:if="{{item.status === 'rejected' && item.rejectReason}}" class="reject-reason-row">
+            <text class="reject-label">驳回理由：</text>
+            <text class="reject-text">{{item.rejectReason}}</text>
+          </view>
+          <!-- 提现状态 -->
+          <view wx:if="{{item.status === 'approved'}}" class="card-info-row">
+            <text class="info-label">提现状态</text>
+            <text class="info-value {{item.withdrawStatus === 'withdrawn' ? 'withdrawn-text' : ''}}">{{item.withdrawStatus === 'withdrawn' ? '已提现' : '未提现'}}</text>
+          </view>
+          <!-- 底部 -->
+          <view class="card-footer">
+            <text class="footer-time">🕐 {{item.applyTime}}</text>
+            <text wx:if="{{item.approveTime}}" class="footer-approve-time">{{item.approveTime}} 处理</text>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{resolvedLoadingMore}}" class="loading-more">加载更多...</view>
+      <view wx:elif="{{!resolvedHasMore && resolvedApplications.length > 0}}" class="no-more">没有更多了</view>
+    </view>
+  </scroll-view>
+
+  <!-- 审批弹窗 -->
+  <view class="modal {{showApproveModal ? 'show' : ''}}" wx:if="{{showApproveModal}}">
+    <view class="modal-mask" bindtap="hideApproveModal"></view>
+    <view class="modal-content">
+      <view class="modal-title">处理提现申请</view>
+
+      <!-- 申请信息 -->
+      <view class="approve-info">
+        <text class="approve-label">申请人：{{currentApplication.nickname}}</text>
+        <text class="approve-label">提现金额：¥{{currentApplication.amount}}</text>
+      </view>
+
+      <!-- 审批结果 -->
+      <view class="form-row">
+        <text class="form-label">审批结果</text>
+        <picker bindchange="onApproveResultChange" range="{{['通过', '驳回']}}">
+          <view class="picker">
+            <text>{{approveResult === 'approved' ? '通过' : approveResult === 'rejected' ? '驳回' : '请选择'}}</text>
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 驳回理由（仅驳回时显示） -->
+      <view wx:if="{{approveResult === 'rejected'}}" class="form-row">
+        <text class="form-label">驳回理由</text>
+        <picker bindchange="onRejectReasonChange" range="{{rejectReasons}}">
+          <view class="picker">
+            <text>{{rejectReason || '请选择'}}</text>
+            <text class="arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 底部按钮 -->
+      <view class="modal-footer">
+        <button class="modal-btn cancel" bindtap="hideApproveModal">取消</button>
+        <button class="modal-btn confirm" bindtap="submitApprove">确认</button>
+      </view>
+    </view>
+  </view>
+</view>

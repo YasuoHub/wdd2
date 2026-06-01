@@ -13,6 +13,9 @@ Page({
     // 平台规则
     withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
     withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
+    withdrawMinPerRequest: PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST,
+    withdrawMaxPerRequest: PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST,
+    withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
 
     // 提现条件
     canWithdraw: false,
@@ -25,6 +28,23 @@ Page({
     page: 0,
     pageSize: 20,
 
+    // 申请记录
+    applications: [],
+    appLoading: false,
+
+    // 申请提现弹窗
+    showApplyModal: false,
+    applyAmount: '',
+    applyFee: '0.00',
+    applyActual: '0.00',
+    canSubmitApply: false,
+    applyErrorTip: '',
+    isSubmitting: false,
+    needApproval: false,
+
+    // 提现规则弹窗
+    showRulesModal: false,
+
     // 用户信息
     userInfo: {}
   },
@@ -33,12 +53,14 @@ Page({
     this.loadUserInfo()
     this.loadBalance()
     this.loadRecords()
+    this.loadApplications()
   },
 
   onShow() {
     this.applyPlatformConfig()
     this.loadBalance()
     this.loadRecords(true)
+    this.loadApplications()
   },
 
   // 应用平台配置到页面数据（从数据库动态加载的费率/阈值）
@@ -47,7 +69,8 @@ Page({
     if (config) {
       this.setData({
         withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
-        withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100)
+        withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
+        withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD
       })
     }
   },
@@ -93,6 +116,27 @@ Page({
     }
   },
 
+  // 加载申请记录
+  async loadApplications() {
+    this.setData({ appLoading: true })
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-withdraw-approval',
+        data: {
+          action: 'getMyApplications',
+          page: 0,
+          pageSize: 20
+        }
+      })
+      if (result.code === 0) {
+        this.setData({ applications: result.data.records || [] })
+      }
+    } catch (err) {
+      console.error('加载申请记录失败:', err)
+    }
+    this.setData({ appLoading: false })
+  },
+
   // 加载账单记录
   async loadRecords(reset = false) {
     if (this.data.loading) return
@@ -133,6 +177,7 @@ Page({
   async onPullDownRefresh() {
     await this.loadBalance()
     await this.loadRecords(true)
+    await this.loadApplications()
     wx.stopPullDownRefresh()
   },
 
@@ -143,8 +188,8 @@ Page({
     }
   },
 
-  // 跳转到提现页面
-  goToWithdraw() {
+  // 显示申请提现弹窗
+  showApplyModal() {
     if (!this.data.canWithdraw) {
       wx.showToast({
         title: this.data.withdrawTip,
@@ -153,18 +198,150 @@ Page({
       })
       return
     }
+    this.setData({
+      showApplyModal: true,
+      applyAmount: '',
+      applyFee: '0.00',
+      applyActual: '0.00',
+      canSubmitApply: false,
+      applyErrorTip: '',
+      isSubmitting: false,
+      needApproval: false
+    })
+  },
+
+  hideApplyModal() {
+    this.setData({ showApplyModal: false })
+  },
+
+  // 输入申请金额
+  onApplyAmountInput(e) {
+    let value = e.detail.value
+    value = value.replace(/[^0-9.]/g, '')
+    const parts = value.split('.')
+    if (parts.length > 2) {
+      value = parts[0] + '.' + parts.slice(1).join('')
+    }
+    if (parts[1] && parts[1].length > 2) {
+      value = parts[0] + '.' + parts[1].slice(0, 2)
+    }
+
+    const numValue = parseFloat(value) || 0
+    const maxPerRequest = PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST
+    if (numValue > this.data.balance) {
+      value = String(this.data.balance)
+    }
+    if (numValue > maxPerRequest) {
+      value = String(maxPerRequest)
+    }
+
+    this.setData({ applyAmount: value })
+    this.calcApplyFee()
+    this.checkCanSubmitApply()
+  },
+
+  // 全部提现
+  withdrawAll() {
+    const maxAmount = Math.min(this.data.balance, PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    const amount = MoneyUtils.formatAmount(maxAmount)
+    this.setData({ applyAmount: amount })
+    this.calcApplyFee()
+    this.checkCanSubmitApply()
+  },
+
+  calcApplyFee() {
+    const amount = parseFloat(this.data.applyAmount) || 0
+    const fee = MoneyUtils.calcWithdrawFee(amount)
+    const actual = MoneyUtils.calcWithdrawActual(amount)
+    this.setData({
+      applyFee: MoneyUtils.formatAmount(fee),
+      applyActual: MoneyUtils.formatAmount(actual)
+    })
+  },
+
+  checkCanSubmitApply() {
+    const amount = parseFloat(this.data.applyAmount) || 0
+    const check = MoneyUtils.checkWithdrawAmount(amount, this.data.balance)
+    const threshold = this.data.withdrawApprovalThreshold
+    const needApproval = amount > threshold
+    this.setData({
+      canSubmitApply: check.valid,
+      applyErrorTip: check.valid ? '' : check.reason,
+      needApproval: needApproval
+    })
+  },
+
+  // 提交提现申请
+  async submitApply() {
+    if (!this.data.canSubmitApply || this.data.isSubmitting) return
+
+    const amount = parseFloat(this.data.applyAmount)
+    const threshold = this.data.withdrawApprovalThreshold
+
+    // 低于或等于阈值 → 直接跳转提现页即时到账
+    if (amount <= threshold) {
+      this.setData({ showApplyModal: false })
+      wx.navigateTo({
+        url: `/pages/withdraw/withdraw?amount=${amount}`
+      })
+      return
+    }
+
+    // 高于阈值 → 走审批流程
+    wx.showModal({
+      title: '确认申请',
+      content: `提现 ¥${amount}（手续费 ¥${this.data.applyFee}，到账 ¥${this.data.applyActual}），单笔超过 ¥${threshold} 需管理员审批，确认提交？`,
+      confirmText: '确认申请',
+      confirmColor: '#5DB8E6',
+      success: async (res) => {
+        if (res.confirm) {
+          await this.doApply(amount)
+        }
+      }
+    })
+  },
+
+  async doApply(amount) {
+    this.setData({ isSubmitting: true })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-withdraw-approval',
+        data: {
+          action: 'apply',
+          amount: amount
+        }
+      })
+
+      if (result.code === 0) {
+        this.setData({ showApplyModal: false })
+        wx.showToast({ title: '申请已提交', icon: 'success' })
+        this.loadApplications()
+      } else {
+        wx.showToast({ title: result.message, icon: 'none', duration: 3000 })
+      }
+    } catch (err) {
+      wx.showToast({ title: '提交失败', icon: 'none' })
+    }
+
+    this.setData({ isSubmitting: false })
+  },
+
+  // 跳转到提现页面（审批通过后发起真实提现）
+  goToWithdraw(e) {
+    const { id } = e.currentTarget.dataset
+    if (!id) return
     wx.navigateTo({
-      url: '/pages/withdraw/withdraw'
+      url: `/pages/withdraw/withdraw?applicationId=${id}`
     })
   },
 
   // 显示提现规则
   showWithdrawRules() {
-    const feeRate = Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100)
-    wx.showModal({
-      title: '提现规则',
-      content: `1. 最低提现金额：${PLATFORM_RULES.WITHDRAW_MIN_AMOUNT}元\r\n2. 提现手续费：${feeRate}%\r\n3. 单次提现最低${PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST}元，最高${PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST}元`,
-      showCancel: false
-    })
+    this.setData({ showRulesModal: true })
+  },
+
+  hideRulesModal() {
+    this.setData({ showRulesModal: false })
   }
 })

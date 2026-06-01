@@ -1,0 +1,164 @@
+<view class="page">
+  <!-- 时间筛选栏 -->
+  <view class="filter-bar">
+    <view class="preset-btns">
+      <view class="preset-btn {{activePreset === '7d' ? 'active' : ''}}" bindtap="setPreset" data-preset="7d">近7天</view>
+      <view class="preset-btn {{activePreset === '30d' ? 'active' : ''}}" bindtap="setPreset" data-preset="30d">近30天</view>
+      <view class="preset-btn {{activePreset === '90d' ? 'active' : ''}}" bindtap="setPreset" data-preset="90d">近90天</view>
+    </view>
+    <view class="date-range">
+      <picker mode="date" value="{{startDate}}" end="{{today}}" bindchange="onStartDateChange">
+        <view class="date-input">{{startDate}}</view>
+      </picker>
+      <text class="date-sep">至</text>
+      <picker mode="date" value="{{endDate}}" end="{{today}}" bindchange="onEndDateChange">
+        <view class="date-input">{{endDate}}</view>
+      </picker>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="main-scroll" enhanced show-scrollbar="{{false}}">
+    <view class="scroll-content">
+    <!-- 1. KPI 概览 -->
+    <view class="kpi-grid">
+      <view class="kpi-card">
+        <text class="kpi-label">总任务数</text>
+        <text class="kpi-value">{{kpi.totalTasks}}</text>
+      </view>
+      <view class="kpi-card">
+        <text class="kpi-label">完结率</text>
+        <text class="kpi-value accent-green">{{kpi.completionRateText}}</text>
+      </view>
+      <view class="kpi-card">
+        <text class="kpi-label">平台收入</text>
+        <text class="kpi-value accent-blue">¥{{kpi.platformRevenueText}}</text>
+      </view>
+      <view class="kpi-card">
+        <text class="kpi-label">新增用户</text>
+        <text class="kpi-value accent-orange">{{kpi.newUsers}}</text>
+      </view>
+    </view>
+
+    <!-- 2. 平台收入趋势 -->
+    <view class="chart-card">
+      <view class="card-title">平台收入趋势</view>
+      <view class="card-body">
+        <view wx:if="{{loading.revenue}}" class="skeleton chart-skeleton"></view>
+        <chart-line wx:else data="{{revenueTrend}}" labels="{{['平台收入']}}" colors="{{['#2ecc71']}}" unit="元" isPercent="{{false}}"></chart-line>
+      </view>
+    </view>
+
+    <!-- 3. 新增用户趋势 -->
+    <view class="chart-card">
+      <view class="card-title">新增用户趋势</view>
+      <view class="card-body">
+        <view wx:if="{{loading.userTrend}}" class="skeleton chart-skeleton"></view>
+        <chart-line wx:else data="{{userTrend}}" labels="{{['新用户']}}" colors="{{['#f39c12']}}" unit="人" isPercent="{{false}}"></chart-line>
+      </view>
+    </view>
+
+    <!-- 4. 任务类型排行 -->
+    <view class="chart-card">
+      <view class="card-title">任务类型排行</view>
+      <view class="card-body">
+        <view wx:if="{{loading.typeRanking}}" class="skeleton" style="height: 300rpx;"></view>
+        <chart-bar wx:else data="{{typeRanking}}"></chart-bar>
+      </view>
+    </view>
+
+    <!-- 5. 转化漏斗 -->
+    <view class="chart-card">
+      <view class="card-title">转化漏斗（期内事件数）</view>
+      <view class="card-body">
+        <view wx:if="{{loading.funnel}}" class="skeleton" style="height: 360rpx;"></view>
+        <chart-funnel wx:else data="{{funnelStages}}" labels="{{['发布', '接单', '完成', '评价']}}"></chart-funnel>
+      </view>
+    </view>
+
+    <!-- 6. 完结率/取消率趋势 -->
+    <view class="chart-card">
+      <view class="card-title">完结率 / 取消率趋势</view>
+      <view class="card-body">
+        <view wx:if="{{loading.completionTrend}}" class="skeleton chart-skeleton"></view>
+        <chart-line wx:else data="{{completionTrend}}" labels="{{['完结率', '取消率']}}" colors="{{['#2ecc71', '#e74c3c']}}" unit="" isPercent="{{true}}"></chart-line>
+      </view>
+    </view>
+
+    <!-- 7. 举报率趋势 -->
+    <view class="chart-card">
+      <view class="card-title">举报率趋势</view>
+      <view class="card-body">
+        <view wx:if="{{loading.reportTrend}}" class="skeleton chart-skeleton"></view>
+        <chart-line wx:else data="{{reportTrend}}" labels="{{['总举报率', '有效举报率']}}" colors="{{['#e74c3c', '#f39c12']}}" unit="" isPercent="{{true}}"></chart-line>
+      </view>
+    </view>
+
+    <!-- 8. 等待时间分布 -->
+    <view class="chart-card">
+      <view class="card-title">等待时间分布（发布到接单）</view>
+      <view class="card-body">
+        <view wx:if="{{loading.waitTime}}" class="skeleton" style="height: 500rpx;"></view>
+        <chart-pie wx:else data="{{waitTimeData}}"></chart-pie>
+      </view>
+    </view>
+
+    <!-- 9. 平均匹配时长趋势 -->
+    <view class="chart-card">
+      <view class="card-title">平均匹配时长趋势</view>
+      <view class="card-body">
+        <view wx:if="{{loading.avgMatch}}" class="skeleton chart-skeleton"></view>
+        <chart-line wx:else data="{{avgMatchTrend}}" labels="{{['平均匹配时长']}}" colors="{{['#9b59b6']}}" unit="分钟" isPercent="{{false}}"></chart-line>
+      </view>
+    </view>
+
+    <!-- 10. 热门地点排行 -->
+    <view class="chart-card">
+      <view class="card-title">热门地点排行 Top 20</view>
+      <view class="card-body">
+        <view wx:if="{{loading.locations}}" class="skeleton" style="height: 400rpx;"></view>
+        <view wx:else class="location-list">
+          <view class="location-row" wx:for="{{hotLocations}}" wx:key="locationName">
+            <text class="loc-rank">{{index + 1}}</text>
+            <text class="loc-name">{{item.locationName}}</text>
+            <view class="loc-bar-track">
+              <view class="loc-bar-fill" style="width: {{item._percent}}%;"></view>
+            </view>
+            <text class="loc-count">{{item.count}}次</text>
+          </view>
+          <view wx:if="{{hotLocations.length === 0}}" class="empty-tip">暂无数据</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 11. 资金流水 -->
+    <view class="chart-card">
+      <view class="card-title">资金流水趋势</view>
+      <view class="card-body">
+        <view wx:if="{{loading.fundFlowTrend}}" class="skeleton chart-skeleton"></view>
+        <chart-line wx:else data="{{fundFlowTrend}}" labels="{{['收入', '支出']}}" colors="{{['#2ecc71', '#e74c3c']}}" unit="元" isPercent="{{false}}"></chart-line>
+      </view>
+    </view>
+
+    <!-- 资金流水明细 -->
+    <view class="chart-card">
+      <view class="card-title">资金流水明细</view>
+      <view class="card-body">
+        <view wx:if="{{loading.fundFlowDetails}}" class="skeleton" style="height: 300rpx;"></view>
+        <view wx:else class="flow-list">
+          <view class="flow-row" wx:for="{{fundFlowDetails}}" wx:key="_id">
+            <view class="flow-info">
+              <text class="flow-type">{{item._typeName}}</text>
+              <text class="flow-time">{{item._time}}</text>
+            </view>
+            <text class="flow-amount {{item.amount > 0 ? 'income' : 'expense'}}">{{item._amountText}}</text>
+          </view>
+          <view wx:if="{{fundFlowDetails.length === 0}}" class="empty-tip">暂无流水记录</view>
+          <view wx:if="{{fundFlowHasMore}}" class="load-more" bindtap="loadMoreFlow">加载更多</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+</view>

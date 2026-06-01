@@ -30,7 +30,9 @@
     "pages/my-reports/my-reports",
     "pages/my-appeals/my-appeals",
     "pages/report-detail/report-detail",
-    "pages/appeal-detail/appeal-detail"
+    "pages/appeal-detail/appeal-detail",
+    "pages/fund-approval/fund-approval",
+    "pages/ops-analytics/ops-analytics"
   ],
   "window": {
     "backgroundTextStyle": "light",

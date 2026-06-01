@@ -19,21 +19,65 @@ Page({
     withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
     withdrawMinPerRequest: PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST,
     withdrawMaxPerRequest: PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST,
+    withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
 
     // 状态
     canSubmit: false,
     isSubmitting: false,
 
     // 错误提示
-    errorTip: ''
+    errorTip: '',
+
+    // 关联的提现申请
+    applicationId: '',
+    application: null
   },
 
-  onLoad() {
+  onLoad(options) {
+    if (options && options.applicationId) {
+      this.setData({ applicationId: options.applicationId })
+      this.loadApplication(options.applicationId)
+    } else if (options && options.amount) {
+      // 即时提现：预设金额，不锁定
+      const amount = parseFloat(options.amount)
+      if (amount > 0) {
+        this.setData({ withdrawAmount: String(amount) })
+        this.calculateFee()
+        this.checkCanSubmit()
+      }
+    }
     this.loadBalance()
   },
 
   onShow() {
     this.loadBalance()
+  },
+
+  // 加载关联的提现申请
+  async loadApplication(applicationId) {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-withdraw-approval',
+        data: {
+          action: 'getMyApplications',
+          page: 0,
+          pageSize: 50
+        }
+      })
+      if (result.code === 0) {
+        const apps = result.data.records || []
+        const app = apps.find(a => a._id === applicationId)
+        if (app && app.status === 'approved' && app.withdrawStatus === 'not_withdrawn') {
+          this.setData({
+            application: app,
+            withdrawAmount: String(app.amount)
+          })
+          this.calculateFee()
+        }
+      }
+    } catch (err) {
+      console.error('加载提现申请失败:', err)
+    }
   },
 
   // 加载余额
@@ -47,6 +91,7 @@ Page({
       if (result.code === 0 && result.data.userInfo) {
         const balance = result.data.userInfo.balance || 0
         this.setData({ balance })
+        this.checkCanSubmit()
       }
     } catch (err) {
       console.error('加载余额失败:', err)
@@ -129,7 +174,7 @@ Page({
     // 二次确认
     wx.showModal({
       title: '确认提现',
-      content: `提现金额：¥${amount}\n手续费：¥${this.data.withdrawFee}\n实际到账：¥${this.data.actualAmount}`,
+      content: `确认提现 ¥${amount} 吗？手续费 ¥${this.data.withdrawFee}，实际到账 ¥${this.data.actualAmount}`,
       confirmText: '确认提现',
       confirmColor: '#5DB8E6',
       success: async (res) => {
@@ -148,12 +193,18 @@ Page({
     let withdrawId = null
 
     try {
+      const callData = {
+        action: 'apply',
+        amount: amount
+      }
+      // 关联提现申请
+      if (this.data.applicationId) {
+        callData.applicationId = this.data.applicationId
+      }
+
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-withdraw',
-        data: {
-          action: 'apply',
-          amount: amount
-        },
+        data: callData,
         timeout: 20000
       })
 

@@ -1,0 +1,278 @@
+/* 运营分析页面样式 */
+page {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #fff;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --primary-color: #5DB8E6;
+  background: var(--bg-primary);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ===== 时间筛选栏 ===== */
+.filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  padding: 20rpx 32rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.preset-btns {
+  display: flex;
+  gap: 12rpx;
+}
+
+.preset-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  background: #f0f0f0;
+  transition: all 0.2s;
+}
+
+.preset-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.date-input {
+  padding: 12rpx 24rpx;
+  background: #f5f7fa;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  color: var(--text-primary);
+}
+
+.date-sep {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+/* ===== 主滚动区 ===== */
+.main-scroll {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.scroll-content {
+  padding: 24rpx 32rpx;
+  box-sizing: border-box;
+}
+
+/* ===== KPI 卡片 ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.kpi-label {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.kpi-value {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.kpi-value.accent-green { color: #2ecc71; }
+.kpi-value.accent-blue { color: #5DB8E6; }
+.kpi-value.accent-orange { color: #f39c12; }
+
+/* ===== 图表卡片 ===== */
+.chart-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 100%;
+}
+
+.card-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.card-body {
+  min-height: 100rpx;
+}
+
+/* ===== 骨架屏 ===== */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 10rpx;
+}
+
+.chart-skeleton {
+  height: 440rpx;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== 热门地点排行 ===== */
+.location-list {
+  max-height: 600rpx;
+  overflow-y: auto;
+}
+
+.location-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+  gap: 12rpx;
+}
+
+.loc-rank {
+  width: 48rpx;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.location-row:nth-child(1) .loc-rank { color: #f39c12; }
+.location-row:nth-child(2) .loc-rank { color: #95a5a6; }
+.location-row:nth-child(3) .loc-rank { color: #cd6133; }
+
+.loc-name {
+  width: 200rpx;
+  font-size: 24rpx;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.loc-bar-track {
+  flex: 1;
+  height: 16rpx;
+  background: #f0f0f0;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.loc-bar-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, #5DB8E6, #3a8fd4);
+  transition: width 0.5s ease;
+}
+
+.loc-count {
+  width: 80rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ===== 资金流水明细 ===== */
+.flow-list {
+  max-height: 600rpx;
+  overflow-y: auto;
+}
+
+.flow-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.flow-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.flow-type {
+  font-size: 26rpx;
+  color: var(--text-primary);
+}
+
+.flow-time {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.flow-amount {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.flow-amount.income { color: #2ecc71; }
+.flow-amount.expense { color: #e74c3c; }
+
+.load-more {
+  text-align: center;
+  padding: 20rpx;
+  font-size: 26rpx;
+  color: var(--primary-color);
+}
+
+/* ===== 通用 ===== */
+.empty-tip {
+  text-align: center;
+  color: #999;
+  font-size: 26rpx;
+  padding: 40rpx 0;
+}
+
+.bottom-spacer {
+  height: 40rpx;
+}

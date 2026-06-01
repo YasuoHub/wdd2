@@ -34,6 +34,18 @@ exports.main = async (event, context) => {
       }
     }
 
+    // isSuperAdmin action
+    if (action === 'isSuperAdmin') {
+      const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
+      const saOpenids = configRes && configRes.data ? (configRes.data.super_admin_openids || []) : []
+      console.log('判断超管id:', OPENID, saOpenids)
+      return {
+        code: 0,
+        data: { isSuperAdmin: OPENID ? saOpenids.includes(OPENID) : false },
+        message: 'success'
+      }
+    }
+
     // 默认：返回平台配置
     let config = null
 

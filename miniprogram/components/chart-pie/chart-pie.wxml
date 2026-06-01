@@ -1,0 +1,11 @@
+<view class="pie-wrapper">
+  <canvas type="2d" id="pie-canvas" class="pie-canvas"></canvas>
+  <view class="pie-legend" wx:if="{{legend.length > 0}}">
+    <view class="legend-item" wx:for="{{legend}}" wx:key="label">
+      <view class="legend-dot" style="background: {{item.color}};"></view>
+      <text class="legend-label">{{item.label}}</text>
+      <text class="legend-pct">{{item.percent}}%</text>
+    </view>
+  </view>
+  <view wx:if="{{data.length === 0}}" class="empty-tip">暂无数据</view>
+</view>

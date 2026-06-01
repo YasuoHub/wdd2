@@ -20,7 +20,10 @@ Page({
     isLoading: false,
     isRefreshing: false,
     isLoadingMore: false,
-    isEmpty: false
+    isEmpty: false,
+
+    // 积分规则弹窗
+    showRulesModal: false
   },
 
   onLoad() {
@@ -153,10 +156,10 @@ Page({
 
   // 跳转到积分规则
   showRules() {
-    wx.showModal({
-      title: '积分规则',
-      content: '【获取方式】\n1. 新用户注册：+100积分\n2. 每日签到：+5~30积分（连续签到递增）\n3. 邀请好友：双方各+50积分\n\n【积分用途】\n积分可兑换平台内免单券、提现免手续费券等权益（功能开发中，敬请期待）。\n\n【重要说明】\n积分仅用于平台内权益兑换，不可提现、不可转让、无现金价值。\n平台保留调整积分发放规则、有效期、可兑换权益种类与比例的权利。',
-      showCancel: false
-    })
+    this.setData({ showRulesModal: true })
+  },
+
+  hideRulesModal() {
+    this.setData({ showRulesModal: false })
   }
 })

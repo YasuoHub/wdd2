@@ -1,0 +1,9 @@
+<view class="chart-line-wrap">
+  <canvas type="2d" id="line-canvas" class="chart-canvas"></canvas>
+  <view class="chart-tooltip" wx:if="{{tooltip.visible}}" style="left: {{tooltip.x}}px; top: {{tooltip.y}}px;">
+    <view class="tooltip-item" wx:for="{{tooltip.items}}" wx:key="label">
+      <view class="tooltip-dot" style="background: {{item.color}};"></view>
+      <text>{{item.label}}: {{item.value}}</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,12 @@
+<view class="funnel">
+  <view class="funnel-stage" wx:for="{{_stages}}" wx:key="label" style="width: {{item.width}}%;">
+    <view class="funnel-block">
+      <text class="funnel-label">{{item.label}}</text>
+      <text class="funnel-value">{{item.value}}</text>
+    </view>
+    <view class="funnel-rate" wx:if="{{item.rate !== null}}">
+      <text>转化率 {{item.rate}}%</text>
+    </view>
+  </view>
+  <view wx:if="{{_stages.length === 0}}" class="empty-tip">暂无数据</view>
+</view>

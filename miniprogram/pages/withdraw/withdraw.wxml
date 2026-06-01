@@ -10,23 +10,31 @@
     </view>
   </view>
 
+  <!-- 关联申请提示 -->
+  <view wx:if="{{application}}" class="application-notice">
+    <text class="notice-text">审批通过的提现申请</text>
+    <text class="notice-amount">¥{{application.amount}}</text>
+  </view>
+
   <!-- 提现金额输入 -->
   <view class="withdraw-section">
     <view class="section-title">
       <text>提现金额</text>
-      <text class="all-btn" bindtap="withdrawAll">全部提现</text>
+      <text wx:if="{{!application}}" class="all-btn" bindtap="withdrawAll">全部提现</text>
+      <text wx:else class="all-btn locked">已锁定</text>
     </view>
 
     <view class="amount-input-wrapper">
       <text class="input-symbol">¥</text>
       <input
-        class="amount-input"
+        class="amount-input {{application ? 'locked' : ''}}"
         type="digit"
         value="{{withdrawAmount}}"
         bindinput="onAmountInput"
         placeholder="{{withdrawMinAmount}}"
         placeholder-class="input-placeholder"
-        focus
+        focus="{{!application}}"
+        disabled="{{!!application}}"
       />
     </view>
 
@@ -66,6 +74,10 @@
     <view class="rule-item">
       <text class="rule-dot"></text>
       <text class="rule-text">手续费率：{{withdrawFeeRate}}%</text>
+    </view>
+    <view class="rule-item">
+      <text class="rule-dot"></text>
+      <text class="rule-text">单笔超过¥{{withdrawApprovalThreshold}}需审批，不超过即时到账</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>

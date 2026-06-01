@@ -10,7 +10,10 @@ Page({
     myNeedsCount: 0,
     myTasksCount: 0,
     showInviteModal: false,
-    isCustomerService: false
+    isCustomerService: false,
+    isSuperAdmin: false,
+    showAboutModal: false,
+    showRulesModal: false
   },
 
   onLoad() {
@@ -101,6 +104,8 @@ Page({
 
         // 检查是否为客服
         this.checkCustomerService()
+        // 检查是否为超级管理员
+        this.checkSuperAdmin()
       }
     } catch (err) {
       console.error('获取最新用户信息失败:', err)
@@ -314,10 +319,39 @@ Page({
     }
   },
 
+  // 检查是否为超级管理员
+  async checkSuperAdmin() {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-get-config',
+        data: { action: 'isSuperAdmin' }
+      })
+      if (result.code === 0) {
+        this.setData({ isSuperAdmin: result.data.isSuperAdmin })
+      }
+    } catch (err) {
+      console.error('检查超管身份失败:', err)
+    }
+  },
+
   // 跳转客服工单列表
   goToTicketList() {
     wx.navigateTo({
       url: '/pages/ticket-list/ticket-list'
+    })
+  },
+
+  // 跳转运营分析
+  goToOpsAnalytics() {
+    wx.navigateTo({
+      url: '/pages/ops-analytics/ops-analytics'
+    })
+  },
+
+  // 跳转资金审批
+  goToFundApproval() {
+    wx.navigateTo({
+      url: '/pages/fund-approval/fund-approval'
     })
   },
 
@@ -360,20 +394,20 @@ Page({
 
   // 显示关于我们
   showAbout() {
-    wx.showModal({
-      title: '关于问当地',
-      content: '问当地是一款基于地理位置的即时互帮互助小程序。\n\n无论你是想了解异地的实时天气、路况，还是确认某家店是否营业，都可以找当地的用户帮你确认。\n\n成都起步，互帮互助。',
-      showCancel: false
-    })
+    this.setData({ showAboutModal: true })
+  },
+
+  hideAboutModal() {
+    this.setData({ showAboutModal: false })
   },
 
   // 显示积分规则
   showRules() {
-    wx.showModal({
-      title: '积分规则',
-      content: '【获取方式】\n1. 新用户注册：+100积分\n2. 每日签到：+5~30积分（连续签到递增）\n3. 邀请好友：双方各+50积分\n\n【积分用途】\n积分可兑换平台内免单券、提现免手续费券等权益（功能开发中，敬请期待）。\n\n【重要说明】\n积分仅用于平台内权益兑换，不可提现、不可转让、无现金价值。\n平台保留调整积分发放规则、有效期、可兑换权益种类与比例的权利。',
-      showCancel: false
-    })
+    this.setData({ showRulesModal: true })
+  },
+
+  hideRulesModal() {
+    this.setData({ showRulesModal: false })
   },
 
   // 退出登录

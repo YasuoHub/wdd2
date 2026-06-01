@@ -15,8 +15,8 @@
       <text class="amount-number">{{money.format(balance)}}</text>
     </view>
     <view class="balance-actions">
-      <button class="withdraw-btn {{canWithdraw ? '' : 'disabled'}}" bindtap="goToWithdraw">
-        <text wx:if="{{canWithdraw}}">提现</text>
+      <button class="withdraw-btn {{canWithdraw ? '' : 'disabled'}}" bindtap="showApplyModal">
+        <text wx:if="{{canWithdraw}}">申请提现</text>
         <text wx:else>{{withdrawTip}}</text>
       </button>
     </view>
@@ -35,6 +35,47 @@
     <view class="stat-card">
       <text class="stat-value">¥{{money.format(totalPaid)}}</text>
       <text class="stat-label">累计支付</text>
+    </view>
+  </view>
+
+  <!-- 申请记录 -->
+  <view class="records-section applications-section">
+    <view class="records-header">
+      <text class="records-title">申请记录</text>
+    </view>
+
+    <view wx:if="{{applications.length === 0 && !appLoading}}" class="empty-state small">
+      <text class="empty-text">暂无提现申请</text>
+    </view>
+
+    <view wx:else class="applications-list">
+      <view wx:for="{{applications}}" wx:key="_id" class="application-card">
+        <!-- 第一行：金额 + 状态 -->
+        <view class="app-row1">
+          <text class="app-amount">¥{{money.format(item.amount)}}</text>
+          <view class="app-status-tag {{item.status === 'pending' ? 'tag-pending' : item.status === 'approved' ? 'tag-approved' : 'tag-rejected'}}">
+            {{item.statusText}}
+          </view>
+        </view>
+        <!-- 驳回理由 -->
+        <view wx:if="{{item.status === 'rejected' && item.rejectReason}}" class="app-reject-row">
+          <text class="app-reject-label">驳回理由：</text>
+          <text class="app-reject-reason">{{item.rejectReason}}</text>
+        </view>
+        <!-- 时间 + 操作按钮 -->
+        <view class="app-action-row">
+          <text class="app-time">{{item.applyTime}}</text>
+          <button
+            wx:if="{{item.status === 'approved' && item.withdrawStatus === 'not_withdrawn'}}"
+            class="app-withdraw-btn active"
+            bindtap="goToWithdraw"
+            data-id="{{item._id}}"
+          >提现</button>
+          <button wx:elif="{{item.status === 'approved' && item.withdrawStatus === 'withdrawn'}}" class="app-withdraw-btn" disabled>已提现</button>
+          <button wx:elif="{{item.status === 'pending'}}" class="app-withdraw-btn" disabled>等待审批</button>
+          <button wx:else class="app-withdraw-btn" disabled>已驳回</button>
+        </view>
+      </view>
     </view>
   </view>
 
@@ -77,6 +118,72 @@
 
     <view wx:if="{{!hasMore && records.length > 0}}" class="no-more">
       <text class="no-more-text">没有更多记录了</text>
+    </view>
+  </view>
+
+  <!-- 申请提现弹窗 -->
+  <view class="modal {{showApplyModal ? 'show' : ''}}" wx:if="{{showApplyModal}}">
+    <view class="modal-mask" bindtap="hideApplyModal"></view>
+    <view class="modal-content">
+      <view class="modal-title">申请提现</view>
+      <view class="apply-info">
+        <text class="apply-balance">可提现余额：¥{{money.format(balance)}}</text>
+      </view>
+      <view class="amount-input-wrapper">
+        <text class="input-symbol">¥</text>
+        <input
+          class="amount-input"
+          type="digit"
+          value="{{applyAmount}}"
+          bindinput="onApplyAmountInput"
+          placeholder="请输入提现金额"
+          placeholder-class="input-placeholder"
+        />
+      </view>
+      <view wx:if="{{applyAmount > 0}}" class="apply-detail">
+        <view class="detail-row">
+          <text class="detail-label">手续费（{{withdrawFeeRate}}%）</text>
+          <text class="detail-value fee">-¥{{applyFee}}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">预计到账</text>
+          <text class="detail-value actual">¥{{applyActual}}</text>
+        </view>
+      </view>
+      <!-- 审批提示 -->
+      <view wx:if="{{applyAmount > 0}}" class="approval-hint {{needApproval ? 'need-approval' : 'instant'}}">
+        <text wx:if="{{needApproval}}">⏳ 单笔超过¥{{withdrawApprovalThreshold}}，需管理员审批</text>
+        <text wx:else>⚡ 未超过¥{{withdrawApprovalThreshold}}，即时到账</text>
+      </view>
+      <view wx:if="{{applyErrorTip}}" class="error-tip">
+        <text>{{applyErrorTip}}</text>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn cancel" bindtap="hideApplyModal">取消</button>
+        <button class="modal-btn confirm {{canSubmitApply ? '' : 'disabled'}}" bindtap="submitApply" disabled="{{!canSubmitApply || isSubmitting}}">
+          <text wx:if="{{isSubmitting}}">提交中...</text>
+          <text wx:elif="{{needApproval}}">提交审批</text>
+          <text wx:else>立即提现</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提现规则弹窗 -->
+  <view class="modal {{showRulesModal ? 'show' : ''}}" wx:if="{{showRulesModal}}">
+    <view class="modal-mask" bindtap="hideRulesModal"></view>
+    <view class="modal-content">
+      <view class="modal-title">提现规则</view>
+      <view class="rules-content">
+        <view class="rule-item"><text class="rule-num">1.</text><text class="rule-desc">最低提现金额：¥{{withdrawMinAmount}}</text></view>
+        <view class="rule-item"><text class="rule-num">2.</text><text class="rule-desc">提现手续费：{{withdrawFeeRate}}%</text></view>
+        <view class="rule-item"><text class="rule-num">3.</text><text class="rule-desc">单次最低 ¥{{withdrawMinPerRequest}}，最高 ¥{{withdrawMaxPerRequest}}</text></view>
+        <view class="rule-item"><text class="rule-num">4.</text><text class="rule-desc">单笔超过 ¥{{withdrawApprovalThreshold}} 需提交审批，审批通过后方可提现</text></view>
+        <view class="rule-item"><text class="rule-num">5.</text><text class="rule-desc">不超过 ¥{{withdrawApprovalThreshold}} 的提现将即时到账</text></view>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-btn confirm" bindtap="hideRulesModal">我知道了</button>
+      </view>
     </view>
   </view>
 </view>

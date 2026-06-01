@@ -10,6 +10,7 @@ let _PLATFORM_FEE_RATE = 0.15
 let _WITHDRAW_MIN_AMOUNT = 2
 let _WITHDRAW_MIN_PER_REQUEST = 1
 let _WITHDRAW_MAX_PER_REQUEST = 5000
+let _WITHDRAW_APPROVAL_THRESHOLD = 100
 let _MIN_REWARD_AMOUNT = 0.1
 let _MAX_REWARD_AMOUNT = 500
 
@@ -27,6 +28,9 @@ function setPlatformConfig(config) {
   }
   if (typeof config.withdraw_max_per_request === 'number') {
     _WITHDRAW_MAX_PER_REQUEST = config.withdraw_max_per_request
+  }
+  if (typeof config.withdraw_approval_threshold === 'number') {
+    _WITHDRAW_APPROVAL_THRESHOLD = config.withdraw_approval_threshold
   }
   if (typeof config.min_reward_amount === 'number') {
     _MIN_REWARD_AMOUNT = config.min_reward_amount
@@ -61,6 +65,11 @@ const PLATFORM_RULES = {
   // 单次提现最高金额（元）
   get WITHDRAW_MAX_PER_REQUEST() {
     return _WITHDRAW_MAX_PER_REQUEST
+  },
+
+  // 审批阈值（元）—— 超过此金额需提交审批
+  get WITHDRAW_APPROVAL_THRESHOLD() {
+    return _WITHDRAW_APPROVAL_THRESHOLD
   },
 
   // 最小悬赏金额（元）
