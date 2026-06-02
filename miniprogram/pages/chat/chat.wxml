@@ -97,7 +97,7 @@
         <!-- 普通消息：原有逻辑 -->
         <block wx:else>
           <!-- 对方头像 -->
-          <view wx:if="{{!item.isSelf}}" class="avatar" bindtap="{{isCustomerServiceMode ? '' : 'goToPublicProfile'}}">
+          <view wx:if="{{!item.isSelf}}" class="avatar" bindtap="{{isCustomerServiceMode ? '' : 'goToPublicProfile'}}" data-user-id="{{item.sender_id}}">
             <image wx:if="{{item.senderAvatar}}" src="{{item.senderAvatar}}" mode="aspectFill" />
             <text wx:else>{{item.senderName ? item.senderName[0] : '?'}}</text>
           </view>

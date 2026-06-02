@@ -1444,11 +1444,12 @@ Page({
   },
 
   // 跳转对方公开资料
-  goToPublicProfile() {
-    const { otherUser } = this.data
-    if (!otherUser || !otherUser._id) return
+  goToPublicProfile(e) {
+    // 优先使用消息中传入的 sender_id，后备使用 otherUser
+    const userId = (e && e.currentTarget.dataset.userId) || (this.data.otherUser && this.data.otherUser._id)
+    if (!userId) return
     wx.navigateTo({
-      url: `/pages/public-profile/public-profile?userId=${otherUser._id}`
+      url: `/pages/public-profile/public-profile?userId=${userId}`
     })
   },
 
