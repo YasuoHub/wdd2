@@ -160,17 +160,17 @@
       <view wx:if="{{applyAmount > 0}}" class="apply-detail">
         <view class="detail-row">
           <text class="detail-label">手续费（{{withdrawFeeRate}}%）</text>
-          <text class="detail-value fee">-¥{{applyFee}}</text>
+          <text class="detail-value fee">-¥{{money.format(applyFee)}}</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">预计到账</text>
-          <text class="detail-value actual">¥{{applyActual}}</text>
+          <text class="detail-value actual">¥{{money.format(applyActual)}}</text>
         </view>
       </view>
       <!-- 审批提示 -->
       <view wx:if="{{applyAmount > 0}}" class="approval-hint {{needApproval ? 'need-approval' : 'instant'}}">
-        <text wx:if="{{needApproval}}">⏳ 单笔超过¥{{withdrawApprovalThreshold}}，需管理员审批</text>
-        <text wx:else>⚡ 未超过¥{{withdrawApprovalThreshold}}，即时到账</text>
+        <text wx:if="{{needApproval}}">⏳ 单笔超过¥{{money.format(withdrawApprovalThreshold)}}，需管理员审批</text>
+        <text wx:else>⚡ 未超过¥{{money.format(withdrawApprovalThreshold)}}，即时到账</text>
       </view>
       <view wx:if="{{applyErrorTip}}" class="error-tip">
         <text>{{applyErrorTip}}</text>
@@ -192,12 +192,12 @@
     <view class="modal-content">
       <view class="modal-title">提现规则</view>
       <view class="rules-content">
-        <view class="rule-item"><text class="rule-num">1.</text><text class="rule-desc">最低提现金额：¥{{withdrawMinAmount}}</text></view>
+        <view class="rule-item"><text class="rule-num">1.</text><text class="rule-desc">最低提现金额：¥{{money.format(withdrawMinAmount)}}</text></view>
         <view class="rule-item"><text class="rule-num">2.</text><text class="rule-desc">提现手续费：{{withdrawFeeRate}}%</text></view>
-        <view class="rule-item"><text class="rule-num">3.</text><text class="rule-desc">单次最低 ¥{{withdrawMinPerRequest}}，最高 ¥{{withdrawMaxPerRequest}}</text></view>
-        <view class="rule-item"><text class="rule-num">4.</text><text class="rule-desc">单笔超过 ¥{{withdrawApprovalThreshold}} 需提交审批，审批通过后方可提现</text></view>
-        <view class="rule-item"><text class="rule-num">5.</text><text class="rule-desc">不超过 ¥{{withdrawApprovalThreshold}} 的提现将即时到账</text></view>
-        <view class="rule-item"><text class="rule-num">6.</text><text class="rule-desc">单日提现上限 ¥{{withdrawDailyLimit}}，每日最多 {{withdrawDailyTimes}} 次</text></view>
+        <view class="rule-item"><text class="rule-num">3.</text><text class="rule-desc">单次最低 ¥{{money.format(withdrawMinPerRequest)}}，最高 ¥{{money.format(withdrawMaxPerRequest)}}</text></view>
+        <view class="rule-item"><text class="rule-num">4.</text><text class="rule-desc">单笔超过 ¥{{money.format(withdrawApprovalThreshold)}} 需提交审批，审批通过后方可提现</text></view>
+        <view class="rule-item"><text class="rule-num">5.</text><text class="rule-desc">不超过 ¥{{money.format(withdrawApprovalThreshold)}} 的提现将即时到账</text></view>
+        <view class="rule-item"><text class="rule-num">6.</text><text class="rule-desc">单日提现上限 ¥{{money.format(withdrawDailyLimit)}}，每日最多 {{withdrawDailyTimes}} 次</text></view>
       </view>
       <view class="modal-footer">
         <button class="modal-btn confirm" bindtap="hideRulesModal">我知道了</button>

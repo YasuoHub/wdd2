@@ -13,7 +13,7 @@ let _WITHDRAW_MAX_PER_REQUEST = 5000
 let _WITHDRAW_APPROVAL_THRESHOLD = 100
 let _WITHDRAW_DAILY_LIMIT = 5000
 let _WITHDRAW_DAILY_TIMES = 3
-let _MIN_REWARD_AMOUNT = 0.1
+let _MIN_REWARD_AMOUNT = 1
 let _MAX_REWARD_AMOUNT = 500
 
 // 动态设置平台配置（由 app.js 启动时从数据库加载后调用）
@@ -159,9 +159,12 @@ const MoneyUtils = {
     return Math.round((amount - fee) * 100) / 100
   },
 
-  // 格式化金额显示（保留2位小数）
+  // 格式化金额显示（最多保留2位小数，尾随零省略）
   formatAmount(amount) {
-    return (Math.round(amount * 100) / 100).toFixed(2)
+    const num = Math.round(Number(amount) * 100) / 100
+    if (num % 1 === 0) return String(num)
+    if (num * 10 % 1 === 0) return num.toFixed(1)
+    return num.toFixed(2)
   },
 
   // 检查是否满足提现条件

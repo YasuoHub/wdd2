@@ -1,4 +1,5 @@
 <!-- 发布求助页面 - 城市绿洲风格 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 主内容区 -->
   <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
@@ -226,16 +227,16 @@
       <view class="amount-detail">
         <view class="detail-row">
           <text class="detail-label">悬赏金额</text>
-          <text class="detail-value">¥{{rewardAmount}}</text>
+          <text class="detail-value">¥{{money.format(rewardAmount)}}</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">平台服务费（{{platformFeeRate}}%）</text>
-          <text class="detail-value fee">-¥{{platformFee}}</text>
+          <text class="detail-value fee">-¥{{money.format(platformFee)}}</text>
         </view>
         <view class="detail-divider"></view>
         <view class="detail-row total">
           <text class="detail-label">帮助者实际获得</text>
-          <text class="detail-value income">¥{{takerIncome}}</text>
+          <text class="detail-value income">¥{{money.format(takerIncome)}}</text>
         </view>
       </view>
 
@@ -252,7 +253,7 @@
               <text class="payment-icon">💰</text>
               <text class="payment-name">余额支付</text>
             </view>
-            <text class="payment-balance">可用 ¥{{availableBalance}}</text>
+            <text class="payment-balance">可用 ¥{{money.format(availableBalance)}}</text>
           </view>
           <view
             class="payment-option {{paymentMethod === 'wechat' ? 'active' : ''}}"
@@ -267,7 +268,7 @@
           </view>
         </view>
         <view wx:if="{{paymentMethod === 'balance' && !canBalancePay}}" class="balance-insufficient">
-          <text>⚠️ 可用余额不足（当前可用 ¥{{availableBalance}}），请选择微信支付</text>
+          <text>⚠️ 可用余额不足（当前可用 ¥{{money.format(availableBalance)}}），请选择微信支付</text>
         </view>
       </view>
 
@@ -288,7 +289,7 @@
     <view class="footer-content">
       <view class="publish-info">
         <text class="publish-label">需支付</text>
-        <text class="publish-amount">¥{{rewardAmount}}</text>
+        <text class="publish-amount">¥{{money.format(rewardAmount)}}</text>
       </view>
       <button
         class="publish-btn {{!canPublish ? 'disabled' : ''}}"

@@ -29,6 +29,23 @@
           { "name": "need_id", "direction": "asc" },
           { "name": "create_time", "direction": "asc" }
         ]
+      },
+      {
+        "collectionName": "wdd-tickets",
+        "name": "status_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "create_time", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-users",
+        "name": "openid_unique",
+        "unique": true,
+        "keys": [
+          { "name": "openid", "direction": "asc" }
+        ]
       }
     ]
   }

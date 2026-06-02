@@ -133,6 +133,9 @@ Page({
         if (this.currentNeedId !== needId) return
         if (!msgResult || msgResult.code !== 0) return
 
+        // 标记消息已加载完成，后续轮询可以正常工作
+        this._messagesLoaded = true
+
         // 合并缓存中网络范围之外的老历史，防止 setData 覆盖导致列表变短
         if (cachedOlderSnapshot && cachedOlderSnapshot.length > 0) {
           const networkMessages = this.data.messages
@@ -191,6 +194,10 @@ Page({
         this.startMessagePolling()
       })
     }
+    // 立即拉取一次消息，防止隐藏期间有遗漏
+    if (this.currentNeedId && this._messagesLoaded) {
+      this.pollNewMessages()
+    }
     // 只有在底部时才标记已读
     if (this.data.isAtBottom) {
       this.markMessagesRead()
@@ -236,7 +243,7 @@ Page({
     poll()
 
     // 每5秒轮询一次（降低频率减少服务器压力）
-    const interval = setInterval(poll, 5000)
+    const interval = setInterval(poll, 2500)
     this.setData({ messagePollingInterval: interval })
   },
 
@@ -257,16 +264,18 @@ Page({
     const currentNeedId = this.currentNeedId
     if (!currentNeedId) return
 
-    // 如果消息列表为空（初始化未完成），跳过轮询
-    if (messages.length === 0) return
+    // 仅当初始化未完成时才跳过（消息列表为空但有可能是真没消息）
+    if (!this._messagesLoaded) return
 
     // 如果正在处理中，跳过本次轮询
     if (this._isPolling) return
     this._isPolling = true
 
     try {
-      // 计算 afterTime：取最后一条消息的时间
-      const afterTime = messages[messages.length - 1].create_time
+      // 计算 afterTime：取最后一条消息的时间，没有消息则传 null 获取全部
+      const afterTime = messages.length > 0
+        ? messages[messages.length - 1].create_time
+        : null
 
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-chat',
@@ -722,7 +731,7 @@ Page({
       timeText,
       showTime,
       // 统一图片字段为 camelCase（优先使用已有的 imageUrl，否则从 image_url 转换）
-      imageUrl: msg.imageUrl || msg.image_url || '',
+      imageUrl: msg.status === 'violated' ? '' : (msg.imageUrl || msg.image_url || ''),
       // 图片显示尺寸（后端预计算）
       imageWidth: msg.image_width || 0,
       imageHeight: msg.image_height || 0
@@ -768,11 +777,6 @@ Page({
         })
         .watch({
           onChange: (snapshot) => {
-            if (snapshot.type === 'init') {
-              this.setData({ lastWatchActivity: Date.now() })
-              return
-            }
-
             // 记录watch活动时间
             this.setData({ lastWatchActivity: Date.now() })
 
@@ -846,6 +850,7 @@ Page({
             const normalNewDocsCount = newDocs.filter(doc => doc.type !== 'system').length
 
             // 更新界面
+            // init 事件仅在发现遗漏消息时才更新界面（去重保证安全）
             if (messagesToUpdate || newDocs.length > 0) {
               let finalMessages = messagesToUpdate || currentMessages
               if (newDocs.length > 0) {
@@ -901,6 +906,8 @@ Page({
                         newMessageCount: 0
                       })
                       this.markMessagesRead()
+                    } else if (snapshot.type === 'init') {
+                      // init 事件补漏的消息：不自动滚动，只更新列表
                     } else if (this.data.isAtBottom) {
                       // 在底部：滚动到底部 + 标记已读
                       this.setData({ lastMessageId: 'bottom-anchor' })
@@ -929,17 +936,17 @@ Page({
       })
       this._isStartingWatch = false
 
-      // 设置自动降级检测：10秒后检查是否有watch活动
+      // 设置自动降级检测：3秒后检查是否有watch活动
       setTimeout(() => {
         const lastActivity = this.data.lastWatchActivity
         const now = Date.now()
-        // 如果10秒内没有watch活动（包括init事件），且页面还开着，切换到轮询
-        if (lastActivity && (now - lastActivity > 9000) && !this.data.messagePollingInterval) {
+        // 如果3秒内没有watch活动（包括init事件），且页面还开着，切换到轮询
+        if (lastActivity && (now - lastActivity > 2500) && !this.data.messagePollingInterval) {
           // 切换到轮询时保留已处理消息ID，避免重复加载
           this.stopMessageWatch(true)
           this.startMessagePolling()
         }
-      }, 10000)
+      }, 3000)
 
     } catch (err) {
       console.error('启动监听异常:', err)

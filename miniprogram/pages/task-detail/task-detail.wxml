@@ -1,4 +1,5 @@
 <!-- 任务详情页 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container" style="padding-bottom: {{pagePaddingBottom}}rpx;">
   <!-- 加载中 -->
   <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
@@ -125,7 +126,7 @@
       class="action-btn primary large"
       bindtap="takeTask"
     >
-      立即接单 (+¥{{task._takerIncome}})
+      立即接单 (+¥{{money.format(task._takerIncome)}})
     </button>
 
     <!-- 已接单状态：可以聊天 -->

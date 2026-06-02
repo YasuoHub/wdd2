@@ -1,4 +1,5 @@
 <!-- 聊天页面 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="chat-container">
   <!-- 任务卡片区域（含下拉菜单） -->
   <view class="task-card-wrapper" wx:if="{{!isCustomerServiceMode}}">
@@ -9,7 +10,7 @@
           <text class="type-icon">{{task.typeIcon}}</text>
           <text class="type-name">{{task.typeName}}</text>
           <text class="location-name">{{task.locationName || ''}}</text>
-          <text class="task-points-mini">¥{{task.rewardAmount || 0}}</text>
+          <text class="task-points-mini">¥{{money.format(task.rewardAmount || 0)}}</text>
         </view>
         <view class="more-btn" catchtap="toggleTaskMenu">
           <text class="more-icon">⋮</text>
@@ -114,7 +115,7 @@
             </block>
 
             <!-- 图片消息 -->
-            <block wx:if="{{item.type === 'image'}}">
+            <block wx:if="{{item.type === 'image' && item.status !== 'violated'}}">
               <view class="image-wrapper">
                 <image
                   class="message-image {{item.imageWidth ? 'has-size' : ''}}"
@@ -130,6 +131,9 @@
                   <view class="loading-spinner"></view>
                 </view>
               </view>
+            </block>
+            <block wx:elif="{{item.type === 'image' && item.status === 'violated'}}">
+              <text class="message-text">图片已被系统拦截</text>
             </block>
           </view>
 

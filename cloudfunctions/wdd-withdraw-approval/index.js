@@ -6,6 +6,14 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+// 金额格式化（最多2位小数，尾随零省略）
+function formatAmount(n) {
+  const num = Math.round(Number(n) * 100) / 100
+  if (num % 1 === 0) return String(num)
+  if (num * 10 % 1 === 0) return num.toFixed(1)
+  return num.toFixed(2)
+}
+
 // 驳回理由选项
 const REJECT_REASONS = [
   '提现金额超出合理范围',
@@ -155,7 +163,7 @@ async function apply(event, OPENID) {
   if (dailyTotal + amount > dailyLimit) {
     return {
       code: -1,
-      message: `超过单日提现限额 ¥${dailyLimit}（今日已提现 ¥${dailyTotal.toFixed(2)}）`
+      message: `超过单日提现限额 ¥${formatAmount(dailyLimit)}（今日已提现 ¥${formatAmount(dailyTotal)}）`
     }
   }
 
@@ -243,7 +251,7 @@ async function apply(event, OPENID) {
         amount: -amount,
         balance: currentBalance,
         frozen_balance: currentFrozen + amount,
-        description: `提现申请冻结 ¥${amount.toFixed(2)}`,
+        description: `提现申请冻结 ¥${formatAmount(amount)}`,
         create_time: new Date()
       }
     })
@@ -511,7 +519,7 @@ async function rejectApplication(event, OPENID) {
         amount: application.amount,
         balance: userInTx.data.balance || 0,
         frozen_balance: userInTx.data.frozen_balance || 0,
-        description: `提现申请驳回，解冻 ¥${application.amount.toFixed(2)}`,
+        description: `提现申请驳回，解冻 ¥${formatAmount(application.amount)}`,
         create_time: new Date()
       }
     })
@@ -596,7 +604,7 @@ async function expireApplication(event) {
         amount: app.amount,
         balance: userInTx.data.balance || 0,
         frozen_balance: userInTx.data.frozen_balance || 0,
-        description: `提现申请已过期，解冻 ¥${app.amount.toFixed(2)}`,
+        description: `提现申请已过期，解冻 ¥${formatAmount(app.amount)}`,
         create_time: new Date()
       }
     })

@@ -10,6 +10,14 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 金额格式化（最多2位小数，尾随零省略）
+function formatAmount(n) {
+  const num = Math.round(Number(n) * 100) / 100
+  if (num % 1 === 0) return String(num)
+  if (num * 10 % 1 === 0) return num.toFixed(1)
+  return num.toFixed(2)
+}
+
 exports.main = async (event, context) => {
   console.log('开始执行自动取消任务检查:', new Date().toISOString())
 
@@ -509,7 +517,7 @@ async function autoCompleteOngoingNeed(need) {
           user_id: taker.taker_id,
           type: 'task_completed',
           title: '任务已自动完成，收入已到账',
-          content: `您承接的「${need.type_name || '求助'}」任务因超时未处理，已自动完成。收入 ¥${takerIncome.toFixed(2)} 已到账。`,
+          content: `您承接的「${need.type_name || '求助'}」任务因超时未处理，已自动完成。收入 ¥${formatAmount(takerIncome)} 已到账。`,
           need_id: need._id,
           is_read: false,
           create_time: new Date()

@@ -13,7 +13,7 @@
   <!-- 关联申请提示 -->
   <view wx:if="{{application}}" class="application-notice">
     <text class="notice-text">审批通过的提现申请</text>
-    <text class="notice-amount">¥{{application.amount}}</text>
+    <text class="notice-amount">¥{{money.format(application.amount)}}</text>
   </view>
 
   <!-- 提现金额输入 -->
@@ -47,16 +47,16 @@
   <view class="detail-section">
     <view class="detail-row">
       <text class="detail-label">提现金额</text>
-      <text class="detail-value">¥{{withdrawAmount || '0.00'}}</text>
+      <text class="detail-value">¥{{money.format(withdrawAmount || 0)}}</text>
     </view>
     <view class="detail-row">
       <text class="detail-label">手续费（{{withdrawFeeRate}}%）</text>
-      <text class="detail-value fee">-¥{{withdrawFee}}</text>
+      <text class="detail-value fee">-¥{{money.format(withdrawFee)}}</text>
     </view>
     <view class="detail-divider"></view>
     <view class="detail-row total">
       <text class="detail-label">实际到账</text>
-      <text class="detail-value actual">¥{{actualAmount}}</text>
+      <text class="detail-value actual">¥{{money.format(actualAmount)}}</text>
     </view>
   </view>
 
@@ -65,11 +65,11 @@
     <view class="rules-title">提现规则</view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">最低提现金额：¥{{withdrawMinAmount}}</text>
+      <text class="rule-text">最低提现金额：¥{{money.format(withdrawMinAmount)}}</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">单次最低：¥{{withdrawMinPerRequest}}，最高：¥{{withdrawMaxPerRequest}}</text>
+      <text class="rule-text">单次最低：¥{{money.format(withdrawMinPerRequest)}}，最高：¥{{money.format(withdrawMaxPerRequest)}}</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
@@ -77,11 +77,11 @@
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">单笔超过¥{{withdrawApprovalThreshold}}需审批，不超过即时到账</text>
+      <text class="rule-text">单笔超过¥{{money.format(withdrawApprovalThreshold)}}需审批，不超过即时到账</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">单日提现上限：¥{{withdrawDailyLimit}}，每日最多{{withdrawDailyTimes}}次</text>
+      <text class="rule-text">单日提现上限：¥{{money.format(withdrawDailyLimit)}}，每日最多{{withdrawDailyTimes}}次</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>

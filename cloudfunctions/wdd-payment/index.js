@@ -15,6 +15,14 @@ const MOCK_PAYMENT = false
 // 微信支付商户号（10位数字），通过环境变量注入
 const SUB_MCH_ID = process.env.WECHATPAY_MCH_ID || ''
 
+// 金额格式化（最多2位小数，尾随零省略）
+function formatAmount(n) {
+  const num = Math.round(Number(n) * 100) / 100
+  if (num % 1 === 0) return String(num)
+  if (num * 10 % 1 === 0) return num.toFixed(1)
+  return num.toFixed(2)
+}
+
 // 主入口
 exports.main = async (event, context) => {
   // 识别微信支付异步回调（无 action 但有 returnCode）
@@ -26,8 +34,9 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   // 前端直接调用时 wxContext.OPENID 必存在，优先使用（防伪造）；云函数间调用时为空，回退到 event.openid
   const OPENID = wxContext.OPENID || event.openid
+  const isInternalCall = !wxContext.OPENID && ['refundOrder', 'retryRefund'].includes(action)
 
-  if (!OPENID) {
+  if (!OPENID && !isInternalCall) {
     return { code: -1, message: '获取用户openid失败' }
   }
 
@@ -107,6 +116,10 @@ async function createOrder(event, OPENID) {
     return { code: -1, message: '用户不存在' }
   }
   const user = userRes.data[0]
+  const userLimit = checkUserCanPublish(user)
+  if (!userLimit.allowed) {
+    return { code: -1, message: userLimit.message }
+  }
 
   // 生成订单号
   const orderId = generateOrderNo()
@@ -171,6 +184,31 @@ async function confirmPayment(event, OPENID) {
 
   if (!orderId) {
     return { code: -1, message: '订单ID不能为空' }
+  }
+
+  if (!MOCK_PAYMENT) {
+    const preOrderRes = await db.collection('wdd-payment-orders').doc(orderId).get().catch(() => null)
+    const preOrder = preOrderRes && preOrderRes.data
+    if (!preOrder) {
+      return { code: -1, message: '订单不存在' }
+    }
+    if (preOrder.openid !== OPENID) {
+      return { code: -1, message: '订单归属错误' }
+    }
+    if (preOrder.status === 'pending') {
+      const verifyRes = await verifyRealPayment(preOrder)
+      if (!verifyRes.success) {
+        return { code: -1, message: verifyRes.message || '微信支付尚未确认成功' }
+      }
+      if (verifyRes.transactionId && !preOrder.transaction_id) {
+        await db.collection('wdd-payment-orders').doc(orderId).update({
+          data: {
+            transaction_id: verifyRes.transactionId,
+            update_time: new Date()
+          }
+        })
+      }
+    }
   }
 
   // 开启事务：更新订单状态 + 创建任务（订单状态必须从事务内读取，避免并发修改）
@@ -311,7 +349,7 @@ async function payByBalance(event, OPENID) {
   }
 
   const rules = await loadFromDb()
-  const minAmount = rules.MIN_REWARD_AMOUNT || 0.1
+  const minAmount = rules.MIN_REWARD_AMOUNT ?? 1
   const maxAmount = rules.MAX_REWARD_AMOUNT || 500
 
   if (amount < minAmount) {
@@ -327,10 +365,14 @@ async function payByBalance(event, OPENID) {
     return { code: -1, message: '用户不存在' }
   }
   const user = userRes.data[0]
+  const userLimit = checkUserCanPublish(user)
+  if (!userLimit.allowed) {
+    return { code: -1, message: userLimit.message }
+  }
   const availableBalance = (user.balance || 0) - (user.frozen_balance || 0)
 
   if (availableBalance < amount) {
-    return { code: -1, message: `可用余额不足（当前可用 ¥${availableBalance.toFixed(2)}）` }
+    return { code: -1, message: `可用余额不足（当前可用 ¥${formatAmount(availableBalance)}）` }
   }
 
   // location 强校验
@@ -375,7 +417,7 @@ async function payByBalance(event, OPENID) {
         amount: 0,
         balance: currentBalance,
         frozen_balance: currentFrozen + amount,
-        description: `余额支付冻结 ¥${amount.toFixed(2)}：${description || '求助'}`,
+        description: `余额支付冻结 ¥${formatAmount(amount)}：${description || '求助'}`,
         create_time: new Date()
       }
     })
@@ -512,12 +554,20 @@ async function refundOrder(event, OPENID) {
     return { code: -1, message: '订单ID或任务ID必须提供' }
   }
 
+  // 退款只能由任务取消、自动取消或客服裁定等后端流程触发，禁止前端直接拿订单号退款。
+  if (cloud.getWXContext().OPENID) {
+    return { code: -1, message: '退款需通过任务取消或客服流程发起' }
+  }
+
   // 云函数间调用需从 event 读取 openid；前端直接调用使用 wxContext 的 OPENID
   const callerOpenid = event.openid || OPENID
 
   let order
 
-  if (orderId) {
+  // 优先使用调用方传来的预查询订单数据，避免重复查库（但仍校验 openid）
+  if (event.orderData && event.orderData.out_trade_no) {
+    order = event.orderData
+  } else if (orderId) {
     const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get()
     if (!orderRes.data) {
       return { code: -1, message: '订单不存在' }
@@ -543,7 +593,10 @@ async function refundOrder(event, OPENID) {
     return { code: -1, message: '订单归属错误' }
   }
 
-  return await executeRefund(order)
+  return await executeRefund(order, {
+    refundAmount: event.refundAmount,
+    refundReason: event.refundReason
+  })
 }
 
 // 退款重试（由 wdd-auto-cancel 定时器调用，专门处理 refund_pending 状态的订单）
@@ -567,7 +620,7 @@ async function retryRefund(event, OPENID) {
 }
 
 // 余额支付退款：直接解冻退回余额（无需调用微信 API）
-async function refundByBalance(order) {
+async function refundByBalance(order, options = {}) {
   const transaction = await db.startTransaction()
 
   try {
@@ -595,7 +648,18 @@ async function refundByBalance(order) {
       return { code: -1, message: '订单状态不允许退款', status: 'failed' }
     }
 
-    const refundAmount = orderInTx.amount
+    const requestedRefundAmount = Number(options.refundAmount || orderInTx.refund_amount || orderInTx.amount)
+    if (!Number.isFinite(requestedRefundAmount) || requestedRefundAmount <= 0) {
+      await transaction.rollback()
+      return { code: -1, message: '退款金额必须大于0', status: 'failed' }
+    }
+    if (requestedRefundAmount > orderInTx.amount) {
+      await transaction.rollback()
+      return { code: -1, message: '退款金额不能超过订单金额', status: 'failed' }
+    }
+    const refundAmount = Math.round(requestedRefundAmount * 100) / 100
+    const isFullRefund = Math.round(refundAmount * 100) >= Math.round(orderInTx.amount * 100)
+    const refundReason = options.refundReason || orderInTx.refund_reason || '任务取消'
 
     // 获取用户信息
     const userRes = await transaction.collection('wdd-users').where({
@@ -606,12 +670,16 @@ async function refundByBalance(order) {
       return { code: -1, message: '用户不存在', status: 'failed' }
     }
     const user = userRes.data[0]
+    const currentFrozen = user.frozen_balance || 0
+    if (currentFrozen < refundAmount) {
+      await transaction.rollback()
+      return { code: -1, message: '冻结金额不足，无法退款', status: 'failed' }
+    }
 
     // 解冻退回（balance 在支付时未扣，无需恢复）
     await transaction.collection('wdd-users').doc(user._id).update({
       data: {
         frozen_balance: _.inc(-refundAmount),
-        total_paid: _.inc(-refundAmount),
         update_time: new Date()
       }
     })
@@ -625,7 +693,7 @@ async function refundByBalance(order) {
         amount: refundAmount,
         balance: latestUser.data.balance || 0,
         frozen_balance: latestUser.data.frozen_balance || 0,
-        description: '任务取消，余额退回',
+        description: isFullRefund ? '任务取消，余额退回' : '任务部分退款，余额解冻',
         create_time: new Date()
       }
     })
@@ -633,10 +701,10 @@ async function refundByBalance(order) {
     // 更新订单状态
     await transaction.collection('wdd-payment-orders').doc(order._id).update({
       data: {
-        status: 'refunded',
+        status: isFullRefund ? 'refunded' : 'partially_refunded',
         refund_time: new Date(),
         refund_amount: refundAmount,
-        refund_reason: orderInTx.refund_reason || '任务取消',
+        refund_reason: refundReason,
         update_time: new Date()
       }
     })
@@ -646,7 +714,7 @@ async function refundByBalance(order) {
     return {
       code: 0,
       message: '退款成功',
-      status: 'refunded',
+      status: isFullRefund ? 'refunded' : 'partially_refunded',
       data: {
         orderId: order._id,
         refundAmount: refundAmount
@@ -663,13 +731,23 @@ async function refundByBalance(order) {
 // 行为：
 //   - 余额支付订单 → 直接解冻退回余额
 //   - 微信支付订单 → 调用微信退款 API
-//   - 微信退款 API 成功 → 订单转 refunded，扣减 total_paid
+//   - 微信退款 API 成功 → 订单转 refunded / partially_refunded，扣减 total_paid
 //   - 微信退款 API 失败 → 订单转 refund_pending，记录失败次数和下次重试时间（不报错给上游）
 //   - refund_attempts 达到 MAX_REFUND_ATTEMPTS → 转 refund_failed，需人工介入
-async function executeRefund(order) {
+async function executeRefund(order, options = {}) {
+  const requestedRefundAmount = Number(options.refundAmount || order.refund_amount || order.amount)
+  if (!Number.isFinite(requestedRefundAmount) || requestedRefundAmount <= 0) {
+    return { code: -1, message: '退款金额必须大于0', status: 'failed' }
+  }
+  if (requestedRefundAmount > order.amount) {
+    return { code: -1, message: '退款金额不能超过订单金额', status: 'failed' }
+  }
+  const refundAmount = Math.round(requestedRefundAmount * 100) / 100
+  const refundReason = options.refundReason || order.refund_reason || '任务取消'
+
   // 余额支付：直接解冻退回，不走微信退款 API
   if (order.payment_method === 'balance') {
-    return await refundByBalance(order)
+    return await refundByBalance(order, { refundAmount, refundReason })
   }
 
   const MAX_REFUND_ATTEMPTS = 5
@@ -685,7 +763,7 @@ async function executeRefund(order) {
       return { code: -1, message: '订单缺少支付单号，无法退款', status: 'failed' }
     }
     try {
-      refundResult = await createRealRefund(order)
+      refundResult = await createRealRefund(order, refundAmount)
     } catch (err) {
       refundError = err
       console.error('微信退款失败:', err)
@@ -730,6 +808,8 @@ async function executeRefund(order) {
         await transaction.collection('wdd-payment-orders').doc(order._id).update({
           data: {
             status: 'refund_failed',
+            refund_amount: refundAmount,
+            refund_reason: refundReason,
             refund_attempts: attempts,
             last_refund_error: errMsg,
             update_time: new Date()
@@ -751,6 +831,8 @@ async function executeRefund(order) {
       await transaction.collection('wdd-payment-orders').doc(order._id).update({
         data: {
           status: 'refund_pending',
+          refund_amount: refundAmount,
+          refund_reason: refundReason,
           refund_attempts: attempts,
           last_refund_error: errMsg,
           next_retry_time: nextRetryTime,
@@ -766,12 +848,13 @@ async function executeRefund(order) {
       }
     }
 
-    // 退款成功（或 mock 模式）：转 refunded 并扣减 total_paid
+    // 退款成功（或 mock 模式）：全额退款转 refunded，部分退款转 partially_refunded
+    const isFullRefund = Math.round(refundAmount * 100) >= Math.round(orderInTx.amount * 100)
     const orderUpdateData = {
-      status: 'refunded',
+      status: isFullRefund ? 'refunded' : 'partially_refunded',
       refund_time: new Date(),
-      refund_amount: orderInTx.amount,
-      refund_reason: orderInTx.refund_reason || '任务取消',
+      refund_amount: refundAmount,
+      refund_reason: refundReason,
       update_time: new Date()
     }
     if (refundResult && refundResult.refundId) {
@@ -790,7 +873,7 @@ async function executeRefund(order) {
       const user = userRes.data[0]
       await transaction.collection('wdd-users').doc(user._id).update({
         data: {
-          total_paid: _.inc(-orderInTx.amount),
+          total_paid: _.inc(-refundAmount),
           update_time: new Date()
         }
       })
@@ -801,10 +884,10 @@ async function executeRefund(order) {
     return {
       code: 0,
       message: '退款成功',
-      status: 'refunded',
+      status: orderUpdateData.status,
       data: {
         orderId: order._id,
-        refundAmount: orderInTx.amount
+        refundAmount: refundAmount
       }
     }
 
@@ -874,8 +957,77 @@ async function createRealPayment(orderId, amount, description, openid) {
   }
 }
 
+function checkUserCanPublish(user) {
+  if (!user) return { allowed: false, message: '用户不存在' }
+
+  if (user.ban_status) {
+    const endTime = new Date(user.ban_status.end_time)
+    if (!isNaN(endTime.getTime()) && new Date() < endTime) {
+      const isPermanent = endTime.getFullYear() >= 9999
+      return {
+        allowed: false,
+        message: isPermanent
+          ? '您的账号已被永久封禁，无法发布求助'
+          : `您的账号已被封禁，暂时无法发布求助`
+      }
+    }
+  }
+
+  if ((user.credit_score ?? 100) <= 0) {
+    return { allowed: false, message: '您的信誉分已扣至0分，已限制发单权限' }
+  }
+
+  return { allowed: true, message: '' }
+}
+
+// 查询微信侧订单，确认真实付款成功后才允许创建任务
+async function verifyRealPayment(order) {
+  if (!SUB_MCH_ID) {
+    return { success: false, message: '真实支付尚未配置：请在环境变量中配置 WECHATPAY_MCH_ID' }
+  }
+  if (!order.out_trade_no) {
+    return { success: false, message: '订单缺少支付单号，无法确认支付' }
+  }
+
+  try {
+    const res = await cloud.cloudPay.queryOrder({
+      outTradeNo: order.out_trade_no,
+      subMchId: SUB_MCH_ID
+    })
+
+    if (res.returnCode !== 'SUCCESS' || res.resultCode !== 'SUCCESS') {
+      return { success: false, message: res.returnMsg || '微信订单查询失败' }
+    }
+
+    const tradeState = res.tradeState || res.trade_state
+    const totalFee = typeof res.totalFee === 'number' ? res.totalFee : res.total_fee
+    const payerOpenid = res.openid
+    const transactionId = res.transactionId || res.transaction_id
+
+    if (tradeState && tradeState !== 'SUCCESS') {
+      return { success: false, message: `微信支付状态为 ${tradeState}` }
+    }
+
+    if (totalFee != null && Number(totalFee) !== Math.round(order.amount * 100)) {
+      return { success: false, message: '微信支付金额与订单金额不一致' }
+    }
+
+    if (payerOpenid && payerOpenid !== order.openid) {
+      return { success: false, message: '微信支付用户与订单用户不一致' }
+    }
+
+    return {
+      success: true,
+      transactionId: transactionId || order.transaction_id || null
+    }
+  } catch (err) {
+    console.error('微信订单查询失败:', err)
+    return { success: false, message: '微信支付确认失败: ' + err.message }
+  }
+}
+
 // 真实退款：调用微信退款API
-async function createRealRefund(order) {
+async function createRealRefund(order, refundAmount) {
   if (!SUB_MCH_ID) {
     throw new Error('真实退款尚未配置：请在代码中填入 SUB_MCH_ID（微信支付商户号）')
   }
@@ -884,14 +1036,18 @@ async function createRealRefund(order) {
     throw new Error('订单缺少微信支付商户订单号，无法退款')
   }
 
-  const refundNo = 'RF' + order.out_trade_no
+  const refundFee = Math.round(refundAmount * 100)
+  const totalFee = Math.round(order.amount * 100)
+  const refundNo = refundFee === totalFee
+    ? 'RF' + order.out_trade_no
+    : 'RF' + order.out_trade_no + 'P' + refundFee
 
   try {
     const res = await cloud.cloudPay.refund({
       outTradeNo: order.out_trade_no,
       outRefundNo: refundNo,
-      totalFee: Math.round(order.amount * 100),
-      refundFee: Math.round(order.amount * 100),
+      totalFee,
+      refundFee,
       subMchId: SUB_MCH_ID,
       envId: 'wdd-2grpiy1r6f9f4cf2'
     })

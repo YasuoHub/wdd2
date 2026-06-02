@@ -12,7 +12,7 @@ const DEFAULT_CONFIG = {
   platform_fee_rate: 0.15,
   withdraw_fee_rate: 0.01,
   withdraw_min_amount: 2,
-  min_reward_amount: 0.1,
+  min_reward_amount: 1,
   max_reward_amount: 500,
   withdraw_daily_limit: 5000,
   withdraw_daily_times: 3

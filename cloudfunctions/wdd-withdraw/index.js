@@ -130,6 +130,13 @@ async function applyWithdraw(event, OPENID) {
     }
   }
 
+  if (!approvedApplication) {
+    const threshold = rules.WITHDRAW_APPROVAL_THRESHOLD
+    if (typeof threshold === 'number' && amount > threshold) {
+      return { code: -1, message: `单笔提现超过¥${threshold}需先提交审批申请` }
+    }
+  }
+
   const withdrawCheck = MoneyUtils.checkCanWithdraw(
     approvedApplication ? user.balance : ((user.balance || 0) - (user.frozen_balance || 0))
   )
@@ -193,7 +200,7 @@ async function applyWithdraw(event, OPENID) {
       const available = latestBalance - latestFrozen
       if (amount > available) {
         await transaction.rollback()
-        return { code: -1, message: `可用余额不足（含已冻结 ¥${latestFrozen.toFixed(2)}）` }
+        return { code: -1, message: `可用余额不足（含已冻结 ¥${MoneyUtils.formatAmount(latestFrozen)}）` }
       }
 
       await transaction.collection('wdd-users').doc(user._id).update({

@@ -1,6 +1,7 @@
 <!-- 我的申诉列表 -->
 <view class="page-bg"></view>
 
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <view class="tab-wrap">
     <view class="tab-bar">
@@ -73,7 +74,7 @@
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
             <text class="task-icon">{{item.taskIcon}}</text>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
-            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{item.taskInfo.rewardAmount}}</text>
+            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>
           <view class="card-footer">
             <text class="time-text">生成时间：{{item.createTimeText || ''}}</text>
@@ -144,7 +145,7 @@
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
             <text class="task-icon">{{item.taskIcon}}</text>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
-            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{item.taskInfo.rewardAmount}}</text>
+            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>
           <view class="card-footer">
             <text class="time-text">生成时间：{{item.createTimeText || ''}}</text>

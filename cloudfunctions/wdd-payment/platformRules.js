@@ -8,12 +8,13 @@ const DEFAULT_RULES = {
   WITHDRAW_MIN_AMOUNT: 2,
   WITHDRAW_MIN_PER_REQUEST: 1,
   WITHDRAW_MAX_PER_REQUEST: 5000,
+  WITHDRAW_APPROVAL_THRESHOLD: 100,
   WITHDRAW_DAILY_LIMIT: 5000,
   WITHDRAW_DAILY_TIMES: 3,
   MAX_TRANSFER_RETRY: 5,
   TRANSFER_BACKOFF_MINUTES: [5, 10, 20, 40, 80],
   TRANSFER_QUERY_TIMEOUT_MINUTES: 1,
-  MIN_REWARD_AMOUNT: 0.1,
+  MIN_REWARD_AMOUNT: 1,
   MAX_REWARD_AMOUNT: 500,
   DEFAULT_EXPIRE_MINUTES: 30,
   PAYMENT_EXPIRE_MINUTES: 30,
@@ -40,6 +41,7 @@ async function loadFromDb() {
       WITHDRAW_MIN_AMOUNT: cfg.withdraw_min_amount ?? DEFAULT_RULES.WITHDRAW_MIN_AMOUNT,
       WITHDRAW_MIN_PER_REQUEST: cfg.withdraw_min_per_request ?? DEFAULT_RULES.WITHDRAW_MIN_PER_REQUEST,
       WITHDRAW_MAX_PER_REQUEST: cfg.withdraw_max_per_request ?? DEFAULT_RULES.WITHDRAW_MAX_PER_REQUEST,
+      WITHDRAW_APPROVAL_THRESHOLD: cfg.withdraw_approval_threshold ?? DEFAULT_RULES.WITHDRAW_APPROVAL_THRESHOLD,
       WITHDRAW_DAILY_LIMIT: cfg.withdraw_daily_limit ?? DEFAULT_RULES.WITHDRAW_DAILY_LIMIT,
       WITHDRAW_DAILY_TIMES: cfg.withdraw_daily_times ?? DEFAULT_RULES.WITHDRAW_DAILY_TIMES,
       MIN_REWARD_AMOUNT: cfg.min_reward_amount ?? DEFAULT_RULES.MIN_REWARD_AMOUNT,
@@ -81,7 +83,10 @@ function createMoneyUtils(rules) {
       return Math.round((amount - fee) * 100) / 100
     },
     formatAmount(amount) {
-      return (Math.round(amount * 100) / 100).toFixed(2)
+      const num = Math.round(Number(amount) * 100) / 100
+      if (num % 1 === 0) return String(num)
+      if (num * 10 % 1 === 0) return num.toFixed(1)
+      return num.toFixed(2)
     },
     checkCanWithdraw(balance) {
       if (balance < rules.WITHDRAW_MIN_AMOUNT) {

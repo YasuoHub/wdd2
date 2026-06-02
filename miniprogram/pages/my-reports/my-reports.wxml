@@ -1,6 +1,7 @@
 <!-- 我的举报列表 -->
 <view class="page-bg"></view>
 
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- Tab 栏 -->
   <view class="tab-wrap">
@@ -82,7 +83,7 @@
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
             <text class="task-icon">{{item.taskIcon}}</text>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
-            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{item.taskInfo.rewardAmount}}</text>
+            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>
 
           <!-- 底部：时间 + 操作 -->
@@ -158,7 +159,7 @@
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
             <text class="task-icon">{{item.taskIcon}}</text>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
-            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{item.taskInfo.rewardAmount}}</text>
+            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>
 
           <view class="card-footer">

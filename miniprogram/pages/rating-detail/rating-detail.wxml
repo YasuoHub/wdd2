@@ -1,4 +1,5 @@
 <!-- 评价详情页面 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 加载中 -->
   <view wx:if="{{loading}}" class="loading-state">
@@ -24,7 +25,7 @@
     <view class="task-card" wx:if="{{task}}">
       <view class="task-header">
         <text class="task-type">{{task.typeName}}</text>
-        <text class="task-points">¥{{task.price}}</text>
+        <text class="task-points">¥{{money.format(task.price)}}</text>
       </view>
       <text class="task-desc">{{task.description}}</text>
     </view>

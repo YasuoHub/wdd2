@@ -1,3 +1,4 @@
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 补充材料模式：显示任务摘要 -->
   <block wx:if="{{mode === 'supplement' && taskSummary}}">
@@ -9,7 +10,7 @@
       </view>
       <view class="opponent-row">
         <text class="opponent-label">任务悬赏</text>
-        <text class="opponent-value">¥{{taskSummary.rewardAmount || 0}}</text>
+        <text class="opponent-value">¥{{money.format(taskSummary.rewardAmount || 0)}}</text>
       </view>
       <view class="countdown-wrap">
         <text class="countdown-label">剩余时间：</text>

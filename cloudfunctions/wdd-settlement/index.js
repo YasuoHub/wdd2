@@ -330,9 +330,16 @@ async function cancelTask(event, OPENID) {
 // 提交评价
 async function submitRating(event, OPENID) {
   const { needId, ratingType, rating, tags, comment } = event
+  const ratingValue = Number(rating)
 
   if (!needId || !rating) {
     return { code: -1, message: '参数错误' }
+  }
+  if (!Number.isFinite(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    return { code: -1, message: '评分必须在1~5分之间' }
+  }
+  if (tags && (!Array.isArray(tags) || tags.length > 10 || tags.some(tag => String(tag).length > 20))) {
+    return { code: -1, message: '评价标签格式不正确' }
   }
 
   try {
@@ -350,12 +357,18 @@ async function submitRating(event, OPENID) {
     if (!need) {
       return { code: -1, message: '任务不存在' }
     }
+    if (need.status !== 'completed') {
+      return { code: -1, message: '任务完成后才能评价' }
+    }
 
     // 验证权限
     const isSeeker = need.user_id === currentUserId
     const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get()
     const taker = takerRes.data[0]
     const isTaker = taker && taker.taker_id === currentUserId
+    if (!taker) {
+      return { code: -1, message: '未找到接单记录，无法评价' }
+    }
 
     if (ratingType === 'seeker' && !isSeeker) {
       return { code: -1, message: '只有求助者可以评价帮助者' }
@@ -379,6 +392,25 @@ async function submitRating(event, OPENID) {
       return { code: -1, message: '您已经评价过了' }
     }
 
+    const cleanComment = String(comment || '').trim()
+    if (cleanComment) {
+      try {
+        const checkRes = await cloud.openapi.security.msgSecCheck({
+          content: cleanComment,
+          version: 2,
+          scene: 2,
+          openid: OPENID,
+          title: '问当地评价'
+        })
+        if (checkRes.errCode !== 0) {
+          return { code: -1, message: '评价内容违规，无法提交' }
+        }
+      } catch (err) {
+        console.error('评价内容安全检测失败:', err)
+        return { code: -1, message: '内容审核失败，请稍后重试' }
+      }
+    }
+
     // 创建评价记录
     await db.collection('wdd-ratings').add({
       data: {
@@ -386,9 +418,9 @@ async function submitRating(event, OPENID) {
         rater_id: raterUserId,
         target_id: targetUserId,
         rating_type: ratingType,
-        rating: rating,
+        rating: ratingValue,
         tags: tags || [],
-        comment: comment || '',
+        comment: cleanComment,
         create_time: new Date()
       }
     })

@@ -251,7 +251,7 @@ Page({
           ...r,
           _typeName: FLOW_TYPE_MAP[r.type] || r.type || '未知',
           _time: this._formatDateTime(r.create_time),
-          _amountText: (r.amount || 0) >= 0 ? `+¥${(r.amount || 0).toFixed(2)}` : `-¥${Math.abs(r.amount || 0).toFixed(2)}`
+          _amountText: (r.amount || 0) >= 0 ? `+¥${this._fmtMoney(r.amount || 0)}` : `-¥${this._fmtMoney(Math.abs(r.amount || 0))}`
         }))
 
         const existing = page === 1 ? [] : this.data.fundFlowDetails
@@ -358,6 +358,9 @@ Page({
   _fmtMoney(amount) {
     if (amount === undefined || amount === null) return '0'
     if (amount >= 10000) return (amount / 10000).toFixed(1) + 'w'
-    return amount.toFixed(2)
+    const num = Math.round(amount * 100) / 100
+    if (num % 1 === 0) return String(num)
+    if (num * 10 % 1 === 0) return num.toFixed(1)
+    return num.toFixed(2)
   }
 })

@@ -4,9 +4,16 @@
 function format(amount) {
   var num = +amount
   if (isNaN(num)) {
-    return '0.00'
+    return '0'
   }
-  return (Math.round(num * 100) / 100).toFixed(2)
+  num = Math.round(num * 100) / 100
+  if (num % 1 === 0) {
+    return '' + num
+  }
+  if (num * 10 % 1 === 0) {
+    return num.toFixed(1)
+  }
+  return num.toFixed(2)
 }
 
 module.exports = {

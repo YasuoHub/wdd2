@@ -1,4 +1,5 @@
 <!-- 我的求助列表页面 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 状态筛选标签 -->
   <view class="filter-tabs">
@@ -74,7 +75,7 @@
         <!-- 卡片底部 -->
         <view class="card-footer">
           <view class="meta-left">
-            <view class="points-tag" wx:if="{{item.rewardAmount > 0}}">¥{{item.rewardAmount}}</view>
+            <view class="points-tag" wx:if="{{item.rewardAmount > 0}}">¥{{money.format(item.rewardAmount)}}</view>
             <view class="points-tag" wx:elif="{{item.points > 0}}">{{item.points}}积分</view>
             <!-- 只有待匹配状态才显示剩余时间 -->
             <view wx:if="{{item.status === 'pending'}}" class="countdown">

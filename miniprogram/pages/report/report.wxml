@@ -1,5 +1,6 @@
 <view class="page-bg"></view>
 
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <!-- 剩余补充时间 — 顶部醒目提醒 -->
   <view class="countdown-hero {{!canSupplement ? 'expired' : ''}}" wx:if="{{mode === 'supplement'}}">
@@ -25,7 +26,7 @@
       </view>
       <view class="info-row">
         <text class="info-label">任务悬赏</text>
-        <text class="info-value highlight-amount">¥{{taskSummary.rewardAmount || 0}}</text>
+        <text class="info-value highlight-amount">¥{{money.format(taskSummary.rewardAmount || 0)}}</text>
       </view>
     </view>
     <view class="card-foot">

@@ -1,4 +1,5 @@
 <!-- 任务大厅 - 城市绿洲风格 -->
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
 
   <!-- 顶部导航栏 -->
@@ -93,7 +94,7 @@
             </view>
             <view class="amount-badge">
               <text class="amount-icon">💰</text>
-              <text class="amount-value">¥{{item.rewardAmount || item.points / 10}}</text>
+              <text class="amount-value">¥{{money.format(item.rewardAmount || item.points / 10)}}</text>
             </view>
           </view>
 

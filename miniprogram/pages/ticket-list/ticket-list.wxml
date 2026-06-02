@@ -3,6 +3,7 @@
   module.exports = function(type) { return map[type] || '📋' }
 </wxs>
 
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <view class="tab-bar">
     <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" bindtap="onTabChange" data-tab="pending">
@@ -36,7 +37,7 @@
           <!-- 悬赏 -->
           <view class="card-info-row">
             <text class="info-label">任务悬赏</text>
-            <text class="info-value reward">¥{{item.rewardAmount}}</text>
+            <text class="info-value reward">¥{{money.format(item.rewardAmount)}}</text>
           </view>
           <!-- 双方用户 -->
           <view class="card-users-row">
@@ -78,7 +79,7 @@
           <!-- 悬赏 -->
           <view class="card-info-row">
             <text class="info-label">任务悬赏</text>
-            <text class="info-value reward">¥{{item.rewardAmount}}</text>
+            <text class="info-value reward">¥{{money.format(item.rewardAmount)}}</text>
           </view>
           <!-- 双方用户 -->
           <view class="card-users-row">

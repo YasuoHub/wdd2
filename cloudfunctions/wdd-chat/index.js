@@ -214,21 +214,25 @@ async function getMessages(event, OPENID) {
   if (beforeTime && afterTime) {
     msgQuery = db.collection('wdd-messages').where({
       need_id: needId,
+      status: _.neq('violated'),
       create_time: _.and(_.gt(new Date(afterTime)), _.lt(new Date(beforeTime)))
     })
   } else if (beforeTime) {
     msgQuery = db.collection('wdd-messages').where({
       need_id: needId,
+      status: _.neq('violated'),
       create_time: _.lt(new Date(beforeTime))
     })
   } else if (afterTime) {
     msgQuery = db.collection('wdd-messages').where({
       need_id: needId,
+      status: _.neq('violated'),
       create_time: _.gt(new Date(afterTime))
     })
   } else {
     msgQuery = db.collection('wdd-messages').where({
-      need_id: needId
+      need_id: needId,
+      status: _.neq('violated')
     })
   }
 
