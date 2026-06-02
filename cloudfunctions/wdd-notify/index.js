@@ -112,7 +112,7 @@ async function getChatSessions(userId) {
     // 用户作为求助者的任务
     db.collection('wdd-needs').where({
       user_id: userId,
-      status: _.in(['ongoing', 'completed', 'breaking'])
+      status: _.in(['ongoing', 'completed', 'breaking', 'cancelled', 'expired'])
     }).get(),
     // 用户作为帮助者的任务
     db.collection('wdd-need-takers').where({
@@ -355,11 +355,20 @@ async function getUnreadCount(OPENID) {
   }
   const userId = userRes.data[0]._id
 
-  // 获取聊天未读数
-  const chatUnreadRes = await db.collection('wdd-messages').where({
-    receiver_id: userId,
-    is_read: false
-  }).count()
+  // 获取可见会话的 need_id 列表，复用 getChatSessions 的可见性过滤（isSessionVisible）
+  const { sessions } = await getChatSessions(userId)
+  const visibleNeedIds = sessions.map(s => s.needId)
+
+  // 只统计可见会话内的未读消息
+  let chatUnread = 0
+  if (visibleNeedIds.length > 0) {
+    const chatUnreadRes = await db.collection('wdd-messages').where({
+      need_id: _.in(visibleNeedIds),
+      receiver_id: userId,
+      is_read: false
+    }).count()
+    chatUnread = chatUnreadRes.total
+  }
 
   // 获取系统通知未读数
   const systemUnreadRes = await db.collection('wdd-notifications').where({
@@ -370,9 +379,9 @@ async function getUnreadCount(OPENID) {
   return {
     code: 0,
     data: {
-      chatUnread: chatUnreadRes.total,
+      chatUnread,
       systemUnread: systemUnreadRes.total,
-      total: chatUnreadRes.total + systemUnreadRes.total
+      total: chatUnread + systemUnreadRes.total
     }
   }
 }
