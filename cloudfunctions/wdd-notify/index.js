@@ -122,7 +122,12 @@ async function getChatSessions(userId) {
 
   // 求助者侧：分原始和可见,差值即"隐藏数"
   const allMyNeeds = needsRes.data
-  const myNeeds = allMyNeeds.filter(isSessionVisible)
+  const myNeeds = allMyNeeds.filter(need => {
+    if (!isSessionVisible(need)) return false
+    // 已取消/已过期的任务，如果无人接单，不显示在消息列表
+    if (['cancelled', 'expired'].includes(need.status) && !need.taker_id) return false
+    return true
+  })
   const hiddenSeekerCount = allMyNeeds.length - myNeeds.length
   const myTakers = takersRes.data
 
