@@ -81,6 +81,10 @@
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
+      <text class="rule-text">单日提现上限：¥{{withdrawDailyLimit}}，每日最多{{withdrawDailyTimes}}次</text>
+    </view>
+    <view class="rule-item">
+      <text class="rule-dot"></text>
       <text class="rule-text">到账时间：确认收款后实时到账</text>
     </view>
   </view>

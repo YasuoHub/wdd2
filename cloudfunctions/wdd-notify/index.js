@@ -431,6 +431,8 @@ async function getUserInfo(OPENID) {
           avatar: user.avatar,
           total_points: user.total_points,
           balance: user.balance || 0,
+          frozen_balance: user.frozen_balance || 0,
+          available_balance: (user.balance || 0) - (user.frozen_balance || 0),
           total_earned: user.total_earned || 0,
           total_withdrawn: user.total_withdrawn || 0,
           total_paid: user.total_paid || 0,

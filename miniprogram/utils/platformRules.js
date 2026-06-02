@@ -11,6 +11,8 @@ let _WITHDRAW_MIN_AMOUNT = 2
 let _WITHDRAW_MIN_PER_REQUEST = 1
 let _WITHDRAW_MAX_PER_REQUEST = 5000
 let _WITHDRAW_APPROVAL_THRESHOLD = 100
+let _WITHDRAW_DAILY_LIMIT = 5000
+let _WITHDRAW_DAILY_TIMES = 3
 let _MIN_REWARD_AMOUNT = 0.1
 let _MAX_REWARD_AMOUNT = 500
 
@@ -31,6 +33,12 @@ function setPlatformConfig(config) {
   }
   if (typeof config.withdraw_approval_threshold === 'number') {
     _WITHDRAW_APPROVAL_THRESHOLD = config.withdraw_approval_threshold
+  }
+  if (typeof config.withdraw_daily_limit === 'number') {
+    _WITHDRAW_DAILY_LIMIT = config.withdraw_daily_limit
+  }
+  if (typeof config.withdraw_daily_times === 'number') {
+    _WITHDRAW_DAILY_TIMES = config.withdraw_daily_times
   }
   if (typeof config.min_reward_amount === 'number') {
     _MIN_REWARD_AMOUNT = config.min_reward_amount
@@ -70,6 +78,16 @@ const PLATFORM_RULES = {
   // 审批阈值（元）—— 超过此金额需提交审批
   get WITHDRAW_APPROVAL_THRESHOLD() {
     return _WITHDRAW_APPROVAL_THRESHOLD
+  },
+
+  // 单日提现累计金额上限（元）
+  get WITHDRAW_DAILY_LIMIT() {
+    return _WITHDRAW_DAILY_LIMIT
+  },
+
+  // 单日提现次数上限
+  get WITHDRAW_DAILY_TIMES() {
+    return _WITHDRAW_DAILY_TIMES
   },
 
   // 最小悬赏金额（元）
@@ -147,13 +165,13 @@ const MoneyUtils = {
   },
 
   // 检查是否满足提现条件
-  // balance: 当前余额（元）
+  // availableBalance: 可用余额（元）= balance - frozen_balance
   // return: { canWithdraw: boolean, reason: string }
-  checkCanWithdraw(balance) {
-    if (balance < _WITHDRAW_MIN_AMOUNT) {
+  checkCanWithdraw(availableBalance) {
+    if (availableBalance < _WITHDRAW_MIN_AMOUNT) {
       return {
         canWithdraw: false,
-        reason: `余额满${_WITHDRAW_MIN_AMOUNT}元才可提现`
+        reason: `可用余额满${_WITHDRAW_MIN_AMOUNT}元才可提现`
       }
     }
     return { canWithdraw: true, reason: '' }
@@ -161,9 +179,9 @@ const MoneyUtils = {
 
   // 检查提现金额是否合法
   // amount: 提现金额（元）
-  // balance: 当前余额（元）
+  // availableBalance: 可用余额（元）
   // return: { valid: boolean, reason: string }
-  checkWithdrawAmount(amount, balance) {
+  checkWithdrawAmount(amount, availableBalance) {
     if (amount <= 0) {
       return { valid: false, reason: '提现金额必须大于0' }
     }
@@ -173,8 +191,8 @@ const MoneyUtils = {
     if (amount > _WITHDRAW_MAX_PER_REQUEST) {
       return { valid: false, reason: `单次提现最高${_WITHDRAW_MAX_PER_REQUEST}元` }
     }
-    if (amount > balance) {
-      return { valid: false, reason: '提现金额不能超过余额' }
+    if (amount > availableBalance) {
+      return { valid: false, reason: '可用余额不足（含已冻结金额）' }
     }
     return { valid: true, reason: '' }
   }

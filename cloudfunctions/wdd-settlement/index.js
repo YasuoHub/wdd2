@@ -157,6 +157,32 @@ async function completeTask(event, OPENID) {
       }
     })
 
+    // 8. 余额支付：解冻 + 实际扣款（平台抽成部分自然消耗）
+    if (needInTx.payment_method === 'balance') {
+      await transaction.collection('wdd-users').doc(need.user_id).update({
+        data: {
+          balance: _.inc(-rewardAmount),
+          frozen_balance: _.inc(-rewardAmount),
+          total_paid: _.inc(rewardAmount),
+          update_time: new Date()
+        }
+      })
+      // 写入求助者支出完成流水
+      const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
+      await transaction.collection('wdd-balance-records').add({
+        data: {
+          user_id: need.user_id,
+          type: 'task_pay',
+          amount: -rewardAmount,
+          balance: latestSeekerRes.data.balance || 0,
+          frozen_balance: latestSeekerRes.data.frozen_balance || 0,
+          description: `任务「${need.type_name || '求助'}」完成，余额支出`,
+          need_id: needId,
+          create_time: new Date()
+        }
+      })
+    }
+
     // 提交事务
     await transaction.commit()
 

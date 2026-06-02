@@ -161,6 +161,24 @@ function formatBalanceRecord(item) {
       icon: '📋',
       iconBg: 'rgba(255, 149, 0, 0.1)',
       amountType: 'expense'
+    },
+    'freeze': {
+      title: item.description || '提现冻结',
+      icon: '🔒',
+      iconBg: 'rgba(255, 149, 0, 0.1)',
+      amountType: 'expense'
+    },
+    'unfreeze': {
+      title: item.description || '冻结解除',
+      icon: '🔓',
+      iconBg: 'rgba(7, 193, 96, 0.1)',
+      amountType: 'income'
+    },
+    'arbitration_refund': {
+      title: item.description || '客服退款',
+      icon: '↩️',
+      iconBg: 'rgba(7, 193, 96, 0.1)',
+      amountType: 'income'
     }
   }
 

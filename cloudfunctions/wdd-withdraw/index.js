@@ -111,24 +111,28 @@ async function applyWithdraw(event, OPENID) {
     if (!appRes || !appRes.data) {
       return { code: -1, message: '提现申请记录不存在' }
     }
-    if (appRes.data.user_id !== user._id) {
-      return { code: -1, message: '无权操作此申请' }
-    }
-    if (appRes.data.status !== 'approved') {
-      return { code: -1, message: '该提现申请尚未通过审批' }
-    }
-    if (appRes.data.withdraw_status === 'withdrawn') {
-      return { code: -1, message: '该申请已提现，请勿重复操作' }
-    }
     approvedApplication = appRes.data
 
-    // 提现金额不能超过申请金额
+    if (approvedApplication.user_id !== user._id) {
+      return { code: -1, message: '无权操作此申请' }
+    }
+    if (approvedApplication.status !== 'approved') {
+      return { code: -1, message: '该提现申请尚未通过审批' }
+    }
+    if (approvedApplication.withdraw_status === 'withdrawn') {
+      return { code: -1, message: '该申请已提现，请勿重复操作' }
+    }
+    if (approvedApplication.expire_time && new Date(approvedApplication.expire_time) < new Date()) {
+      return { code: -1, message: '该提现申请已过期，请重新申请' }
+    }
     if (Math.abs(amount - approvedApplication.amount) > 0.01) {
       return { code: -1, message: `提现金额需与申请金额一致（¥${approvedApplication.amount}）` }
     }
   }
 
-  const withdrawCheck = MoneyUtils.checkCanWithdraw(user.balance || 0)
+  const withdrawCheck = MoneyUtils.checkCanWithdraw(
+    approvedApplication ? user.balance : ((user.balance || 0) - (user.frozen_balance || 0))
+  )
   if (!withdrawCheck.canWithdraw) {
     return { code: -1, message: withdrawCheck.reason }
   }
@@ -139,6 +143,15 @@ async function applyWithdraw(event, OPENID) {
     return {
       code: -1,
       message: `超过单日提现限额 ¥${rules.WITHDRAW_DAILY_LIMIT}（今日已提现 ¥${dailyTotal}）`
+    }
+  }
+
+  // 单日提现次数校验
+  const dailyCount = await sumTodayWithdrawCount(OPENID)
+  if (dailyCount >= rules.WITHDRAW_DAILY_TIMES) {
+    return {
+      code: -1,
+      message: `今日提现次数已达上限（${rules.WITHDRAW_DAILY_TIMES}次），请明天再试`
     }
   }
 
@@ -154,19 +167,43 @@ async function applyWithdraw(event, OPENID) {
     // 事务内查询最新余额（防并发扣减）
     const latestUserRes = await transaction.collection('wdd-users').doc(user._id).get()
     const latestBalance = latestUserRes.data.balance || 0
+    const latestFrozen = latestUserRes.data.frozen_balance || 0
 
-    if (amount > latestBalance) {
-      await transaction.rollback()
-      return { code: -1, message: '余额不足' }
-    }
-
-    await transaction.collection('wdd-users').doc(user._id).update({
-      data: {
-        balance: _.inc(-amount),
-        total_withdrawn: _.inc(amount),
-        update_time: new Date()
+    if (approvedApplication) {
+      // 审批路径：同时扣减 balance 和 frozen_balance
+      if (amount > latestBalance) {
+        await transaction.rollback()
+        return { code: -1, message: '余额不足' }
       }
-    })
+      if (amount > latestFrozen) {
+        await transaction.rollback()
+        return { code: -1, message: '冻结金额异常，请联系客服' }
+      }
+
+      await transaction.collection('wdd-users').doc(user._id).update({
+        data: {
+          balance: _.inc(-amount),
+          frozen_balance: _.inc(-amount),
+          total_withdrawn: _.inc(amount),
+          update_time: new Date()
+        }
+      })
+    } else {
+      // 即时路径：仅扣减 balance，校验可用余额
+      const available = latestBalance - latestFrozen
+      if (amount > available) {
+        await transaction.rollback()
+        return { code: -1, message: `可用余额不足（含已冻结 ¥${latestFrozen.toFixed(2)}）` }
+      }
+
+      await transaction.collection('wdd-users').doc(user._id).update({
+        data: {
+          balance: _.inc(-amount),
+          total_withdrawn: _.inc(amount),
+          update_time: new Date()
+        }
+      })
+    }
 
     // 提现完整记录写入 wdd-withdraws（状态机、微信支付追踪等复杂字段）
     withdrawRecord = {
@@ -177,6 +214,7 @@ async function applyWithdraw(event, OPENID) {
       fee: fee,
       actual_amount: actualAmount,
       status: 'processing',
+      application_id: approvedApplication ? approvedApplication._id : null,
       out_bill_no: withdrawId,
       bill_id: null,
       state: null,
@@ -195,19 +233,6 @@ async function applyWithdraw(event, OPENID) {
 
     await transaction.collection('wdd-withdraws').add({ data: withdrawRecord })
 
-    // 同步写入 wdd-balance-records 简化流水（供钱包流水列表展示）
-    await transaction.collection('wdd-balance-records').add({
-      data: {
-        user_id: user._id,
-        type: 'withdraw',
-        amount: -amount,
-        balance: latestBalance - amount,
-        description: `提现 ¥${amount}`,
-        withdraw_id: withdrawId,
-        create_time: new Date()
-      }
-    })
-
     await transaction.commit()
   } catch (err) {
     await transaction.rollback()
@@ -218,8 +243,8 @@ async function applyWithdraw(event, OPENID) {
   // 事务外发起真实打款（事务内调用外部 API 会拖长事务、增加风险）
   const transferResult = await executeTransfer(withdrawRecord)
 
-  // 打款成功后，才将关联的提现申请标记为已提现（避免打款失败时申请记录已错误标记）
-  if (approvedApplication && transferResult.code === 0) {
+  // 打款成功后，关联的提现申请标记为已提现（避免打款失败时申请记录已错误标记）
+  if (transferResult.code === 0 && approvedApplication) {
     await db.collection('wdd-withdraw-applications').doc(approvedApplication._id).update({
       data: {
         withdraw_status: 'withdrawn',
@@ -352,6 +377,28 @@ async function executeTransfer(withdraw) {
         update_time: new Date()
       }
     })
+
+    // 幂等写入收支明细（提现成功才产生记录，失败不留痕）
+    const existCount = await db.collection('wdd-balance-records')
+      .where({ withdraw_id: withdraw._id }).count()
+    if (existCount.total === 0) {
+      const userRes = await db.collection('wdd-users')
+        .where({ openid: withdraw.openid }).get()
+      if (userRes.data.length > 0) {
+        await db.collection('wdd-balance-records').add({
+          data: {
+            user_id: withdraw.user_id,
+            type: 'withdraw',
+            amount: -withdraw.amount,
+            balance: userRes.data[0].balance || 0,
+            frozen_balance: userRes.data[0].frozen_balance || 0,
+            description: `提现 ¥${withdraw.amount}`,
+            withdraw_id: withdraw._id,
+            create_time: new Date()
+          }
+        })
+      }
+    }
 
     return {
       code: 0,
@@ -515,6 +562,28 @@ async function queryTransferStatus(event) {
       // 转账成功
       newStatus = 'completed'
       updateData.payment_time = result.successTime ? new Date(result.successTime) : new Date()
+
+      // 幂等写入收支明细
+      const existCount = await db.collection('wdd-balance-records')
+        .where({ withdraw_id: withdraw._id }).count()
+      if (existCount.total === 0) {
+        const userRes = await db.collection('wdd-users')
+          .where({ openid: withdraw.openid }).get()
+        if (userRes.data.length > 0) {
+          await db.collection('wdd-balance-records').add({
+            data: {
+              user_id: withdraw.user_id,
+              type: 'withdraw',
+              amount: -withdraw.amount,
+              balance: userRes.data[0].balance || 0,
+              frozen_balance: userRes.data[0].frozen_balance || 0,
+              description: `提现 ¥${withdraw.amount}`,
+              withdraw_id: withdraw._id,
+              create_time: new Date()
+            }
+          })
+        }
+      }
     } else if (result.state === 'FAIL') {
       // 转账失败
       return await rollbackWithdrawBalance(withdraw, `转账失败: ${result.failReason || '微信侧失败'}`)
@@ -639,6 +708,7 @@ async function handleTransferCallback(event) {
 // ========================================
 
 // 余额回滚（驳回或转账明确失败时使用）
+// 审批路径的提现：恢复 balance 的同时恢复 frozen_balance（保持冻结状态，用户可重试）
 async function rollbackWithdrawBalance(withdraw, reason) {
   if (withdraw.status === 'rejected') {
     return { code: -1, message: '已是驳回状态，跳过回滚' }
@@ -654,13 +724,22 @@ async function rollbackWithdrawBalance(withdraw, reason) {
       return { code: -1, message: `状态已变更（${latestRecord.data.status}），跳过回滚` }
     }
 
-    // 余额回滚
+    const hasApplication = !!(withdraw.application_id || latestRecord.data.application_id)
+
+    // 构建用户更新数据
+    const userUpdateData = {
+      balance: _.inc(withdraw.amount),
+      total_withdrawn: _.inc(-withdraw.amount),
+      update_time: new Date()
+    }
+
+    // 审批提现同时恢复冻结（保持冻结状态，让用户可以重试）
+    if (hasApplication) {
+      userUpdateData.frozen_balance = _.inc(withdraw.amount)
+    }
+
     await transaction.collection('wdd-users').doc(withdraw.user_id).update({
-      data: {
-        balance: _.inc(withdraw.amount),
-        total_withdrawn: _.inc(-withdraw.amount),
-        update_time: new Date()
-      }
+      data: userUpdateData
     })
 
     // 更新 wdd-withdraws 状态为 rejected
@@ -671,14 +750,6 @@ async function rollbackWithdrawBalance(withdraw, reason) {
         update_time: new Date()
       }
     })
-
-    // 删除 wdd-balance-records 中的简化流水（不在收支明细中展示）
-    const balanceRecordsRes = await transaction.collection('wdd-balance-records').where({
-      withdraw_id: withdraw._id
-    }).get()
-    if (balanceRecordsRes.data.length > 0) {
-      await transaction.collection('wdd-balance-records').doc(balanceRecordsRes.data[0]._id).remove()
-    }
 
     await transaction.commit()
 
@@ -708,6 +779,22 @@ async function sumTodayWithdrawAmount(openid) {
     .get()
 
   return res.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+}
+
+// 累计今日已发起提现次数（processing/completed/transfer_pending 都算占用次数）
+async function sumTodayWithdrawCount(openid) {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+
+  const res = await db.collection('wdd-withdraws')
+    .where({
+      openid: openid,
+      status: _.in(['processing', 'completed', 'transfer_pending']),
+      apply_time: _.gte(start)
+    })
+    .count()
+
+  return res.total
 }
 
 // 生成提现单号

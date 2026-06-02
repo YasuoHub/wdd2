@@ -239,6 +239,38 @@
         </view>
       </view>
 
+      <!-- 支付方式选择 -->
+      <view class="payment-method-section">
+        <text class="section-label">支付方式</text>
+        <view class="payment-options">
+          <view
+            class="payment-option {{paymentMethod === 'balance' ? 'active' : ''}} {{canBalancePay ? '' : 'disabled'}}"
+            data-method="balance"
+            bindtap="onSwitchPaymentMethod"
+          >
+            <view class="payment-option-header">
+              <text class="payment-icon">💰</text>
+              <text class="payment-name">余额支付</text>
+            </view>
+            <text class="payment-balance">可用 ¥{{availableBalance}}</text>
+          </view>
+          <view
+            class="payment-option {{paymentMethod === 'wechat' ? 'active' : ''}}"
+            data-method="wechat"
+            bindtap="onSwitchPaymentMethod"
+          >
+            <view class="payment-option-header">
+              <text class="payment-icon">💳</text>
+              <text class="payment-name">微信支付</text>
+            </view>
+            <text class="payment-desc">即时到账</text>
+          </view>
+        </view>
+        <view wx:if="{{paymentMethod === 'balance' && !canBalancePay}}" class="balance-insufficient">
+          <text>⚠️ 可用余额不足（当前可用 ¥{{availableBalance}}），请选择微信支付</text>
+        </view>
+      </view>
+
       <!-- 平台规则提示 -->
       <view class="rules-tip" bindtap="showPlatformRules">
         <text class="rules-icon">ℹ️</text>

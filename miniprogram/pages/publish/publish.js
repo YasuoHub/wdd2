@@ -52,6 +52,13 @@ Page({
     rewardAmount: 1,
     quickAmounts: QUICK_AMOUNTS,
 
+    // 支付方式
+    paymentMethod: 'wechat',    // 'balance' | 'wechat'
+    availableBalance: 0,
+    frozenBalance: 0,
+    balanceLoaded: false,
+    canBalancePay: false,
+
     // 平台规则
     platformFeeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100),
     minRewardAmount: PLATFORM_RULES.MIN_REWARD_AMOUNT,
@@ -91,6 +98,7 @@ Page({
   onShow() {
     this.refreshPlatformConfig()
     this.updateAmountCalculation()
+    this.loadBalance()
   },
 
   // 从 PLATFORM_RULES 刷新平台配置（费率可能已被 app.js 异步加载更新）
@@ -102,6 +110,61 @@ Page({
       maxRewardAmount: PLATFORM_RULES.MAX_REWARD_AMOUNT,
       withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT
     })
+  },
+
+  // 加载用户余额信息
+  async loadBalance() {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-notify',
+        data: { action: 'getUserInfo' }
+      })
+      if (result.code === 0 && result.data.userInfo) {
+        const ui = result.data.userInfo
+        const availableBalance = (ui.balance || 0) - (ui.frozen_balance || 0)
+        this.setData({
+          availableBalance,
+          frozenBalance: ui.frozen_balance || 0,
+          balanceLoaded: true
+        })
+        this.updateDefaultPaymentMethod()
+      }
+    } catch (err) {
+      console.error('加载余额失败:', err)
+    }
+  },
+
+  // 根据悬赏金额自动选择默认支付方式
+  updateDefaultPaymentMethod() {
+    const amount = parseFloat(this.data.rewardAmount) || 0
+    const canBalancePay = amount > 0 && amount <= this.data.availableBalance
+    this.setData({ canBalancePay })
+
+    if (amount > 0 && amount <= this.data.availableBalance) {
+      // 金额在可用范围内，自动选余额支付
+      if (!this._lastRewardAmount || this._lastRewardAmount !== amount) {
+        this.setData({ paymentMethod: 'balance' })
+      }
+    } else {
+      this.setData({ paymentMethod: 'wechat' })
+    }
+    this._lastRewardAmount = amount
+  },
+
+  // 切换支付方式
+  onSwitchPaymentMethod(e) {
+    const method = e.currentTarget.dataset.method
+    if (method === 'balance' && !this.data.canBalancePay) {
+      wx.showToast({ title: '可用余额不足，请选择微信支付', icon: 'none', duration: 2000 })
+      return
+    }
+    this.setData({ paymentMethod: method })
+  },
+
+  // 检查是否可用余额支付
+  canPayByBalance() {
+    const amount = parseFloat(this.data.rewardAmount) || 0
+    return amount > 0 && amount <= this.data.availableBalance
   },
 
   // 初始化地图中心点
@@ -263,6 +326,7 @@ Page({
     const rewardAmount = e.detail.value
     this.setData({ rewardAmount })
     this.updateAmountCalculation()
+    this.updateDefaultPaymentMethod()
     this.checkCanPublish()
   },
 
@@ -271,6 +335,7 @@ Page({
     const amount = e.currentTarget.dataset.amount
     this.setData({ rewardAmount: amount })
     this.updateAmountCalculation()
+    this.updateDefaultPaymentMethod()
     this.checkCanPublish()
   },
 
@@ -280,6 +345,7 @@ Page({
     if (isNaN(value) || value < 0) value = 0
     this.setData({ rewardAmount: value })
     this.updateAmountCalculation()
+    this.updateDefaultPaymentMethod()
     this.checkCanPublish()
   },
 
@@ -418,13 +484,55 @@ Page({
     this.setData({ isPublishing: true })
 
     try {
-      wx.showLoading({ title: '创建订单中...' })
+      wx.showLoading({ title: '发布中...' })
 
       // 1. 上传图片
       let imageUrls = []
       if (this.data.images.length > 0) {
         imageUrls = await this.uploadImages()
       }
+
+      const metadata = {
+        location: {
+          name: locationName,
+          coordinates: [this.data.longitude, this.data.latitude]
+        },
+        type: selectedType,
+        typeName: typeInfo.name,
+        description: description,
+        expireMinutes: selectedTime,
+        images: imageUrls
+      }
+
+      // 余额支付：一步完成
+      if (this.data.paymentMethod === 'balance') {
+        const { result } = await wx.cloud.callFunction({
+          name: 'wdd-payment',
+          data: {
+            action: 'payByBalance',
+            amount: rewardAmount,
+            description: `发布求助：${typeInfo.name}`,
+            metadata: metadata
+          }
+        })
+
+        wx.hideLoading()
+
+        if (result.code === 0) {
+          app.globalData.refreshMyNeeds = true
+          wx.setStorageSync('forceRefreshIndex', true)
+          wx.setStorageSync('forceRefreshTaskHall', true)
+
+          const targetUrl = `/pages/publish-success/publish-success?needId=${result.data.needId}&amount=${rewardAmount}&typeName=${encodeURIComponent(typeInfo.name)}`
+          wx.redirectTo({ url: targetUrl })
+        } else {
+          throw new Error(result.message || '发布失败')
+        }
+        return
+      }
+
+      // 微信支付：现有流程
+      wx.showLoading({ title: '创建订单中...' })
 
       // 2. 创建支付订单
       const { result: orderResult } = await wx.cloud.callFunction({
@@ -433,17 +541,7 @@ Page({
           action: 'createOrder',
           amount: rewardAmount,
           description: `发布求助：${typeInfo.name}`,
-          metadata: {
-            location: {
-              name: locationName,
-              coordinates: [this.data.longitude, this.data.latitude]
-            },
-            type: selectedType,
-            typeName: typeInfo.name,
-            description: description,
-            expireMinutes: selectedTime,
-            images: imageUrls
-          }
+          metadata: metadata
         }
       })
 

@@ -6,6 +6,7 @@ Page({
   data: {
     // 用户余额
     balance: 0,
+    availableBalance: 0,
 
     // 提现金额
     withdrawAmount: '',
@@ -20,6 +21,8 @@ Page({
     withdrawMinPerRequest: PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST,
     withdrawMaxPerRequest: PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST,
     withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
+    withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+    withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
 
     // 状态
     canSubmit: false,
@@ -68,11 +71,22 @@ Page({
         const apps = result.data.records || []
         const app = apps.find(a => a._id === applicationId)
         if (app && app.status === 'approved' && app.withdrawStatus === 'not_withdrawn') {
+          // 检查是否已过期
+          if (app.expireTime && new Date(app.expireTime.replace(/-/g, '/')) < new Date()) {
+            wx.showModal({
+              title: '申请已过期',
+              content: '该提现申请已超过3天有效期，请返回钱包页面重新申请。',
+              showCancel: false,
+              success: () => wx.navigateBack()
+            })
+            return
+          }
           this.setData({
             application: app,
             withdrawAmount: String(app.amount)
           })
           this.calculateFee()
+          this.checkCanSubmit()
         }
       }
     } catch (err) {
@@ -89,8 +103,11 @@ Page({
       })
 
       if (result.code === 0 && result.data.userInfo) {
-        const balance = result.data.userInfo.balance || 0
-        this.setData({ balance })
+        const userInfo = result.data.userInfo
+        const balance = userInfo.balance || 0
+        const frozenBalance = userInfo.frozen_balance || 0
+        const availableBalance = balance - frozenBalance
+        this.setData({ balance, availableBalance })
         this.checkCanSubmit()
       }
     } catch (err) {
@@ -116,13 +133,11 @@ Page({
       value = parts[0] + '.' + parts[1].slice(0, 2)
     }
 
-    // 限制最大金额
+    // 限制最大金额（基于可用余额和平台限额）
     const numValue = parseFloat(value) || 0
-    if (numValue > this.data.balance) {
-      value = String(this.data.balance)
-    }
-    if (numValue > PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST) {
-      value = String(PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    const maxAvailable = Math.min(this.data.availableBalance, PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    if (numValue > maxAvailable) {
+      value = String(maxAvailable)
     }
 
     this.setData({ withdrawAmount: value })
@@ -133,7 +148,7 @@ Page({
   // 全部提现
   withdrawAll() {
     const maxAmount = Math.min(
-      this.data.balance,
+      this.data.availableBalance,
       PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST
     )
     const amount = MoneyUtils.formatAmount(maxAmount)
@@ -157,7 +172,7 @@ Page({
   // 检查是否可以提交
   checkCanSubmit() {
     const amount = parseFloat(this.data.withdrawAmount) || 0
-    const check = MoneyUtils.checkWithdrawAmount(amount, this.data.balance)
+    const check = MoneyUtils.checkWithdrawAmount(amount, this.data.availableBalance)
 
     this.setData({
       canSubmit: check.valid,

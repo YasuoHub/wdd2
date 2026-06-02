@@ -21,6 +21,7 @@ exports.main = async (event, context) => {
     retriedPending: 0,
     retriedTransfers: 0,
     queriedTransfers: 0,
+    expiredApps: 0,
     errors: []
   }
 
@@ -157,6 +158,40 @@ exports.main = async (event, context) => {
       } catch (err) {
         console.error(`查询提现调用失败 ${record._id}:`, err)
         results.errors.push({ withdrawId: record._id, error: err.message })
+      }
+    }
+
+    console.log('自动取消任务检查完成:', results)
+
+    // 5. 扫描已过期未提现的审批申请
+    const expiredAppsRes = await db.collection('wdd-withdraw-applications')
+      .where({
+        status: 'approved',
+        withdraw_status: 'not_withdrawn',
+        expire_time: _.lt(now)
+      })
+      .limit(50)
+      .get()
+
+    console.log(`找到 ${expiredAppsRes.data.length} 个过期提现申请`)
+
+    for (const app of expiredAppsRes.data) {
+      try {
+        const { result } = await cloud.callFunction({
+          name: 'wdd-withdraw-approval',
+          data: {
+            action: 'expire',
+            applicationId: app._id
+          }
+        })
+        if (result.code === 0) {
+          results.expiredApps = (results.expiredApps || 0) + 1
+        } else {
+          console.error(`过期处理业务失败 ${app._id}:`, result.message)
+        }
+      } catch (err) {
+        console.error(`过期处理调用失败 ${app._id}:`, err)
+        results.errors.push({ appId: app._id, error: err.message })
       }
     }
 
@@ -429,6 +464,31 @@ async function autoCompleteOngoingNeed(need) {
         create_time: new Date()
       }
     })
+
+    // 余额支付：解冻 + 实际扣款
+    if (needInTx.payment_method === 'balance') {
+      await transaction.collection('wdd-users').doc(need.user_id).update({
+        data: {
+          balance: _.inc(-rewardAmount),
+          frozen_balance: _.inc(-rewardAmount),
+          total_paid: _.inc(rewardAmount),
+          update_time: new Date()
+        }
+      })
+      const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
+      await transaction.collection('wdd-balance-records').add({
+        data: {
+          user_id: need.user_id,
+          type: 'task_pay',
+          amount: -rewardAmount,
+          balance: latestSeekerRes.data.balance || 0,
+          frozen_balance: latestSeekerRes.data.frozen_balance || 0,
+          description: `任务「${need.type_name || '求助'}」自动完成，余额支出`,
+          need_id: need._id,
+          create_time: new Date()
+        }
+      })
+    }
 
     // 通知双方
     await transaction.collection('wdd-notifications').add({

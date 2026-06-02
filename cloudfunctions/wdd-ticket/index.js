@@ -448,26 +448,50 @@ async function submitArbitration(event, OPENID) {
     })
 
     if (taskResult === 'cancelled') {
-      // 更新求助者余额（使用预计算的值，避免事务内 get）
-      await transaction.collection('wdd-users').doc(need.user_id).update({
-        data: {
-          balance: seekerNewBalance,
-          update_time: new Date()
-        }
-      })
-
-      // 创建退款流水（使用预计算的余额）
-      await transaction.collection('wdd-balance-records').add({
-        data: {
-          user_id: need.user_id,
-          type: 'arbitration_refund',
-          amount: seekerRefund,
-          balance: seekerNewBalance,
-          description: `客服裁决：任务取消，全额退款`,
-          need_id: need._id,
-          create_time: new Date()
-        }
-      })
+      if (need.payment_method === 'balance') {
+        // 余额支付：只解冻，balance 在支付时未扣无需恢复
+        await transaction.collection('wdd-users').doc(need.user_id).update({
+          data: {
+            frozen_balance: _.inc(-seekerRefund),
+            update_time: new Date()
+          }
+        })
+        // 写入解冻流水
+        const seekerUser = await transaction.collection('wdd-users').doc(need.user_id).get()
+        await transaction.collection('wdd-balance-records').add({
+          data: {
+            user_id: need.user_id,
+            type: 'arbitration_refund',
+            amount: seekerRefund,
+            balance: seekerUser.data.balance || 0,
+            frozen_balance: seekerUser.data.frozen_balance || 0,
+            description: '客服裁决：任务取消，解冻退回',
+            need_id: need._id,
+            create_time: new Date()
+          }
+        })
+      } else {
+        // 微信支付：退款到平台余额
+        await transaction.collection('wdd-users').doc(need.user_id).update({
+          data: {
+            balance: seekerNewBalance,
+            total_paid: _.inc(-seekerRefund),
+            update_time: new Date()
+          }
+        })
+        // 创建退款流水
+        await transaction.collection('wdd-balance-records').add({
+          data: {
+            user_id: need.user_id,
+            type: 'arbitration_refund',
+            amount: seekerRefund,
+            balance: seekerNewBalance,
+            description: '客服裁决：任务取消，全额退款',
+            need_id: need._id,
+            create_time: new Date()
+          }
+        })
+      }
 
       // 扣减帮助者信誉分 10 分
       await transaction.collection('wdd-users').doc(takerRecord.taker_id).update({
@@ -509,6 +533,18 @@ async function submitArbitration(event, OPENID) {
         }
       })
 
+      // 余额支付：解冻 + 实际扣款
+      if (need.payment_method === 'balance') {
+        await transaction.collection('wdd-users').doc(need.user_id).update({
+          data: {
+            balance: _.inc(-rewardAmount),
+            frozen_balance: _.inc(-rewardAmount),
+            total_paid: _.inc(rewardAmount),
+            update_time: new Date()
+          }
+        })
+      }
+
       // 更新接单记录
       await transaction.collection('wdd-need-takers').doc(takerRecord._id).update({
         data: {
@@ -536,39 +572,53 @@ async function submitArbitration(event, OPENID) {
         }
       })
 
-      // 更新求助者余额（退款部分）
-      await transaction.collection('wdd-users').doc(need.user_id).update({
-        data: {
-          balance: seekerNewBalance,
-          update_time: new Date()
-        }
-      })
-
-      // 创建帮助者收入流水
-      await transaction.collection('wdd-balance-records').add({
-        data: {
-          user_id: takerRecord.taker_id,
-          type: 'task_income',
-          amount: takerIncome,
-          balance: takerNewBalance,
-          description: `客服裁决：部分完成(${partialPercent}%)收入`,
-          need_id: need._id,
-          create_time: new Date()
-        }
-      })
-
-      // 创建求助者退款流水
-      await transaction.collection('wdd-balance-records').add({
-        data: {
-          user_id: need.user_id,
-          type: 'arbitration_refund',
-          amount: seekerRefund,
-          balance: seekerNewBalance,
-          description: `客服裁决：部分完成，剩余退款`,
-          need_id: need._id,
-          create_time: new Date()
-        }
-      })
+      if (need.payment_method === 'balance') {
+        // 余额支付：解冻全部 + 实际扣款已消费部分（退款部分 balance 未动无需恢复）
+        const spentAmount = rewardAmount - seekerRefund
+        await transaction.collection('wdd-users').doc(need.user_id).update({
+          data: {
+            balance: _.inc(-spentAmount),
+            frozen_balance: _.inc(-rewardAmount),
+            total_paid: _.inc(spentAmount),
+            update_time: new Date()
+          }
+        })
+        // 写入支出流水
+        const seekerUser = await transaction.collection('wdd-users').doc(need.user_id).get()
+        await transaction.collection('wdd-balance-records').add({
+          data: {
+            user_id: need.user_id,
+            type: 'arbitration_refund',
+            amount: seekerRefund,
+            balance: seekerUser.data.balance || 0,
+            frozen_balance: seekerUser.data.frozen_balance || 0,
+            description: `客服裁决：部分完成(${partialPercent}%)，已消费部分扣除，剩余解冻`,
+            need_id: need._id,
+            create_time: new Date()
+          }
+        })
+      } else {
+        // 微信支付：退款到平台余额
+        await transaction.collection('wdd-users').doc(need.user_id).update({
+          data: {
+            balance: seekerNewBalance,
+            total_paid: _.inc(-seekerRefund),
+            update_time: new Date()
+          }
+        })
+        // 创建求助者退款流水
+        await transaction.collection('wdd-balance-records').add({
+          data: {
+            user_id: need.user_id,
+            type: 'arbitration_refund',
+            amount: seekerRefund,
+            balance: seekerNewBalance,
+            description: `客服裁决：部分完成，剩余退款`,
+            need_id: need._id,
+            create_time: new Date()
+          }
+        })
+      }
 
       // 更新接单记录
       await transaction.collection('wdd-need-takers').doc(takerRecord._id).update({
@@ -804,12 +854,24 @@ async function autoCancelTimeout(event) {
         // 退款给求助者
         const rewardAmount = need.reward_amount || 0
         if (rewardAmount > 0) {
-          await transaction.collection('wdd-users').doc(need.user_id).update({
-            data: {
-              balance: _.inc(rewardAmount),
-              update_time: new Date()
-            }
-          })
+          if (need.payment_method === 'balance') {
+            // 余额支付：只解冻，balance 在支付时未扣无需恢复
+            await transaction.collection('wdd-users').doc(need.user_id).update({
+              data: {
+                frozen_balance: _.inc(-rewardAmount),
+                update_time: new Date()
+              }
+            })
+          } else {
+            // 微信支付：退款到平台余额
+            await transaction.collection('wdd-users').doc(need.user_id).update({
+              data: {
+                balance: _.inc(rewardAmount),
+                total_paid: _.inc(-rewardAmount),
+                update_time: new Date()
+              }
+            })
+          }
 
           const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
           await transaction.collection('wdd-balance-records').add({
@@ -818,6 +880,7 @@ async function autoCancelTimeout(event) {
               type: 'arbitration_refund',
               amount: rewardAmount,
               balance: latestSeekerRes.data.balance || rewardAmount,
+              frozen_balance: latestSeekerRes.data.frozen_balance || 0,
               description: '客服超时未处理，自动取消并全额退款',
               need_id: need._id,
               create_time: new Date()

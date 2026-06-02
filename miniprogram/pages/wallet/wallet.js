@@ -6,6 +6,8 @@ Page({
   data: {
     // 余额信息
     balance: 0,
+    frozenBalance: 0,
+    availableBalance: 0,
     totalEarned: 0,
     totalWithdrawn: 0,
     totalPaid: 0,
@@ -16,6 +18,8 @@ Page({
     withdrawMinPerRequest: PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST,
     withdrawMaxPerRequest: PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST,
     withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
+    withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+    withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
 
     // 提现条件
     canWithdraw: false,
@@ -70,7 +74,9 @@ Page({
       this.setData({
         withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
         withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
-        withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD
+        withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
+        withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+        withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES
       })
     }
   },
@@ -94,12 +100,16 @@ Page({
       if (result.code === 0 && result.data.userInfo) {
         const userInfo = result.data.userInfo
         const balance = userInfo.balance || 0
+        const frozenBalance = userInfo.frozen_balance || 0
+        const availableBalance = balance - frozenBalance
 
-        // 检查提现条件
-        const withdrawCheck = MoneyUtils.checkCanWithdraw(balance)
+        // 检查提现条件（基于可用余额）
+        const withdrawCheck = MoneyUtils.checkCanWithdraw(availableBalance)
 
         this.setData({
           balance: balance,
+          frozenBalance: frozenBalance,
+          availableBalance: availableBalance,
           totalEarned: userInfo.total_earned || 0,
           totalWithdrawn: userInfo.total_withdrawn || 0,
           totalPaid: userInfo.total_paid || 0,
@@ -129,7 +139,27 @@ Page({
         }
       })
       if (result.code === 0) {
-        this.setData({ applications: result.data.records || [] })
+        const now = new Date()
+        const records = (result.data.records || []).map(item => {
+          const expireTime = item.expireTime ? new Date(item.expireTime.replace(/-/g, '/')) : null
+          const isExpired = item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && expireTime && expireTime < now
+          let expireCountdown = ''
+          if (item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && expireTime && !isExpired) {
+            const diffMs = expireTime - now
+            if (diffMs > 0) {
+              const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+              const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+              expireCountdown = days > 0 ? `${days}天${hours}小时` : `${hours}小时`
+            }
+          }
+          return {
+            ...item,
+            expireTimeStr: item.expireTime || '',
+            isExpired,
+            expireCountdown
+          }
+        })
+        this.setData({ applications: records })
       }
     } catch (err) {
       console.error('加载申请记录失败:', err)
@@ -228,11 +258,9 @@ Page({
 
     const numValue = parseFloat(value) || 0
     const maxPerRequest = PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST
-    if (numValue > this.data.balance) {
-      value = String(this.data.balance)
-    }
-    if (numValue > maxPerRequest) {
-      value = String(maxPerRequest)
+    const maxAvailable = Math.min(this.data.availableBalance, maxPerRequest)
+    if (numValue > maxAvailable) {
+      value = String(maxAvailable)
     }
 
     this.setData({ applyAmount: value })
@@ -242,7 +270,7 @@ Page({
 
   // 全部提现
   withdrawAll() {
-    const maxAmount = Math.min(this.data.balance, PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    const maxAmount = Math.min(this.data.availableBalance, PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
     const amount = MoneyUtils.formatAmount(maxAmount)
     this.setData({ applyAmount: amount })
     this.calcApplyFee()
@@ -261,7 +289,7 @@ Page({
 
   checkCanSubmitApply() {
     const amount = parseFloat(this.data.applyAmount) || 0
-    const check = MoneyUtils.checkWithdrawAmount(amount, this.data.balance)
+    const check = MoneyUtils.checkWithdrawAmount(amount, this.data.availableBalance)
     const threshold = this.data.withdrawApprovalThreshold
     const needApproval = amount > threshold
     this.setData({

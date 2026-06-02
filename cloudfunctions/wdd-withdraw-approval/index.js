@@ -16,6 +16,34 @@ const REJECT_REASONS = [
   '其他原因'
 ]
 
+// 累计今日已提现金额
+async function sumTodayWithdrawAmount(openid) {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  const res = await db.collection('wdd-withdraws')
+    .where({
+      openid: openid,
+      status: _.in(['processing', 'completed', 'transfer_pending']),
+      apply_time: _.gte(start)
+    })
+    .get()
+  return res.data.reduce((sum, r) => sum + (r.amount || 0), 0)
+}
+
+// 累计今日已提现次数
+async function sumTodayWithdrawCount(openid) {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  const res = await db.collection('wdd-withdraws')
+    .where({
+      openid: openid,
+      status: _.in(['processing', 'completed', 'transfer_pending']),
+      apply_time: _.gte(start)
+    })
+    .count()
+  return res.total
+}
+
 // 从 wdd-config 加载平台配置
 async function loadConfig() {
   const res = await db.collection('wdd-config').doc('platform').get().catch(() => null)
@@ -49,7 +77,8 @@ function getStatusText(status) {
   const map = {
     'pending': '待审批',
     'approved': '已通过',
-    'rejected': '已驳回'
+    'rejected': '已驳回',
+    'expired': '已过期'
   }
   return map[status] || status
 }
@@ -59,7 +88,10 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const OPENID = wxContext.OPENID
 
-  if (!OPENID) {
+  // expire 由定时任务调用，无 OPENID
+  const isInternalCall = (action === 'expire')
+
+  if (!OPENID && !isInternalCall) {
     return { code: -1, message: '获取用户openid失败' }
   }
 
@@ -75,6 +107,8 @@ exports.main = async (event, context) => {
         return await approve(event, OPENID)
       case 'reject':
         return await rejectApplication(event, OPENID)
+      case 'expire':
+        return await expireApplication(event)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -108,6 +142,23 @@ async function apply(event, OPENID) {
     return { code: -1, message: `单次提现最高${maxPerRequest}元` }
   }
 
+  // 单日提现次数校验
+  const dailyTimes = config.withdraw_daily_times ?? 3
+  const dailyCount = await sumTodayWithdrawCount(OPENID)
+  if (dailyCount >= dailyTimes) {
+    return { code: -1, message: `今日提现次数已达上限（${dailyTimes}次），请明天再试` }
+  }
+
+  // 单日累计金额校验
+  const dailyLimit = config.withdraw_daily_limit ?? 5000
+  const dailyTotal = await sumTodayWithdrawAmount(OPENID)
+  if (dailyTotal + amount > dailyLimit) {
+    return {
+      code: -1,
+      message: `超过单日提现限额 ¥${dailyLimit}（今日已提现 ¥${dailyTotal.toFixed(2)}）`
+    }
+  }
+
   // 查询用户
   const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
   if (userRes.data.length === 0) {
@@ -116,13 +167,15 @@ async function apply(event, OPENID) {
 
   const user = userRes.data[0]
   const balance = user.balance || 0
+  const frozenBalance = user.frozen_balance || 0
+  const availableBalance = balance - frozenBalance
 
-  if (balance < minAmount) {
-    return { code: -1, message: `余额满${minAmount}元才可申请提现` }
+  if (availableBalance < minAmount) {
+    return { code: -1, message: `可用余额满${minAmount}元才可申请提现` }
   }
 
-  if (amount > balance) {
-    return { code: -1, message: '提现金额不能超过余额' }
+  if (amount > availableBalance) {
+    return { code: -1, message: '可用余额不足（含已冻结金额）' }
   }
 
   // 校验审批阈值：低于阈值走即时到账，无需提交审批申请
@@ -161,36 +214,78 @@ async function apply(event, OPENID) {
   const fee = Math.round(amount * feeRate * 100) / 100
   const actualAmount = Math.round((amount - fee) * 100) / 100
 
-  // 写入申请记录
-  const appRes = await db.collection('wdd-withdraw-applications').add({
-    data: {
-      user_id: user._id,
-      openid: OPENID,
-      amount: amount,
-      fee: fee,
-      actual_amount: actualAmount,
-      status: 'pending',
-      withdraw_status: 'not_withdrawn',
-      reject_reason: null,
-      handler_id: null,
-      apply_time: new Date(),
-      approve_time: null,
-      withdraw_time: null,
-      withdraw_id: null,
-      create_time: new Date(),
-      update_time: new Date()
-    }
-  })
+  // 事务：原子性冻结金额 + 写入申请记录
+  const transaction = await db.startTransaction()
+  try {
+    const userInTx = await transaction.collection('wdd-users').doc(user._id).get()
+    const currentBalance = userInTx.data.balance || 0
+    const currentFrozen = userInTx.data.frozen_balance || 0
+    const currentAvailable = currentBalance - currentFrozen
 
-  return {
-    code: 0,
-    message: '提现申请已提交，请等待审批',
-    data: {
-      applicationId: appRes._id,
-      amount,
-      fee,
-      actualAmount
+    if (amount > currentAvailable) {
+      await transaction.rollback()
+      return { code: -1, message: '可用余额不足' }
     }
+
+    // 冻结金额
+    await transaction.collection('wdd-users').doc(user._id).update({
+      data: {
+        frozen_balance: _.inc(amount),
+        update_time: new Date()
+      }
+    })
+
+    // 写入冻结流水
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: user._id,
+        type: 'freeze',
+        amount: -amount,
+        balance: currentBalance,
+        frozen_balance: currentFrozen + amount,
+        description: `提现申请冻结 ¥${amount.toFixed(2)}`,
+        create_time: new Date()
+      }
+    })
+
+    // 写入申请记录
+    const appRes = await transaction.collection('wdd-withdraw-applications').add({
+      data: {
+        user_id: user._id,
+        openid: OPENID,
+        amount: amount,
+        fee: fee,
+        actual_amount: actualAmount,
+        status: 'pending',
+        withdraw_status: 'not_withdrawn',
+        expire_time: null,
+        reject_reason: null,
+        handler_id: null,
+        apply_time: new Date(),
+        approve_time: null,
+        withdraw_time: null,
+        withdraw_id: null,
+        create_time: new Date(),
+        update_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+
+    return {
+      code: 0,
+      message: '提现申请已提交，请等待审批',
+      data: {
+        applicationId: appRes._id,
+        amount,
+        fee,
+        actualAmount
+      }
+    }
+  } catch (err) {
+    await transaction.rollback()
+    console.error('提现申请事务失败:', err)
+    return { code: -1, message: '提交失败: ' + err.message }
   }
 }
 
@@ -232,6 +327,7 @@ async function getMyApplications(event, OPENID) {
     rejectReason: item.reject_reason || '',
     applyTime: formatTime(item.apply_time),
     approveTime: item.approve_time ? formatTime(item.approve_time) : '',
+    expireTime: item.expire_time ? formatTime(item.expire_time) : '',
     withdrawTime: item.withdraw_time ? formatTime(item.withdraw_time) : ''
   }))
 
@@ -255,7 +351,7 @@ async function getApplicationList(event, OPENID) {
   if (status === 'pending') {
     whereCondition.status = 'pending'
   } else if (status === 'resolved') {
-    whereCondition.status = _.in(['approved', 'rejected'])
+    whereCondition.status = _.in(['approved', 'rejected', 'expired'])
   }
 
   const listRes = await db.collection('wdd-withdraw-applications')
@@ -297,6 +393,7 @@ async function getApplicationList(event, OPENID) {
     rejectReason: item.reject_reason || '',
     applyTime: formatTime(item.apply_time),
     approveTime: item.approve_time ? formatTime(item.approve_time) : '',
+    expireTime: item.expire_time ? formatTime(item.expire_time) : '',
     withdrawTime: item.withdraw_time ? formatTime(item.withdraw_time) : ''
   }))
 
@@ -334,6 +431,7 @@ async function approve(event, OPENID) {
       status: 'approved',
       handler_id: OPENID,
       approve_time: new Date(),
+      expire_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       update_time: new Date()
     }
   })
@@ -345,7 +443,7 @@ async function approve(event, OPENID) {
         user_id: application.user_id,
         type: 'system',
         title: '提现申请已通过',
-        content: `您的提现申请（¥${application.amount}）已审批通过，请前往钱包页面发起提现。`,
+        content: `您的提现申请（¥${application.amount}）已审批通过，请在3天内前往钱包页面发起提现，逾期需重新申请。`,
         is_read: false,
         create_time: new Date()
       }
@@ -376,6 +474,7 @@ async function rejectApplication(event, OPENID) {
     return { code: -1, message: '驳回理由不能为空' }
   }
 
+  // 先查申请记录（事务外）
   const appRes = await db.collection('wdd-withdraw-applications').doc(applicationId).get().catch(() => null)
   if (!appRes || !appRes.data) {
     return { code: -1, message: '申请记录不存在' }
@@ -386,24 +485,63 @@ async function rejectApplication(event, OPENID) {
     return { code: -1, message: '该申请已处理，无法重复审批' }
   }
 
-  await db.collection('wdd-withdraw-applications').doc(applicationId).update({
-    data: {
-      status: 'rejected',
-      reject_reason: rejectReason,
-      handler_id: OPENID,
-      approve_time: new Date(),
-      update_time: new Date()
+  // 事务：原子性解冻 + 更新状态
+  const transaction = await db.startTransaction()
+  try {
+    const appInTx = await transaction.collection('wdd-withdraw-applications').doc(applicationId).get()
+    if (!appInTx.data || appInTx.data.status !== 'pending') {
+      await transaction.rollback()
+      return { code: -1, message: '该申请已处理，无法重复审批' }
     }
-  })
 
-  // 发送通知给申请人
+    // 解冻金额
+    await transaction.collection('wdd-users').doc(application.user_id).update({
+      data: {
+        frozen_balance: _.inc(-application.amount),
+        update_time: new Date()
+      }
+    })
+
+    // 写入解冻流水
+    const userInTx = await transaction.collection('wdd-users').doc(application.user_id).get()
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: application.user_id,
+        type: 'unfreeze',
+        amount: application.amount,
+        balance: userInTx.data.balance || 0,
+        frozen_balance: userInTx.data.frozen_balance || 0,
+        description: `提现申请驳回，解冻 ¥${application.amount.toFixed(2)}`,
+        create_time: new Date()
+      }
+    })
+
+    // 更新申请状态
+    await transaction.collection('wdd-withdraw-applications').doc(applicationId).update({
+      data: {
+        status: 'rejected',
+        reject_reason: rejectReason,
+        handler_id: OPENID,
+        approve_time: new Date(),
+        update_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+  } catch (err) {
+    await transaction.rollback()
+    console.error('驳回事务失败:', err)
+    return { code: -1, message: '驳回失败: ' + err.message }
+  }
+
+  // 发送通知给申请人（事务外）
   try {
     await db.collection('wdd-notifications').add({
       data: {
         user_id: application.user_id,
         type: 'system',
         title: '提现申请已驳回',
-        content: `您的提现申请（¥${application.amount}）已被驳回，原因：${rejectReason}`,
+        content: `您的提现申请（¥${application.amount}）已被驳回，原因：${rejectReason}。冻结金额已解冻。`,
         is_read: false,
         create_time: new Date()
       }
@@ -415,5 +553,84 @@ async function rejectApplication(event, OPENID) {
   return {
     code: 0,
     message: '已驳回'
+  }
+}
+
+// ========================================
+// 过期处理（由定时任务调用）
+// ========================================
+async function expireApplication(event) {
+  const { applicationId } = event
+  if (!applicationId) {
+    return { code: -1, message: '申请ID不能为空' }
+  }
+
+  const transaction = await db.startTransaction()
+  try {
+    const appInTx = await transaction.collection('wdd-withdraw-applications')
+      .doc(applicationId).get().catch(() => null)
+    if (!appInTx || !appInTx.data) {
+      await transaction.rollback()
+      return { code: -1, message: '申请记录不存在' }
+    }
+    const app = appInTx.data
+    if (app.status !== 'approved' || app.withdraw_status !== 'not_withdrawn') {
+      await transaction.rollback()
+      return { code: -1, message: `申请状态不符合过期条件（当前: ${app.status}/${app.withdraw_status}）` }
+    }
+
+    // 解冻金额
+    await transaction.collection('wdd-users').doc(app.user_id).update({
+      data: {
+        frozen_balance: _.inc(-app.amount),
+        update_time: new Date()
+      }
+    })
+
+    // 写入解冻流水
+    const userInTx = await transaction.collection('wdd-users').doc(app.user_id).get()
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: app.user_id,
+        type: 'unfreeze',
+        amount: app.amount,
+        balance: userInTx.data.balance || 0,
+        frozen_balance: userInTx.data.frozen_balance || 0,
+        description: `提现申请已过期，解冻 ¥${app.amount.toFixed(2)}`,
+        create_time: new Date()
+      }
+    })
+
+    // 更新状态为 expired
+    await transaction.collection('wdd-withdraw-applications').doc(applicationId).update({
+      data: {
+        status: 'expired',
+        update_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+
+    // 发送通知（事务外）
+    try {
+      await db.collection('wdd-notifications').add({
+        data: {
+          user_id: app.user_id,
+          type: 'system',
+          title: '提现申请已过期',
+          content: `您的提现申请（¥${app.amount}）已超过3天未提现，已自动过期，冻结金额已解冻。如需提现请重新申请。`,
+          is_read: false,
+          create_time: new Date()
+        }
+      })
+    } catch (err) {
+      console.warn('发送过期通知失败:', err)
+    }
+
+    return { code: 0, message: '申请已过期，金额已解冻' }
+  } catch (err) {
+    await transaction.rollback()
+    console.error('过期处理失败:', err)
+    return { code: -1, message: '过期处理失败: ' + err.message }
   }
 }

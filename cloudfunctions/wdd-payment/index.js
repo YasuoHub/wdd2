@@ -43,6 +43,8 @@ exports.main = async (event, context) => {
         return await refundOrder(event, OPENID)
       case 'retryRefund':
         return await retryRefund(event, OPENID)
+      case 'payByBalance':
+        return await payByBalance(event, OPENID)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -240,6 +242,7 @@ async function confirmPayment(event, OPENID) {
         platform_fee: 0, // 完成后计算
         taker_income: 0, // 完成后计算
         status: 'pending',
+        payment_method: 'wechat',
         payment_status: 'paid',
         payment_order_id: orderId,
         expire_time: expireTime,
@@ -295,6 +298,180 @@ async function confirmPayment(event, OPENID) {
   } catch (err) {
     await transaction.rollback()
     console.error('确认支付事务失败:', err)
+    return { code: -1, message: '支付处理失败: ' + err.message }
+  }
+}
+
+// 余额支付：一步完成冻结余额 + 创建订单 + 创建任务
+async function payByBalance(event, OPENID) {
+  const { amount, description, metadata } = event
+
+  if (!amount || amount <= 0) {
+    return { code: -1, message: '金额必须大于0' }
+  }
+
+  const rules = await loadFromDb()
+  const minAmount = rules.MIN_REWARD_AMOUNT || 0.1
+  const maxAmount = rules.MAX_REWARD_AMOUNT || 500
+
+  if (amount < minAmount) {
+    return { code: -1, message: `悬赏金额最低¥${minAmount}` }
+  }
+  if (amount > maxAmount) {
+    return { code: -1, message: `悬赏金额最高¥${maxAmount}` }
+  }
+
+  // 查询用户
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  if (userRes.data.length === 0) {
+    return { code: -1, message: '用户不存在' }
+  }
+  const user = userRes.data[0]
+  const availableBalance = (user.balance || 0) - (user.frozen_balance || 0)
+
+  if (availableBalance < amount) {
+    return { code: -1, message: `可用余额不足（当前可用 ¥${availableBalance.toFixed(2)}）` }
+  }
+
+  // location 强校验
+  const loc = (metadata && metadata.location) || {}
+  if (!loc || !Array.isArray(loc.coordinates) || loc.coordinates.length !== 2 ||
+      typeof loc.coordinates[0] !== 'number' || typeof loc.coordinates[1] !== 'number' ||
+      !loc.name || typeof loc.name !== 'string') {
+    return { code: -1, message: '位置信息不完整' }
+  }
+
+  const orderId = generateOrderNo()
+  const expireMinutes = (metadata && metadata.expireMinutes) || rules.DEFAULT_EXPIRE_MINUTES
+  const expireTime = new Date(Date.now() + expireMinutes * 60 * 1000)
+
+  const transaction = await db.startTransaction()
+
+  try {
+    // 事务内重新查询余额（防并发）
+    const userInTx = await transaction.collection('wdd-users').doc(user._id).get()
+    const currentBalance = userInTx.data.balance || 0
+    const currentFrozen = userInTx.data.frozen_balance || 0
+    const currentAvailable = currentBalance - currentFrozen
+
+    if (currentAvailable < amount) {
+      await transaction.rollback()
+      return { code: -1, message: '可用余额不足' }
+    }
+
+    // 冻结余额：只增加 frozen_balance，balance 不动
+    await transaction.collection('wdd-users').doc(user._id).update({
+      data: {
+        frozen_balance: _.inc(amount),
+        update_time: new Date()
+      }
+    })
+
+    // 写入冻结流水
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: user._id,
+        type: 'freeze',
+        amount: 0,
+        balance: currentBalance,
+        frozen_balance: currentFrozen + amount,
+        description: `余额支付冻结 ¥${amount.toFixed(2)}：${description || '求助'}`,
+        create_time: new Date()
+      }
+    })
+
+    // 创建支付订单（一步到位，status=paid）
+    await transaction.collection('wdd-payment-orders').add({
+      data: {
+        _id: orderId,
+        user_id: user._id,
+        openid: OPENID,
+        amount: amount,
+        description: description || '发布求助',
+        status: 'paid',
+        payment_method: 'balance',
+        metadata: {
+          ...(metadata || {}),
+          need_id: null
+        },
+        out_trade_no: orderId,
+        transaction_id: null,
+        refund_id: null,
+        refund_amount: null,
+        refund_attempts: 0,
+        next_retry_time: null,
+        last_refund_error: null,
+        create_time: new Date(),
+        expire_time: new Date(Date.now() + 30 * 60 * 1000),
+        pay_time: new Date(),
+        refund_time: null,
+        update_time: new Date()
+      }
+    })
+
+    // 创建任务
+    const needRes = await transaction.collection('wdd-needs').add({
+      data: {
+        user_id: user._id,
+        location: {
+          type: 'Point',
+          coordinates: loc.coordinates
+        },
+        location_name: loc.name,
+        type: (metadata && metadata.type) || '',
+        type_name: (metadata && metadata.typeName) || '',
+        description: (metadata && metadata.description) || '',
+        images: (metadata && metadata.images) || [],
+        points: 0,
+        reward_amount: amount,
+        platform_fee: 0,
+        taker_income: 0,
+        status: 'pending',
+        payment_status: 'paid',
+        payment_method: 'balance',
+        payment_order_id: orderId,
+        expire_time: expireTime,
+        create_time: new Date(),
+        update_time: new Date(),
+        taker_id: null
+      }
+    })
+
+    // 回填 need_id 到订单 metadata
+    await transaction.collection('wdd-payment-orders').doc(orderId).update({
+      data: {
+        'metadata.need_id': needRes._id,
+        update_time: new Date()
+      }
+    })
+
+    // 发送通知
+    await transaction.collection('wdd-notifications').add({
+      data: {
+        user_id: user._id,
+        type: 'system',
+        title: '求助发布成功',
+        content: `您发布的"${(metadata && metadata.typeName) || '求助'}"已上线，悬赏金额¥${amount}（余额支付），正在为您匹配附近帮助者...`,
+        need_id: needRes._id,
+        is_read: false,
+        create_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+
+    return {
+      code: 0,
+      message: '发布成功',
+      data: {
+        needId: needRes._id,
+        orderId: orderId,
+        amount: amount
+      }
+    }
+  } catch (err) {
+    await transaction.rollback()
+    console.error('余额支付事务失败:', err)
     return { code: -1, message: '支付处理失败: ' + err.message }
   }
 }
@@ -389,12 +566,112 @@ async function retryRefund(event, OPENID) {
   return await executeRefund(order)
 }
 
+// 余额支付退款：直接解冻退回余额（无需调用微信 API）
+async function refundByBalance(order) {
+  const transaction = await db.startTransaction()
+
+  try {
+    const orderResTx = await transaction.collection('wdd-payment-orders').doc(order._id).get()
+    const orderInTx = orderResTx.data
+    if (!orderInTx) {
+      await transaction.rollback()
+      return { code: -1, message: '订单不存在', status: 'failed' }
+    }
+
+    // 幂等：已退款则直接返回成功
+    if (orderInTx.status === 'refunded') {
+      await transaction.rollback()
+      return {
+        code: 0,
+        message: '订单已退款',
+        status: 'refunded',
+        data: { orderId: order._id, refundAmount: orderInTx.refund_amount || orderInTx.amount }
+      }
+    }
+
+    // 只允许从 paid 状态发起退款（余额支付不存在 refund_pending）
+    if (orderInTx.status !== 'paid') {
+      await transaction.rollback()
+      return { code: -1, message: '订单状态不允许退款', status: 'failed' }
+    }
+
+    const refundAmount = orderInTx.amount
+
+    // 获取用户信息
+    const userRes = await transaction.collection('wdd-users').where({
+      openid: orderInTx.openid
+    }).get()
+    if (userRes.data.length === 0) {
+      await transaction.rollback()
+      return { code: -1, message: '用户不存在', status: 'failed' }
+    }
+    const user = userRes.data[0]
+
+    // 解冻退回（balance 在支付时未扣，无需恢复）
+    await transaction.collection('wdd-users').doc(user._id).update({
+      data: {
+        frozen_balance: _.inc(-refundAmount),
+        total_paid: _.inc(-refundAmount),
+        update_time: new Date()
+      }
+    })
+
+    // 写入退款流水
+    const latestUser = await transaction.collection('wdd-users').doc(user._id).get()
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: user._id,
+        type: 'refund',
+        amount: refundAmount,
+        balance: latestUser.data.balance || 0,
+        frozen_balance: latestUser.data.frozen_balance || 0,
+        description: '任务取消，余额退回',
+        create_time: new Date()
+      }
+    })
+
+    // 更新订单状态
+    await transaction.collection('wdd-payment-orders').doc(order._id).update({
+      data: {
+        status: 'refunded',
+        refund_time: new Date(),
+        refund_amount: refundAmount,
+        refund_reason: orderInTx.refund_reason || '任务取消',
+        update_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+
+    return {
+      code: 0,
+      message: '退款成功',
+      status: 'refunded',
+      data: {
+        orderId: order._id,
+        refundAmount: refundAmount
+      }
+    }
+  } catch (err) {
+    await transaction.rollback()
+    console.error('余额退款事务失败:', err)
+    return { code: -1, message: '退款失败: ' + err.message, status: 'failed' }
+  }
+}
+
 // 退款核心逻辑（refundOrder 和 retryRefund 共用）
 // 行为：
+//   - 余额支付订单 → 直接解冻退回余额
+//   - 微信支付订单 → 调用微信退款 API
 //   - 微信退款 API 成功 → 订单转 refunded，扣减 total_paid
 //   - 微信退款 API 失败 → 订单转 refund_pending，记录失败次数和下次重试时间（不报错给上游）
 //   - refund_attempts 达到 MAX_REFUND_ATTEMPTS → 转 refund_failed，需人工介入
 async function executeRefund(order) {
+  // 余额支付：直接解冻退回，不走微信退款 API
+  if (order.payment_method === 'balance') {
+    return await refundByBalance(order)
+  }
+
   const MAX_REFUND_ATTEMPTS = 5
   // 指数退避：第1/2/3/4/5次失败后，分别 5/10/20/40/80 分钟后重试
   const BACKOFF_MINUTES = [5, 10, 20, 40, 80]

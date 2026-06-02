@@ -9,6 +9,7 @@ const DEFAULT_RULES = {
   WITHDRAW_MIN_PER_REQUEST: 1,
   WITHDRAW_MAX_PER_REQUEST: 5000,
   WITHDRAW_DAILY_LIMIT: 5000,
+  WITHDRAW_DAILY_TIMES: 3,
   MAX_TRANSFER_RETRY: 5,
   TRANSFER_BACKOFF_MINUTES: [5, 10, 20, 40, 80],
   TRANSFER_QUERY_TIMEOUT_MINUTES: 1,
@@ -40,6 +41,7 @@ async function loadFromDb() {
       WITHDRAW_MIN_PER_REQUEST: cfg.withdraw_min_per_request ?? DEFAULT_RULES.WITHDRAW_MIN_PER_REQUEST,
       WITHDRAW_MAX_PER_REQUEST: cfg.withdraw_max_per_request ?? DEFAULT_RULES.WITHDRAW_MAX_PER_REQUEST,
       WITHDRAW_DAILY_LIMIT: cfg.withdraw_daily_limit ?? DEFAULT_RULES.WITHDRAW_DAILY_LIMIT,
+      WITHDRAW_DAILY_TIMES: cfg.withdraw_daily_times ?? DEFAULT_RULES.WITHDRAW_DAILY_TIMES,
       MIN_REWARD_AMOUNT: cfg.min_reward_amount ?? DEFAULT_RULES.MIN_REWARD_AMOUNT,
       MAX_REWARD_AMOUNT: cfg.max_reward_amount ?? DEFAULT_RULES.MAX_REWARD_AMOUNT,
       DEFAULT_EXPIRE_MINUTES: DEFAULT_RULES.DEFAULT_EXPIRE_MINUTES,
@@ -81,17 +83,17 @@ function createMoneyUtils(rules) {
     formatAmount(amount) {
       return (Math.round(amount * 100) / 100).toFixed(2)
     },
-    checkCanWithdraw(balance) {
-      if (balance < rules.WITHDRAW_MIN_AMOUNT) {
-        return { canWithdraw: false, reason: `余额满${rules.WITHDRAW_MIN_AMOUNT}元才可提现` }
+    checkCanWithdraw(availableBalance) {
+      if (availableBalance < rules.WITHDRAW_MIN_AMOUNT) {
+        return { canWithdraw: false, reason: `可用余额满${rules.WITHDRAW_MIN_AMOUNT}元才可提现` }
       }
       return { canWithdraw: true, reason: '' }
     },
-    checkWithdrawAmount(amount, balance) {
+    checkWithdrawAmount(amount, availableBalance) {
       if (amount <= 0) return { valid: false, reason: '提现金额必须大于0' }
       if (amount < rules.WITHDRAW_MIN_PER_REQUEST) return { valid: false, reason: `单次提现最低${rules.WITHDRAW_MIN_PER_REQUEST}元` }
       if (amount > rules.WITHDRAW_MAX_PER_REQUEST) return { valid: false, reason: `单次提现最高${rules.WITHDRAW_MAX_PER_REQUEST}元` }
-      if (amount > balance) return { valid: false, reason: '提现金额不能超过余额' }
+      if (amount > availableBalance) return { valid: false, reason: '可用余额不足（含已冻结金额）' }
       return { valid: true, reason: '' }
     }
   }
