@@ -1,3 +1,4 @@
+<wxs src="../../utils/money.wxs" module="money" />
 <view class="container">
   <view wx:if="{{loading}}" class="loading">加载中...</view>
 
@@ -23,7 +24,7 @@
       </view>
       <view class="info-row">
         <text class="label">悬赏</text>
-        <text class="value">¥{{task.rewardAmount}}</text>
+        <text class="value">¥{{money.format(task.rewardAmount)}}</text>
       </view>
       <view class="info-row">
         <text class="label">位置</text>
@@ -191,7 +192,7 @@
         <text class="form-label">封禁时长</text>
         <picker bindchange="onBanDurationChange" range="{{['1天', '1周', '1个月', '1年', '永久封禁']}}">
           <view class="picker">
-            <text>{{banDuration === '1d' ? '1天' : banDuration === '1w' ? '1周' : banDuration === '1m' ? '1个月' : banDuration === '1y' ? '1年' : '永久封禁'}}</text>
+            <text>{{banDurationLabel}}</text>
             <text class="arrow">▼</text>
           </view>
         </picker>

@@ -16,6 +16,7 @@ Page({
     partialPercent: 50,
     banTarget: 'none',
     banDuration: '1d',
+    banDurationLabel: '1天',
     isSubmitting: false
   },
 
@@ -96,12 +97,16 @@ Page({
   // 选择封禁时长
   onBanDurationChange(e) {
     const durations = ['1d', '1w', '1m', '1y', 'permanent']
-    this.setData({ banDuration: durations[e.detail.value] })
+    const labels = ['1天', '1周', '1个月', '1年', '永久封禁']
+    this.setData({
+      banDuration: durations[e.detail.value],
+      banDurationLabel: labels[e.detail.value]
+    })
   },
 
   // 提交裁决
   async submitArbitrate() {
-    const { ticketId, taskResult, partialPercent, banTarget, banDuration, task } = this.data
+    const { ticketId, taskResult, partialPercent, banTarget, banDuration, banDurationLabel, task } = this.data
 
     if (!taskResult) {
       wx.showToast({ title: '请选择处理结果', icon: 'none' })
@@ -125,7 +130,7 @@ Page({
           ticketId,
           taskResult,
           partialPercent: taskResult === 'partial' ? partialPercent : null,
-          banInfo: banTarget !== 'none' ? { target: banTarget, duration: banDuration } : null
+          banInfo: banTarget !== 'none' ? { target: banTarget, duration: banDuration, durationLabel: banDurationLabel } : null
         }
       })
 
