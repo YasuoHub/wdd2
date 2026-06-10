@@ -387,8 +387,7 @@ Page({
     const userInfo = this.data.userInfo
     return {
       title: `🙏 ${userInfo.nickname || '有人'}邀请你加入问当地，双方各得50积分！`,
-      path: `/pages/index/index?inviter=${userInfo._id}`,
-      imageUrl: '/images/share-cover.png'
+      path: `/pages/index/index?inviter=${userInfo._id}`
     }
   },
 

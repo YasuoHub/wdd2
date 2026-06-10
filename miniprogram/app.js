@@ -1,4 +1,72 @@
 // 小程序入口
+
+const DEFAULT_SHARE_TITLE = '问当地 - 找当地人确认现场情况'
+const DEFAULT_SHARE_PATH = '/pages/index/index'
+
+function getCurrentPagePath(page) {
+  if (page && page.route) {
+    return `/${page.route}`
+  }
+  return DEFAULT_SHARE_PATH
+}
+
+function getDefaultShareMessage() {
+  return {
+    title: DEFAULT_SHARE_TITLE,
+    path: getCurrentPagePath(this)
+  }
+}
+
+function getDefaultShareTimeline() {
+  return {
+    title: DEFAULT_SHARE_TITLE
+  }
+}
+
+function showShareMenu() {
+  if (!wx.showShareMenu) return
+
+  const options = {
+    withShareTicket: true
+  }
+
+  if (!wx.canIUse || wx.canIUse('showShareMenu.object.menus')) {
+    options.menus = ['shareAppMessage', 'shareTimeline']
+  }
+
+  wx.showShareMenu({
+    ...options,
+    fail() {
+      wx.showShareMenu({
+        withShareTicket: true
+      })
+    }
+  })
+}
+
+const originalPage = Page
+Page = function(pageOptions) {
+  const options = pageOptions || {}
+  const originalOnShow = options.onShow
+
+  if (!options.onShareAppMessage) {
+    options.onShareAppMessage = getDefaultShareMessage
+  }
+
+  if (!options.onShareTimeline) {
+    options.onShareTimeline = getDefaultShareTimeline
+  }
+
+  options.onShow = function(...args) {
+    showShareMenu()
+    if (typeof originalOnShow === 'function') {
+      return originalOnShow.apply(this, args)
+    }
+  }
+
+  return originalPage(options)
+}
+
 App({
   globalData: {
     userInfo: null,
