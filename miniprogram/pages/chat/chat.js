@@ -66,7 +66,11 @@ Page({
     participants: {},
 
     // 首屏加载状态（用于骨架屏显示）
-    loading: true
+    loading: true,
+
+    // 隐藏画布尺寸，用于拍照可信水印生成
+    watermarkCanvasWidth: 1,
+    watermarkCanvasHeight: 1
   },
 
   onLoad(options) {
@@ -734,7 +738,10 @@ Page({
       imageUrl: msg.status === 'violated' ? '' : (msg.imageUrl || msg.image_url || ''),
       // 图片显示尺寸（后端预计算）
       imageWidth: msg.image_width || 0,
-      imageHeight: msg.image_height || 0
+      imageHeight: msg.image_height || 0,
+      imageSource: msg.image_source || msg.imageSource || 'album',
+      isTrustedPhoto: !!(msg.is_trusted_photo || msg.isTrustedPhoto),
+      watermarkInfo: msg.watermark_info || msg.watermarkInfo || null
     }
   },
 
@@ -1117,19 +1124,196 @@ Page({
     wx.chooseImage({
       count: 1,
       sizeType: ['compressed'],
+    const trustedContext = source === 'camera' ? await this.prepareTrustedPhotoContext() : null
+
       sourceType: [source],
       success: (res) => {
-        this.uploadImage(res.tempFilePaths[0])
+        this.uploadImage(res.tempFilePaths[0], {
+          source,
+          trustedContext
+        })
       }
     })
   },
 
   // 上传图片
-  async uploadImage(filePath) {
+  async uploadImage(filePath, options = {}) {
     const { task, userInfo } = this.data
+  // 准备拍照可信上下文：位置失败时降级为普通照片，不阻断发送。
+  async prepareTrustedPhotoContext() {
+    try {
+      let location = app.getUserLocation && app.getUserLocation()
+      if (!location || Date.now() - (location.updateTime || 0) > 2 * 60 * 1000) {
+        location = await app.updateUserLocation()
+      }
+
+      if (!location || !location.latitude || !location.longitude) {
+        return null
+      }
+
+      const locationName = await this.resolveTrustedLocationName(location)
+
+      return {
+        locationName,
+        latitude: Number(location.latitude),
+        longitude: Number(location.longitude)
+      }
+    } catch (err) {
+      console.warn('获取拍照位置失败，按普通图片发送:', err.errMsg || err.message || err)
+      wx.showToast({ title: '未获取到位置，将按普通图片发送', icon: 'none' })
+      return null
+    }
+  },
+
+  async resolveTrustedLocationName(location) {
+    const fallbackName = this.data.task.locationName || this.data.task.location?.name || '现场位置'
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-geo',
+        data: {
+          action: 'reverseGeocode',
+          longitude: Number(location.longitude),
+          latitude: Number(location.latitude)
+        }
+      })
+
+      if (result && result.code === 0 && result.data && result.data.address) {
+        return result.data.address
+      }
+    } catch (err) {
+      console.warn('当前位置地名解析失败，使用任务地点名:', err.errMsg || err.message || err)
+    }
+
+    return fallbackName
+  },
+
+  buildTrustedPhotoContext(preparedContext) {
+    const capturedAt = new Date()
+    const needId = this.currentNeedId || ''
+
+    return {
+      ...preparedContext,
+      capturedAt: capturedAt.toISOString(),
+      displayTime: this.formatWatermarkDateTime(capturedAt),
+      needShortId: needId ? String(needId).slice(-6).toUpperCase() : '',
+      nonce: Math.random().toString(36).slice(2, 10)
+    }
+  },
+
+  formatWatermarkDateTime(date) {
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}`
+  },
+
+  truncateWatermarkText(text, maxLength) {
+    const value = String(text || '')
+    if (value.length <= maxLength) {
+      return value
+    }
+    return value.slice(0, maxLength - 1) + '…'
+  },
+
+  // 给拍照图片生成可见水印和低透明度暗水印。
+  async createTrustedWatermarkImage(filePath, trustedContext) {
+    if (!trustedContext) {
+      return { filePath, imageWidth: 0, imageHeight: 0, watermarkInfo: null }
+    }
+
+    const imgInfo = await wx.getImageInfo({ src: filePath })
+    const width = Math.max(1, imgInfo.width || 0)
+    const height = Math.max(1, imgInfo.height || 0)
+
+    await new Promise(resolve => {
+      this.setData({
+        watermarkCanvasWidth: width,
+        watermarkCanvasHeight: height
+      }, resolve)
+    })
+
+    const ctx = wx.createCanvasContext('trustedPhotoCanvas', this)
+    ctx.clearRect(0, 0, width, height)
+    ctx.drawImage(filePath, 0, 0, width, height)
+
+    const shortCoord = `${trustedContext.latitude.toFixed(5)},${trustedContext.longitude.toFixed(5)}`
+    const hiddenCode = `WDD|${this.currentNeedId}|${trustedContext.capturedAt}|${shortCoord}|${trustedContext.nonce}`
+
+    ctx.save()
+    ctx.setGlobalAlpha(0.08)
+    ctx.setFillStyle('#ffffff')
+    ctx.setFontSize(Math.max(18, Math.round(width * 0.035)))
+    ctx.translate(width / 2, height / 2)
+    ctx.rotate(-Math.PI / 6)
+    const stepX = Math.max(260, Math.round(width * 0.45))
+    const stepY = Math.max(180, Math.round(height * 0.22))
+    for (let x = -width; x <= width; x += stepX) {
+      for (let y = -height; y <= height; y += stepY) {
+        ctx.fillText(hiddenCode, x, y)
+      }
+    }
+    ctx.restore()
+
+    const panelHeight = Math.max(116, Math.round(height * 0.12))
+    const padding = Math.max(24, Math.round(width * 0.028))
+    const bottom = height - panelHeight
+    const titleSize = Math.max(26, Math.round(width * 0.038))
+    const textSize = Math.max(20, Math.round(width * 0.028))
+
+    ctx.setFillStyle('rgba(0, 0, 0, 0.52)')
+    ctx.fillRect(0, bottom, width, panelHeight)
+    ctx.setFillStyle('#ffffff')
+    ctx.setFontSize(titleSize)
+    ctx.fillText('问当地 现场拍摄', padding, bottom + padding + titleSize)
+    ctx.setFontSize(textSize)
+    ctx.fillText(`时间 ${trustedContext.displayTime}`, padding, bottom + padding + titleSize + textSize + 14)
+    ctx.fillText(`地点 ${this.truncateWatermarkText(trustedContext.locationName, 28)}`, padding, bottom + padding + titleSize + textSize * 2 + 28)
+
+    ctx.setFillStyle('rgba(255, 255, 255, 0.78)')
+    ctx.setFontSize(Math.max(18, Math.round(width * 0.024)))
+    const codeText = trustedContext.needShortId ? `任务 ${trustedContext.needShortId}` : '可信现场照'
+    ctx.fillText(codeText, width - padding - Math.min(220, width * 0.32), bottom + padding + titleSize)
+
+    const watermarkedPath = await new Promise((resolve, reject) => {
+      ctx.draw(false, () => {
+        wx.canvasToTempFilePath({
+          canvasId: 'trustedPhotoCanvas',
+          destWidth: width,
+          destHeight: height,
+          fileType: 'jpg',
+          quality: 0.9,
+          success: res => resolve(res.tempFilePath),
+          fail: reject
+        }, this)
+      })
+    })
+
+    return {
+      filePath: watermarkedPath,
+      imageWidth: width,
+      imageHeight: height,
+      watermarkInfo: {
+        capturedAt: trustedContext.capturedAt,
+        locationName: trustedContext.locationName,
+        latitude: trustedContext.latitude,
+        longitude: trustedContext.longitude,
+        needShortId: trustedContext.needShortId,
+        nonce: trustedContext.nonce,
+        hiddenCode
+      }
+    }
+  },
+
 
     // 关键：使用 currentNeedId 确保发送给正确的任务
     const currentNeedId = this.currentNeedId
+    const imageSource = options.source || 'album'
+    let uploadFilePath = filePath
+    let watermarkInfo = null
+    let isTrustedPhoto = false
     if (!currentNeedId) {
       console.error('发送图片失败: 任务ID为空')
       return
@@ -1138,8 +1322,21 @@ Page({
     // 获取图片尺寸
     let originalWidth = 0
     let originalHeight = 0
+    if (imageSource === 'camera' && options.trustedContext) {
+      try {
+        const trustedContext = this.buildTrustedPhotoContext(options.trustedContext)
+        const watermarked = await this.createTrustedWatermarkImage(filePath, trustedContext)
+        uploadFilePath = watermarked.filePath
+        watermarkInfo = watermarked.watermarkInfo
+        isTrustedPhoto = !!watermarkInfo
+      } catch (err) {
+        console.error('生成可信水印失败，按普通图片发送:', err)
+        wx.showToast({ title: '水印生成失败，将按普通图片发送', icon: 'none' })
+      }
+    }
+
     try {
-      const imgInfo = await wx.getImageInfo({ src: filePath })
+      const imgInfo = await wx.getImageInfo({ src: uploadFilePath })
       originalWidth = imgInfo.width
       originalHeight = imgInfo.height
     } catch (err) {
@@ -1163,7 +1360,7 @@ Page({
       need_id: currentNeedId,
       sender_id: userInfo._id,
       type: 'image',
-      imageUrl: filePath,
+      imageUrl: uploadFilePath,
       create_time: now.toISOString(),
       isSelf: true,
       senderAvatar: userInfo.avatar,
@@ -1174,6 +1371,9 @@ Page({
       // 预计算显示尺寸
       imageWidth: displaySize.width,
       imageHeight: displaySize.height
+      imageSource,
+      isTrustedPhoto,
+      watermarkInfo,
     }
 
     // 将临时消息ID添加到已处理集合，防止重复渲染
@@ -1197,7 +1397,7 @@ Page({
       const cloudPath = `chat-images/${Date.now()}-${Math.random().toString(36).substr(2, 6)}.jpg`
       const uploadResult = await wx.cloud.uploadFile({
         cloudPath,
-        filePath
+        filePath: uploadFilePath
       })
 
       // 发送图片消息（带上原始尺寸）
@@ -1213,6 +1413,9 @@ Page({
           clientMsgId
         }
       })
+          imageSource,
+          isTrustedPhoto,
+          watermarkInfo,
 
       if (result.code !== 0) {
         throw new Error(result.message)
@@ -1257,7 +1460,7 @@ Page({
   previewImage(e) {
     const url = e.currentTarget.dataset.url
     const imageUrls = this.data.messages
-      .filter(msg => msg.type === 'image')
+      .filter(msg => msg.type === 'image' && msg.status !== 'violated' && msg.imageUrl)
       .map(msg => msg.imageUrl)
 
     wx.previewImage({

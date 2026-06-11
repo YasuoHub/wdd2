@@ -126,6 +126,9 @@
                   data-url="{{item.imageUrl}}"
                   lazy-load
                 />
+                <view wx:if="{{item.isTrustedPhoto}}" class="trusted-photo-badge">
+                  <text>现场拍摄</text>
+                </view>
                 <!-- 图片 loading 指示器 -->
                 <view class="image-loading" wx:if="{{item.isLocalImage}}">
                   <view class="loading-spinner"></view>
@@ -219,6 +222,12 @@
       </view>
     </block>
   </view>
+
+  <canvas
+    canvas-id="trustedPhotoCanvas"
+    class="trusted-photo-canvas"
+    style="width: {{watermarkCanvasWidth}}px; height: {{watermarkCanvasHeight}}px;"
+  ></canvas>
 
   <!-- 完成任务确认弹窗 -->
   <view class="modal {{showCompleteModal ? 'show' : ''}}" wx:if="{{showCompleteModal}}">

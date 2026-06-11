@@ -1,5 +1,6 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
+const crypto = require('crypto')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -31,6 +32,42 @@ function calculateDisplaySize(width, height) {
     width: Math.round(width * scale),
     height: Math.round(height * scale)
   }
+}
+
+function normalizeTrustedWatermarkInfo(info) {
+  if (!info || typeof info !== 'object') {
+    return null
+  }
+
+  const latitude = Number(info.latitude)
+  const longitude = Number(info.longitude)
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null
+  }
+
+  return {
+    capturedAt: String(info.capturedAt || ''),
+    locationName: String(info.locationName || '').slice(0, 80),
+    latitude,
+    longitude,
+    needShortId: String(info.needShortId || '').slice(0, 12),
+    nonce: String(info.nonce || '').slice(0, 32),
+    hiddenCode: String(info.hiddenCode || '').slice(0, 300)
+  }
+}
+
+function createTrustedPhotoProof({ needId, senderId, imageUrl, watermarkInfo }) {
+  const raw = [
+    needId,
+    senderId,
+    imageUrl,
+    watermarkInfo.capturedAt,
+    watermarkInfo.latitude,
+    watermarkInfo.longitude,
+    watermarkInfo.nonce
+  ].join('|')
+
+  return crypto.createHash('sha256').update(raw).digest('hex')
 }
 
 // 从 wdd-config 获取客服白名单
@@ -292,6 +329,9 @@ async function sendMessage(event, OPENID) {
     imageUrl,
     imageWidth: clientWidth,
     imageHeight: clientHeight,
+    imageSource = 'album',
+    isTrustedPhoto = false,
+    watermarkInfo,
     clientMsgId
   } = event
 
@@ -394,6 +434,19 @@ async function sendMessage(event, OPENID) {
     }
   }
 
+  const normalizedImageSource = imageSource === 'camera' ? 'camera' : 'album'
+  const trustedWatermarkInfo = type === MSG_TYPE.IMAGE && normalizedImageSource === 'camera' && isTrustedPhoto
+    ? normalizeTrustedWatermarkInfo(watermarkInfo)
+    : null
+  const trustedPhotoProof = trustedWatermarkInfo
+    ? createTrustedPhotoProof({
+      needId: String(needId),
+      senderId: currentUserId,
+      imageUrl,
+      watermarkInfo: trustedWatermarkInfo
+    })
+    : ''
+
   // 创建消息记录
   // 确保 need_id 是字符串类型，与前端监听查询保持一致
   const message = {
@@ -407,6 +460,10 @@ async function sendMessage(event, OPENID) {
     // 图片显示尺寸（后端预计算）
     image_width: imageDisplayWidth,
     image_height: imageDisplayHeight,
+    image_source: type === MSG_TYPE.IMAGE ? normalizedImageSource : '',
+    is_trusted_photo: !!trustedWatermarkInfo,
+    watermark_info: trustedWatermarkInfo,
+    trusted_photo_proof: trustedPhotoProof,
     // 图片内容安全审核 trace_id，用于回调关联
     check_trace_id: checkTraceId,
     status: 'normal',
