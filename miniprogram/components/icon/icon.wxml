@@ -1,4 +1,9 @@
 <view
-  class="wdd-icon-mask"
-  style="width: {{size}}rpx; height: {{size}}rpx; background-color: {{color}}; -webkit-mask: url('/images/icons/{{name}}.svg') center / contain no-repeat; mask: url('/images/icons/{{name}}.svg') center / contain no-repeat;"
-></view>
+  class="wdd-icon-frame"
+  style="width: {{size}}rpx; height: {{size}}rpx;"
+>
+  <text
+    class="wdd-icon-font"
+    style="color: {{color}}; font-size: {{size}}rpx;"
+  >{{glyph}}</text>
+</view>
