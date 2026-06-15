@@ -1,7 +1,7 @@
 <!-- 首页 - 问当地 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
-  <view class="hero" style="padding-top: {{safeTop}}px;">
+  <view class="hero {{!isLoggedIn ? 'hero-guest' : ''}}" style="padding-top: {{safeTop}}px;">
     <view class="map-grid map-grid-a"></view>
     <view class="map-grid map-grid-b"></view>
     <view class="map-water"></view>
@@ -21,6 +21,20 @@
     <view class="hero-copy">
       <text class="hero-title">即时问当地人</text>
       <text class="hero-subtitle">异地求助 当地解答 实时可靠</text>
+    </view>
+
+    <view wx:if="{{!isLoggedIn}}" class="hero-login-card">
+      <view class="hero-login-icon">
+        <wdd-icon name="circle-user-round" color="#1178DC" size="46"></wdd-icon>
+      </view>
+      <view class="hero-login-copy">
+        <text class="hero-login-title">欢迎来到问当地</text>
+        <text class="hero-login-subtitle">登录后即可发布求助或帮助他人</text>
+      </view>
+      <button class="hero-login-btn" bindtap="handleLogin">
+        <wdd-icon name="message-circle" color="#FFFFFF" size="28"></wdd-icon>
+        <text>微信一键登录</text>
+      </button>
     </view>
 
     <view class="map-pulse">

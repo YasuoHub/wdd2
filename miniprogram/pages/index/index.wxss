@@ -24,6 +24,7 @@
 
 .topbar,
 .hero-copy,
+.hero-login-card,
 .action-panel {
   position: relative;
   z-index: 2;
@@ -162,6 +163,85 @@
   font-size: 27rpx;
   line-height: 1.35;
   font-weight: 400;
+}
+
+.hero-guest .hero-copy {
+  margin-bottom: 30rpx;
+}
+
+.hero-login-card {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  width: 100%;
+  margin-bottom: 30rpx;
+  padding: 22rpx 22rpx;
+  border: 2rpx solid rgba(21, 148, 232, 0.13);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14rpx 34rpx rgba(42, 105, 150, 0.1);
+  box-sizing: border-box;
+}
+
+.hero-login-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 72rpx;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  background: rgba(17, 120, 220, 0.09);
+}
+
+.hero-login-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.hero-login-title {
+  color: #26313f;
+  font-size: 28rpx;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.hero-login-subtitle {
+  color: #66788f;
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+.hero-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 8rpx;
+  min-width: 190rpx;
+  height: 68rpx;
+  margin: 0;
+  padding: 0 20rpx;
+  border: 0;
+  border-radius: 999rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #1599ec 0%, #0788e6 100%);
+  font-size: 23rpx;
+  line-height: 68rpx;
+  font-weight: 600;
+  box-shadow: 0 10rpx 22rpx rgba(21, 148, 232, 0.2);
+}
+
+.hero-login-btn::after {
+  border: 0;
+}
+
+.hero-login-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 .map-pulse {
@@ -598,6 +678,23 @@
 
   .brand-text {
     font-size: 43rpx;
+  }
+
+  .hero-login-card {
+    gap: 14rpx;
+    padding: 20rpx 18rpx;
+  }
+
+  .hero-login-icon {
+    flex-basis: 62rpx;
+    width: 62rpx;
+    height: 62rpx;
+  }
+
+  .hero-login-btn {
+    min-width: 164rpx;
+    padding: 0 14rpx;
+    font-size: 21rpx;
   }
 
   .primary-action {
