@@ -1,4 +1,5 @@
 const DateUtil = require('../../utils/dateUtil')
+const { TYPE_MAP } = require('../../config/types')
 
 Page({
   data: {
@@ -95,7 +96,14 @@ Page({
       })
 
       if (result.code === 0) {
-        const list = result.data.list || []
+        const list = (result.data.list || []).map(item => {
+          const typeMeta = TYPE_MAP[item.taskType] || TYPE_MAP.other
+          return {
+            ...item,
+            taskIcon: typeMeta.icon,
+            taskIconColor: typeMeta.color
+          }
+        })
         const newList = reset ? list : this.data[listKey].concat(list)
         this.setData({
           [listKey]: newList,

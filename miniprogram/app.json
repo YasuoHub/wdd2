@@ -78,5 +78,8 @@
       "desc": "您的位置信息将用于匹配附近的帮助者"
     }
   },
+  "usingComponents": {
+    "wdd-icon": "/components/icon/icon"
+  },
   "requiredPrivateInfos": ["chooseLocation", "getLocation"]
 }

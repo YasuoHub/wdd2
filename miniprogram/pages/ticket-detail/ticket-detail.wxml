@@ -1,5 +1,5 @@
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <view wx:if="{{loading}}" class="loading">加载中...</view>
 
   <block wx:else>
@@ -56,9 +56,9 @@
     <!-- 聊天入口 -->
     <view class="section chat-entry" wx:if="{{task}}" bindtap="goToChat">
       <view class="chat-entry-content">
-        <text class="chat-icon">💬</text>
+        <wdd-icon name="message-circle" color="#1178DC" size="32"></wdd-icon>
         <text class="chat-text">查看双方聊天记录</text>
-        <text class="chat-arrow">›</text>
+        <wdd-icon name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
 

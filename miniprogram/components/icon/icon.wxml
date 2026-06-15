@@ -1,0 +1,4 @@
+<view
+  class="wdd-icon-mask"
+  style="width: {{size}}rpx; height: {{size}}rpx; background-color: {{color}}; -webkit-mask: url('/images/icons/{{name}}.svg') center / contain no-repeat; mask: url('/images/icons/{{name}}.svg') center / contain no-repeat;"
+></view>

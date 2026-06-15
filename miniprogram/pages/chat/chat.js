@@ -441,10 +441,10 @@ Page({
     const { scrollTop, scrollHeight } = e.detail
     const clientHeight = this.data.scrollViewHeight || 0
     const isAtBottom = clientHeight > 0 && (scrollHeight - scrollTop - clientHeight < 50)
-    
+
     if (isAtBottom !== this.data.isAtBottom) {
       this.setData({ isAtBottom })
-      if (isAtBottom && newMessageCount > 0) {
+      if (isAtBottom && this.data.newMessageCount > 0) {
         // 滚动到底部：标记已读 + 清零计数
         this.markMessagesRead()
         this.setData({ newMessageCount: 0 })
@@ -1351,8 +1351,8 @@ Page({
     }
 
     // 如果当前不在底部或未读消息不为0，则滚动到底部 + 标记已读
-    if(!this.data.isAtBottom || this.data.newMessageCount > 0) {
-      this.setData({ 
+    if (!this.data.isAtBottom || this.data.newMessageCount > 0) {
+      this.setData({
         isAtBottom: true,
         newMessageCount: 0
       }, () => {

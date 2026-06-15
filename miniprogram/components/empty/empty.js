@@ -6,15 +6,15 @@ Component({
       type: String,
       value: 'card'
     },
-    // 图标类型：emoji(表情) | image(图片)
+    // 图标类型：icon(线性图标) | image(图片)
     iconType: {
       type: String,
-      value: 'emoji'
+      value: 'icon'
     },
-    // 图标内容：表情字符或图片路径
+    // 图标内容：线性图标名称或图片路径
     icon: {
       type: String,
-      value: '📭'
+      value: 'inbox'
     },
     // 标题
     title: {

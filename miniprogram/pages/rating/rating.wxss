@@ -4,7 +4,7 @@
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 30%, var(--bg-tertiary) 70%, #F5FAFF 100%);
+  background: linear-gradient(180deg, #eef8ff 0%, #f8fbff 46%, #f3f8fc 100%);
   padding: 32rpx;
   padding-bottom: 80rpx;
   position: relative;
@@ -13,29 +13,12 @@
   width: 100%;
 }
 
-/* 背景装饰 */
 .container::before {
-  content: '';
-  position: absolute;
-  top: -150rpx;
-  right: -100rpx;
-  width: 350rpx;
-  height: 350rpx;
-  background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 0;
+  display: none;
 }
 
 .container::after {
-  content: '';
-  position: absolute;
-  bottom: 100rpx;
-  left: -100rpx;
-  width: 300rpx;
-  height: 300rpx;
-  background: radial-gradient(circle, rgba(93, 184, 230, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 0;
+  display: none;
 }
 
 /* 评价对象信息卡片 */
@@ -368,8 +351,7 @@
 }
 
 .tips-title::before {
-  content: '💡';
-  font-size: 32rpx;
+  display: none;
 }
 
 .tips-item {

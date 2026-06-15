@@ -4,12 +4,12 @@ const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 // 帮助类型选项
 const HELP_TYPES = [
-  { id: 'weather', name: '实时天气', icon: '🌤️', color: '#74B9FF' },
-  { id: 'traffic', name: '道路拥堵', icon: '🚗', color: '#FDCB6E' },
-  { id: 'shop', name: '店铺营业', icon: '🏪', color: '#A29BFE' },
-  { id: 'parking', name: '停车场空位', icon: '🅿️', color: '#00CEC9' },
-  { id: 'queue', name: '排队情况', icon: '👥', color: '#FD79A8' },
-  { id: 'other', name: '其他', icon: '💬', color: '#A8E6CF' }
+  { id: 'weather', name: '实时天气', icon: 'cloud-sun', color: '#5DB8E6' },
+  { id: 'traffic', name: '道路拥堵', icon: 'car-front', color: '#FFD166' },
+  { id: 'shop', name: '店铺营业', icon: 'store', color: '#5DB8E6' },
+  { id: 'parking', name: '停车场空位', icon: 'square-parking', color: '#6DD5B0' },
+  { id: 'queue', name: '排队情况', icon: 'users-round', color: '#FF8C69' },
+  { id: 'other', name: '其他', icon: 'ellipsis', color: '#A8C4D4' }
 ]
 
 Page({
@@ -17,8 +17,8 @@ Page({
     // 帮助意愿
     helpWillingness: '', // 'willing' | 'request_only'
     willingnessOptions: [
-      { value: 'willing', label: '愿意帮助他人', desc: '可以接单帮助附近的人', icon: '🤗' },
-      { value: 'request_only', label: '仅求助不帮助', desc: '只发布求助，不接单', icon: '🙏' }
+      { value: 'willing', label: '愿意帮助他人', desc: '可以接单帮助附近的人', icon: 'handshake' },
+      { value: 'request_only', label: '仅求助不帮助', desc: '只发布求助，不接单', icon: 'send' }
     ],
 
     // 常去地点（最多3个）

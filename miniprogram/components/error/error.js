@@ -6,10 +6,10 @@ Component({
       type: String,
       value: 'card'
     },
-    // 图标表情
+    // 线性图标名称
     icon: {
       type: String,
-      value: '⚠️'
+      value: 'triangle-alert'
     },
     // 错误标题
     title: {

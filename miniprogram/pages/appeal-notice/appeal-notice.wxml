@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container wdd-page">
   <view wx:if="{{isLoading}}" class="loading-wrap">
     <text>加载中...</text>
   </view>

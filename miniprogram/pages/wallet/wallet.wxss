@@ -1,24 +1,16 @@
 /* 钱包/余额页面 */
 .container {
   min-height: 100vh;
-  background: linear-gradient(
-    180deg,
-    #f0f8ff 0%,
-    #e6f3ff 20%,
-    #f5faff 100%
-  );
+  background: linear-gradient(180deg, #eef8ff 0%, #f8fbff 42%, #f3f8fc 100%);
   padding: 32rpx;
   box-sizing: border-box;
 }
 
 /* 余额卡片 */
 .balance-card {
-  background: linear-gradient(
-    135deg,
-    var(--sky-primary) 0%,
-    var(--sky-light) 100%
-  );
-  border-radius: 32rpx;
+  background:
+    linear-gradient(135deg, #1178dc 0%, #5db8e6 68%, #7ec8e8 100%);
+  border-radius: 30rpx;
   padding: 48rpx 40rpx;
   box-shadow: 0 8rpx 40rpx rgba(93, 184, 230, 0.3);
   margin-bottom: 32rpx;
@@ -44,10 +36,6 @@
   padding: 8rpx 16rpx;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 24rpx;
-}
-
-.rules-icon {
-  font-size: 24rpx;
 }
 
 .rules-text {
@@ -111,7 +99,8 @@
   border-radius: 24rpx;
   padding: 28rpx 20rpx;
   text-align: center;
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-card);
+  border: 1rpx solid rgba(93, 184, 230, 0.1);
 }
 
 .stat-value {
@@ -130,9 +119,10 @@
 /* 账单列表 */
 .records-section {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 32rpx;
+  border-radius: 30rpx;
   padding: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+  box-shadow: var(--shadow-card);
+  border: 1rpx solid rgba(93, 184, 230, 0.1);
 }
 
 .records-header {
@@ -153,8 +143,14 @@
 }
 
 .empty-icon {
-  font-size: 80rpx;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 36rpx;
+  background: rgba(93, 184, 230, 0.08);
   margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-text {
@@ -187,10 +183,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.record-icon {
-  font-size: 32rpx;
 }
 
 .record-info {
@@ -264,9 +256,10 @@
 
 .application-card {
   background: #fff;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.06);
+  border: 1rpx solid rgba(93, 184, 230, 0.1);
+  box-shadow: 0 8rpx 24rpx rgba(42, 125, 179, 0.06);
 }
 
 /* 第一行：金额 + 状态 */
@@ -373,7 +366,7 @@
 .modal.show { opacity: 1; visibility: visible; }
 .modal-mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); }
 .modal-content {
-  position: relative; background: #fff; border-radius: 24rpx 24rpx 0 0;
+  position: relative; background: #fff; border-radius: 30rpx 30rpx 0 0;
   width: 100%; padding: 40rpx 30rpx; max-height: 80vh; overflow-y: auto; z-index: 1;
 }
 .modal-title { font-size: 36rpx; font-weight: 600; text-align: center; margin-bottom: 24rpx; }
@@ -433,7 +426,7 @@
 
 /* 审批提示 */
 .approval-hint {
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; gap: 8rpx;
   padding: 16rpx 20rpx; border-radius: 12rpx; margin-bottom: 8rpx;
   font-size: 24rpx;
 }

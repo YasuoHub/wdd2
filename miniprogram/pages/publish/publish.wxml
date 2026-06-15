@@ -1,13 +1,15 @@
 <!-- 发布求助页面 - 城市绿洲风格 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <!-- 主内容区 -->
   <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
 
     <!-- 地点选择卡片 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon location">🗺️</view>
+        <view class="section-icon location">
+          <wdd-icon name="map-pinned" color="#1178DC" size="34"></wdd-icon>
+        </view>
         <view class="section-info">
           <text class="section-title">求助地点</text>
           <text class="section-subtitle">选择你想了解的位置</text>
@@ -17,7 +19,7 @@
       <!-- 已选地点展示 -->
       <view wx:if="{{locationName}}" class="selected-location" bindtap="goToLocationPicker">
         <view class="location-info">
-          <text class="location-icon">📍</text>
+          <wdd-icon name="map-pin" color="#1178DC" size="28"></wdd-icon>
           <view class="location-text">
             <text class="location-name">{{locationName}}</text>
             <text wx:if="{{addressDetail}}" class="location-detail">{{addressDetail}}</text>
@@ -29,13 +31,13 @@
       <!-- 未选择地点 -->
       <view wx:else class="location-picker-trigger required" bindtap="goToLocationPicker">
         <view class="picker-icon-wrapper">
-          <text class="picker-icon">📍</text>
+          <wdd-icon name="map-pin" color="#FFFFFF" size="34"></wdd-icon>
         </view>
         <view class="picker-text">
           <text class="picker-title">请选择地点 <text class="required-mark">*</text></text>
           <text class="picker-desc">在地图上选择你想了解的位置</text>
         </view>
-        <text class="picker-arrow">›</text>
+        <wdd-icon name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
 
       <!-- 常用地点快捷选择 -->
@@ -56,7 +58,9 @@
     <!-- 求助类型选择 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon type">🎯</view>
+        <view class="section-icon type">
+          <wdd-icon name="target" color="#C58A00" size="34"></wdd-icon>
+        </view>
         <view class="section-info">
           <text class="section-title">求助类型</text>
           <text class="section-subtitle">选择你想了解的信息类型</text>
@@ -73,10 +77,12 @@
           style="--type-color: {{item.color}}; --type-bg: {{item.bgColor}}"
         >
           <view class="type-icon-wrapper" style="background: {{item.bgColor}}">
-            <text class="type-icon">{{item.icon}}</text>
+            <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="40"></wdd-icon>
           </view>
           <text class="type-name">{{item.name}}</text>
-          <view wx:if="{{selectedType === item.id}}" class="type-check">✓</view>
+          <view wx:if="{{selectedType === item.id}}" class="type-check">
+            <wdd-icon name="check" color="#FFFFFF" size="20"></wdd-icon>
+          </view>
         </view>
       </view>
     </view>
@@ -84,7 +90,9 @@
     <!-- 问题描述 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon desc">📝</view>
+        <view class="section-icon desc">
+          <wdd-icon name="notebook-pen" color="#FF5B19" size="34"></wdd-icon>
+        </view>
         <view class="section-info">
           <text class="section-title">详细描述</text>
           <text class="section-subtitle">选填，让帮助者更了解你的需求</text>
@@ -105,7 +113,9 @@
     <!-- 图片上传 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon image">📷</view>
+        <view class="section-icon image">
+          <wdd-icon name="image-plus" color="#1178DC" size="34"></wdd-icon>
+        </view>
         <view class="section-info">
           <text class="section-title">添加图片</text>
           <text class="section-subtitle">选填，最多3张，每张不超过10MB</text>
@@ -127,7 +137,7 @@
             data-index="{{index}}"
           />
           <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">
-            <text class="delete-icon">×</text>
+            <wdd-icon name="x" color="#FFFFFF" size="22"></wdd-icon>
           </view>
         </view>
 
@@ -146,7 +156,9 @@
     <!-- 有效期选择 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon time">⏱️</view>
+        <view class="section-icon time">
+          <wdd-icon name="clock-3" color="#11A37F" size="34"></wdd-icon>
+        </view>
         <view class="section-info">
           <text class="section-title">有效时间</text>
           <text class="section-subtitle">超时自动取消，金额原路退回</text>
@@ -170,7 +182,9 @@
     <!-- 悬赏金额 -->
     <view class="section-card">
       <view class="section-header">
-        <view class="section-icon amount">💰</view>
+        <view class="section-icon amount">
+          <wdd-icon name="circle-dollar-sign" color="#FF5B19" size="34"></wdd-icon>
+        </view>
         <view class="section-info">
           <text class="section-title">悬赏金额</text>
           <text class="section-subtitle">设置悬赏，吸引更多帮助者</text>
@@ -274,9 +288,9 @@
 
       <!-- 平台规则提示 -->
       <view class="rules-tip" bindtap="showPlatformRules">
-        <text class="rules-icon">ℹ️</text>
+        <wdd-icon name="info" color="#1178DC" size="28"></wdd-icon>
         <text class="rules-text">平台规则：{{feePolicy}}。{{refundPolicy}}</text>
-        <text class="rules-arrow">›</text>
+        <wdd-icon name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
 
@@ -307,39 +321,41 @@
     <view class="rules-modal-content" catchtap="preventHide">
       <view class="rules-modal-header">
         <text class="rules-modal-title">平台规则说明</text>
-        <text class="rules-modal-close" bindtap="hidePlatformRules">×</text>
+        <view class="rules-modal-close" bindtap="hidePlatformRules">
+          <wdd-icon name="x" color="#6B8BA4" size="26"></wdd-icon>
+        </view>
       </view>
       <view class="rules-modal-body">
         <view class="rule-item">
-          <text class="rule-icon">💰</text>
+          <wdd-icon name="circle-dollar-sign" color="#FF5B19" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">悬赏支付</text>
             <text class="rule-desc">发布任务时需先支付悬赏金额，支付成功后任务才会上线。</text>
           </view>
         </view>
         <view class="rule-item">
-          <text class="rule-icon">📊</text>
+          <wdd-icon name="chart-column" color="#1178DC" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">平台服务费</text>
             <text class="rule-desc">平台对每单任务收取{{platformFeeRate}}%服务费，用于平台运营和技术维护。</text>
           </view>
         </view>
         <view class="rule-item">
-          <text class="rule-icon">↩️</text>
+          <wdd-icon name="refresh-cw" color="#66788F" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">取消退款</text>
             <text class="rule-desc">任务超时无人接单或手动取消，悬赏金额将原路退回至您的支付账户。</text>
           </view>
         </view>
         <view class="rule-item">
-          <text class="rule-icon">✅</text>
+          <wdd-icon name="circle-check-big" color="#11A37F" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">任务完成</text>
             <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入余额。</text>
           </view>
         </view>
         <view class="rule-item">
-          <text class="rule-icon">🏦</text>
+          <wdd-icon name="landmark" color="#1178DC" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">提现规则</text>
             <text class="rule-desc">余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>

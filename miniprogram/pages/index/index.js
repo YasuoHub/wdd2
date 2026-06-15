@@ -3,13 +3,18 @@ const app = getApp()
 
 // 求助类型配置
 const NEED_TYPES = [
-  { type: 'weather', name: '实时天气', icon: '🌤️', color: '#5DB8E6', lightColor: '#7EC8E8' },
-  { type: 'traffic', name: '道路拥堵', icon: '🚗', color: '#FFD166', lightColor: '#FFE08C' },
-  { type: 'shop', name: '店铺营业', icon: '🏪', color: '#B8B8E8', lightColor: '#D4D4F0' },
-  { type: 'parking', name: '停车场', icon: '🅿️', color: '#6DD5B0', lightColor: '#88D8A3' },
-  { type: 'queue', name: '排队情况', icon: '👥', color: '#FF8C69', lightColor: '#FF9A8B' },
-  { type: 'other', name: '其他', icon: '📝', color: '#A8C4D4', lightColor: '#C4D8E5' }
+  { type: 'weather', name: '实时天气', icon: 'cloud-sun', tone: 'blue', color: '#0879E6', lightColor: '#7EC8E8' },
+  { type: 'traffic', name: '道路拥堵', icon: 'car-front', tone: 'green', color: '#13A879', lightColor: '#88D8A3' },
+  { type: 'shop', name: '店铺营业', icon: 'store', tone: 'yellow', color: '#BE8400', lightColor: '#FFE08C' },
+  { type: 'parking', name: '停车空位', icon: 'square-parking', tone: 'blue', color: '#0879E6', lightColor: '#A8D8F0' },
+  { type: 'queue', name: '排队情况', icon: 'users-round', tone: 'orange', color: '#F25B16', lightColor: '#FF9A8B' },
+  { type: 'other', name: '其他', icon: 'ellipsis', tone: 'gray', color: '#374151', lightColor: '#C4D8E5' }
 ]
+
+const TYPE_META = NEED_TYPES.reduce((map, item) => {
+  map[item.type] = item
+  return map
+}, {})
 
 Page({
   data: {
@@ -22,6 +27,8 @@ Page({
     nearbyEmpty: false,
     nearbyError: false,
     quickTypes: NEED_TYPES,
+    safeTop: 24,
+    currentCity: '当前城市',
     // 刷新控制
     lastRefreshTime: 0,      // 上次刷新时间戳
     refreshInterval: 30000,  // 最小刷新间隔 30秒
@@ -29,6 +36,14 @@ Page({
   },
 
   onLoad(options) {
+    const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+    const menuButton = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null
+    this.setData({
+      safeTop: menuButton && menuButton.bottom
+        ? menuButton.bottom + 4
+        : Math.max((windowInfo.statusBarHeight || 24) + 44, 64)
+    })
+
     // 保存邀请人ID（如果有）
     if (options.inviter) {
       wx.setStorageSync('pendingInviterId', options.inviter)
@@ -36,10 +51,24 @@ Page({
     }
 
     this.checkLoginStatus()
+    this.updateCurrentCity()
     this.checkSignInStatus()
 
     // 确保位置获取后再加载任务
     this.loadNearbyNeedsWithLocation()
+  },
+
+  // 城市名称优先使用已保存的用户资料或定位缓存，未取得时保持中性占位。
+  updateCurrentCity() {
+    const userInfo = app.globalData.userInfo || wx.getStorageSync('userInfo') || {}
+    const userLocation = app.getUserLocation() || {}
+    const city = userLocation.city || userInfo.city || userInfo.current_city
+
+    if (city) {
+      this.setData({
+        currentCity: String(city).replace(/市$/, '')
+      })
+    }
   },
 
   // 带位置获取的任务加载
@@ -51,7 +80,8 @@ Page({
       // 如果没有位置，尝试获取
       if (!userLocation) {
         try {
-          await app.updateUserLocation()
+          userLocation = await app.updateUserLocation()
+          this.updateCurrentCity()
         } catch (err) {
           // 位置获取失败，继续加载任务
         }
@@ -99,7 +129,8 @@ Page({
     let userLocation = app.getUserLocation()
     if (!userLocation) {
       try {
-        await app.updateUserLocation()
+        userLocation = await app.updateUserLocation()
+        this.updateCurrentCity()
       } catch (err) {
         // 位置获取失败，继续加载任务（会显示"--"）
       }
@@ -157,7 +188,7 @@ Page({
       // 判断是否是被邀请注册
       const isInvited = userInfo.inviter_id != null
       const toastTitle = result.data.isNewUser
-        ? (isInvited ? '注册成功，获得150积分 🎉' : '欢迎新用户，已送100积分')
+        ? (isInvited ? '注册成功，获得150积分' : '欢迎新用户，已送100积分')
         : '登录成功'
 
       wx.showToast({
@@ -314,7 +345,9 @@ Page({
             need_id: item.need_id || item._id,
             type: item.type,
             typeName: item.typeName || item.type_name,
-            typeIcon: item.typeIcon,
+            typeIcon: item.typeIcon || item.icon || (TYPE_META[item.type] && TYPE_META[item.type].icon) || 'circle-help',
+            iconTone: item.iconTone || (TYPE_META[item.type] && TYPE_META[item.type].tone) || 'blue',
+            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1178DC',
             bgColor: item.bgColor,
             color: item.color,
             description: item.description,
@@ -373,10 +406,7 @@ Page({
   // 跳转到发布页
   goToPublish() {
     if (!this.data.isLoggedIn) {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      })
+      this.handleLogin()
       return
     }
 
@@ -388,10 +418,7 @@ Page({
   // 跳转到发布页并自动选择类型
   goToPublishWithType(e) {
     if (!this.data.isLoggedIn) {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      })
+      this.handleLogin()
       return
     }
 

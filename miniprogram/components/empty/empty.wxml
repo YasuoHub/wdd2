@@ -2,10 +2,10 @@
 <view class="empty-container {{type === 'card' ? 'empty-card' : ''}}">
   <!-- 图标区域 -->
   <view class="empty-icon-wrapper">
-    <!-- 使用表情图标 -->
-    <block wx:if="{{iconType === 'emoji'}}">
+    <!-- 使用线性图标 -->
+    <block wx:if="{{iconType === 'icon'}}">
       <view class="empty-circle">
-        <text class="empty-emoji">{{icon}}</text>
+        <wdd-icon name="{{icon}}" color="#1178DC" size="82"></wdd-icon>
       </view>
     </block>
 

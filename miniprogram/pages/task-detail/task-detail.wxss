@@ -321,7 +321,17 @@
   font-weight: 500;
 }
 
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
 .waiting-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
   text-align: center;
   padding: 32rpx;
   background: rgba(255, 209, 102, 0.1);
@@ -464,6 +474,10 @@
 
 /* 状态提示 */
 .status-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
   text-align: center;
   padding: 28rpx;
   border-radius: 20rpx;

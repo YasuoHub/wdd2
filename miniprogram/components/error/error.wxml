@@ -3,7 +3,7 @@
   <!-- 错误图标 -->
   <view class="error-icon-wrapper">
     <view class="error-circle">
-      <text class="error-emoji">{{icon}}</text>
+      <wdd-icon name="{{icon}}" color="#FF6B6B" size="82"></wdd-icon>
     </view>
   </view>
 
@@ -21,7 +21,7 @@
       bind:tap="onRetryTap"
       hover-class="btn-hover"
     >
-      <text class="btn-icon">🔄</text>
+      <wdd-icon name="refresh-cw" color="#FFFFFF" size="28"></wdd-icon>
       <text>{{retryText}}</text>
     </button>
 

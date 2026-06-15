@@ -114,9 +114,17 @@
 }
 
 .hint-text {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10rpx;
   font-size: 24rpx;
   opacity: 0.95;
   font-weight: 500;
+}
+
+.hint-text text {
+  flex: 1;
 }
 
 /* 记录列表区域 - 天蓝色调 */

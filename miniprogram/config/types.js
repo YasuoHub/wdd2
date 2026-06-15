@@ -22,21 +22,21 @@ const REPORT_TYPE_LABELS = REPORT_TYPES.map(t => t.label)
 
 // 状态映射
 const STATUS_MAP = {
-  pending: { text: '待匹配', class: 'pending', icon: '⏳' },
-  ongoing: { text: '进行中', class: 'ongoing', icon: '🤝' },
-  completed: { text: '已完成', class: 'completed', icon: '✅' },
-  cancelled: { text: '已取消', class: 'cancelled', icon: '❌' },
-  breaking: { text: '审核中', class: 'breaking', icon: '⏳' }
+  pending: { text: '待匹配', class: 'pending', icon: 'hourglass' },
+  ongoing: { text: '进行中', class: 'ongoing', icon: 'handshake' },
+  completed: { text: '已完成', class: 'completed', icon: 'circle-check-big' },
+  cancelled: { text: '已取消', class: 'cancelled', icon: 'circle-x' },
+  breaking: { text: '审核中', class: 'breaking', icon: 'clock-3' }
 }
 
 // 任务类型映射
 const TYPE_MAP = {
-  weather: { name: '实时天气', icon: '🌤️', color: '#74B9FF', bgColor: 'rgba(116, 185, 255, 0.15)' },
-  traffic: { name: '道路拥堵', icon: '🚗', color: '#FDCB6E', bgColor: 'rgba(253, 203, 110, 0.15)' },
-  shop: { name: '店铺营业', icon: '🏪', color: '#A29BFE', bgColor: 'rgba(162, 155, 254, 0.15)' },
-  parking: { name: '停车场空位', icon: '🅿️', color: '#81ECEC', bgColor: 'rgba(129, 236, 236, 0.15)' },
-  queue: { name: '排队情况', icon: '👥', color: '#FD79A8', bgColor: 'rgba(253, 121, 168, 0.15)' },
-  other: { name: '其他', icon: '💬', color: '#A8E6CF', bgColor: 'rgba(168, 230, 207, 0.15)' }
+  weather: { name: '实时天气', icon: 'cloud-sun', color: '#5DB8E6', bgColor: 'rgba(93, 184, 230, 0.12)' },
+  traffic: { name: '道路拥堵', icon: 'car-front', color: '#FFD166', bgColor: 'rgba(255, 209, 102, 0.16)' },
+  shop: { name: '店铺营业', icon: 'store', color: '#5DB8E6', bgColor: 'rgba(93, 184, 230, 0.1)' },
+  parking: { name: '停车场空位', icon: 'square-parking', color: '#6DD5B0', bgColor: 'rgba(109, 213, 176, 0.14)' },
+  queue: { name: '排队情况', icon: 'users-round', color: '#FF8C69', bgColor: 'rgba(255, 140, 105, 0.14)' },
+  other: { name: '其他', icon: 'ellipsis', color: '#A8C4D4', bgColor: 'rgba(168, 196, 212, 0.14)' }
 }
 
 module.exports = {

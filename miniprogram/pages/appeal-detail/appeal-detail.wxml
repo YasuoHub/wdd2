@@ -1,7 +1,7 @@
 <!-- 申诉详情 - 纯展示 -->
 <view class="page-bg"></view>
 
-<view class="container">
+<view class="container wdd-page">
   <view wx:if="{{loading}}" class="loading-wrap">
     <text>加载中...</text>
   </view>
@@ -47,7 +47,7 @@
     <view class="section">
       <view class="task-link-btn" bindtap="goToTask" hover-class="task-link-btn-hover">
         <text>查看关联任务</text>
-        <text class="link-arrow">›</text>
+        <wdd-icon name="chevron-right" color="#8FA8B8" size="26"></wdd-icon>
       </view>
     </view>
 

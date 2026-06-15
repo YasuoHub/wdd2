@@ -1,6 +1,6 @@
 <!-- 评价详情页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <!-- 加载中 -->
   <view wx:if="{{loading}}" class="loading-state">
     <view class="loading-icon"></view>
@@ -12,7 +12,8 @@
     <!-- 评价对象 -->
     <view class="target-card">
       <view class="target-avatar">
-        <text wx:if="{{!targetUser.avatar}}">{{targetUser.nickname ? targetUser.nickname[0] : '👤'}}</text>
+        <text wx:if="{{!targetUser.avatar && targetUser.nickname}}">{{targetUser.nickname[0]}}</text>
+        <wdd-icon wx:elif="{{!targetUser.avatar}}" name="circle-user" color="#FFFFFF" size="54"></wdd-icon>
         <image wx:else src="{{targetUser.avatar}}" mode="aspectFill"/>
       </view>
       <view class="target-info">
@@ -39,7 +40,7 @@
           wx:key="*this"
           class="star {{rating.rating >= item ? 'active' : ''}}"
         >
-          <text class="star-icon">{{rating.rating >= item ? '★' : '☆'}}</text>
+          <wdd-icon name="star" color="{{rating.rating >= item ? '#FFD166' : '#C4D8E5'}}" size="48"></wdd-icon>
         </view>
       </view>
       <text class="rating-score">{{rating.rating}}分</text>

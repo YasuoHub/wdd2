@@ -1,7 +1,7 @@
 // 消息中心页面逻辑
 const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
-const { STATUS_MAP } = require('../../config/types')
+const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
 
 Page({
   data: {
@@ -216,11 +216,17 @@ Page({
 
       if (result.code === 0) {
         // 分离求助聊天和帮助聊天
-        const chatList = result.data.chatList.map(item => ({
-          ...item,
-          lastTime: DateUtil.formatRelativeTime(item.lastTime),
-          statusText: this.getStatusText(item.needStatus)
-        }))
+        const chatList = result.data.chatList.map(item => {
+          const typeMeta = TYPE_MAP[item.type] || TYPE_MAP.other
+          return {
+            ...item,
+            typeIcon: typeMeta.icon,
+            typeColor: typeMeta.color,
+            typeBgColor: typeMeta.bgColor,
+            lastTime: DateUtil.formatRelativeTime(item.lastTime),
+            statusText: this.getStatusText(item.needStatus)
+          }
+        })
 
         const seekerChatList = chatList.filter(item => item.isSeeker)
         const helperChatList = chatList.filter(item => !item.isSeeker)
@@ -230,11 +236,15 @@ Page({
         const helperChatUnread = helperChatList.reduce((sum, item) => sum + (item.unread || 0), 0)
 
         // 处理系统通知列表
-        const systemList = result.data.systemList.map(item => ({
-          ...item,
-          icon: this.getNotificationIcon(item.type),
-          timeText: DateUtil.formatRelativeTime(item.create_time)
-        }))
+        const systemList = result.data.systemList.map(item => {
+          const iconMeta = this.getNotificationIcon(item.type)
+          return {
+            ...item,
+            icon: iconMeta.name,
+            iconColor: iconMeta.color,
+            timeText: DateUtil.formatRelativeTime(item.create_time)
+          }
+        })
 
         const systemUnread = result.data.systemUnread || 0
 
@@ -336,19 +346,19 @@ Page({
   // 获取通知图标
   getNotificationIcon(type) {
     const iconMap = {
-      'task_completed': '✅',
-      'task_cancelled': '❌',
-      'task_matched': '🎯',
-      'points_received': '💰',
-      'system': '📢',
-      'appeal_notice': '⚖️',
-      'report_notice': '🚨',
-      'appeal_reminder': '⏰',
-      'report_reminder': '⏰',
-      'arbitration_result': '✅',
-      'task_auto_completed': '✅'
+      'task_completed': { name: 'circle-check-big', color: '#6DD5B0' },
+      'task_cancelled': { name: 'circle-x', color: '#FF6B6B' },
+      'task_matched': { name: 'target', color: '#5DB8E6' },
+      'points_received': { name: 'coins', color: '#FF8C69' },
+      'system': { name: 'megaphone', color: '#5DB8E6' },
+      'appeal_notice': { name: 'scale', color: '#FF8C69' },
+      'report_notice': { name: 'siren', color: '#FF6B6B' },
+      'appeal_reminder': { name: 'clock-3', color: '#FFD166' },
+      'report_reminder': { name: 'clock-3', color: '#FFD166' },
+      'arbitration_result': { name: 'file-check-2', color: '#6DD5B0' },
+      'task_auto_completed': { name: 'circle-check-big', color: '#6DD5B0' }
     }
-    return iconMap[type] || '📢'
+    return iconMap[type] || { name: 'megaphone', color: '#5DB8E6' }
   },
 
   // 点击系统通知
