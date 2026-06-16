@@ -11,10 +11,17 @@
 }
 
 .opponent-title {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
   font-size: 32rpx;
   font-weight: 600;
-  color: #e74c3c;
+  color: var(--text-primary);
   margin-bottom: 20rpx;
+}
+
+.opponent-title wdd-icon {
+  flex-shrink: 0;
 }
 
 .opponent-type {

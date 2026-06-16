@@ -133,17 +133,18 @@ async function getTaskInfo(event, OPENID) {
   }
   const need = needRes.data
   const taker = takerRes.data[0]
+  const takerId = taker?.taker_id || need.taker_id
 
   const isSeeker = need.user_id === currentUserId
-  const isTaker = taker && taker.taker_id === currentUserId
+  const isTaker = takerId === currentUserId
 
   if (!isSeeker && !isTaker && !isCs) {
     return { code: -1, message: '无权查看此任务' }
   }
 
   // 客服模式：纯客服（非任务参与者）返回双方信息，不含操作权限
-  if (isCs) {
-    const takerUserId = taker ? taker.taker_id : null
+  if (isCs && !isSeeker && !isTaker) {
+    const takerUserId = takerId || null
     const userIds = [need.user_id, takerUserId].filter(Boolean)
 
     // 查询双方用户信息
@@ -175,7 +176,7 @@ async function getTaskInfo(event, OPENID) {
   }
 
   // 第二批并行：对方用户 + 举报状态 + 申诉状态
-  const otherUserId = isSeeker ? taker?.taker_id : need.user_id
+  const otherUserId = isSeeker ? takerId : need.user_id
 
   const [otherUserRes, reportRes, appealRes] = await Promise.all([
     otherUserId

@@ -24,6 +24,7 @@ Page({
     userInfo: null,
     isSeeker: false,
     otherUser: null,
+    canCompleteTask: false,
     showReportBtn: false,
 
     // 消息相关
@@ -82,7 +83,6 @@ Page({
 
     // 判断是否客服查看模式（从工单页面进入）
     const isCustomerServiceMode = from === 'ticket'
-
     // 先尝试读本地缓存：命中则立即渲染，跳过骨架屏
     // 客服查看模式不复用缓存（避免越权状态泄露）
     let cached = null
@@ -107,6 +107,7 @@ Page({
       initialData.task = { ...cached.taskMeta.task, _id: needId }
       initialData.isSeeker = !!cached.taskMeta.isSeeker
       initialData.otherUser = cached.taskMeta.otherUser || null
+      initialData.canCompleteTask = this.canCompleteTask(initialData.isSeeker, initialData.task)
       initialData.showReportBtn = !!cached.taskMeta.showReportBtn
       initialData.messages = Array.isArray(cached.messages) ? cached.messages : []
       initialData.loading = false
@@ -119,6 +120,7 @@ Page({
     }
 
     this.setData(initialData)
+    this.updateNavigationTitle(initialData.otherUser, isCustomerServiceMode)
 
     // 重置已处理消息ID集合（带上缓存里的，防止 watch / 网络回调重复添加）
     this.processedMessageIds = new Set(initialData.messages.map(m => m._id).filter(Boolean))
@@ -235,6 +237,43 @@ Page({
         expireTime: null
       }
     })
+  },
+
+  updateNavigationTitle(otherUser, isCustomerServiceMode = this.data.isCustomerServiceMode) {
+    const title = isCustomerServiceMode
+      ? '查看聊天记录'
+      : (this.getUserDisplayName(otherUser) || '聊天')
+    wx.setNavigationBarTitle({ title })
+  },
+
+  getUserDisplayName(user) {
+    if (!user) return ''
+    return user.nickname || user.nickName || user.name || ''
+  },
+
+  buildOtherUser(taskData, isSeeker) {
+    if (taskData.otherUser) {
+      return {
+        ...taskData.otherUser,
+        nickname: this.getUserDisplayName(taskData.otherUser)
+      }
+    }
+
+    return isSeeker
+      ? {
+          _id: taskData.taker_id || '',
+          nickname: taskData.takerNickname || taskData.taker_nickname || '',
+          avatar: taskData.takerAvatar || taskData.taker_avatar || ''
+        }
+      : {
+          _id: taskData.user_id || '',
+          nickname: taskData.seekerNickname || taskData.user_nickname || '',
+          avatar: taskData.seekerAvatar || taskData.user_avatar || ''
+        }
+  },
+
+  canCompleteTask(isSeeker, task) {
+    return !!(isSeeker && task && task.status === 'ongoing')
   },
 
   // 启动消息轮询（watch不可用时的备用方案）
@@ -442,6 +481,10 @@ Page({
 
   // 监听滚动事件，判断是否在底部
   onScroll(e) {
+    if (this.data.showTaskMenu) {
+      this.setData({ showTaskMenu: false })
+    }
+
     const { scrollTop, scrollHeight } = e.detail
     const clientHeight = this.data.scrollViewHeight || 0
     const isAtBottom = clientHeight > 0 && (scrollHeight - scrollTop - clientHeight < 50)
@@ -495,44 +538,40 @@ Page({
         const taskData = result.data
         const typeInfo = TYPE_MAP[taskData.type] || TYPE_MAP['other']
         const statusInfo = STATUS_MAP[taskData.status] || STATUS_MAP['pending']
-
-        const isCustomerServiceMode = this.data.isCustomerServiceMode
+        const currentUser = this.data.userInfo || app.globalData.userInfo || {}
+        const isSeeker = result.data.role === 'seeker' || taskData.user_id === currentUser._id
+        const otherUser = this.buildOtherUser(taskData, isSeeker)
+        const task = {
+          _id: taskData._id,
+          type: taskData.type,
+          typeName: typeInfo.name,
+          typeIcon: typeInfo.icon,
+          description: taskData.description,
+          rewardAmount: taskData.reward_amount || taskData.rewardAmount || 0,
+          status: taskData.status,
+          statusText: statusInfo.text,
+          expireTime: taskData.expire_time,
+          location: {
+            latitude: taskData.location.coordinates[1],
+            longitude: taskData.location.coordinates[0],
+            name: taskData.location_name
+          },
+          locationName: taskData.location_name,
+          images: taskData.images || []
+        }
 
         this.setData({
-          task: {
-            _id: taskData._id,
-            type: taskData.type,
-            typeName: typeInfo.name,
-            typeIcon: typeInfo.icon,
-            description: taskData.description,
-            rewardAmount: taskData.reward_amount || taskData.rewardAmount || 0,
-            status: taskData.status,
-            statusText: statusInfo.text,
-            expireTime: taskData.expire_time,
-            location: {
-              latitude: taskData.location.coordinates[1],
-              longitude: taskData.location.coordinates[0],
-              name: taskData.location_name
-            },
-            locationName: taskData.location_name,
-            images: taskData.images || []
-          },
-          isSeeker: result.data.role === 'seeker',
-          otherUser: result.data.otherUser || null,
+          task,
+          isSeeker,
+          otherUser,
+          canCompleteTask: this.canCompleteTask(isSeeker, task),
           participants: result.data.participants || {},
           showReportBtn: (result.data.status === 'ongoing' || result.data.status === 'completed') &&
             !result.data.myReportStatus.hasReport &&
             (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 72 * 60 * 60 * 1000))
         })
 
-        // 设置导航栏标题
-        if (isCustomerServiceMode) {
-          wx.setNavigationBarTitle({ title: '查看聊天记录' })
-        } else if (result.data.otherUser && result.data.otherUser.nickname) {
-          wx.setNavigationBarTitle({
-            title: result.data.otherUser.nickname
-          })
-        }
+        this.updateNavigationTitle(otherUser, this.data.isCustomerServiceMode)
 
         return result
       }
@@ -1525,13 +1564,6 @@ Page({
     })
   },
 
-  // 隐藏任务卡片更多菜单
-  hideTaskMenu() {
-    this.setData({
-      showTaskMenu: false
-    })
-  },
-
   // 切换工具栏展开/收起状态
   toggleToolbar() {
     const newExpanded = !this.data.isToolbarExpanded
@@ -1598,7 +1630,8 @@ Page({
         // 更新任务状态
         this.setData({
           'task.status': 'completed',
-          'task.statusText': '已完成'
+          'task.statusText': '已完成',
+          canCompleteTask: false
         })
 
         // 标记本地缓存为已完成，触发 FIFO 清理

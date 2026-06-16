@@ -135,21 +135,6 @@
   position: relative;
 }
 
-/* 下拉菜单遮罩 */
-.task-menu-mask {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 99;
-}
-
-.task-menu-mask.show {
-  display: block;
-}
-
 /* 下拉菜单内容 */
 .task-menu-content {
   display: none;
@@ -684,7 +669,7 @@
 }
 
 /* 完成任务确认弹窗 */
-.modal {
+.chat-container.wdd-page > view.modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -699,12 +684,12 @@
   transition: all 0.3s;
 }
 
-.modal.show {
+.chat-container.wdd-page > view.modal.show {
   opacity: 1;
   visibility: visible;
 }
 
-.modal-mask {
+.chat-container.wdd-page > view.modal .modal-mask {
   position: absolute;
   top: 0;
   left: 0;
@@ -714,9 +699,11 @@
   backdrop-filter: blur(8rpx);
 }
 
-.modal-content {
+.chat-container.wdd-page > view.modal .modal-content {
   position: relative;
+  z-index: 1;
   width: 600rpx;
+  max-width: calc(100vw - 96rpx);
   background: var(--bg-card);
   backdrop-filter: blur(40rpx);
   border-radius: var(--radius-xl);
@@ -728,7 +715,7 @@
   transition: all 0.3s;
 }
 
-.modal.show .modal-content {
+.chat-container.wdd-page > view.modal.show .modal-content {
   transform: translateY(0) scale(1);
 }
 
@@ -1205,6 +1192,326 @@ image,
 button,
 view {
   letter-spacing: 0;
+}
+
+/* ============================================
+   聊天页设计图对齐：微信式顶部、轻任务条、轻气泡、明确状态栏
+   ============================================ */
+.chat-container {
+  background: #f5f7fa;
+}
+
+.chat-container.wdd-page > view.task-card-wrapper {
+  z-index: 60;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1rpx solid var(--border-light);
+  position: relative;
+}
+
+.task-card,
+.task-card.collapsed {
+  width: 100%;
+  margin: 0;
+  padding: 22rpx 28rpx;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+}
+
+.task-card-collapsed {
+  min-height: 74rpx;
+  gap: 20rpx;
+}
+
+.task-summary-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
+  flex: 1;
+}
+
+.task-card .type-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  background: rgba(22, 119, 210, 0.1);
+  box-shadow: none;
+}
+
+.task-summary-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.task-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-width: 0;
+}
+
+.task-title-row .type-name {
+  min-width: 0;
+  color: #111827;
+  font-size: 29rpx;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-meta-line {
+  margin-top: 5rpx;
+  color: var(--text-tertiary);
+  font-size: 23rpx;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-status-pill {
+  flex-shrink: 0;
+  padding: 5rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.task-status-pill.status-ongoing {
+  color: #1677d2;
+  background: rgba(22, 119, 210, 0.1);
+}
+
+.task-status-pill.status-breaking,
+.task-status-pill.status-pending {
+  color: #946b00;
+  background: rgba(233, 185, 73, 0.16);
+}
+
+.task-status-pill.status-completed {
+  color: #1f8f7a;
+  background: rgba(31, 143, 122, 0.12);
+}
+
+.task-status-pill.status-cancelled,
+.task-status-pill.status-expired {
+  color: var(--text-tertiary);
+  background: #eef2f6;
+}
+
+.more-btn {
+  width: 72rpx;
+  height: 72rpx;
+  padding: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  box-shadow: 0 4rpx 14rpx rgba(15, 23, 42, 0.04);
+}
+
+.chat-container .task-menu-content {
+  top: 92rpx;
+  right: 24rpx;
+  min-width: 176rpx;
+  border-radius: 14rpx;
+  z-index: 80;
+}
+
+.chat-container.wdd-page > scroll-view.message-list {
+  position: relative;
+  z-index: 1;
+  padding: 30rpx 28rpx 24rpx;
+  background: transparent;
+}
+
+.time-divider {
+  margin: 26rpx 0 28rpx;
+}
+
+.time-divider::before {
+  display: none;
+}
+
+.time-divider text {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 24rpx;
+}
+
+.message-item {
+  margin-bottom: 30rpx;
+  animation: none;
+}
+
+.message-content {
+  gap: 16rpx;
+}
+
+.avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border: none;
+  box-shadow: none;
+  background: #d9ecfb;
+}
+
+.message-bubble {
+  max-width: 68%;
+  animation: none;
+}
+
+.message-bubble.text {
+  padding: 18rpx 24rpx;
+  border-radius: 14rpx;
+  box-shadow: 0 4rpx 14rpx rgba(15, 23, 42, 0.05);
+}
+
+.message-item.other .message-bubble.text,
+.message-item.self .message-bubble.text {
+  border-top-left-radius: 14rpx;
+  border-top-right-radius: 14rpx;
+}
+
+.message-item.other .message-bubble.text::before,
+.message-item.self .message-bubble.text::before {
+  display: none;
+}
+
+.message-item.other .message-bubble.text {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+}
+
+.message-item.self .message-bubble.text {
+  color: var(--text-primary);
+  background: #dbeafe;
+  border: 1rpx solid rgba(22, 119, 210, 0.08);
+  box-shadow: 0 4rpx 14rpx rgba(22, 119, 210, 0.08);
+}
+
+.message-item.self .message-text {
+  color: var(--text-primary);
+}
+
+.message-text {
+  font-size: 29rpx;
+  line-height: 1.55;
+}
+
+.message-bubble.image,
+.message-image,
+.image-loading {
+  border-radius: 12rpx;
+}
+
+.message-bubble.image {
+  max-width: 360rpx;
+  max-height: 460rpx;
+  box-shadow: 0 6rpx 18rpx rgba(15, 23, 42, 0.08);
+}
+
+.message-image {
+  max-width: 360rpx;
+  max-height: 460rpx;
+}
+
+.system-message-text {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  padding: 4rpx 0;
+  font-size: 24rpx;
+}
+
+.chat-container.wdd-page > view.input-area {
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+  min-height: auto;
+  padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.97);
+  border-top: 1rpx solid var(--border-light);
+  box-shadow: 0 -6rpx 18rpx rgba(15, 23, 42, 0.03);
+}
+
+.input-row {
+  height: 76rpx;
+  gap: 14rpx;
+}
+
+.toolbar-toggle-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2rpx solid #111827;
+  box-shadow: none;
+}
+
+.toolbar-toggle-btn.expanded {
+  background: #f8fafc;
+}
+
+.input-wrapper {
+  height: 68rpx;
+  padding: 0 24rpx;
+  border-radius: 18rpx;
+  background: #ffffff;
+  border: 1rpx solid #d9e2ec;
+}
+
+.message-input {
+  height: 68rpx;
+  font-size: 28rpx;
+}
+
+.send-btn {
+  width: 112rpx;
+  height: 68rpx;
+  border-radius: 16rpx;
+  background: #1677d2;
+  box-shadow: 0 6rpx 16rpx rgba(22, 119, 210, 0.18);
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.send-btn.active {
+  background: #1677d2;
+  transform: none;
+  box-shadow: 0 6rpx 16rpx rgba(22, 119, 210, 0.18);
+}
+
+.send-btn[disabled] {
+  color: #ffffff;
+  background: #b8c2cc;
+}
+
+.task-ended-bar {
+  gap: 14rpx;
+  height: 88rpx;
+  border-radius: 18rpx;
+  background: rgba(31, 143, 122, 0.12);
+  border: 1rpx solid rgba(31, 143, 122, 0.12);
+}
+
+.task-ended-bar.breaking-bar {
+  background: #fff3d8;
+  border-color: rgba(233, 185, 73, 0.22);
+}
+
+.task-ended-text,
+.task-ended-bar.breaking-bar .task-ended-text {
+  color: #1f2933;
+  font-size: 28rpx;
+  font-weight: 700;
 }
 /* 城市服务按钮对比修正 */
 .primary-action,

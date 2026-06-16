@@ -4,7 +4,10 @@
   <!-- 补充材料模式：显示任务摘要 -->
   <block wx:if="{{mode === 'supplement' && taskSummary}}">
     <view class="opponent-card">
-      <view class="opponent-title">任务摘要</view>
+      <view class="opponent-title">
+        <wdd-icon name="clipboard-list" color="#1677D2" size="30"></wdd-icon>
+        <text>任务摘要</text>
+      </view>
       <view class="opponent-row">
         <text class="opponent-label">任务类型</text>
         <text class="opponent-value">{{taskSummary.typeName || taskSummary.type || '未知'}}</text>
@@ -27,7 +30,10 @@
   <!-- 已提交的补充材料展示（只读） -->
   <block wx:if="{{mySupplement}}">
     <view class="opponent-card my-supplement">
-      <view class="opponent-title">我的补充材料</view>
+      <view class="opponent-title">
+        <wdd-icon name="circle-check-big" color="#6DD5B0" size="30"></wdd-icon>
+        <text>我的补充材料</text>
+      </view>
       <view class="opponent-row">
         <text class="opponent-label">情况说明</text>
         <text class="opponent-value">{{mySupplement.reason}}</text>
