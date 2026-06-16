@@ -1,5 +1,6 @@
 <!-- 用户信息填写页面 -->
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <view class="header">
     <view class="title">完善个人资料</view>
     <view class="subtitle">请设置您的头像和昵称</view>

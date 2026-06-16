@@ -1,5 +1,6 @@
 <!-- 星级评价页面 -->
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 评价对象信息 -->
   <view class="target-card">
     <view class="target-avatar">

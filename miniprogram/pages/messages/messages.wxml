@@ -1,5 +1,6 @@
 <!-- 消息中心页面 -->
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 页面标题 -->
   <view class="page-header">
     <text class="page-title">消息</text>

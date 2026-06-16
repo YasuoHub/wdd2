@@ -1,6 +1,7 @@
 <!-- 个人中心页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 用户信息卡片 -->
   <view class="user-card">
     <view class="user-header">

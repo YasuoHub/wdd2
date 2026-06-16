@@ -1,7 +1,7 @@
 {
   "navigationBarTitleText": "评价详情",
-  "navigationBarBackgroundColor": "#F0F8FF",
+  "navigationBarBackgroundColor": "#F5F7FA",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#F0F8FF",
+  "backgroundColor": "#F5F7FA",
   "usingComponents": {}
 }

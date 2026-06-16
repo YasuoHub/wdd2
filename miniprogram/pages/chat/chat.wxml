@@ -1,6 +1,7 @@
 <!-- 聊天页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="chat-container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 任务卡片区域（含下拉菜单） -->
   <view class="task-card-wrapper" wx:if="{{!isCustomerServiceMode}}">
     <!-- 任务信息卡片（仅收起样式） -->

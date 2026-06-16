@@ -2,6 +2,7 @@
 
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 剩余补充时间 — 顶部醒目提醒 -->
   <view class="countdown-hero {{!canSupplement ? 'expired' : ''}}" wx:if="{{mode === 'supplement'}}">
     <view class="countdown-hero-inner">

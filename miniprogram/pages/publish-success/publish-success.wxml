@@ -1,6 +1,7 @@
 <!-- 发布成功页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page {{showAnimation ? 'show' : ''}}">
+  <view class="wdd-page-bg"></view>
   <!-- 成功动画区域 -->
   <view class="success-section">
     <view class="success-icon">

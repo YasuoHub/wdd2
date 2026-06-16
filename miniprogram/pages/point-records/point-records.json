@@ -1,6 +1,6 @@
 {
   "navigationBarTitleText": "我的积分",
-  "navigationBarBackgroundColor": "#F0F8FF",
+  "navigationBarBackgroundColor": "#F5F7FA",
   "navigationBarTextStyle": "black",
   "usingComponents": {
     "loading": "/components/loading/loading",

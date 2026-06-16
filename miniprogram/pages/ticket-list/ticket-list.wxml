@@ -1,5 +1,6 @@
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <view class="tab-bar">
     <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" bindtap="onTabChange" data-tab="pending">
       <text>待处理</text>

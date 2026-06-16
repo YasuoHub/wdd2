@@ -35,10 +35,11 @@
     "pages/ops-analytics/ops-analytics"
   ],
   "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#fff",
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#F5F7FA",
     "navigationBarTitleText": "问当地",
-    "navigationBarTextStyle": "black"
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F5F7FA"
   },
   "tabBar": {
     "color": "#9AA5B1",

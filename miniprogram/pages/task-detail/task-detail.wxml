@@ -1,6 +1,7 @@
 <!-- 任务详情页 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page" style="padding-bottom: {{pagePaddingBottom}}rpx;">
+  <view class="wdd-page-bg"></view>
   <!-- 加载中 -->
   <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 

@@ -1,6 +1,7 @@
 <!-- 我的求助列表页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 状态筛选标签 -->
   <view class="filter-tabs">
     <view

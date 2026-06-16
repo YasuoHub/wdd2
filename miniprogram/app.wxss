@@ -90,8 +90,62 @@ page {
    ============================================ */
 .wdd-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  position: relative;
+  background:
+    linear-gradient(180deg, #f5f7fa 0%, #fafbfc 46%, #f3f6f9 100%);
   box-sizing: border-box;
+}
+
+.wdd-page-bg {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 760rpx;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wdd-page-bg::before {
+  content: "";
+  position: absolute;
+  top: -86rpx;
+  right: -172rpx;
+  width: 620rpx;
+  height: 520rpx;
+  opacity: 0.72;
+  background:
+    radial-gradient(circle at 68% 36%, rgba(22, 119, 210, 0.12) 0, rgba(22, 119, 210, 0.12) 116rpx, transparent 118rpx),
+    radial-gradient(circle at 30% 72%, rgba(31, 143, 122, 0.08) 0, rgba(31, 143, 122, 0.08) 96rpx, transparent 98rpx),
+    linear-gradient(90deg, transparent 0, transparent 31%, rgba(82, 97, 111, 0.12) 31%, rgba(82, 97, 111, 0.12) 31.6%, transparent 31.6%, transparent 100%),
+    linear-gradient(0deg, transparent 0, transparent 42%, rgba(82, 97, 111, 0.1) 42%, rgba(82, 97, 111, 0.1) 42.6%, transparent 42.6%, transparent 100%),
+    linear-gradient(135deg, transparent 0, transparent 54%, rgba(22, 119, 210, 0.16) 54%, rgba(22, 119, 210, 0.16) 55%, transparent 55%, transparent 100%),
+    linear-gradient(24deg, transparent 0, transparent 62%, rgba(31, 143, 122, 0.1) 62%, rgba(31, 143, 122, 0.1) 63%, transparent 63%, transparent 100%);
+}
+
+.wdd-page-bg::after {
+  content: "";
+  position: absolute;
+  left: -120rpx;
+  top: 254rpx;
+  width: 520rpx;
+  height: 360rpx;
+  opacity: 0.56;
+  background:
+    radial-gradient(circle at 26% 46%, rgba(31, 143, 122, 0.08) 0, rgba(31, 143, 122, 0.08) 118rpx, transparent 120rpx),
+    radial-gradient(circle at 74% 56%, rgba(217, 106, 34, 0.06) 0, rgba(217, 106, 34, 0.06) 76rpx, transparent 78rpx),
+    linear-gradient(112deg, transparent 0, transparent 48%, rgba(22, 119, 210, 0.1) 48%, rgba(22, 119, 210, 0.1) 49%, transparent 49%, transparent 100%),
+    linear-gradient(8deg, transparent 0, transparent 56%, rgba(82, 97, 111, 0.08) 56%, rgba(82, 97, 111, 0.08) 56.7%, transparent 56.7%, transparent 100%);
+}
+
+.wdd-page > view:not(.wdd-page-bg),
+.wdd-page > scroll-view,
+.wdd-page > swiper,
+.wdd-page > form,
+.wdd-page > button {
+  position: relative;
+  z-index: 1;
 }
 
 .wdd-map-surface {

@@ -1,5 +1,6 @@
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 补充材料模式：显示任务摘要 -->
   <block wx:if="{{mode === 'supplement' && taskSummary}}">
     <view class="opponent-card">

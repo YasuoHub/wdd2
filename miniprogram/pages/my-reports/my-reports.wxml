@@ -3,6 +3,7 @@
 
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- Tab 栏 -->
   <view class="tab-wrap">
     <view class="tab-bar">

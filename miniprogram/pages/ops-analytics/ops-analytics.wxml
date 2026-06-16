@@ -1,4 +1,5 @@
 <view class="page wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 时间筛选栏 -->
   <view class="filter-bar">
     <view class="preset-btns">

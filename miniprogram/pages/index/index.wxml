@@ -1,6 +1,7 @@
 <!-- 首页 - 问当地 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <view class="hero {{!isLoggedIn ? 'hero-guest' : ''}}" style="padding-top: {{safeTop}}px;">
     <image class="hero-bg-map" src="/images/bg-city-map.png" mode="aspectFill"></image>
     <view class="map-grid map-grid-a"></view>

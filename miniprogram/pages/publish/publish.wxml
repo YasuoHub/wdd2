@@ -1,6 +1,7 @@
 <!-- 发布求助页面 - 城市绿洲风格 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 主内容区 -->
   <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
 

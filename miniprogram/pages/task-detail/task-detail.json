@@ -3,6 +3,6 @@
     "loading": "/components/loading/loading"
   },
   "navigationBarTitleText": "任务详情",
-  "navigationBarBackgroundColor": "#F0F8FF",
+  "navigationBarBackgroundColor": "#F5F7FA",
   "navigationBarTextStyle": "black"
 }

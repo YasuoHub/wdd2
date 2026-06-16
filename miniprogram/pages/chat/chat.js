@@ -1121,11 +1121,11 @@ Page({
       return
     }
 
+    const trustedContext = source === 'camera' ? await this.prepareTrustedPhotoContext() : null
+
     wx.chooseImage({
       count: 1,
       sizeType: ['compressed'],
-    const trustedContext = source === 'camera' ? await this.prepareTrustedPhotoContext() : null
-
       sourceType: [source],
       success: (res) => {
         this.uploadImage(res.tempFilePaths[0], {
@@ -1136,9 +1136,7 @@ Page({
     })
   },
 
-  // 上传图片
-  async uploadImage(filePath, options = {}) {
-    const { task, userInfo } = this.data
+  // 可信现场照辅助方法
   // 准备拍照可信上下文：位置失败时降级为普通照片，不阻断发送。
   async prepareTrustedPhotoContext() {
     try {
@@ -1306,7 +1304,9 @@ Page({
       }
     }
   },
-
+  // 上传图片
+  async uploadImage(filePath, options = {}) {
+    const { task, userInfo } = this.data
 
     // 关键：使用 currentNeedId 确保发送给正确的任务
     const currentNeedId = this.currentNeedId
@@ -1370,7 +1370,7 @@ Page({
       sendStatus: 'sending',
       // 预计算显示尺寸
       imageWidth: displaySize.width,
-      imageHeight: displaySize.height
+      imageHeight: displaySize.height,
       imageSource,
       isTrustedPhoto,
       watermarkInfo,
@@ -1410,12 +1410,12 @@ Page({
           imageUrl: uploadResult.fileID,
           imageWidth: originalWidth,
           imageHeight: originalHeight,
-          clientMsgId
-        }
-      })
+          clientMsgId,
           imageSource,
           isTrustedPhoto,
-          watermarkInfo,
+          watermarkInfo
+        }
+      })
 
       if (result.code !== 0) {
         throw new Error(result.message)

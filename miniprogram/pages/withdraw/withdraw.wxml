@@ -1,6 +1,7 @@
 <!-- 提现页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 余额展示 -->
   <view class="balance-section">
     <text class="balance-label">可提现余额</text>

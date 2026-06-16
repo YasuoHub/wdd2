@@ -1,6 +1,7 @@
 <!-- 钱包/余额页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 余额卡片 -->
   <view class="balance-card">
     <view class="balance-header">

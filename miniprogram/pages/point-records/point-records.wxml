@@ -1,5 +1,6 @@
 <!-- 积分明细页面 -->
 <view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
   <!-- 顶部积分卡片 -->
   <view class="points-card">
     <view class="points-header">
