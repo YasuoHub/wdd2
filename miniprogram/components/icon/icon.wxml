@@ -1,0 +1,9 @@
+<view
+  class="wdd-icon-frame"
+  style="width: {{size}}rpx; height: {{size}}rpx;"
+>
+  <text
+    class="wdd-icon-font"
+    style="color: {{color}}; font-size: {{size}}rpx;"
+  >{{glyph}}</text>
+</view>

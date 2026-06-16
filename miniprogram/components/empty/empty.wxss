@@ -41,10 +41,6 @@
   50% { transform: translateY(-8rpx); }
 }
 
-.empty-emoji {
-  font-size: 88rpx;
-}
-
 .empty-image {
   width: 200rpx;
   height: 200rpx;

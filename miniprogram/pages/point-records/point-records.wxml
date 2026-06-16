@@ -1,11 +1,11 @@
 <!-- 积分明细页面 -->
-<view class="container">
+<view class="container wdd-page">
   <!-- 顶部积分卡片 -->
   <view class="points-card">
     <view class="points-header">
       <text class="points-title">积分总额</text>
       <view class="rules-btn" bindtap="showRules">
-        <text class="rules-icon">📋</text>
+        <wdd-icon name="clipboard-list" color="#1178DC" size="26"></wdd-icon>
         <text class="rules-text">规则</text>
       </view>
     </view>
@@ -16,7 +16,10 @@
     </view>
 
     <view class="points-hint">
-      <text class="hint-text">💡 积分可兑换免单券、提现免手续费券等权益，不可提现、无现金价值</text>
+      <view class="hint-text">
+        <wdd-icon name="lightbulb" color="#FFD166" size="24"></wdd-icon>
+        <text>积分可兑换免单券、提现免手续费券等权益，不可提现、无现金价值</text>
+      </view>
     </view>
   </view>
 
@@ -30,7 +33,7 @@
     <loading wx:if="{{isLoading && records.length === 0}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 
     <!-- 空状态 -->
-    <empty wx:if="{{isEmpty}}" type="normal" icon="📊" title="暂无积分记录" desc="快去签到或完成任务赚取积分吧~"></empty>
+    <empty wx:if="{{isEmpty}}" type="normal" icon="chart-column" title="暂无积分记录" desc="快去签到或完成任务赚取积分吧~"></empty>
 
     <!-- 记录列表 -->
     <view class="records-list" wx:if="{{records.length > 0}}">
@@ -47,7 +50,7 @@
           <view class="record-header">
             <text class="record-title">{{item.description}}</text>
             <text class="record-amount" style="color: {{item.typeColor}}">
-              {{item.icon}}{{item.amount}}
+              {{item.amount >= 0 ? '+' : ''}}{{item.amount}}
             </text>
           </view>
 

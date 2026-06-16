@@ -5,30 +5,35 @@ const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 
 // 筛选标签
 const FILTERS = [
-  { id: 'all', name: '全部', icon: '✨' },
-  { id: 'weather', name: '天气', icon: '🌤️' },
-  { id: 'traffic', name: '路况', icon: '🚗' },
-  { id: 'shop', name: '店铺', icon: '🏪' },
-  { id: 'parking', name: '停车', icon: '🅿️' },
-  { id: 'queue', name: '排队', icon: '👥' },
-  { id: 'other', name: '其他', icon: '💬' }
+  { id: 'all', name: '全部', icon: 'sparkles', color: '#1178DC' },
+  { id: 'weather', name: '天气', icon: 'cloud-sun', color: '#1178DC' },
+  { id: 'traffic', name: '路况', icon: 'car-front', color: '#11A37F' },
+  { id: 'shop', name: '店铺', icon: 'store', color: '#C58A00' },
+  { id: 'parking', name: '停车', icon: 'square-parking', color: '#1178DC' },
+  { id: 'queue', name: '排队', icon: 'users-round', color: '#FF5B19' },
+  { id: 'other', name: '其他', icon: 'ellipsis', color: '#4B5563' }
 ]
 
 // 排序选项
 const SORT_OPTIONS = [
-  { value: 'distance', label: '距离最近', icon: '📍' },
-  { value: 'reward', label: '金额最高', icon: '💰' },
-  { value: 'time', label: '时间最新', icon: '⏱️' }
+  { value: 'distance', label: '距离最近', icon: 'map-pin', color: '#1178DC' },
+  { value: 'reward', label: '金额最高', icon: 'circle-dollar-sign', color: '#FF5B19' },
+  { value: 'time', label: '时间最新', icon: 'clock-3', color: '#66788F' }
 ]
 
 // 距离选项
 const DISTANCE_OPTIONS = [
-  { value: 1000, label: '1公里内', icon: '🚶' },
-  { value: 3000, label: '3公里内', icon: '🚲' },
-  { value: 5000, label: '5公里内', icon: '🚗' },
-  { value: 10000, label: '10公里内', icon: '🚇' },
-  { value: 0, label: '不限距离', icon: '🌍' }
+  { value: 1000, label: '1公里内', icon: 'locate-fixed', color: '#1178DC' },
+  { value: 3000, label: '3公里内', icon: 'route', color: '#1178DC' },
+  { value: 5000, label: '5公里内', icon: 'map-pin', color: '#1178DC' },
+  { value: 10000, label: '10公里内', icon: 'map', color: '#1178DC' },
+  { value: 0, label: '不限距离', icon: 'circle-ellipsis', color: '#66788F' }
 ]
+
+const TYPE_META = FILTERS.reduce((map, item) => {
+  map[item.id] = item
+  return map
+}, {})
 
 Page({
   data: {
@@ -157,7 +162,9 @@ Page({
           }
           return {
             ...item,
-            distanceText
+            distanceText,
+            typeIcon: item.typeIcon || (TYPE_META[item.type] && TYPE_META[item.type].icon) || 'circle-help',
+            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1178DC'
           }
         })
 

@@ -67,12 +67,13 @@ page { background: var(--bg-secondary); }
   border-top: 1rpx solid var(--border-light, #eee);
   border-bottom: 1rpx solid var(--border-light, #eee);
 }
-.user-text { font-size: 26rpx; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.user-text { display: flex; align-items: center; gap: 6rpx; font-size: 26rpx; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.user-text text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-arrow { font-size: 24rpx; color: var(--text-light); flex-shrink: 0; }
 
 /* 底部 */
 .card-footer { display: flex; align-items: center; justify-content: space-between; }
-.footer-time { font-size: 24rpx; color: var(--text-light); }
+.footer-time { display: flex; align-items: center; gap: 6rpx; font-size: 24rpx; color: var(--text-light); }
 .supplement-tag {
   font-size: 22rpx; color: #2980b9;
   padding: 4rpx 14rpx; background: rgba(52,152,219,0.08); border-radius: 20rpx;

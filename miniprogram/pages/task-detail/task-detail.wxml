@@ -1,6 +1,6 @@
 <!-- 任务详情页 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container" style="padding-bottom: {{pagePaddingBottom}}rpx;">
+<view class="container wdd-page" style="padding-bottom: {{pagePaddingBottom}}rpx;">
   <!-- 加载中 -->
   <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 
@@ -9,7 +9,7 @@
     <!-- 任务状态卡片 -->
     <view class="status-card {{task.status}}">
       <view class="status-icon">
-        <text>{{task.statusIcon}}</text>
+        <wdd-icon name="{{task.statusIcon || 'circle-help'}}" color="#FFFFFF" size="34"></wdd-icon>
       </view>
       <view class="status-info">
         <text class="status-text">{{task.statusText}}</text>
@@ -22,7 +22,7 @@
       <!-- 类型 + 悬赏金额 同排 -->
       <view class="info-header">
         <view class="type-tag" style="background: {{task.bgColor}}; color: {{task.color}};">
-          <text class="type-icon">{{task.typeIcon}}</text>
+          <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="{{task.color || '#1178DC'}}" size="24"></wdd-icon>
           <text>{{task.typeName}}</text>
         </view>
 
@@ -58,9 +58,9 @@
       <view class="location-section">
         <text class="section-title">求助位置</text>
         <view class="location-box" bindtap="previewLocation">
-          <text class="location-icon">📍</text>
+          <wdd-icon name="map-pin" color="#6B8BA4" size="26"></wdd-icon>
           <text class="location-name">{{task.locationName || '未知位置'}}</text>
-          <text class="location-arrow">›</text>
+          <wdd-icon name="chevron-right" color="#8FA8B8" size="26"></wdd-icon>
         </view>
         <view class="order-id-block">
           <text class="order-id-label">任务单号</text>
@@ -73,7 +73,10 @@
     <view class="user-card">
       <!-- 求助者信息 -->
       <view class="user-section">
-        <text class="section-title">🙏 求助者</text>
+        <view class="section-title title-with-icon">
+          <wdd-icon name="send" color="#1178DC" size="28"></wdd-icon>
+          <text>求助者</text>
+        </view>
         <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.user_id}}">
           <image class="user-avatar" src="{{task.user_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
           <view class="user-meta">
@@ -85,7 +88,10 @@
 
       <!-- 帮助者信息（如果有） -->
       <view wx:if="{{task.taker_id}}" class="user-section">
-        <text class="section-title">🤗 帮助者</text>
+        <view class="section-title title-with-icon">
+          <wdd-icon name="handshake" color="#119B72" size="28"></wdd-icon>
+          <text>帮助者</text>
+        </view>
         <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.taker_id}}">
           <image class="user-avatar" src="{{task.taker_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
           <view class="user-meta">
@@ -97,7 +103,8 @@
 
       <!-- 等待接单提示（仅求助者可见） -->
       <view wx:if="{{task.status === 'pending' && isSeeker}}" class="waiting-tip">
-        <text>⏳ 等待有缘人接单...</text>
+        <wdd-icon name="hourglass" color="#FF8C69" size="24"></wdd-icon>
+        <text>等待附近帮助者接单...</text>
       </view>
     </view>
 
@@ -158,15 +165,18 @@
 
     <!-- 审核中提示 -->
     <view wx:if="{{task.status === 'breaking'}}" class="status-tip warning">
-      <text>⏳ 任务正在审核中，暂不可操作</text>
+      <wdd-icon name="hourglass" color="#E67E22" size="24"></wdd-icon>
+      <text>任务正在审核中，暂不可操作</text>
     </view>
 
     <!-- 已完成/已取消提示 -->
     <view wx:if="{{task.status === 'completed'}}" class="status-tip success">
-      <text>✅ 任务已完成</text>
+      <wdd-icon name="circle-check-big" color="#6DD5B0" size="24"></wdd-icon>
+      <text>任务已完成</text>
     </view>
     <view wx:if="{{task.status === 'cancelled'}}" class="status-tip danger">
-      <text>❌ 任务已取消</text>
+      <wdd-icon name="circle-x" color="#FF6B6B" size="24"></wdd-icon>
+      <text>任务已取消</text>
     </view>
   </view>
 </view>

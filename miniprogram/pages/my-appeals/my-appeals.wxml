@@ -2,7 +2,7 @@
 <view class="page-bg"></view>
 
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <view class="tab-wrap">
     <view class="tab-bar">
       <view
@@ -53,7 +53,7 @@
 
     <view wx:elif="{{pendingList.length === 0}}" class="empty-state">
       <view class="empty-illustration">
-        <text class="empty-icon">📝</text>
+        <wdd-icon name="notebook-pen" color="#8FA8B8" size="72"></wdd-icon>
       </view>
       <text class="empty-title">暂无处理中的申诉</text>
       <text class="empty-desc">你提交的申诉会显示在这里</text>
@@ -72,7 +72,7 @@
             <text class="reason-text">{{item.reason}}</text>
           </view>
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
-            <text class="task-icon">{{item.taskIcon}}</text>
+            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1178DC'}}" size="26"></wdd-icon>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
             <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>
@@ -123,7 +123,7 @@
 
     <view wx:elif="{{processedList.length === 0}}" class="empty-state">
       <view class="empty-illustration">
-        <text class="empty-icon">✅</text>
+        <wdd-icon name="circle-check-big" color="#6DD5B0" size="72"></wdd-icon>
       </view>
       <text class="empty-title">暂无已处理的申诉</text>
       <text class="empty-desc">已处理的申诉会归档到这里</text>
@@ -143,7 +143,7 @@
             <text class="reason-text">{{item.reason}}</text>
           </view>
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
-            <text class="task-icon">{{item.taskIcon}}</text>
+            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1178DC'}}" size="26"></wdd-icon>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
             <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>

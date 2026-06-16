@@ -1,6 +1,6 @@
 <!-- 任务大厅 - 城市绿洲风格 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
 
   <!-- 顶部导航栏 -->
   <view class="header">
@@ -15,7 +15,7 @@
             bindtap="selectFilter"
             data-filter="{{item.id}}"
           >
-            <text class="filter-icon">{{item.icon}}</text>
+            <wdd-icon name="{{item.icon}}" color="{{activeFilter === item.id ? '#FFFFFF' : item.color}}" size="28"></wdd-icon>
             <text class="filter-name">{{item.name}}</text>
           </view>
         </view>
@@ -25,12 +25,14 @@
     <!-- 排序和距离筛选 -->
     <view class="sub-filter-bar">
       <view class="sort-section" bindtap="showSortOptions">
+        <wdd-icon name="{{currentSort.icon}}" color="#1178DC" size="24"></wdd-icon>
         <text class="sort-label">{{currentSort.label}}</text>
-        <text class="sort-arrow">▼</text>
+        <wdd-icon name="chevron-down" color="#66788F" size="18"></wdd-icon>
       </view>
       <view class="distance-section" bindtap="showDistanceOptions">
+        <wdd-icon name="{{currentDistance.icon}}" color="#1178DC" size="24"></wdd-icon>
         <text class="distance-label">{{currentDistance.label}}</text>
-        <text class="distance-arrow">▼</text>
+        <wdd-icon name="chevron-down" color="#66788F" size="18"></wdd-icon>
       </view>
     </view>
   </view>
@@ -38,14 +40,16 @@
   <!-- 帮助者资料完善提示 -->
   <view class="helper-profile-tip" wx:if="{{showHelperProfileTip}}">
     <view class="tip-content">
-      <text class="tip-icon">💡</text>
+      <wdd-icon name="lightbulb" color="#C58A00" size="40"></wdd-icon>
       <view class="tip-text">
         <view class="tip-title">完善帮助者资料</view>
         <view class="tip-desc">设置常去地点和可帮助类型，获取更精准的任务推荐</view>
       </view>
     </view>
     <view class="tip-actions">
-      <text class="tip-close" bindtap="closeHelperProfileTip">✕</text>
+      <view class="tip-close" bindtap="closeHelperProfileTip">
+        <wdd-icon name="x" color="#B89950" size="24"></wdd-icon>
+      </view>
       <view class="tip-btn" bindtap="goToHelperProfile">去完善</view>
     </view>
   </view>
@@ -89,11 +93,11 @@
           <!-- 头部：类型和积分 -->
           <view class="card-header">
             <view class="type-badge" style="background: {{item.bgColor}}">
-              <text class="type-icon">{{item.typeIcon}}</text>
+              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || '#1178DC'}}" size="28"></wdd-icon>
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <text class="amount-icon">💰</text>
+              <wdd-icon name="circle-dollar-sign" color="#FFFFFF" size="22"></wdd-icon>
               <text class="amount-value">¥{{money.format(item.rewardAmount || item.points / 10)}}</text>
             </view>
           </view>
@@ -103,7 +107,7 @@
 
           <!-- 位置信息 -->
           <view class="card-location">
-            <text class="location-icon">📍</text>
+            <wdd-icon name="map-pin" color="#66788F" size="24"></wdd-icon>
             <text class="location-text">{{item.locationName}}</text>
             <text class="distance-tag">{{item.distanceText}}</text>
           </view>
@@ -115,7 +119,7 @@
               <text class="publisher-name">{{item.userNickname || '匿名用户'}}</text>
             </view>
             <view class="time-info">
-              <text class="time-icon">⏱️</text>
+              <wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon>
               <text class="time-text">{{item.remainTime}}</text>
             </view>
           </view>
@@ -129,7 +133,7 @@
     </view>
 
     <!-- 空状态 -->
-    <empty wx:if="{{taskList.length === 0 && !isRefreshing && !isLoading}}" type="normal" icon="🌸" title="附近暂无求助任务" desc="{{activeFilter === 'all' ? '下拉页面刷新，或稍后再来看看' : '试试查看全部类型，或稍后再来'}}" showBtn="{{activeFilter !== 'all'}}" btnText="查看全部类型" btnType="primary" bind:btnTap="onViewAllTap"></empty>
+    <empty wx:if="{{taskList.length === 0 && !isRefreshing && !isLoading}}" type="normal" icon="inbox" title="附近暂无求助任务" desc="{{activeFilter === 'all' ? '下拉页面刷新，或稍后再来看看' : '试试查看全部类型，或稍后再来'}}" showBtn="{{activeFilter !== 'all'}}" btnText="查看全部类型" btnType="primary" bind:btnTap="onViewAllTap"></empty>
 
     <!-- 加载更多 -->
     <loading wx:if="{{isLoadingMore}}" type="normal" text="正在加载更多..." mode="spinner" size="48"></loading>
@@ -147,7 +151,7 @@
 
   <!-- 快速回到顶部 -->
   <view wx:if="{{showBackToTop}}" class="back-to-top" bindtap="scrollToTop">
-    <text class="back-icon">↑</text>
+    <wdd-icon name="arrow-up" color="#1178DC" size="36"></wdd-icon>
   </view>
 
   <!-- 排序选项弹窗 -->
@@ -155,7 +159,9 @@
     <view class="popup-content sort-popup" catchtap="preventBubble">
       <view class="popup-header">
         <text class="popup-title">排序方式</text>
-        <view class="popup-close" bindtap="hidePopups">✕</view>
+        <view class="popup-close" bindtap="hidePopups">
+          <wdd-icon name="x" color="#66788F" size="26"></wdd-icon>
+        </view>
       </view>
       <view class="popup-options">
         <view
@@ -165,9 +171,9 @@
           bindtap="selectSort"
           data-sort="{{item}}"
         >
-          <text class="option-icon">{{item.icon}}</text>
+          <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
           <text class="option-label">{{item.label}}</text>
-          <text wx:if="{{currentSort.value === item.value}}" class="option-check">✓</text>
+          <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="#1178DC" size="30"></wdd-icon>
         </view>
       </view>
     </view>
@@ -178,7 +184,9 @@
     <view class="popup-content distance-popup" catchtap="preventBubble">
       <view class="popup-header">
         <text class="popup-title">距离范围</text>
-        <view class="popup-close" bindtap="hidePopups">✕</view>
+        <view class="popup-close" bindtap="hidePopups">
+          <wdd-icon name="x" color="#66788F" size="26"></wdd-icon>
+        </view>
       </view>
       <view class="popup-options">
         <view
@@ -188,9 +196,9 @@
           bindtap="selectDistance"
           data-distance="{{item}}"
         >
-          <text class="option-icon">{{item.icon}}</text>
+          <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
           <text class="option-label">{{item.label}}</text>
-          <text wx:if="{{currentDistance.value === item.value}}" class="option-check">✓</text>
+          <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="#1178DC" size="30"></wdd-icon>
         </view>
       </view>
     </view>

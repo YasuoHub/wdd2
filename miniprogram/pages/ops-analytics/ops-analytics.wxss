@@ -1,6 +1,6 @@
 /* 运营分析页面样式 */
 page {
-  --bg-primary: #f5f7fa;
+  --bg-primary: #f3f8fc;
   --bg-secondary: #fff;
   --text-primary: #333;
   --text-secondary: #666;
@@ -16,6 +16,7 @@ page {
   width: 100%;
   overflow: hidden;
   box-sizing: border-box;
+  background: linear-gradient(180deg, #eef8ff 0%, #f8fbff 46%, #f3f8fc 100%);
 }
 
 /* ===== 时间筛选栏 ===== */

@@ -1,9 +1,10 @@
 <!-- 星级评价页面 -->
-<view class="container">
+<view class="container wdd-page">
   <!-- 评价对象信息 -->
   <view class="target-card">
     <view class="target-avatar">
-      <text wx:if="{{!targetUser.avatar}}">{{targetUser.nickname ? targetUser.nickname[0] : '👤'}}</text>
+      <text wx:if="{{!targetUser.avatar && targetUser.nickname}}">{{targetUser.nickname[0]}}</text>
+      <wdd-icon wx:elif="{{!targetUser.avatar}}" name="circle-user" color="#FFFFFF" size="54"></wdd-icon>
       <image wx:else src="{{targetUser.avatar}}" mode="aspectFill"/>
     </view>
     <view class="target-info">
@@ -23,7 +24,7 @@
         bindtap="setRating"
         data-score="{{item}}"
       >
-        <text class="star-icon">{{rating >= item ? '★' : '☆'}}</text>
+        <wdd-icon name="star" color="{{rating >= item ? '#FFD166' : '#C4D8E5'}}" size="58"></wdd-icon>
       </view>
     </view>
   </view>
@@ -70,7 +71,10 @@
 
   <!-- 评价说明 -->
   <view class="tips-section">
-    <text class="tips-title">💡 评价说明</text>
+    <view class="tips-title">
+      <wdd-icon name="lightbulb" color="#FFD166" size="26"></wdd-icon>
+      <text>评价说明</text>
+    </view>
     <text class="tips-item">• 评价后无法修改，请认真填写</text>
     <text class="tips-item">• 好的评价会帮助TA获得更多机会</text>
     <text class="tips-item">• 恶意评价将被平台处理</text>

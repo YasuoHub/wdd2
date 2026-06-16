@@ -1,5 +1,5 @@
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <view class="tab-bar">
     <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" bindtap="onTabChange" data-tab="pending">
       <text>待处理</text>
@@ -21,7 +21,9 @@
           <!-- 用户信息行 -->
           <view class="card-user-row">
             <image wx:if="{{item.avatar}}" class="user-avatar" src="{{item.avatar}}" mode="aspectFill" />
-            <view wx:else class="user-avatar-default">👤</view>
+            <view wx:else class="user-avatar-default">
+              <wdd-icon name="circle-user" color="#FFFFFF" size="40"></wdd-icon>
+            </view>
             <text class="user-name">{{item.nickname}}</text>
             <view class="status-tag status-pending">待审批</view>
           </view>
@@ -41,7 +43,10 @@
           </view>
           <!-- 底部 -->
           <view class="card-footer">
-            <text class="footer-time">🕐 {{item.applyTime}}</text>
+            <view class="footer-time">
+              <wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon>
+              <text>{{item.applyTime}}</text>
+            </view>
             <view class="approve-btn" bindtap="showApproveModal" data-id="{{item._id}}">审批</view>
           </view>
         </view>
@@ -62,7 +67,9 @@
           <!-- 用户信息行 -->
           <view class="card-user-row">
             <image wx:if="{{item.avatar}}" class="user-avatar" src="{{item.avatar}}" mode="aspectFill" />
-            <view wx:else class="user-avatar-default">👤</view>
+            <view wx:else class="user-avatar-default">
+              <wdd-icon name="circle-user" color="#FFFFFF" size="40"></wdd-icon>
+            </view>
             <text class="user-name">{{item.nickname}}</text>
             <view class="status-tag {{item.status === 'approved' ? 'status-approved' : 'status-rejected'}}">{{item.statusText}}</view>
           </view>
@@ -83,7 +90,10 @@
           </view>
           <!-- 底部 -->
           <view class="card-footer">
-            <text class="footer-time">🕐 {{item.applyTime}}</text>
+            <view class="footer-time">
+              <wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon>
+              <text>{{item.applyTime}}</text>
+            </view>
             <text wx:if="{{item.approveTime}}" class="footer-approve-time">{{item.approveTime}} 处理</text>
           </view>
         </view>

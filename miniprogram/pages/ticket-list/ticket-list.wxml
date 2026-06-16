@@ -1,10 +1,5 @@
-<wxs module="icon">
-  var map = { weather: '🌤', traffic: '🚗', shop: '🏪', parking: '🅿', queue: '👥', other: '📋' }
-  module.exports = function(type) { return map[type] || '📋' }
-</wxs>
-
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <view class="tab-bar">
     <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" bindtap="onTabChange" data-tab="pending">
       <text>待处理</text>
@@ -25,7 +20,7 @@
         <view class="card-body">
           <!-- 标题行 -->
           <view class="card-title-row">
-            <text class="type-icon">{{icon(item.taskType)}}</text>
+            <wdd-icon name="{{item.taskIcon || 'clipboard-list'}}" color="{{item.taskIconColor || '#1178DC'}}" size="28"></wdd-icon>
             <text class="card-title text-ellipsis">{{item.taskTitle}}</text>
             <view class="status-tag status-pending">待处理</view>
           </view>
@@ -41,13 +36,13 @@
           </view>
           <!-- 双方用户 -->
           <view class="card-users-row">
-            <text class="user-text">🙏 {{item.seekerNickname || '未知'}}</text>
+            <view class="user-text"><wdd-icon name="send" color="#1178DC" size="22"></wdd-icon><text>{{item.seekerNickname || '未知'}}</text></view>
             <text class="user-arrow">→</text>
-            <text class="user-text">🤗 {{item.takerNickname || '未知'}}</text>
+            <view class="user-text"><wdd-icon name="handshake" color="#119B72" size="22"></wdd-icon><text>{{item.takerNickname || '未知'}}</text></view>
           </view>
           <!-- 底部 -->
           <view class="card-footer">
-            <text class="footer-time">🕐 {{item.createTimeFormatted}}</text>
+            <view class="footer-time"><wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon><text>{{item.createTimeFormatted}}</text></view>
             <text wx:if="{{item.supplementStatus}}" class="supplement-tag">{{item.supplementStatus}}</text>
           </view>
         </view>
@@ -67,7 +62,7 @@
         <view class="card-body">
           <!-- 标题行 -->
           <view class="card-title-row">
-            <text class="type-icon">{{icon(item.taskType)}}</text>
+            <wdd-icon name="{{item.taskIcon || 'clipboard-list'}}" color="{{item.taskIconColor || '#1178DC'}}" size="28"></wdd-icon>
             <text class="card-title text-ellipsis">{{item.taskTitle}}</text>
             <view class="status-tag status-resolved">已处理</view>
           </view>
@@ -83,13 +78,13 @@
           </view>
           <!-- 双方用户 -->
           <view class="card-users-row">
-            <text class="user-text">🙏 {{item.seekerNickname || '未知'}}</text>
+            <view class="user-text"><wdd-icon name="send" color="#1178DC" size="22"></wdd-icon><text>{{item.seekerNickname || '未知'}}</text></view>
             <text class="user-arrow">→</text>
-            <text class="user-text">🤗 {{item.takerNickname || '未知'}}</text>
+            <view class="user-text"><wdd-icon name="handshake" color="#119B72" size="22"></wdd-icon><text>{{item.takerNickname || '未知'}}</text></view>
           </view>
           <!-- 底部 -->
           <view class="card-footer">
-            <text class="footer-time">🕐 {{item.createTimeFormatted}}</text>
+            <view class="footer-time"><wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon><text>{{item.createTimeFormatted}}</text></view>
           </view>
         </view>
       </view>

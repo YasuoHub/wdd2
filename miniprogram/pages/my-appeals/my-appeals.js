@@ -61,7 +61,7 @@ Page({
         return {
           ...item,
           createTimeText: DateUtil.formatDateTime(item.createTime),
-          taskIcon: typeMeta.icon || '📌',
+          taskIcon: typeMeta.icon || 'clipboard-list',
           taskColor: typeMeta.color || '#636e72',
           taskBgColor: typeMeta.bgColor || 'rgba(99, 110, 114, 0.1)'
         }

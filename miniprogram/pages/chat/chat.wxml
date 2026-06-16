@@ -1,19 +1,21 @@
 <!-- 聊天页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="chat-container">
+<view class="chat-container wdd-page">
   <!-- 任务卡片区域（含下拉菜单） -->
   <view class="task-card-wrapper" wx:if="{{!isCustomerServiceMode}}">
     <!-- 任务信息卡片（仅收起样式） -->
     <view class="task-card collapsed">
       <view class="task-card-collapsed">
         <view class="collapsed-left">
-          <text class="type-icon">{{task.typeIcon}}</text>
+          <view class="type-icon">
+            <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="#1178DC" size="30"></wdd-icon>
+          </view>
           <text class="type-name">{{task.typeName}}</text>
           <text class="location-name">{{task.locationName || ''}}</text>
           <text class="task-points-mini">¥{{money.format(task.rewardAmount || 0)}}</text>
         </view>
         <view class="more-btn" catchtap="toggleTaskMenu">
-          <text class="more-icon">⋮</text>
+          <wdd-icon name="more-vertical" color="#4A6572" size="30"></wdd-icon>
         </view>
       </view>
     </view>
@@ -24,15 +26,15 @@
     <!-- 下拉菜单内容 -->
     <view class="task-menu-content {{showTaskMenu ? 'show' : ''}}">
       <view wx:if="{{isSeeker && task.status === 'ongoing'}}" class="menu-item" catchtap="onCompleteMenuTap">
-        <text class="menu-item-icon">✅</text>
+        <wdd-icon name="circle-check-big" color="#6DD5B0" size="28"></wdd-icon>
         <text class="menu-item-text">完成</text>
       </view>
       <view wx:if="{{showReportBtn}}" class="menu-item" catchtap="goToReport">
-        <text class="menu-item-icon">🚨</text>
+        <wdd-icon name="siren" color="#FF6B6B" size="28"></wdd-icon>
         <text class="menu-item-text">举报</text>
       </view>
       <view class="menu-item" catchtap="goToTaskDetail">
-        <text class="menu-item-icon">📋</text>
+        <wdd-icon name="clipboard-list" color="#1178DC" size="28"></wdd-icon>
         <text class="menu-item-text">详情</text>
       </view>
     </view>
@@ -154,12 +156,12 @@
   </scroll-view>
 
   <!-- 未读新消息提示按钮 -->
-  <view 
-    class="new-message-btn {{newMessageCount > 0 ? 'show' : ''}}" 
+  <view
+    class="new-message-btn {{newMessageCount > 0 ? 'show' : ''}}"
     bindtap="scrollToBottomAndClear"
     wx:if="{{newMessageCount > 0}}"
   >
-    <text class="btn-arrow">↓</text>
+    <wdd-icon name="arrow-down" color="#1178DC" size="24"></wdd-icon>
     <text class="btn-text">{{newMessageCount}}条新消息</text>
   </view>
 
@@ -181,7 +183,7 @@
       <view class="input-row">
         <!-- 展开/收起工具栏按钮 -->
         <view class="toolbar-toggle-btn {{isToolbarExpanded ? 'expanded' : ''}}" catchtap="toggleToolbar">
-          <text class="toggle-icon">{{isToolbarExpanded ? '▲' : '📎'}}</text>
+          <wdd-icon name="{{isToolbarExpanded ? 'chevron-down' : 'paperclip'}}" color="#1178DC" size="32"></wdd-icon>
         </view>
 
         <view class="input-wrapper">
@@ -212,11 +214,15 @@
       <!-- 工具栏 -->
       <view class="toolbar {{isToolbarExpanded ? 'show' : ''}}">
         <view class="tool-item" bindtap="chooseImage" data-source="album">
-          <text class="tool-icon">🖼️</text>
+          <view class="tool-icon">
+            <wdd-icon name="image" color="#FFFFFF" size="34"></wdd-icon>
+          </view>
           <text class="tool-text">相册</text>
         </view>
         <view class="tool-item" bindtap="chooseImage" data-source="camera">
-          <text class="tool-icon">📸</text>
+          <view class="tool-icon">
+            <wdd-icon name="camera" color="#FFFFFF" size="34"></wdd-icon>
+          </view>
           <text class="tool-text">拍照</text>
         </view>
       </view>

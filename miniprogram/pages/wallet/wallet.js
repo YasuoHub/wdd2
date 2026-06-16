@@ -186,7 +186,7 @@ Page({
       })
 
       if (result.code === 0) {
-        const newRecords = result.data.records || []
+        const newRecords = (result.data.records || []).map(item => this.normalizeBalanceRecord(item))
 
         this.setData({
           records: reset ? newRecords : [...this.data.records, ...newRecords],
@@ -371,5 +371,30 @@ Page({
 
   hideRulesModal() {
     this.setData({ showRulesModal: false })
+  },
+
+  normalizeBalanceRecord(item) {
+    const title = item.title || ''
+    const isIncome = item.amount >= 0
+    const fallback = isIncome
+      ? { icon: 'circle-dollar-sign', color: '#6DD5B0', bg: 'rgba(109, 213, 176, 0.14)' }
+      : { icon: 'credit-card', color: '#FF8C69', bg: 'rgba(255, 140, 105, 0.14)' }
+
+    const iconMap = [
+      { match: '收入', icon: 'hand-coins', color: '#6DD5B0', bg: 'rgba(109, 213, 176, 0.14)' },
+      { match: '支付', icon: 'credit-card', color: '#FF8C69', bg: 'rgba(255, 140, 105, 0.14)' },
+      { match: '退款', icon: 'refresh-cw', color: '#6DD5B0', bg: 'rgba(109, 213, 176, 0.14)' },
+      { match: '提现手续费', icon: 'receipt-text', color: '#FF8C69', bg: 'rgba(255, 140, 105, 0.14)' },
+      { match: '提现', icon: 'landmark', color: '#5DB8E6', bg: 'rgba(93, 184, 230, 0.12)' }
+    ]
+
+    const matched = iconMap.find(meta => title.includes(meta.match)) || fallback
+
+    return {
+      ...item,
+      icon: item.icon && /^[a-z0-9-]+$/.test(item.icon) ? item.icon : matched.icon,
+      iconColor: item.iconColor || matched.color,
+      iconBg: item.iconBg || matched.bg
+    }
   }
 })

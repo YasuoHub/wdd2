@@ -5,12 +5,12 @@ const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 // 求助类型配置
 const NEED_TYPES = [
-  { id: 'weather', name: '实时天气', icon: '🌤️', color: '#74B9FF', bgColor: 'rgba(116, 185, 255, 0.15)' },
-  { id: 'traffic', name: '道路拥堵', icon: '🚗', color: '#FDCB6E', bgColor: 'rgba(253, 203, 110, 0.15)' },
-  { id: 'shop', name: '店铺营业', icon: '🏪', color: '#A29BFE', bgColor: 'rgba(162, 155, 254, 0.15)' },
-  { id: 'parking', name: '停车场空位', icon: '🅿️', color: '#81ECEC', bgColor: 'rgba(129, 236, 236, 0.15)' },
-  { id: 'queue', name: '排队情况', icon: '👥', color: '#FD79A8', bgColor: 'rgba(253, 121, 168, 0.15)' },
-  { id: 'other', name: '其他', icon: '💬', color: '#A8E6CF', bgColor: 'rgba(168, 230, 207, 0.15)' }
+  { id: 'weather', name: '实时天气', icon: 'cloud-sun', color: '#1178DC', bgColor: 'rgba(17, 120, 220, 0.12)' },
+  { id: 'traffic', name: '道路拥堵', icon: 'car-front', color: '#11A37F', bgColor: 'rgba(17, 163, 127, 0.12)' },
+  { id: 'shop', name: '店铺营业', icon: 'store', color: '#C58A00', bgColor: 'rgba(255, 209, 102, 0.22)' },
+  { id: 'parking', name: '停车场空位', icon: 'square-parking', color: '#1178DC', bgColor: 'rgba(17, 120, 220, 0.12)' },
+  { id: 'queue', name: '排队情况', icon: 'users-round', color: '#FF5B19', bgColor: 'rgba(255, 91, 25, 0.12)' },
+  { id: 'other', name: '其他', icon: 'ellipsis', color: '#4B5563', bgColor: 'rgba(75, 85, 99, 0.1)' }
 ]
 
 // 有效期选项

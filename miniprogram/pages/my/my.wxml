@@ -1,12 +1,15 @@
 <!-- 个人中心页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <!-- 用户信息卡片 -->
   <view class="user-card">
     <view class="user-header">
       <view class="avatar-wrapper">
         <image wx:if="{{userInfo.avatar}}" class="avatar" src="{{userInfo.avatar}}" mode="aspectFill"/>
-        <view wx:else class="avatar-default">{{userInfo.nickname ? userInfo.nickname[0] : '👤'}}</view>
+        <view wx:else class="avatar-default">
+          <text wx:if="{{userInfo.nickname}}">{{userInfo.nickname[0]}}</text>
+          <wdd-icon wx:else name="circle-user" color="#FFFFFF" size="58"></wdd-icon>
+        </view>
       </view>
       <view class="user-info">
         <text class="nickname">{{userInfo.nickname || '微信用户'}}</text>
@@ -29,11 +32,11 @@
 
     <!-- 签到按钮 -->
     <view wx:if="{{!hasSignedToday}}" class="sign-in-btn" bindtap="handleSignIn">
-      <text class="sign-in-icon">📅</text>
+      <wdd-icon name="calendar-check" color="#FFFFFF" size="34"></wdd-icon>
       <text>每日签到 +{{signPoints}}积分</text>
     </view>
     <view wx:else class="sign-in-btn signed">
-      <text class="sign-in-icon">✅</text>
+      <wdd-icon name="circle-check-big" color="#6DD5B0" size="34"></wdd-icon>
       <text>今日已签到</text>
     </view>
   </view>
@@ -44,23 +47,23 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToMyNeeds">
         <view class="menu-icon-wrapper" style="background: rgba(116, 185, 255, 0.15);">
-          <text class="menu-icon">🙏</text>
+          <wdd-icon name="send" color="#1178DC" size="36"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的求助</text>
           <text class="menu-desc">{{myNeedsCount}}个进行中</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToMyTasks">
         <view class="menu-icon-wrapper" style="background: rgba(168, 230, 207, 0.3);">
-          <text class="menu-icon">🤗</text>
+          <wdd-icon name="handshake" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的接单</text>
           <text class="menu-desc">{{myTasksCount}}个进行中</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -70,13 +73,13 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToHelperProfile">
         <view class="menu-icon-wrapper" style="background: linear-gradient(135deg, rgba(168, 230, 207, 0.3), rgba(129, 199, 132, 0.2));">
-          <text class="menu-icon">⚙️</text>
+          <wdd-icon name="user-round-cog" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">帮助者资料</text>
           <text class="menu-desc">{{userInfo.help_willingness ? '已完善' : '未设置，点击完善'}}</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -86,33 +89,33 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToWallet">
         <view class="menu-icon-wrapper" style="background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 179, 71, 0.15));">
-          <text class="menu-icon">💰</text>
+          <wdd-icon name="wallet" color="#FF8C69" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的钱包</text>
           <text class="menu-desc">余额 ¥{{money.format(userInfo.balance)}}</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToPointRecords">
         <view class="menu-icon-wrapper" style="background: rgba(253, 203, 110, 0.15);">
-          <text class="menu-icon">⭐</text>
+          <wdd-icon name="star" color="#C9941E" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的积分</text>
           <text class="menu-desc">可兑换免单券、提现免手续费券等权益</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="showInviteModal">
         <view class="menu-icon-wrapper" style="background: rgba(162, 155, 254, 0.15);">
-          <text class="menu-icon">🎁</text>
+          <wdd-icon name="gift" color="#7B61D1" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">邀请好友</text>
           <text class="menu-desc">邀请得积分</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -123,21 +126,21 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToMyReports">
         <view class="menu-icon-wrapper" style="background: rgba(231, 76, 60, 0.12);">
-          <text class="menu-icon">⚠️</text>
+          <wdd-icon name="shield-alert" color="#FF6B6B" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的举报</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToMyAppeals">
         <view class="menu-icon-wrapper" style="background: rgba(243, 156, 18, 0.12);">
-          <text class="menu-icon">📝</text>
+          <wdd-icon name="notebook-pen" color="#FF8C69" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的申诉</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -148,13 +151,13 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToTicketList">
         <view class="menu-icon-wrapper" style="background: rgba(231, 76, 60, 0.15);">
-          <text class="menu-icon">🎧</text>
+          <wdd-icon name="headphones" color="#FF6B6B" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">客服工单处理</text>
           <text class="menu-desc">处理举报和申诉工单</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -165,23 +168,23 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToOpsAnalytics">
         <view class="menu-icon-wrapper" style="background: rgba(39, 174, 96, 0.15);">
-          <text class="menu-icon">📊</text>
+          <wdd-icon name="chart-column" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">运营分析</text>
           <text class="menu-desc">查看平台运营数据</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToFundApproval">
         <view class="menu-icon-wrapper" style="background: rgba(93, 184, 230, 0.15);">
-          <text class="menu-icon">💰</text>
+          <wdd-icon name="banknote" color="#1178DC" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">资金审批</text>
           <text class="menu-desc">处理用户提现申请</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -191,21 +194,21 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="showAbout">
         <view class="menu-icon-wrapper" style="background: rgba(253, 121, 168, 0.15);">
-          <text class="menu-icon">ℹ️</text>
+          <wdd-icon name="info" color="#FF6B9D" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">关于我们</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="showRules">
         <view class="menu-icon-wrapper" style="background: rgba(99, 110, 114, 0.1);">
-          <text class="menu-icon">📋</text>
+          <wdd-icon name="clipboard-list" color="#5E7187" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">积分规则</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -226,10 +229,14 @@
 <view class="modal {{showInviteModal ? 'show' : ''}}" wx:if="{{showInviteModal}}">
   <view class="modal-mask" bindtap="hideInviteModal"></view>
   <view class="modal-content">
-    <view class="modal-close" bindtap="hideInviteModal">×</view>
+    <view class="modal-close" bindtap="hideInviteModal">
+      <wdd-icon name="x" color="#6B8BA4" size="28"></wdd-icon>
+    </view>
     <view class="modal-title">邀请好友</view>
     <view class="invite-content">
-      <view class="invite-icon">🎉</view>
+      <view class="invite-icon">
+        <wdd-icon name="gift" color="#FFFFFF" size="60"></wdd-icon>
+      </view>
       <view class="invite-text">邀请好友注册，双方各得50积分！</view>
       <view class="invite-tip">好友通过你的分享注册后，积分自动到账</view>
     </view>

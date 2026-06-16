@@ -35,10 +35,6 @@
   box-shadow: 0 8rpx 32rpx rgba(255, 140, 105, 0.15);
 }
 
-.error-emoji {
-  font-size: 88rpx;
-}
-
 /* 标题 */
 .error-title {
   font-size: 32rpx;
@@ -102,8 +98,4 @@
 
 .error-btn.primary.btn-hover {
   box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.25);
-}
-
-.btn-icon {
-  font-size: 28rpx;
 }

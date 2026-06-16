@@ -1,7 +1,5 @@
 {
-  "navigationBarTitleText": "子凡问问-问当地",
-  "navigationBarBackgroundColor": "#F0F8FF",
-  "navigationBarTextStyle": "black",
+  "navigationStyle": "custom",
   "backgroundColor": "#F0F8FF",
   "usingComponents": {
     "loading": "/components/loading/loading",

@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container wdd-page">
   <view wx:if="{{loading}}" class="loading">加载中...</view>
 
   <block wx:else>
@@ -10,7 +10,9 @@
       </view>
       <view class="nickname">{{userInfo.nickname}}</view>
       <view class="rating-wrap">
-        <text class="stars">{{userInfo.ratingStars}}</text>
+        <view class="stars">
+          <wdd-icon wx:for="{{[1,2,3,4,5]}}" wx:key="*this" name="star" color="{{userInfo.ratingRounded >= item ? '#FFD166' : '#C4D8E5'}}" size="28"></wdd-icon>
+        </view>
         <text class="rating-num">{{userInfo.ratingFormatted}}</text>
         <text class="rating-count">({{userInfo.ratingCount}}条评价)</text>
       </view>
@@ -21,7 +23,7 @@
       <view class="section-title">提供帮助</view>
       <view class="tag-list">
         <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">
-          <text>{{item.icon}}</text>
+          <wdd-icon name="{{item.icon}}" color="{{item.color || '#1178DC'}}" size="24"></wdd-icon>
           <text style="margin-left: 8rpx;">{{item.name}}</text>
         </view>
       </view>
@@ -35,8 +37,9 @@
           bindtap="{{item.latitude && item.longitude ? 'goToLocation' : ''}}"
           data-index="{{index}}">
           <view class="location-info">
-            <text class="location-icon">📍</text>
+            <wdd-icon name="map-pin" color="#6B8BA4" size="24"></wdd-icon>
             <text class="location-name">{{item.name || '未知地点'}}</text>
+            <wdd-icon wx:if="{{item.latitude && item.longitude}}" name="chevron-right" color="#8FA8B8" size="24"></wdd-icon>
           </view>
         </view>
       </view>
@@ -47,7 +50,9 @@
       <view class="section-title">最近五星好评</view>
       <view class="rating-list">
         <view wx:for="{{ratings}}" wx:key="_id" class="rating-item">
-          <view class="rating-stars">★★★★★</view>
+          <view class="rating-stars">
+            <wdd-icon wx:for="{{[1,2,3,4,5]}}" wx:key="*this" name="star" color="#FFD166" size="24"></wdd-icon>
+          </view>
           <text wx:if="{{item.comment}}" class="rating-comment">{{item.comment}}</text>
           <text wx:else class="rating-comment empty">用户未留下文字评价</text>
         </view>

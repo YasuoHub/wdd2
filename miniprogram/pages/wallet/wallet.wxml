@@ -1,12 +1,12 @@
 <!-- 钱包/余额页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container">
+<view class="container wdd-page">
   <!-- 余额卡片 -->
   <view class="balance-card">
     <view class="balance-header">
       <text class="balance-title">余额</text>
       <view class="balance-rules" bindtap="showWithdrawRules">
-        <text class="rules-icon">ℹ️</text>
+        <wdd-icon name="info" color="#FFFFFF" size="24"></wdd-icon>
         <text class="rules-text">提现规则</text>
       </view>
     </view>
@@ -103,7 +103,9 @@
     </view>
 
     <view wx:if="{{records.length === 0 && !loading}}" class="empty-state">
-      <text class="empty-icon">📋</text>
+      <view class="empty-icon">
+        <wdd-icon name="receipt-text" color="#8FA8B8" size="70"></wdd-icon>
+      </view>
       <text class="empty-text">暂无收支记录</text>
     </view>
 
@@ -115,7 +117,7 @@
       >
         <view class="record-left">
           <view class="record-icon-wrapper" style="background: {{item.iconBg}}">
-            <text class="record-icon">{{item.icon}}</text>
+            <wdd-icon name="{{item.icon || 'receipt'}}" color="{{item.iconColor || '#1178DC'}}" size="34"></wdd-icon>
           </view>
           <view class="record-info">
             <text class="record-title">{{item.title}}</text>
@@ -169,8 +171,10 @@
       </view>
       <!-- 审批提示 -->
       <view wx:if="{{applyAmount > 0}}" class="approval-hint {{needApproval ? 'need-approval' : 'instant'}}">
-        <text wx:if="{{needApproval}}">⏳ 单笔超过¥{{money.format(withdrawApprovalThreshold)}}，需管理员审批</text>
-        <text wx:else>⚡ 未超过¥{{money.format(withdrawApprovalThreshold)}}，即时到账</text>
+        <wdd-icon wx:if="{{needApproval}}" name="hourglass" color="#E67E22" size="24"></wdd-icon>
+        <wdd-icon wx:else name="circle-check-big" color="#07C160" size="24"></wdd-icon>
+        <text wx:if="{{needApproval}}">单笔超过¥{{money.format(withdrawApprovalThreshold)}}，需管理员审批</text>
+        <text wx:else>未超过¥{{money.format(withdrawApprovalThreshold)}}，即时到账</text>
       </view>
       <view wx:if="{{applyErrorTip}}" class="error-tip">
         <text>{{applyErrorTip}}</text>
