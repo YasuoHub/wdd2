@@ -3,7 +3,7 @@
   min-height: 100vh;
   background: linear-gradient(
     180deg,
-    #f0f8ff 0%,
+    #f5f7fa 0%,
     #f5faff 100%
   );
   padding: 32rpx;
@@ -49,7 +49,7 @@
   border-radius: 32rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.08);
 }
 
 .section-title {
@@ -76,7 +76,7 @@
   align-items: center;
   gap: 16rpx;
   padding: 24rpx 0;
-  border-bottom: 2rpx solid rgba(93, 184, 230, 0.15);
+  border-bottom: 2rpx solid rgba(22, 119, 210, 0.15);
 }
 
 .input-symbol {
@@ -136,7 +136,7 @@
   border-radius: 32rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.08);
 }
 
 .detail-row {
@@ -173,7 +173,7 @@
 
 .detail-divider {
   height: 2rpx;
-  background: rgba(93, 184, 230, 0.12);
+  background: rgba(22, 119, 210, 0.12);
   margin: 8rpx 0;
 }
 
@@ -182,7 +182,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: 32rpx;
   padding: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
+  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.08);
 }
 
 .rules-title {
@@ -222,7 +222,7 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(40rpx);
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: 0 -4rpx 24rpx rgba(22, 119, 210, 0.1);
 }
 
 .submit-btn {
@@ -240,10 +240,202 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
 }
 
 .submit-btn.disabled {
   background: linear-gradient(135deg, #d4e5f0 0%, #c4d8e5 100%);
   box-shadow: none;
+}
+/* ============================================
+   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
+   ============================================ */
+.container,
+.chat-container {
+  background: #f5f7fa;
+}
+
+.header,
+.footer,
+.input-area,
+.popup-content,
+.modal-content,
+.rules-modal-content {
+  background: #ffffff;
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-card);
+}
+
+.section-card,
+.task-card,
+.user-card,
+.menu-list,
+.quick-panel,
+.need-feed,
+.login-tip-card,
+.balance-section,
+.record-card,
+.ticket-card,
+.report-card,
+.appeal-card,
+.profile-card,
+.rating-card,
+.info-card,
+.form-card,
+.stat-card,
+.card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.location-bar,
+.filter-item,
+.sort-section,
+.distance-section,
+.type-badge,
+.card-location,
+.distance-tag,
+.quick-tag,
+.type-item,
+.time-option,
+.quick-point,
+.quick-amount,
+.payment-option,
+.amount-detail,
+.rules-tip,
+.points-tip-wrapper,
+.input-wrapper,
+.toolbar-toggle-btn,
+.more-btn,
+.system-message-text,
+.time-divider text {
+  background: #f8fafc;
+  border-color: var(--border-light);
+  box-shadow: none;
+}
+
+.filter-item.active,
+.type-item.active,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active {
+  background: rgba(22, 119, 210, 0.08);
+  border-color: rgba(22, 119, 210, 0.34);
+  box-shadow: none;
+}
+
+.filter-item.active .filter-name,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active .payment-name {
+  color: var(--sky-deep);
+  font-weight: 600;
+}
+
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.amount-badge,
+.quick-amount.active,
+.quick-point.active,
+.time-recommend,
+.btn-vitality {
+  background: var(--vitality-orange);
+  box-shadow: var(--shadow-orange);
+}
+
+.balance-value.points,
+.balance-value.available,
+.points-number,
+.publish-points,
+.publish-amount {
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.wdd-amount,
+.need-amount,
+.amount-current,
+.amount-symbol,
+.detail-value.fee,
+.warning-text,
+.balance-value.insufficient,
+.task-points-mini {
+  color: var(--vitality-orange);
+}
+
+.detail-value.income,
+.tag-mint,
+.status-success,
+.success-text {
+  color: var(--fresh-mint);
+}
+
+.message-item.other .message-bubble.text {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.message-item.self .message-bubble.text {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.popup-overlay,
+.modal-mask,
+.rules-modal {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.helper-profile-tip,
+.balance-insufficient,
+.task-ended-bar.breaking-bar {
+  background: #fff8e6;
+  border-color: rgba(233, 185, 73, 0.34);
+}
+
+image,
+button,
+view {
+  letter-spacing: 0;
+}
+/* 城市服务按钮对比修正 */
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  color: #ffffff;
+}
+
+.publish-btn.disabled,
+.send-btn[disabled],
+.disabled {
+  color: var(--text-muted);
 }

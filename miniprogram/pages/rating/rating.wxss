@@ -1,10 +1,10 @@
 /* ============================================
-   问当地 - 星级评价 - 天蓝色青春活力风格
+   问当地 - 星级评价 - 城市服务清爽可信风格
    ============================================ */
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eef8ff 0%, #f8fbff 46%, #f3f8fc 100%);
+  background: linear-gradient(180deg, #f5f7fa 0%, #fafbfc 46%, #f3f8fc 100%);
   padding: 32rpx;
   padding-bottom: 80rpx;
   position: relative;
@@ -32,7 +32,7 @@
   padding: 32rpx;
   margin-bottom: 28rpx;
   box-shadow: var(--shadow-md);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  border: 2rpx solid rgba(22, 119, 210, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -49,7 +49,7 @@
   color: white;
   overflow: hidden;
   border: 4rpx solid white;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(22, 119, 210, 0.3);
   position: relative;
 }
 
@@ -94,7 +94,7 @@
   padding: 32rpx;
   margin-bottom: 28rpx;
   box-shadow: var(--shadow-md);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  border: 2rpx solid rgba(22, 119, 210, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -134,7 +134,7 @@
   padding: 48rpx 32rpx;
   margin-bottom: 28rpx;
   box-shadow: var(--shadow-md);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  border: 2rpx solid rgba(22, 119, 210, 0.08);
   text-align: center;
   position: relative;
   z-index: 1;
@@ -216,7 +216,7 @@
   padding: 32rpx;
   margin-bottom: 28rpx;
   box-shadow: var(--shadow-md);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  border: 2rpx solid rgba(22, 119, 210, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -267,7 +267,7 @@
   padding: 32rpx;
   margin-bottom: 28rpx;
   box-shadow: var(--shadow-md);
-  border: 2rpx solid rgba(93, 184, 230, 0.08);
+  border: 2rpx solid rgba(22, 119, 210, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -311,18 +311,18 @@
   border-radius: var(--radius-full);
   border: none;
   transition: all 0.3s ease;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.15);
+  box-shadow: 0 4rpx 16rpx rgba(22, 119, 210, 0.15);
 }
 
 .submit-btn.active {
   background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
-  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
   transform: translateY(-2rpx);
 }
 
 .submit-btn.active:active {
   transform: scale(0.98) translateY(0);
-  box-shadow: 0 4rpx 20rpx rgba(93, 184, 230, 0.3);
+  box-shadow: 0 4rpx 20rpx rgba(22, 119, 210, 0.3);
 }
 
 .submit-btn::after {
@@ -369,4 +369,196 @@
   left: 20rpx;
   color: #FFD700;
   font-weight: 700;
+}
+/* ============================================
+   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
+   ============================================ */
+.container,
+.chat-container {
+  background: #f5f7fa;
+}
+
+.header,
+.footer,
+.input-area,
+.popup-content,
+.modal-content,
+.rules-modal-content {
+  background: #ffffff;
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-card);
+}
+
+.section-card,
+.task-card,
+.user-card,
+.menu-list,
+.quick-panel,
+.need-feed,
+.login-tip-card,
+.balance-section,
+.record-card,
+.ticket-card,
+.report-card,
+.appeal-card,
+.profile-card,
+.rating-card,
+.info-card,
+.form-card,
+.stat-card,
+.card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.location-bar,
+.filter-item,
+.sort-section,
+.distance-section,
+.type-badge,
+.card-location,
+.distance-tag,
+.quick-tag,
+.type-item,
+.time-option,
+.quick-point,
+.quick-amount,
+.payment-option,
+.amount-detail,
+.rules-tip,
+.points-tip-wrapper,
+.input-wrapper,
+.toolbar-toggle-btn,
+.more-btn,
+.system-message-text,
+.time-divider text {
+  background: #f8fafc;
+  border-color: var(--border-light);
+  box-shadow: none;
+}
+
+.filter-item.active,
+.type-item.active,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active {
+  background: rgba(22, 119, 210, 0.08);
+  border-color: rgba(22, 119, 210, 0.34);
+  box-shadow: none;
+}
+
+.filter-item.active .filter-name,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active .payment-name {
+  color: var(--sky-deep);
+  font-weight: 600;
+}
+
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.amount-badge,
+.quick-amount.active,
+.quick-point.active,
+.time-recommend,
+.btn-vitality {
+  background: var(--vitality-orange);
+  box-shadow: var(--shadow-orange);
+}
+
+.balance-value.points,
+.balance-value.available,
+.points-number,
+.publish-points,
+.publish-amount {
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.wdd-amount,
+.need-amount,
+.amount-current,
+.amount-symbol,
+.detail-value.fee,
+.warning-text,
+.balance-value.insufficient,
+.task-points-mini {
+  color: var(--vitality-orange);
+}
+
+.detail-value.income,
+.tag-mint,
+.status-success,
+.success-text {
+  color: var(--fresh-mint);
+}
+
+.message-item.other .message-bubble.text {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.message-item.self .message-bubble.text {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.popup-overlay,
+.modal-mask,
+.rules-modal {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.helper-profile-tip,
+.balance-insufficient,
+.task-ended-bar.breaking-bar {
+  background: #fff8e6;
+  border-color: rgba(233, 185, 73, 0.34);
+}
+
+image,
+button,
+view {
+  letter-spacing: 0;
+}
+/* 城市服务按钮对比修正 */
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  color: #ffffff;
+}
+
+.publish-btn.disabled,
+.send-btn[disabled],
+.disabled {
+  color: var(--text-muted);
 }

@@ -3,7 +3,7 @@
   width: 100%;
   min-height: 100vh;
   padding-bottom: 32rpx;
-  background: linear-gradient(180deg, #f4faff 0%, #fbfdff 58%, #f5f9fd 100%);
+  background: linear-gradient(180deg, #f5f7fa 0%, #ffffff 58%, #f5f7fa 100%);
   font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
   font-synthesis: none;
   box-sizing: border-box;
@@ -123,7 +123,7 @@
 }
 
 .brand-text {
-  color: #0879e6;
+  color: #135fa7;
   font-size: 49rpx;
   line-height: 1;
   font-weight: 700;
@@ -228,7 +228,7 @@
   border: 0;
   border-radius: 999rpx;
   color: #fff;
-  background: linear-gradient(135deg, #1599ec 0%, #0788e6 100%);
+  background: linear-gradient(135deg, #1677d2 0%, #135fa7 100%);
   font-size: 23rpx;
   line-height: 68rpx;
   font-weight: 600;
@@ -264,7 +264,7 @@
   height: 54rpx;
   border: 10rpx solid #fff;
   border-radius: 50%;
-  background: #1594e8;
+  background: #1677d2;
   box-shadow: 0 7rpx 22rpx rgba(21, 148, 232, 0.25);
   box-sizing: border-box;
 }
@@ -283,7 +283,7 @@
   padding: 36rpx 28rpx 30rpx;
   border-radius: 26rpx;
   color: #fff;
-  background: linear-gradient(135deg, #1599ec 0%, #0788e6 58%, #26a7f2 100%);
+  background: linear-gradient(135deg, #1677d2 0%, #135fa7 58%, #26a7f2 100%);
   box-shadow: 0 18rpx 42rpx rgba(21, 148, 232, 0.22);
   flex-direction: column;
   align-items: stretch;
@@ -297,7 +297,7 @@
   min-width: 0;
   height: 148rpx;
   padding: 24rpx 18rpx;
-  border: 2rpx solid #1594e8;
+  border: 2rpx solid #1677d2;
   border-radius: 22rpx;
   background: rgba(255, 255, 255, 0.88);
   justify-content: center;
@@ -381,7 +381,7 @@
 .secondary-title {
   flex: 0 1 auto;
   min-width: 0;
-  color: #0879e6;
+  color: #135fa7;
   font-size: 25rpx;
   line-height: 1.2;
   font-weight: 600;
@@ -391,10 +391,10 @@
 .quick-panel {
   margin: 0 34rpx;
   padding: 28rpx 44rpx 26rpx;
-  border: 1rpx solid rgba(93, 184, 230, 0.07);
+  border: 1rpx solid rgba(22, 119, 210, 0.07);
   border-radius: 27rpx;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 14rpx 38rpx rgba(42, 125, 179, 0.08);
+  box-shadow: 0 14rpx 38rpx rgba(15, 23, 42, 0.08);
 }
 
 .quick-grid {
@@ -411,7 +411,7 @@
 }
 
 .quick-type-item:nth-child(-n + 3) {
-  border-bottom: 1rpx solid rgba(93, 184, 230, 0.13);
+  border-bottom: 1rpx solid rgba(22, 119, 210, 0.13);
 }
 
 .quick-type-item:nth-child(2)::before,
@@ -424,14 +424,14 @@
   top: 28rpx;
   bottom: 28rpx;
   width: 1rpx;
-  background: rgba(93, 184, 230, 0.13);
+  background: rgba(22, 119, 210, 0.13);
 }
 
 .quick-type-icon {
   width: 94rpx;
   height: 94rpx;
   border-radius: 50%;
-  background: #e8f4ff;
+  background: #eef7fd;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -471,7 +471,7 @@
 }
 
 .points-tip .link {
-  color: #0879e6;
+  color: #135fa7;
   font-weight: 600;
 }
 
@@ -507,13 +507,13 @@
   margin: 0 34rpx;
   padding: 0 22rpx;
   background: rgba(255, 255, 255, 0.96);
-  border-top: 1rpx solid rgba(93, 184, 230, 0.08);
-  border-bottom: 1rpx solid rgba(93, 184, 230, 0.08);
+  border-top: 1rpx solid rgba(22, 119, 210, 0.08);
+  border-bottom: 1rpx solid rgba(22, 119, 210, 0.08);
 }
 
 .need-row {
   padding: 29rpx 0;
-  border-bottom: 1rpx solid rgba(93, 184, 230, 0.14);
+  border-bottom: 1rpx solid rgba(22, 119, 210, 0.14);
 }
 
 .need-row:last-child {
@@ -530,7 +530,7 @@
   height: 96rpx;
   margin-right: 26rpx;
   border-radius: 50%;
-  background: #e8f4ff;
+  background: #eef7fd;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -571,7 +571,7 @@
   padding: 5rpx 11rpx;
   border-radius: 6rpx;
   background: rgba(8, 121, 230, 0.1);
-  color: #0879e6;
+  color: #135fa7;
   font-size: 21rpx;
   line-height: 1;
   font-weight: 500;
@@ -622,7 +622,7 @@
 }
 
 .need-amount {
-  color: #f45612;
+  color: #d96a22;
   font-size: 34rpx;
   line-height: 1;
   font-weight: 600;
@@ -653,7 +653,7 @@
   height: 92rpx;
   margin: 0 auto 22rpx;
   border-radius: 28rpx;
-  background: rgba(93, 184, 230, 0.1);
+  background: rgba(22, 119, 210, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -731,4 +731,196 @@
   .secondary-title {
     font-size: 23rpx;
   }
+}
+/* ============================================
+   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
+   ============================================ */
+.container,
+.chat-container {
+  background: #f5f7fa;
+}
+
+.header,
+.footer,
+.input-area,
+.popup-content,
+.modal-content,
+.rules-modal-content {
+  background: #ffffff;
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-card);
+}
+
+.section-card,
+.task-card,
+.user-card,
+.menu-list,
+.quick-panel,
+.need-feed,
+.login-tip-card,
+.balance-section,
+.record-card,
+.ticket-card,
+.report-card,
+.appeal-card,
+.profile-card,
+.rating-card,
+.info-card,
+.form-card,
+.stat-card,
+.card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.location-bar,
+.filter-item,
+.sort-section,
+.distance-section,
+.type-badge,
+.card-location,
+.distance-tag,
+.quick-tag,
+.type-item,
+.time-option,
+.quick-point,
+.quick-amount,
+.payment-option,
+.amount-detail,
+.rules-tip,
+.points-tip-wrapper,
+.input-wrapper,
+.toolbar-toggle-btn,
+.more-btn,
+.system-message-text,
+.time-divider text {
+  background: #f8fafc;
+  border-color: var(--border-light);
+  box-shadow: none;
+}
+
+.filter-item.active,
+.type-item.active,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active {
+  background: rgba(22, 119, 210, 0.08);
+  border-color: rgba(22, 119, 210, 0.34);
+  box-shadow: none;
+}
+
+.filter-item.active .filter-name,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active .payment-name {
+  color: var(--sky-deep);
+  font-weight: 600;
+}
+
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.amount-badge,
+.quick-amount.active,
+.quick-point.active,
+.time-recommend,
+.btn-vitality {
+  background: var(--vitality-orange);
+  box-shadow: var(--shadow-orange);
+}
+
+.balance-value.points,
+.balance-value.available,
+.points-number,
+.publish-points,
+.publish-amount {
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.wdd-amount,
+.need-amount,
+.amount-current,
+.amount-symbol,
+.detail-value.fee,
+.warning-text,
+.balance-value.insufficient,
+.task-points-mini {
+  color: var(--vitality-orange);
+}
+
+.detail-value.income,
+.tag-mint,
+.status-success,
+.success-text {
+  color: var(--fresh-mint);
+}
+
+.message-item.other .message-bubble.text {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.message-item.self .message-bubble.text {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.popup-overlay,
+.modal-mask,
+.rules-modal {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.helper-profile-tip,
+.balance-insufficient,
+.task-ended-bar.breaking-bar {
+  background: #fff8e6;
+  border-color: rgba(233, 185, 73, 0.34);
+}
+
+image,
+button,
+view {
+  letter-spacing: 0;
+}
+/* 城市服务按钮对比修正 */
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  color: #ffffff;
+}
+
+.publish-btn.disabled,
+.send-btn[disabled],
+.disabled {
+  color: var(--text-muted);
 }

@@ -1,11 +1,11 @@
 /* ============================================
-   问当地 - 消息中心 - 天蓝色青春活力风格
+   问当地 - 消息中心 - 城市服务清爽可信风格
    ============================================ */
 
 .container {
   height: 100vh;
   background:
-    linear-gradient(180deg, rgba(240, 248, 255, 0.92) 0%, rgba(247, 251, 255, 0.98) 46%, #f5f9fd 100%);
+    linear-gradient(180deg, rgba(240, 248, 255, 0.92) 0%, rgba(247, 251, 255, 0.98) 46%, #f5f7fa 100%);
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -79,7 +79,7 @@
   background: rgba(255, 255, 255, 0.94);
   border-radius: 24rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(93, 184, 230, 0.14);
+  border: 1rpx solid rgba(22, 119, 210, 0.14);
   transition: all 0.3s ease;
 }
 
@@ -135,7 +135,7 @@
   color: var(--text-tertiary);
   position: relative;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(93, 184, 230, 0.12);
+  border: 1rpx solid rgba(22, 119, 210, 0.12);
   transition: all 0.3s ease;
   font-weight: 500;
 }
@@ -224,7 +224,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: 28rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(93, 184, 230, 0.1);
+  border: 1rpx solid rgba(22, 119, 210, 0.1);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -249,7 +249,7 @@
 
 .message-card.unread {
   background: rgba(232, 246, 255, 0.92);
-  border-color: rgba(93, 184, 230, 0.22);
+  border-color: rgba(22, 119, 210, 0.22);
 }
 
 .message-card.unread::before {
@@ -283,7 +283,7 @@
   font-size: 36rpx;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 10rpx 26rpx rgba(93, 184, 230, 0.18);
+  box-shadow: 0 10rpx 26rpx rgba(22, 119, 210, 0.18);
   position: relative;
   overflow: hidden;
 }
@@ -335,7 +335,7 @@
   width: 42rpx;
   height: 42rpx;
   border-radius: 14rpx;
-  background: rgba(93, 184, 230, 0.1);
+  background: rgba(22, 119, 210, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -511,7 +511,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: 26rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(93, 184, 230, 0.1);
+  border: 1rpx solid rgba(22, 119, 210, 0.1);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -547,7 +547,7 @@
 .system-icon-wrapper {
   width: 88rpx;
   height: 88rpx;
-  background: rgba(93, 184, 230, 0.1);
+  background: rgba(22, 119, 210, 0.1);
   border-radius: 24rpx;
   display: flex;
   align-items: center;
@@ -608,7 +608,7 @@
   word-break: break-all;
 }
 
-/* 空状态 - 天蓝风格 */
+/* 空状态 - 城市服务风格 */
 .empty-state {
   text-align: center;
   padding: 140rpx 40rpx;
@@ -761,7 +761,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(93, 184, 230, 0.1);
+  background: rgba(22, 119, 210, 0.1);
   border-radius: 50%;
   transition: all 0.3s ease;
 }
@@ -798,4 +798,196 @@
 .modal-empty-text {
   font-size: 28rpx;
   color: var(--text-light);
+}
+/* ============================================
+   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
+   ============================================ */
+.container,
+.chat-container {
+  background: #f5f7fa;
+}
+
+.header,
+.footer,
+.input-area,
+.popup-content,
+.modal-content,
+.rules-modal-content {
+  background: #ffffff;
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-card);
+}
+
+.section-card,
+.task-card,
+.user-card,
+.menu-list,
+.quick-panel,
+.need-feed,
+.login-tip-card,
+.balance-section,
+.record-card,
+.ticket-card,
+.report-card,
+.appeal-card,
+.profile-card,
+.rating-card,
+.info-card,
+.form-card,
+.stat-card,
+.card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.location-bar,
+.filter-item,
+.sort-section,
+.distance-section,
+.type-badge,
+.card-location,
+.distance-tag,
+.quick-tag,
+.type-item,
+.time-option,
+.quick-point,
+.quick-amount,
+.payment-option,
+.amount-detail,
+.rules-tip,
+.points-tip-wrapper,
+.input-wrapper,
+.toolbar-toggle-btn,
+.more-btn,
+.system-message-text,
+.time-divider text {
+  background: #f8fafc;
+  border-color: var(--border-light);
+  box-shadow: none;
+}
+
+.filter-item.active,
+.type-item.active,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active {
+  background: rgba(22, 119, 210, 0.08);
+  border-color: rgba(22, 119, 210, 0.34);
+  box-shadow: none;
+}
+
+.filter-item.active .filter-name,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active .payment-name {
+  color: var(--sky-deep);
+  font-weight: 600;
+}
+
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.amount-badge,
+.quick-amount.active,
+.quick-point.active,
+.time-recommend,
+.btn-vitality {
+  background: var(--vitality-orange);
+  box-shadow: var(--shadow-orange);
+}
+
+.balance-value.points,
+.balance-value.available,
+.points-number,
+.publish-points,
+.publish-amount {
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.wdd-amount,
+.need-amount,
+.amount-current,
+.amount-symbol,
+.detail-value.fee,
+.warning-text,
+.balance-value.insufficient,
+.task-points-mini {
+  color: var(--vitality-orange);
+}
+
+.detail-value.income,
+.tag-mint,
+.status-success,
+.success-text {
+  color: var(--fresh-mint);
+}
+
+.message-item.other .message-bubble.text {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.message-item.self .message-bubble.text {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.popup-overlay,
+.modal-mask,
+.rules-modal {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.helper-profile-tip,
+.balance-insufficient,
+.task-ended-bar.breaking-bar {
+  background: #fff8e6;
+  border-color: rgba(233, 185, 73, 0.34);
+}
+
+image,
+button,
+view {
+  letter-spacing: 0;
+}
+/* 城市服务按钮对比修正 */
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  color: #ffffff;
+}
+
+.publish-btn.disabled,
+.send-btn[disabled],
+.disabled {
+  color: var(--text-muted);
 }

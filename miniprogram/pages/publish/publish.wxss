@@ -1,12 +1,12 @@
 /* ============================================
-   问当地 - 发布求助 - 天蓝色青春活力风格
+   问当地 - 发布求助 - 城市服务清爽可信风格
    ============================================ */
 
 .container {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 82% 6%, rgba(93, 184, 230, 0.16) 0 76rpx, transparent 180rpx),
-    linear-gradient(180deg, #eff8ff 0%, #fbfdff 46%, #f5f9fd 100%);
+    radial-gradient(circle at 82% 6%, rgba(22, 119, 210, 0.16) 0 76rpx, transparent 180rpx),
+    linear-gradient(180deg, #f5f7fa 0%, #ffffff 46%, #f5f7fa 100%);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -27,8 +27,8 @@
   border-radius: 30rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 10rpx 34rpx rgba(42, 125, 179, 0.07);
-  border: 1rpx solid rgba(93, 184, 230, 0.12);
+  box-shadow: 0 10rpx 34rpx rgba(15, 23, 42, 0.07);
+  border: 1rpx solid rgba(22, 119, 210, 0.12);
   box-sizing: border-box;
   width: 100%;
 }
@@ -102,18 +102,18 @@
 
 .location-picker-trigger:active {
   background: var(--bg-glass);
-  border-color: rgba(93, 184, 230, 0.5);
+  border-color: rgba(22, 119, 210, 0.5);
 }
 
 .picker-icon-wrapper {
   width: 80rpx;
   height: 80rpx;
-  background: linear-gradient(135deg, #1178dc 0%, #1594e8 100%);
+  background: linear-gradient(135deg, #1677d2 0%, #1677d2 100%);
   border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(22, 119, 210, 0.3);
 }
 
 .picker-text {
@@ -148,13 +148,13 @@
   padding: 24rpx;
   background: var(--bg-glass);
   border-radius: 28rpx;
-  border: 2rpx solid rgba(93, 184, 230, 0.2);
+  border: 2rpx solid rgba(22, 119, 210, 0.2);
   margin-bottom: 24rpx;
   transition: all 0.3s;
 }
 
 .selected-location:active {
-  background: rgba(93, 184, 230, 0.15);
+  background: rgba(22, 119, 210, 0.15);
 }
 
 .location-info {
@@ -187,7 +187,7 @@
   color: var(--sky-primary);
   font-weight: 600;
   padding: 8rpx 20rpx;
-  background: rgba(93, 184, 230, 0.15);
+  background: rgba(22, 119, 210, 0.15);
   border-radius: var(--radius-full);
 }
 
@@ -200,8 +200,8 @@
 
 /* 必填状态下的选择器 */
 .location-picker-trigger.required {
-  border: 2rpx dashed rgba(255, 140, 105, 0.5);
-  background: rgba(255, 140, 105, 0.05);
+  border: 2rpx dashed rgba(217, 106, 34, 0.5);
+  background: rgba(217, 106, 34, 0.05);
 }
 
 .location-picker-trigger.required .picker-title {
@@ -235,7 +235,7 @@
   font-size: 24rpx;
   color: var(--text-tertiary);
   transition: all 0.3s;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(22, 119, 210, 0.1);
 }
 
 .quick-tag.active {
@@ -246,7 +246,7 @@
   );
   color: white;
   font-weight: 600;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(22, 119, 210, 0.3);
 }
 
 /* 类型选择网格 */
@@ -274,7 +274,7 @@
 .type-item.active {
   background: white;
   border-color: var(--type-color, var(--sky-primary));
-  box-shadow: 0 8rpx 24rpx rgba(93, 184, 230, 0.2);
+  box-shadow: 0 8rpx 24rpx rgba(22, 119, 210, 0.2);
   transform: translateY(-4rpx);
 }
 
@@ -325,7 +325,7 @@
   font-size: 28rpx;
   line-height: 1.6;
   color: var(--text-primary);
-  border: 1rpx solid rgba(93, 184, 230, 0.14);
+  border: 1rpx solid rgba(22, 119, 210, 0.14);
 }
 
 .textarea-placeholder {
@@ -356,7 +356,7 @@
   color: var(--text-tertiary);
   position: relative;
   transition: all 0.3s;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(22, 119, 210, 0.1);
 }
 
 .time-option.active {
@@ -367,7 +367,7 @@
   );
   color: white;
   font-weight: 600;
-  box-shadow: 0 4rpx 16rpx rgba(93, 184, 230, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(22, 119, 210, 0.3);
 }
 
 .time-recommend {
@@ -452,7 +452,7 @@
   color: var(--text-tertiary);
   font-weight: 600;
   transition: all 0.3s;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(22, 119, 210, 0.1);
 }
 
 .quick-point.active {
@@ -462,7 +462,7 @@
     var(--vitality-coral) 100%
   );
   color: white;
-  box-shadow: 0 4rpx 16rpx rgba(255, 140, 105, 0.35);
+  box-shadow: 0 4rpx 16rpx rgba(217, 106, 34, 0.35);
   transform: scale(1.05);
 }
 
@@ -474,7 +474,7 @@
   padding: 20rpx 24rpx;
   background: rgba(240, 248, 255, 0.8);
   border-radius: 20rpx;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(22, 119, 210, 0.1);
 }
 
 .points-balance {
@@ -545,8 +545,8 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(40rpx);
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 24rpx rgba(93, 184, 230, 0.1);
-  border-top: 2rpx solid rgba(93, 184, 230, 0.08);
+  box-shadow: 0 -4rpx 24rpx rgba(22, 119, 210, 0.1);
+  border-top: 2rpx solid rgba(22, 119, 210, 0.08);
 }
 
 .footer-content {
@@ -595,7 +595,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
@@ -632,7 +632,7 @@
 
 /* 图片上传区域 */
 .section-icon.image {
-  background: linear-gradient(135deg, #5db8e6 0%, #7ec8e8 100%);
+  background: linear-gradient(135deg, #1677d2 0%, #2b8ad8 100%);
 }
 
 .image-upload-area {
@@ -679,7 +679,7 @@
   width: 200rpx;
   height: 200rpx;
   background: rgba(240, 248, 255, 0.8);
-  border: 2rpx dashed rgba(93, 184, 230, 0.3);
+  border: 2rpx dashed rgba(22, 119, 210, 0.3);
   border-radius: 20rpx;
   display: flex;
   flex-direction: column;
@@ -703,7 +703,7 @@
 .section-icon.amount {
   background: linear-gradient(
     135deg,
-    #FFD166 0%,
+    #E9B949 0%,
     #FFB347 100%
   );
 }
@@ -788,7 +788,7 @@
   color: var(--text-tertiary);
   font-weight: 600;
   transition: all 0.3s;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(22, 119, 210, 0.1);
   text-align: center;
   white-space: nowrap;
 }
@@ -800,7 +800,7 @@
     var(--vitality-coral) 100%
   );
   color: white;
-  box-shadow: 0 4rpx 16rpx rgba(255, 140, 105, 0.35);
+  box-shadow: 0 4rpx 16rpx rgba(217, 106, 34, 0.35);
 }
 
 /* 金额明细 */
@@ -809,7 +809,7 @@
   border-radius: 20rpx;
   padding: 24rpx;
   margin-top: 24rpx;
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 2rpx solid rgba(22, 119, 210, 0.1);
 }
 
 .detail-row {
@@ -847,7 +847,7 @@
 
 .detail-divider {
   height: 2rpx;
-  background: rgba(93, 184, 230, 0.15);
+  background: rgba(22, 119, 210, 0.15);
   margin: 8rpx 0;
 }
 
@@ -857,10 +857,10 @@
   align-items: flex-start;
   gap: 12rpx;
   padding: 20rpx;
-  background: rgba(93, 184, 230, 0.08);
+  background: rgba(22, 119, 210, 0.08);
   border-radius: 16rpx;
   margin-top: 24rpx;
-  border: 2rpx solid rgba(93, 184, 230, 0.15);
+  border: 2rpx solid rgba(22, 119, 210, 0.15);
 }
 
 .rules-icon {
@@ -959,7 +959,7 @@
   align-items: flex-start;
   gap: 20rpx;
   padding: 24rpx 0;
-  border-bottom: 2rpx solid rgba(93, 184, 230, 0.1);
+  border-bottom: 2rpx solid rgba(22, 119, 210, 0.1);
 }
 
 .rule-item:last-child {
@@ -1002,7 +1002,7 @@
   font-size: 32rpx;
   font-weight: 700;
   margin-top: 32rpx;
-  box-shadow: 0 8rpx 32rpx rgba(93, 184, 230, 0.4);
+  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
 }
 
 /* 支付方式选择 */
@@ -1034,7 +1034,7 @@
 
 .payment-option.active {
   border-color: var(--sky-primary);
-  background: rgba(93, 184, 230, 0.06);
+  background: rgba(22, 119, 210, 0.06);
   box-shadow: 0 0 0 1rpx var(--sky-primary);
 }
 
@@ -1077,4 +1077,196 @@
 .balance-insufficient text {
   font-size: 24rpx;
   color: #e67e22;
+}
+/* ============================================
+   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
+   ============================================ */
+.container,
+.chat-container {
+  background: #f5f7fa;
+}
+
+.header,
+.footer,
+.input-area,
+.popup-content,
+.modal-content,
+.rules-modal-content {
+  background: #ffffff;
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-card);
+}
+
+.section-card,
+.task-card,
+.user-card,
+.menu-list,
+.quick-panel,
+.need-feed,
+.login-tip-card,
+.balance-section,
+.record-card,
+.ticket-card,
+.report-card,
+.appeal-card,
+.profile-card,
+.rating-card,
+.info-card,
+.form-card,
+.stat-card,
+.card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.location-bar,
+.filter-item,
+.sort-section,
+.distance-section,
+.type-badge,
+.card-location,
+.distance-tag,
+.quick-tag,
+.type-item,
+.time-option,
+.quick-point,
+.quick-amount,
+.payment-option,
+.amount-detail,
+.rules-tip,
+.points-tip-wrapper,
+.input-wrapper,
+.toolbar-toggle-btn,
+.more-btn,
+.system-message-text,
+.time-divider text {
+  background: #f8fafc;
+  border-color: var(--border-light);
+  box-shadow: none;
+}
+
+.filter-item.active,
+.type-item.active,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active {
+  background: rgba(22, 119, 210, 0.08);
+  border-color: rgba(22, 119, 210, 0.34);
+  box-shadow: none;
+}
+
+.filter-item.active .filter-name,
+.quick-tag.active,
+.time-option.active,
+.payment-option.active .payment-name {
+  color: var(--sky-deep);
+  font-weight: 600;
+}
+
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.amount-badge,
+.quick-amount.active,
+.quick-point.active,
+.time-recommend,
+.btn-vitality {
+  background: var(--vitality-orange);
+  box-shadow: var(--shadow-orange);
+}
+
+.balance-value.points,
+.balance-value.available,
+.points-number,
+.publish-points,
+.publish-amount {
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.wdd-amount,
+.need-amount,
+.amount-current,
+.amount-symbol,
+.detail-value.fee,
+.warning-text,
+.balance-value.insufficient,
+.task-points-mini {
+  color: var(--vitality-orange);
+}
+
+.detail-value.income,
+.tag-mint,
+.status-success,
+.success-text {
+  color: var(--fresh-mint);
+}
+
+.message-item.other .message-bubble.text {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.message-item.self .message-bubble.text {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.popup-overlay,
+.modal-mask,
+.rules-modal {
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.helper-profile-tip,
+.balance-insufficient,
+.task-ended-bar.breaking-bar {
+  background: #fff8e6;
+  border-color: rgba(233, 185, 73, 0.34);
+}
+
+image,
+button,
+view {
+  letter-spacing: 0;
+}
+/* 城市服务按钮对比修正 */
+.primary-action,
+.hero-login-btn,
+.publish-btn,
+.send-btn,
+.take-btn,
+.sign-in-btn,
+.invite-btn,
+.rules-modal-btn,
+.empty-btn.primary,
+.modal-btn.confirm,
+.logout-section.login-btn,
+.picker-icon-wrapper,
+.tool-icon {
+  color: #ffffff;
+}
+
+.publish-btn.disabled,
+.send-btn[disabled],
+.disabled {
+  color: var(--text-muted);
 }

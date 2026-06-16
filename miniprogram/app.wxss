@@ -1,15 +1,15 @@
 /* ============================================
    问当地小程序 - 全局样式
-   风格：青春活力 / 天蓝色主调 / 亲和力
+   风格：微信城市服务 / 清爽可信 / 地点感强 / 交易清楚
    ============================================ */
 
-/* 页面基础样式 - 天蓝青春风格 */
+/* 页面基础样式 - 白底浅灰的城市服务工具风格 */
 page {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  color: #2c3e50;
-  background: linear-gradient(180deg, #f0f8ff 0%, #e6f3ff 50%, #edf7ff 100%);
+  color: #1f2933;
+  background: #f5f7fa;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 28rpx;
@@ -17,63 +17,63 @@ page {
   box-sizing: border-box;
   width: 100%;
 
-  /* CSS变量 - 天蓝色系设计令牌 */
-  /* 主色调 - 天蓝色系 */
-  --sky-primary: #5db8e6;
-  --sky-light: #7ec8e8;
-  --sky-soft: #a8d8f0;
-  --sky-pale: #d4edf7;
-  --sky-dark: #3a9ad2;
-  --sky-deep: #2a7db3;
+  /* CSS 变量 - 微信城市服务感设计令牌 */
+  /* 主色调 - 克制蓝绿 */
+  --sky-primary: #1677d2;
+  --sky-light: #2b8ad8;
+  --sky-soft: #d9ecfb;
+  --sky-pale: #eef7fd;
+  --sky-dark: #0f66bd;
+  --sky-deep: #135fa7;
 
-  /* 辅助色 - 活力点缀 */
-  --vitality-orange: #ff8c69;
-  --vitality-coral: #ff9a8b;
-  --vitality-yellow: #ffd166;
-  --fresh-mint: #6dd5b0;
-  --fresh-green: #88d8a3;
-  --lavender: #b8b8e8;
-  --pink-soft: #ffb6c1;
+  /* 辅助色 - 只用于明确状态和交易信息 */
+  --vitality-orange: #d96a22;
+  --vitality-coral: #e9823a;
+  --vitality-yellow: #e9b949;
+  --fresh-mint: #1f8f7a;
+  --fresh-green: #34a98f;
+  --lavender: #8b96a8;
+  --pink-soft: #d65f76;
 
   /* 背景色 */
-  --bg-primary: #f0f8ff;
-  --bg-secondary: #e6f3ff;
-  --bg-tertiary: #edf7ff;
-  --bg-card: rgba(255, 255, 255, 0.95);
-  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #eef2f6;
+  --bg-tertiary: #fafbfc;
+  --bg-card: #ffffff;
+  --bg-glass: #ffffff;
 
   /* 文字色 - 确保对比度 */
-  --text-primary: #2c3e50;
-  --text-secondary: #4a6572;
-  --text-tertiary: #6b8ba4;
-  --text-light: #8fa8b8;
-  --text-muted: #a8c4d4;
+  --text-primary: #1f2933;
+  --text-secondary: #52616f;
+  --text-tertiary: #7b8794;
+  --text-light: #9aa5b1;
+  --text-muted: #b8c2cc;
   --text-white: #ffffff;
 
   /* 边框色 */
-  --border-color: rgba(93, 184, 230, 0.2);
-  --border-light: rgba(93, 184, 230, 0.12);
+  --border-color: #d9e2ec;
+  --border-light: #e6edf3;
 
   /* 功能色 */
-  --danger-color: #ff6b6b;
+  --danger-color: #d64545;
 
   /* 阴影 */
-  --shadow-sm: 0 2rpx 12rpx rgba(93, 184, 230, 0.08);
-  --shadow-md: 0 4rpx 24rpx rgba(93, 184, 230, 0.12);
-  --shadow-lg: 0 8rpx 40rpx rgba(93, 184, 230, 0.16);
-  --shadow-sky: 0 4rpx 20rpx rgba(93, 184, 230, 0.25);
-  --shadow-orange: 0 4rpx 16rpx rgba(255, 140, 105, 0.3);
-  --shadow-green: 0 4rpx 16rpx rgba(109, 213, 176, 0.35);
-  --shadow-card: 0 10rpx 36rpx rgba(42, 125, 179, 0.08);
-  --shadow-float: 0 16rpx 48rpx rgba(42, 125, 179, 0.12);
+  --shadow-sm: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 6rpx 18rpx rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12rpx 32rpx rgba(15, 23, 42, 0.08);
+  --shadow-sky: 0 4rpx 14rpx rgba(22, 119, 210, 0.18);
+  --shadow-orange: 0 4rpx 14rpx rgba(217, 106, 34, 0.18);
+  --shadow-green: 0 4rpx 14rpx rgba(31, 143, 122, 0.18);
+  --shadow-card: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
+  --shadow-float: 0 12rpx 34rpx rgba(15, 23, 42, 0.12);
 
-  /* 圆角 - 亲和力 */
-  --radius-xs: 12rpx;
-  --radius-sm: 20rpx;
-  --radius-md: 28rpx;
-  --radius-lg: 40rpx;
-  --radius-xl: 56rpx;
-  --radius-xxl: 80rpx;
+  /* 圆角 - 克制、真实小程序质感 */
+  --radius-xs: 8rpx;
+  --radius-sm: 12rpx;
+  --radius-md: 16rpx;
+  --radius-lg: 24rpx;
+  --radius-xl: 32rpx;
+  --radius-xxl: 40rpx;
   --radius-full: 9999rpx;
 
   /* 间距 - 自适应 */
@@ -86,14 +86,11 @@ page {
 }
 
 /* ============================================
-   2026 全站视觉基准：专业信息流 + 清透地图感
+   全站视觉基准：专业信息流 + 克制地点感
    ============================================ */
 .wdd-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(93, 184, 230, 0.14) 0, rgba(93, 184, 230, 0) 34%),
-    radial-gradient(circle at 88% 16%, rgba(109, 213, 176, 0.12) 0, rgba(109, 213, 176, 0) 30%),
-    linear-gradient(180deg, #eef8ff 0%, #f7fbff 42%, #f3f8fc 100%);
+  background: #f5f7fa;
   box-sizing: border-box;
 }
 
@@ -106,18 +103,17 @@ page {
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.26;
+  opacity: 0.14;
   pointer-events: none;
   background:
-    linear-gradient(135deg, transparent 0 45%, rgba(93, 184, 230, 0.24) 45% 46%, transparent 46% 100%),
-    linear-gradient(28deg, transparent 0 58%, rgba(42, 125, 179, 0.14) 58% 59%, transparent 59% 100%),
-    radial-gradient(circle at 78% 22%, rgba(255, 255, 255, 0.55) 0 14rpx, transparent 15rpx);
+    linear-gradient(135deg, transparent 0 45%, rgba(22, 119, 210, 0.16) 45% 46%, transparent 46% 100%),
+    linear-gradient(28deg, transparent 0 58%, rgba(31, 143, 122, 0.1) 58% 59%, transparent 59% 100%);
 }
 
 .wdd-card {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1rpx solid rgba(93, 184, 230, 0.12);
-  border-radius: 32rpx;
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   box-sizing: border-box;
 }
@@ -159,8 +155,8 @@ page {
 .wdd-icon-chip {
   width: 64rpx;
   height: 64rpx;
-  border-radius: 22rpx;
-  background: rgba(93, 184, 230, 0.12);
+  border-radius: var(--radius-md);
+  background: rgba(22, 119, 210, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -173,16 +169,16 @@ page {
 }
 
 .wdd-btn-primary {
-  background: linear-gradient(135deg, #2a7db3 0%, #5db8e6 62%, #7ec8e8 100%);
+  background: #1677d2;
   color: #fff;
-  box-shadow: 0 12rpx 30rpx rgba(93, 184, 230, 0.28);
+  box-shadow: var(--shadow-sky);
   border-radius: var(--radius-full);
 }
 
 .wdd-btn-secondary {
-  background: rgba(255, 255, 255, 0.88);
+  background: #ffffff;
   color: var(--sky-deep);
-  border: 1rpx solid rgba(93, 184, 230, 0.22);
+  border: 1rpx solid var(--border-color);
   border-radius: var(--radius-full);
 }
 
@@ -194,7 +190,7 @@ page {
 
 .wdd-divider {
   height: 1rpx;
-  background: rgba(93, 184, 230, 0.12);
+  background: var(--border-light);
 }
 
 /* 重置默认样式 */
@@ -302,10 +298,10 @@ button::after {
 @keyframes breathe {
   0%,
   100% {
-    box-shadow: 0 0 20rpx rgba(93, 184, 230, 0.3);
+    box-shadow: 0 0 20rpx rgba(22, 119, 210, 0.3);
   }
   50% {
-    box-shadow: 0 0 40rpx rgba(93, 184, 230, 0.5);
+    box-shadow: 0 0 40rpx rgba(22, 119, 210, 0.5);
   }
 }
 
@@ -393,7 +389,7 @@ button::after {
 }
 
 /* ============================================
-   按钮样式 - 天蓝色主调
+   按钮样式 - 克制主色
    ============================================ */
 .btn {
   display: inline-flex;
@@ -412,65 +408,52 @@ button::after {
   transform: scale(0.96);
 }
 
-/* 主按钮 - 天蓝色渐变 */
+/* 主按钮 */
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--sky-primary) 0%,
-    var(--sky-light) 50%,
-    var(--sky-soft) 100%
-  );
+  background: var(--sky-primary);
   color: var(--text-white);
   box-shadow: var(--shadow-sky);
 }
 
 .btn-primary:active {
-  box-shadow: 0 2rpx 12rpx rgba(93, 184, 230, 0.2);
+  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.2);
 }
 
-/* 次要按钮 - 白色玻璃 */
+/* 次要按钮 */
 .btn-secondary {
-  background: var(--bg-glass);
+  background: #ffffff;
   color: var(--sky-deep);
-  border: 2rpx solid rgba(93, 184, 230, 0.3);
+  border: 1rpx solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
-/* 活力橙按钮 */
+/* 交易按钮 */
 .btn-vitality {
-  background: linear-gradient(
-    135deg,
-    var(--vitality-orange) 0%,
-    var(--vitality-coral) 100%
-  );
+  background: var(--vitality-orange);
   color: var(--text-white);
   box-shadow: var(--shadow-orange);
 }
 
-/* 薄荷绿按钮 */
+/* 成功按钮 */
 .btn-fresh {
-  background: linear-gradient(
-    135deg,
-    var(--fresh-mint) 0%,
-    var(--fresh-green) 100%
-  );
+  background: var(--fresh-mint);
   color: var(--text-white);
-  box-shadow: 0 4rpx 20rpx rgba(109, 213, 176, 0.3);
+  box-shadow: var(--shadow-green);
 }
 
 /* ============================================
-   卡片样式 - 圆润亲和
+   卡片样式 - 清爽可信
    ============================================ */
 .card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: 32rpx;
   box-shadow: var(--shadow-sm);
-  border: 2rpx solid rgba(93, 184, 230, 0.1);
+  border: 1rpx solid var(--border-light);
 }
 
 /* ============================================
-   标签样式 - 青春活泼
+   标签样式 - 明确状态
    ============================================ */
 .tag {
   display: inline-flex;
@@ -482,90 +465,57 @@ button::after {
 }
 
 .tag-sky {
-  background: linear-gradient(
-    135deg,
-    rgba(93, 184, 230, 0.2) 0%,
-    rgba(168, 216, 240, 0.15) 100%
-  );
+  background: rgba(22, 119, 210, 0.08);
   color: var(--sky-deep);
 }
 
 .tag-orange {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 140, 105, 0.2) 0%,
-    rgba(255, 154, 139, 0.15) 100%
-  );
-  color: #e86a4a;
+  background: rgba(217, 106, 34, 0.1);
+  color: var(--vitality-orange);
 }
 
 .tag-mint {
-  background: linear-gradient(
-    135deg,
-    rgba(109, 213, 176, 0.2) 0%,
-    rgba(136, 216, 163, 0.15) 100%
-  );
-  color: #3ba882;
+  background: rgba(31, 143, 122, 0.1);
+  color: var(--fresh-mint);
 }
 
 .tag-yellow {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 209, 102, 0.25) 0%,
-    rgba(255, 220, 130, 0.2) 100%
-  );
-  color: #c9941e;
+  background: rgba(233, 185, 73, 0.14);
+  color: #946b00;
 }
 
 /* ============================================
    背景渐变
    ============================================ */
 .bg-sky-gradient {
-  background: linear-gradient(
-    135deg,
-    var(--sky-primary) 0%,
-    var(--sky-light) 50%,
-    var(--sky-soft) 100%
-  );
+  background: var(--sky-primary);
 }
 
 .bg-sky-light {
-  background: linear-gradient(
-    180deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
+  background: var(--bg-primary);
 }
 
 .bg-vitality {
-  background: linear-gradient(
-    135deg,
-    var(--vitality-orange) 0%,
-    var(--vitality-coral) 100%
-  );
+  background: var(--vitality-orange);
 }
 
 .bg-fresh {
-  background: linear-gradient(
-    135deg,
-    var(--fresh-mint) 0%,
-    var(--fresh-green) 100%
-  );
+  background: var(--fresh-mint);
 }
 
 /* ============================================
-   发光效果
+   轻阴影效果
    ============================================ */
 .glow-sky {
-  box-shadow: 0 0 40rpx rgba(93, 184, 230, 0.4);
+  box-shadow: var(--shadow-sky);
 }
 
 .glow-orange {
-  box-shadow: 0 0 40rpx rgba(255, 140, 105, 0.4);
+  box-shadow: var(--shadow-orange);
 }
 
 .glow-mint {
-  box-shadow: 0 0 40rpx rgba(109, 213, 176, 0.4);
+  box-shadow: var(--shadow-green);
 }
 
 /* ============================================
@@ -579,7 +529,7 @@ button::after {
    加载状态
    ============================================ */
 .skeleton {
-  background: linear-gradient(90deg, #e8f4f8 25%, #d4edf7 50%, #e8f4f8 75%);
+  background: linear-gradient(90deg, #eef2f6 25%, #eef7fd 50%, #eef2f6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);

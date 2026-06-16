@@ -19,7 +19,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20rpx 28rpx;
-  background: linear-gradient(90deg, #5DB8E6, #3a8fd4);
+  background: linear-gradient(90deg, #1677D2, #3a8fd4);
   border-radius: 10rpx;
   box-sizing: border-box;
 }
@@ -46,4 +46,43 @@
   color: #999;
   font-size: 26rpx;
   padding: 40rpx 0;
+}
+/* ============================================
+   城市服务风格视觉覆盖：公共状态组件
+   ============================================ */
+.loading-container,
+.empty-container,
+.error-container,
+.loading-card,
+.empty-card,
+.error-card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.loading-icon,
+.empty-icon-wrapper,
+.error-icon-wrapper,
+.empty-circle,
+.error-circle {
+  background: #eef7fd;
+  box-shadow: none;
+  animation: none;
+}
+
+.loading-dot,
+.empty-btn.primary,
+.error-btn.primary {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.empty-btn.secondary,
+.error-btn.secondary {
+  background: #ffffff;
+  color: var(--sky-deep);
+  border: 1rpx solid var(--border-color);
+  box-shadow: none;
 }

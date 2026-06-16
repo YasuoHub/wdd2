@@ -1,5 +1,5 @@
 /* ============================================
-   加载状态组件 - 天蓝色青春活力风格
+   加载状态组件 - 城市服务清爽可信风格
    ============================================ */
 
 .loading-container {
@@ -15,14 +15,14 @@
   padding: 80rpx 40rpx;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 36rpx;
-  box-shadow: 0 4rpx 24rpx rgba(93, 184, 230, 0.1);
+  box-shadow: 0 4rpx 24rpx rgba(22, 119, 210, 0.1);
   margin: 32rpx;
 }
 
 /* 转圈加载 */
 .loading-spinner {
-  border: 4rpx solid rgba(93, 184, 230, 0.2);
-  border-top-color: #5DB8E6;
+  border: 4rpx solid rgba(22, 119, 210, 0.2);
+  border-top-color: #1677D2;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -41,7 +41,7 @@
 .dot {
   width: 16rpx;
   height: 16rpx;
-  background: linear-gradient(135deg, #5DB8E6 0%, #7EC8E8 100%);
+  background: linear-gradient(135deg, #1677D2 0%, #2B8AD8 100%);
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out both;
 }
@@ -74,7 +74,7 @@
 
 .skeleton-item {
   height: 40rpx;
-  background: linear-gradient(90deg, #E8F4F8 25%, #D4EDF7 50%, #E8F4F8 75%);
+  background: linear-gradient(90deg, #E8F4F8 25%, #EEF7FD 50%, #E8F4F8 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 12rpx;
@@ -83,4 +83,43 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+/* ============================================
+   城市服务风格视觉覆盖：公共状态组件
+   ============================================ */
+.loading-container,
+.empty-container,
+.error-container,
+.loading-card,
+.empty-card,
+.error-card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.loading-icon,
+.empty-icon-wrapper,
+.error-icon-wrapper,
+.empty-circle,
+.error-circle {
+  background: #eef7fd;
+  box-shadow: none;
+  animation: none;
+}
+
+.loading-dot,
+.empty-btn.primary,
+.error-btn.primary {
+  background: var(--sky-primary);
+  box-shadow: var(--shadow-sky);
+}
+
+.empty-btn.secondary,
+.error-btn.secondary {
+  background: #ffffff;
+  color: var(--sky-deep);
+  border: 1rpx solid var(--border-color);
+  box-shadow: none;
 }
