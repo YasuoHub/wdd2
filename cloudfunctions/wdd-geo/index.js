@@ -46,7 +46,17 @@ exports.main = async (event) => {
         || result.formatted_addresses?.standard_address
         || result.address
         || '未知位置'
-      return { code: 0, data: { address: addressName, fullResult: result } }
+      const addressComponent = result.address_component || {}
+      return {
+        code: 0,
+        data: {
+          address: addressName,
+          province: addressComponent.province || '',
+          city: addressComponent.city || '',
+          district: addressComponent.district || '',
+          fullResult: result
+        }
+      }
     }
     return { code: -1, message: data.message || '逆编码失败' }
   } catch (err) {

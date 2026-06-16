@@ -135,35 +135,35 @@ function formatBalanceRecord(item) {
     'task_income': {
       title: item.description || '任务收入',
       icon: 'hand-coins',
-      iconColor: '#6DD5B0',
+      iconColor: '#1F8F7A',
       iconBg: 'rgba(7, 193, 96, 0.1)',
       amountType: 'income'
     },
     'task_pay': {
       title: item.description || '任务支付',
       icon: 'credit-card',
-      iconColor: '#FF8C69',
+      iconColor: '#D96A22',
       iconBg: 'rgba(255, 59, 48, 0.1)',
       amountType: 'expense'
     },
     'refund': {
       title: item.description || '退款',
       icon: 'refresh-cw',
-      iconColor: '#6DD5B0',
+      iconColor: '#1F8F7A',
       iconBg: 'rgba(7, 193, 96, 0.1)',
       amountType: 'income'
     },
     'withdraw': {
       title: item.description || '提现',
       icon: 'landmark',
-      iconColor: '#5DB8E6',
+      iconColor: '#1677D2',
       iconBg: 'rgba(255, 59, 48, 0.1)',
       amountType: 'expense'
     },
     'withdraw_fee': {
       title: item.description || '提现手续费',
       icon: 'receipt-text',
-      iconColor: '#FF8C69',
+      iconColor: '#D96A22',
       iconBg: 'rgba(255, 149, 0, 0.1)',
       amountType: 'expense'
     },
@@ -190,7 +190,7 @@ function formatBalanceRecord(item) {
   const typeInfo = typeMap[item.type] || {
     title: item.description || '其他',
     icon: 'circle-dollar-sign',
-    iconColor: item.amount >= 0 ? '#6DD5B0' : '#FF8C69',
+    iconColor: item.amount >= 0 ? '#1F8F7A' : '#D96A22',
     iconBg: 'rgba(153, 153, 153, 0.1)',
     amountType: item.amount >= 0 ? 'income' : 'expense'
   }

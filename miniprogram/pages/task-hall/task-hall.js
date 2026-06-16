@@ -5,30 +5,32 @@ const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 
 // 筛选标签
 const FILTERS = [
-  { id: 'all', name: '全部', icon: 'sparkles', color: '#1178DC' },
-  { id: 'weather', name: '天气', icon: 'cloud-sun', color: '#1178DC' },
-  { id: 'traffic', name: '路况', icon: 'car-front', color: '#11A37F' },
-  { id: 'shop', name: '店铺', icon: 'store', color: '#C58A00' },
-  { id: 'parking', name: '停车', icon: 'square-parking', color: '#1178DC' },
-  { id: 'queue', name: '排队', icon: 'users-round', color: '#FF5B19' },
+  { id: 'all', name: '全部', icon: 'sparkles', color: '#1677D2' },
+  { id: 'weather', name: '天气', icon: 'cloud-sun', color: '#1677D2' },
+  { id: 'traffic', name: '路况', icon: 'car-front', color: '#1F8F7A' },
+  { id: 'shop', name: '店铺', icon: 'store', color: '#946B00' },
+  { id: 'parking', name: '停车', icon: 'square-parking', color: '#1677D2' },
+  { id: 'queue', name: '排队', icon: 'users-round', color: '#D96A22' },
   { id: 'other', name: '其他', icon: 'ellipsis', color: '#4B5563' }
 ]
 
 // 排序选项
 const SORT_OPTIONS = [
-  { value: 'distance', label: '距离最近', icon: 'map-pin', color: '#1178DC' },
-  { value: 'reward', label: '金额最高', icon: 'circle-dollar-sign', color: '#FF5B19' },
-  { value: 'time', label: '时间最新', icon: 'clock-3', color: '#66788F' }
+  { value: 'distance', label: '距离最近', icon: 'map-pin', color: '#1677D2' },
+  { value: 'reward', label: '金额最高', icon: 'circle-dollar-sign', color: '#D96A22' },
+  { value: 'time', label: '时间最新', icon: 'clock-3', color: '#7B8794' }
 ]
 
 // 距离选项
-const DISTANCE_OPTIONS = [
-  { value: 1000, label: '1公里内', icon: 'locate-fixed', color: '#1178DC' },
-  { value: 3000, label: '3公里内', icon: 'route', color: '#1178DC' },
-  { value: 5000, label: '5公里内', icon: 'map-pin', color: '#1178DC' },
-  { value: 10000, label: '10公里内', icon: 'map', color: '#1178DC' },
-  { value: 0, label: '不限距离', icon: 'circle-ellipsis', color: '#66788F' }
+const LIMITED_DISTANCE_OPTIONS = [
+  { value: 1000, label: '1公里内', icon: 'locate-fixed', color: '#1677D2' },
+  { value: 3000, label: '3公里内', icon: 'route', color: '#1677D2' },
+  { value: 5000, label: '5公里内', icon: 'map-pin', color: '#1677D2' },
+  { value: 10000, label: '10公里内', icon: 'map', color: '#1677D2' }
 ]
+const UNLIMITED_DISTANCE_OPTION = { value: 0, label: '不限距离', icon: 'circle-ellipsis', color: '#7B8794' }
+const DISTANCE_OPTIONS = [...LIMITED_DISTANCE_OPTIONS, UNLIMITED_DISTANCE_OPTION]
+const DEFAULT_DISTANCE_OPTION = LIMITED_DISTANCE_OPTIONS[2]
 
 const TYPE_META = FILTERS.reduce((map, item) => {
   map[item.id] = item
@@ -41,8 +43,9 @@ Page({
     activeFilter: 'all',
     sortOptions: SORT_OPTIONS,
     currentSort: SORT_OPTIONS[0],
-    distanceOptions: DISTANCE_OPTIONS,
-    currentDistance: DISTANCE_OPTIONS[2], // 默认5公里
+    distanceOptions: LIMITED_DISTANCE_OPTIONS,
+    currentDistance: DEFAULT_DISTANCE_OPTION, // 默认5公里
+    canUseUnlimitedDistance: false,
     taskList: [],
     totalCount: 0,
     isRefreshing: false,
@@ -87,6 +90,8 @@ Page({
   onShow() {
     // 更新消息角标
     app.updateTabBarBadge()
+    // 用户登录状态或后台权限变更后，刷新距离筛选权限
+    this.refreshDistancePermission()
 
     // 检查是否需要强制刷新
     const forceRefresh = wx.getStorageSync('forceRefreshTaskHall')
@@ -104,6 +109,63 @@ Page({
     if (shouldRefresh) {
       // 从全局同步最新位置并刷新任务列表
       this.syncUserLocationFromGlobal()
+      this.loadTasks(true)
+    }
+  },
+
+  // 刷新距离筛选权限：仅超级管理员和客服可使用“不限距离”
+  async refreshDistancePermission() {
+    app.checkLoginStatus()
+
+    if (!app.globalData.isLoggedIn) {
+      this.applyDistancePermission(false)
+      return
+    }
+
+    try {
+      const [customerServiceRes, superAdminRes] = await Promise.all([
+        wx.cloud.callFunction({
+          name: 'wdd-get-config',
+          data: { action: 'isCustomerService' }
+        }),
+        wx.cloud.callFunction({
+          name: 'wdd-get-config',
+          data: { action: 'isSuperAdmin' }
+        })
+      ])
+
+      const isCustomerService = customerServiceRes.result &&
+        customerServiceRes.result.code === 0 &&
+        customerServiceRes.result.data &&
+        customerServiceRes.result.data.isCustomerService
+      const isSuperAdmin = superAdminRes.result &&
+        superAdminRes.result.code === 0 &&
+        superAdminRes.result.data &&
+        superAdminRes.result.data.isSuperAdmin
+
+      this.applyDistancePermission(!!(isCustomerService || isSuperAdmin))
+    } catch (err) {
+      console.error('刷新距离筛选权限失败:', err)
+      this.applyDistancePermission(false)
+    }
+  },
+
+  applyDistancePermission(canUseUnlimitedDistance) {
+    const wasUnlimited = this.data.currentDistance && this.data.currentDistance.value === 0
+    const nextData = {
+      canUseUnlimitedDistance,
+      distanceOptions: canUseUnlimitedDistance ? DISTANCE_OPTIONS : LIMITED_DISTANCE_OPTIONS
+    }
+
+    if (!canUseUnlimitedDistance && wasUnlimited) {
+      nextData.currentDistance = DEFAULT_DISTANCE_OPTION
+      nextData.showDistancePopup = false
+      nextData.page = 1
+    }
+
+    this.setData(nextData)
+
+    if (!canUseUnlimitedDistance && wasUnlimited) {
       this.loadTasks(true)
     }
   },
@@ -126,7 +188,9 @@ Page({
       const requestData = {
         filter: this.data.activeFilter,
         sort: this.data.currentSort.value,
-        distance: this.data.currentDistance.value,
+        distance: this.data.currentDistance.value === 0 && !this.data.canUseUnlimitedDistance
+          ? DEFAULT_DISTANCE_OPTION.value
+          : this.data.currentDistance.value,
         page: this.data.page,
         pageSize: this.data.pageSize
       }
@@ -164,7 +228,7 @@ Page({
             ...item,
             distanceText,
             typeIcon: item.typeIcon || (TYPE_META[item.type] && TYPE_META[item.type].icon) || 'circle-help',
-            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1178DC'
+            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1677D2'
           }
         })
 

@@ -31,15 +31,15 @@
   <!-- 提示信息 -->
   <view class="tips-section">
     <view class="tip-item">
-      <wdd-icon name="timer" color="#1178DC" size="30"></wdd-icon>
+      <wdd-icon name="timer" color="#1677D2" size="30"></wdd-icon>
       <text class="tip-text">任务有效期内，系统会自动匹配附近的帮助者</text>
     </view>
     <view class="tip-item">
-      <wdd-icon name="message-circle" color="#1178DC" size="30"></wdd-icon>
+      <wdd-icon name="message-circle" color="#1677D2" size="30"></wdd-icon>
       <text class="tip-text">有帮助者接单后，您会收到通知，可立即开始沟通</text>
     </view>
     <view class="tip-item">
-      <wdd-icon name="wallet" color="#FF8C69" size="30"></wdd-icon>
+      <wdd-icon name="wallet" color="#D96A22" size="30"></wdd-icon>
       <text class="tip-text">任务取消后，悬赏金额将原路退回至您的账户</text>
     </view>
   </view>

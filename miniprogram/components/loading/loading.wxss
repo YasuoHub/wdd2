@@ -57,7 +57,7 @@
 
 /* 加载文字 */
 .loading-text {
-  color: #6B8BA4;
+  color: #7B8794;
   margin-top: 24rpx;
   font-weight: 500;
 }

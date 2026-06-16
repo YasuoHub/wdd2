@@ -18,7 +18,7 @@
   <!-- 补充材料模式：任务摘要卡片 -->
   <view class="card task-card" wx:if="{{mode === 'supplement' && taskSummary}}">
     <view class="card-head">
-      <wdd-icon name="clipboard-list" color="#1178DC" size="30"></wdd-icon>
+      <wdd-icon name="clipboard-list" color="#1677D2" size="30"></wdd-icon>
       <text class="card-head-title">任务摘要</text>
     </view>
     <view class="card-body">
@@ -34,7 +34,7 @@
     <view class="card-foot">
       <view class="detail-link" bindtap="goToTaskDetail">
         <text>查看任务详情</text>
-        <wdd-icon name="chevron-right" color="#8FA8B8" size="26"></wdd-icon>
+        <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
       </view>
     </view>
   </view>
@@ -71,14 +71,14 @@
     <view class="card" wx:if="{{mode !== 'supplement'}}">
       <view class="form-group">
         <view class="form-label">
-          <wdd-icon name="tag" color="#1178DC" size="26"></wdd-icon>
+          <wdd-icon name="tag" color="#1677D2" size="26"></wdd-icon>
           <text>举报类型</text>
           <text class="required">*</text>
         </view>
         <picker bindchange="onTypeChange" range="{{reportTypes}}">
           <view class="picker-wrap">
             <text class="picker-text {{selectedTypeValue ? '' : 'placeholder'}}">{{selectedTypeLabel || '请选择举报类型'}}</text>
-            <wdd-icon name="chevron-right" color="#8FA8B8" size="26"></wdd-icon>
+            <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
           </view>
         </picker>
       </view>
@@ -88,7 +88,7 @@
     <view class="card">
       <view class="form-group">
         <view class="form-label">
-          <wdd-icon name="pencil" color="#1178DC" size="26"></wdd-icon>
+          <wdd-icon name="pencil" color="#1677D2" size="26"></wdd-icon>
           <text>{{mode === 'supplement' ? '情况说明' : '举报理由'}}</text>
           <text class="required">*</text>
         </view>
@@ -112,7 +112,7 @@
     <view class="card">
       <view class="form-group">
         <view class="form-label">
-          <wdd-icon name="image-plus" color="#1178DC" size="26"></wdd-icon>
+          <wdd-icon name="image-plus" color="#1677D2" size="26"></wdd-icon>
           <text>证据截图</text>
           <text class="required">*</text>
         </view>
@@ -161,7 +161,7 @@
     <view class="modal-mask" bindtap="hideConfirm"></view>
     <view class="modal-content">
       <view class="modal-icon">
-        <wdd-icon name="triangle-alert" color="#FF8C69" size="48"></wdd-icon>
+        <wdd-icon name="triangle-alert" color="#D96A22" size="48"></wdd-icon>
       </view>
       <view class="modal-title">确认提交举报</view>
       <view class="modal-body">

@@ -23,7 +23,7 @@
       <view class="section-title">提供帮助</view>
       <view class="tag-list">
         <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">
-          <wdd-icon name="{{item.icon}}" color="{{item.color || '#1178DC'}}" size="24"></wdd-icon>
+          <wdd-icon name="{{item.icon}}" color="{{item.color || '#1677D2'}}" size="24"></wdd-icon>
           <text style="margin-left: 8rpx;">{{item.name}}</text>
         </view>
       </view>
@@ -37,9 +37,9 @@
           bindtap="{{item.latitude && item.longitude ? 'goToLocation' : ''}}"
           data-index="{{index}}">
           <view class="location-info">
-            <wdd-icon name="map-pin" color="#6B8BA4" size="24"></wdd-icon>
+            <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
             <text class="location-name">{{item.name || '未知地点'}}</text>
-            <wdd-icon wx:if="{{item.latitude && item.longitude}}" name="chevron-right" color="#8FA8B8" size="24"></wdd-icon>
+            <wdd-icon wx:if="{{item.latitude && item.longitude}}" name="chevron-right" color="#9AA5B1" size="24"></wdd-icon>
           </view>
         </view>
       </view>

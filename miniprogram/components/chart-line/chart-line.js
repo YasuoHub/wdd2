@@ -5,7 +5,7 @@ Component({
     // labels: [线1名称, 线2名称(可选)]
     labels: { type: Array, value: ['', ''] },
     // colors: [线1颜色, 线2颜色(可选)]
-    colors: { type: Array, value: ['#5DB8E6', '#e74c3c'] },
+    colors: { type: Array, value: ['#1677D2', '#e74c3c'] },
     unit: { type: String, value: '' },
     height: { type: Number, value: 440 },
     // 是否显示百分比格式（y轴自动加%）

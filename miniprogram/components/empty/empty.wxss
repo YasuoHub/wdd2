@@ -58,7 +58,7 @@
 /* 描述 */
 .empty-desc {
   font-size: 26rpx;
-  color: #6B8BA4;
+  color: #7B8794;
   text-align: center;
   line-height: 1.6;
   margin-bottom: 40rpx;

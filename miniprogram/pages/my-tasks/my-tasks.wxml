@@ -55,7 +55,7 @@
         <!-- 卡片头部 -->
         <view class="card-header">
           <view class="type-tag" style="background: {{item.bgColor}}; color: {{item.color}};">
-            <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.color || '#1178DC'}}" size="24"></wdd-icon>
+            <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.color || '#1677D2'}}" size="24"></wdd-icon>
             <text>{{item.typeName}}</text>
           </view>
           <view class="status-badge {{item.status}}">{{item.statusText}}</view>
@@ -74,7 +74,7 @@
 
         <!-- 位置信息 -->
         <view class="location-info">
-          <wdd-icon name="map-pin" color="#6B8BA4" size="24"></wdd-icon>
+          <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
           <text class="location-name">{{item.locationName}}</text>
         </view>
 

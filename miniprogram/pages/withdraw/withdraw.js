@@ -191,7 +191,7 @@ Page({
       title: '确认提现',
       content: `确认提现 ¥${amount} 吗？手续费 ¥${this.data.withdrawFee}，实际到账 ¥${this.data.actualAmount}`,
       confirmText: '确认提现',
-      confirmColor: '#5DB8E6',
+      confirmColor: '#1677D2',
       success: async (res) => {
         if (res.confirm) {
           await this.doWithdraw(amount)

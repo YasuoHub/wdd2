@@ -53,7 +53,7 @@
 
     <view wx:elif="{{pendingList.length === 0}}" class="empty-state">
       <view class="empty-illustration">
-        <wdd-icon name="notebook-pen" color="#8FA8B8" size="72"></wdd-icon>
+        <wdd-icon name="notebook-pen" color="#9AA5B1" size="72"></wdd-icon>
       </view>
       <text class="empty-title">暂无处理中的申诉</text>
       <text class="empty-desc">你提交的申诉会显示在这里</text>
@@ -72,7 +72,7 @@
             <text class="reason-text">{{item.reason}}</text>
           </view>
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
-            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1178DC'}}" size="26"></wdd-icon>
+            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1677D2'}}" size="26"></wdd-icon>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
             <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>
@@ -143,7 +143,7 @@
             <text class="reason-text">{{item.reason}}</text>
           </view>
           <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
-            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1178DC'}}" size="26"></wdd-icon>
+            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1677D2'}}" size="26"></wdd-icon>
             <text class="task-type">{{item.taskInfo.typeName}}</text>
             <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
           </view>

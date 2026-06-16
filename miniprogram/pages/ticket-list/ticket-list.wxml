@@ -20,7 +20,7 @@
         <view class="card-body">
           <!-- 标题行 -->
           <view class="card-title-row">
-            <wdd-icon name="{{item.taskIcon || 'clipboard-list'}}" color="{{item.taskIconColor || '#1178DC'}}" size="28"></wdd-icon>
+            <wdd-icon name="{{item.taskIcon || 'clipboard-list'}}" color="{{item.taskIconColor || '#1677D2'}}" size="28"></wdd-icon>
             <text class="card-title text-ellipsis">{{item.taskTitle}}</text>
             <view class="status-tag status-pending">待处理</view>
           </view>
@@ -36,13 +36,13 @@
           </view>
           <!-- 双方用户 -->
           <view class="card-users-row">
-            <view class="user-text"><wdd-icon name="send" color="#1178DC" size="22"></wdd-icon><text>{{item.seekerNickname || '未知'}}</text></view>
+            <view class="user-text"><wdd-icon name="send" color="#1677D2" size="22"></wdd-icon><text>{{item.seekerNickname || '未知'}}</text></view>
             <text class="user-arrow">→</text>
             <view class="user-text"><wdd-icon name="handshake" color="#119B72" size="22"></wdd-icon><text>{{item.takerNickname || '未知'}}</text></view>
           </view>
           <!-- 底部 -->
           <view class="card-footer">
-            <view class="footer-time"><wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon><text>{{item.createTimeFormatted}}</text></view>
+            <view class="footer-time"><wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon><text>{{item.createTimeFormatted}}</text></view>
             <text wx:if="{{item.supplementStatus}}" class="supplement-tag">{{item.supplementStatus}}</text>
           </view>
         </view>
@@ -62,7 +62,7 @@
         <view class="card-body">
           <!-- 标题行 -->
           <view class="card-title-row">
-            <wdd-icon name="{{item.taskIcon || 'clipboard-list'}}" color="{{item.taskIconColor || '#1178DC'}}" size="28"></wdd-icon>
+            <wdd-icon name="{{item.taskIcon || 'clipboard-list'}}" color="{{item.taskIconColor || '#1677D2'}}" size="28"></wdd-icon>
             <text class="card-title text-ellipsis">{{item.taskTitle}}</text>
             <view class="status-tag status-resolved">已处理</view>
           </view>
@@ -78,13 +78,13 @@
           </view>
           <!-- 双方用户 -->
           <view class="card-users-row">
-            <view class="user-text"><wdd-icon name="send" color="#1178DC" size="22"></wdd-icon><text>{{item.seekerNickname || '未知'}}</text></view>
+            <view class="user-text"><wdd-icon name="send" color="#1677D2" size="22"></wdd-icon><text>{{item.seekerNickname || '未知'}}</text></view>
             <text class="user-arrow">→</text>
             <view class="user-text"><wdd-icon name="handshake" color="#119B72" size="22"></wdd-icon><text>{{item.takerNickname || '未知'}}</text></view>
           </view>
           <!-- 底部 -->
           <view class="card-footer">
-            <view class="footer-time"><wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon><text>{{item.createTimeFormatted}}</text></view>
+            <view class="footer-time"><wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon><text>{{item.createTimeFormatted}}</text></view>
           </view>
         </view>
       </view>

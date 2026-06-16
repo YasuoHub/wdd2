@@ -8,7 +8,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon location">
-          <wdd-icon name="map-pinned" color="#1178DC" size="34"></wdd-icon>
+          <wdd-icon name="map-pinned" color="#1677D2" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">求助地点</text>
@@ -19,7 +19,7 @@
       <!-- 已选地点展示 -->
       <view wx:if="{{locationName}}" class="selected-location" bindtap="goToLocationPicker">
         <view class="location-info">
-          <wdd-icon name="map-pin" color="#1178DC" size="28"></wdd-icon>
+          <wdd-icon name="map-pin" color="#1677D2" size="28"></wdd-icon>
           <view class="location-text">
             <text class="location-name">{{locationName}}</text>
             <text wx:if="{{addressDetail}}" class="location-detail">{{addressDetail}}</text>
@@ -37,7 +37,7 @@
           <text class="picker-title">请选择地点 <text class="required-mark">*</text></text>
           <text class="picker-desc">在地图上选择你想了解的位置</text>
         </view>
-        <wdd-icon name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
 
       <!-- 常用地点快捷选择 -->
@@ -59,7 +59,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon type">
-          <wdd-icon name="target" color="#C58A00" size="34"></wdd-icon>
+          <wdd-icon name="target" color="#946B00" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">求助类型</text>
@@ -91,7 +91,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon desc">
-          <wdd-icon name="notebook-pen" color="#FF5B19" size="34"></wdd-icon>
+          <wdd-icon name="notebook-pen" color="#D96A22" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">详细描述</text>
@@ -114,7 +114,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon image">
-          <wdd-icon name="image-plus" color="#1178DC" size="34"></wdd-icon>
+          <wdd-icon name="image-plus" color="#1677D2" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">添加图片</text>
@@ -157,7 +157,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon time">
-          <wdd-icon name="clock-3" color="#11A37F" size="34"></wdd-icon>
+          <wdd-icon name="clock-3" color="#1F8F7A" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">有效时间</text>
@@ -183,7 +183,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon amount">
-          <wdd-icon name="circle-dollar-sign" color="#FF5B19" size="34"></wdd-icon>
+          <wdd-icon name="circle-dollar-sign" color="#D96A22" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">悬赏金额</text>
@@ -212,7 +212,7 @@
           max="{{maxRewardAmount}}"
           step="1"
           value="{{rewardAmount}}"
-          activeColor="#FF8C69"
+          activeColor="#D96A22"
           backgroundColor="#F5EDE4"
           block-size="28"
           bindchange="onAmountChange"
@@ -264,7 +264,7 @@
             bindtap="onSwitchPaymentMethod"
           >
             <view class="payment-option-header">
-              <text class="payment-icon">💰</text>
+              <wdd-icon class="payment-icon" name="wallet" color="#1677D2" size="32"></wdd-icon>
               <text class="payment-name">余额支付</text>
             </view>
             <text class="payment-balance">可用 ¥{{money.format(availableBalance)}}</text>
@@ -275,22 +275,23 @@
             bindtap="onSwitchPaymentMethod"
           >
             <view class="payment-option-header">
-              <text class="payment-icon">💳</text>
+              <wdd-icon class="payment-icon" name="credit-card" color="#1677D2" size="32"></wdd-icon>
               <text class="payment-name">微信支付</text>
             </view>
             <text class="payment-desc">即时到账</text>
           </view>
         </view>
         <view wx:if="{{paymentMethod === 'balance' && !canBalancePay}}" class="balance-insufficient">
-          <text>⚠️ 可用余额不足（当前可用 ¥{{money.format(availableBalance)}}），请选择微信支付</text>
+          <wdd-icon name="triangle-alert" color="#D96A22" size="24"></wdd-icon>
+          <text>可用余额不足（当前可用 ¥{{money.format(availableBalance)}}），请选择微信支付</text>
         </view>
       </view>
 
       <!-- 平台规则提示 -->
       <view class="rules-tip" bindtap="showPlatformRules">
-        <wdd-icon name="info" color="#1178DC" size="28"></wdd-icon>
+        <wdd-icon name="info" color="#1677D2" size="28"></wdd-icon>
         <text class="rules-text">平台规则：{{feePolicy}}。{{refundPolicy}}</text>
-        <wdd-icon name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
 
@@ -322,40 +323,40 @@
       <view class="rules-modal-header">
         <text class="rules-modal-title">平台规则说明</text>
         <view class="rules-modal-close" bindtap="hidePlatformRules">
-          <wdd-icon name="x" color="#6B8BA4" size="26"></wdd-icon>
+          <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
         </view>
       </view>
       <view class="rules-modal-body">
         <view class="rule-item">
-          <wdd-icon name="circle-dollar-sign" color="#FF5B19" size="40"></wdd-icon>
+          <wdd-icon name="circle-dollar-sign" color="#D96A22" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">悬赏支付</text>
             <text class="rule-desc">发布任务时需先支付悬赏金额，支付成功后任务才会上线。</text>
           </view>
         </view>
         <view class="rule-item">
-          <wdd-icon name="chart-column" color="#1178DC" size="40"></wdd-icon>
+          <wdd-icon name="chart-column" color="#1677D2" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">平台服务费</text>
             <text class="rule-desc">平台对每单任务收取{{platformFeeRate}}%服务费，用于平台运营和技术维护。</text>
           </view>
         </view>
         <view class="rule-item">
-          <wdd-icon name="refresh-cw" color="#66788F" size="40"></wdd-icon>
+          <wdd-icon name="refresh-cw" color="#7B8794" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">取消退款</text>
             <text class="rule-desc">任务超时无人接单或手动取消，悬赏金额将原路退回至您的支付账户。</text>
           </view>
         </view>
         <view class="rule-item">
-          <wdd-icon name="circle-check-big" color="#11A37F" size="40"></wdd-icon>
+          <wdd-icon name="circle-check-big" color="#1F8F7A" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">任务完成</text>
             <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入余额。</text>
           </view>
         </view>
         <view class="rule-item">
-          <wdd-icon name="landmark" color="#1178DC" size="40"></wdd-icon>
+          <wdd-icon name="landmark" color="#1677D2" size="40"></wdd-icon>
           <view class="rule-content">
             <text class="rule-title">提现规则</text>
             <text class="rule-desc">余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>

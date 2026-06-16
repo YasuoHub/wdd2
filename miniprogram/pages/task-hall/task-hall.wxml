@@ -25,14 +25,14 @@
     <!-- 排序和距离筛选 -->
     <view class="sub-filter-bar">
       <view class="sort-section" bindtap="showSortOptions">
-        <wdd-icon name="{{currentSort.icon}}" color="#1178DC" size="24"></wdd-icon>
+        <wdd-icon name="{{currentSort.icon}}" color="#1677D2" size="24"></wdd-icon>
         <text class="sort-label">{{currentSort.label}}</text>
-        <wdd-icon name="chevron-down" color="#66788F" size="18"></wdd-icon>
+        <wdd-icon name="chevron-down" color="#7B8794" size="18"></wdd-icon>
       </view>
       <view class="distance-section" bindtap="showDistanceOptions">
-        <wdd-icon name="{{currentDistance.icon}}" color="#1178DC" size="24"></wdd-icon>
+        <wdd-icon name="{{currentDistance.icon}}" color="#1677D2" size="24"></wdd-icon>
         <text class="distance-label">{{currentDistance.label}}</text>
-        <wdd-icon name="chevron-down" color="#66788F" size="18"></wdd-icon>
+        <wdd-icon name="chevron-down" color="#7B8794" size="18"></wdd-icon>
       </view>
     </view>
   </view>
@@ -40,7 +40,7 @@
   <!-- 帮助者资料完善提示 -->
   <view class="helper-profile-tip" wx:if="{{showHelperProfileTip}}">
     <view class="tip-content">
-      <wdd-icon name="lightbulb" color="#C58A00" size="40"></wdd-icon>
+      <wdd-icon name="lightbulb" color="#946B00" size="40"></wdd-icon>
       <view class="tip-text">
         <view class="tip-title">完善帮助者资料</view>
         <view class="tip-desc">设置常去地点和可帮助类型，获取更精准的任务推荐</view>
@@ -93,7 +93,7 @@
           <!-- 头部：类型和积分 -->
           <view class="card-header">
             <view class="type-badge" style="background: {{item.bgColor}}">
-              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || '#1178DC'}}" size="28"></wdd-icon>
+              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || '#1677D2'}}" size="28"></wdd-icon>
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
@@ -107,7 +107,7 @@
 
           <!-- 位置信息 -->
           <view class="card-location">
-            <wdd-icon name="map-pin" color="#66788F" size="24"></wdd-icon>
+            <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
             <text class="location-text">{{item.locationName}}</text>
             <text class="distance-tag">{{item.distanceText}}</text>
           </view>
@@ -119,7 +119,7 @@
               <text class="publisher-name">{{item.userNickname || '匿名用户'}}</text>
             </view>
             <view class="time-info">
-              <wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon>
+              <wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon>
               <text class="time-text">{{item.remainTime}}</text>
             </view>
           </view>
@@ -151,7 +151,7 @@
 
   <!-- 快速回到顶部 -->
   <view wx:if="{{showBackToTop}}" class="back-to-top" bindtap="scrollToTop">
-    <wdd-icon name="arrow-up" color="#1178DC" size="36"></wdd-icon>
+    <wdd-icon name="arrow-up" color="#1677D2" size="36"></wdd-icon>
   </view>
 
   <!-- 排序选项弹窗 -->
@@ -160,7 +160,7 @@
       <view class="popup-header">
         <text class="popup-title">排序方式</text>
         <view class="popup-close" bindtap="hidePopups">
-          <wdd-icon name="x" color="#66788F" size="26"></wdd-icon>
+          <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
         </view>
       </view>
       <view class="popup-options">
@@ -173,7 +173,7 @@
         >
           <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
           <text class="option-label">{{item.label}}</text>
-          <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="#1178DC" size="30"></wdd-icon>
+          <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
         </view>
       </view>
     </view>
@@ -185,7 +185,7 @@
       <view class="popup-header">
         <text class="popup-title">距离范围</text>
         <view class="popup-close" bindtap="hidePopups">
-          <wdd-icon name="x" color="#66788F" size="26"></wdd-icon>
+          <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
         </view>
       </view>
       <view class="popup-options">
@@ -198,7 +198,7 @@
         >
           <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
           <text class="option-label">{{item.label}}</text>
-          <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="#1178DC" size="30"></wdd-icon>
+          <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
         </view>
       </view>
     </view>

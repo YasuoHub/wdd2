@@ -56,9 +56,9 @@
     <!-- 聊天入口 -->
     <view class="section chat-entry" wx:if="{{task}}" bindtap="goToChat">
       <view class="chat-entry-content">
-        <wdd-icon name="message-circle" color="#1178DC" size="32"></wdd-icon>
+        <wdd-icon name="message-circle" color="#1677D2" size="32"></wdd-icon>
         <text class="chat-text">查看双方聊天记录</text>
-        <wdd-icon name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
 

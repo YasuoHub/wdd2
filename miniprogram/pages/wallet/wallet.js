@@ -320,7 +320,7 @@ Page({
       title: '确认申请',
       content: `提现 ¥${amount}（手续费 ¥${this.data.applyFee}，到账 ¥${this.data.applyActual}），单笔超过 ¥${threshold} 需管理员审批，确认提交？`,
       confirmText: '确认申请',
-      confirmColor: '#5DB8E6',
+      confirmColor: '#1677D2',
       success: async (res) => {
         if (res.confirm) {
           await this.doApply(amount)
@@ -377,15 +377,15 @@ Page({
     const title = item.title || ''
     const isIncome = item.amount >= 0
     const fallback = isIncome
-      ? { icon: 'circle-dollar-sign', color: '#6DD5B0', bg: 'rgba(109, 213, 176, 0.14)' }
-      : { icon: 'credit-card', color: '#FF8C69', bg: 'rgba(255, 140, 105, 0.14)' }
+      ? { icon: 'circle-dollar-sign', color: '#1F8F7A', bg: 'rgba(31, 143, 122, 0.14)' }
+      : { icon: 'credit-card', color: '#D96A22', bg: 'rgba(217, 106, 34, 0.14)' }
 
     const iconMap = [
-      { match: '收入', icon: 'hand-coins', color: '#6DD5B0', bg: 'rgba(109, 213, 176, 0.14)' },
-      { match: '支付', icon: 'credit-card', color: '#FF8C69', bg: 'rgba(255, 140, 105, 0.14)' },
-      { match: '退款', icon: 'refresh-cw', color: '#6DD5B0', bg: 'rgba(109, 213, 176, 0.14)' },
-      { match: '提现手续费', icon: 'receipt-text', color: '#FF8C69', bg: 'rgba(255, 140, 105, 0.14)' },
-      { match: '提现', icon: 'landmark', color: '#5DB8E6', bg: 'rgba(93, 184, 230, 0.12)' }
+      { match: '收入', icon: 'hand-coins', color: '#1F8F7A', bg: 'rgba(31, 143, 122, 0.14)' },
+      { match: '支付', icon: 'credit-card', color: '#D96A22', bg: 'rgba(217, 106, 34, 0.14)' },
+      { match: '退款', icon: 'refresh-cw', color: '#1F8F7A', bg: 'rgba(31, 143, 122, 0.14)' },
+      { match: '提现手续费', icon: 'receipt-text', color: '#D96A22', bg: 'rgba(217, 106, 34, 0.14)' },
+      { match: '提现', icon: 'landmark', color: '#1677D2', bg: 'rgba(22, 119, 210, 0.12)' }
     ]
 
     const matched = iconMap.find(meta => title.includes(meta.match)) || fallback

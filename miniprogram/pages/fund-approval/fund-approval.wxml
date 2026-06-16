@@ -44,7 +44,7 @@
           <!-- 底部 -->
           <view class="card-footer">
             <view class="footer-time">
-              <wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon>
+              <wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon>
               <text>{{item.applyTime}}</text>
             </view>
             <view class="approve-btn" bindtap="showApproveModal" data-id="{{item._id}}">审批</view>
@@ -91,7 +91,7 @@
           <!-- 底部 -->
           <view class="card-footer">
             <view class="footer-time">
-              <wdd-icon name="clock-3" color="#8FA8B8" size="22"></wdd-icon>
+              <wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon>
               <text>{{item.applyTime}}</text>
             </view>
             <text wx:if="{{item.approveTime}}" class="footer-approve-time">{{item.approveTime}} 处理</text>

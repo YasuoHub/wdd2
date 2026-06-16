@@ -4,12 +4,12 @@ const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 // 帮助类型选项
 const HELP_TYPES = [
-  { id: 'weather', name: '实时天气', icon: 'cloud-sun', color: '#5DB8E6' },
-  { id: 'traffic', name: '道路拥堵', icon: 'car-front', color: '#FFD166' },
-  { id: 'shop', name: '店铺营业', icon: 'store', color: '#5DB8E6' },
-  { id: 'parking', name: '停车场空位', icon: 'square-parking', color: '#6DD5B0' },
-  { id: 'queue', name: '排队情况', icon: 'users-round', color: '#FF8C69' },
-  { id: 'other', name: '其他', icon: 'ellipsis', color: '#A8C4D4' }
+  { id: 'weather', name: '实时天气', icon: 'cloud-sun', color: '#1677D2' },
+  { id: 'traffic', name: '道路拥堵', icon: 'car-front', color: '#E9B949' },
+  { id: 'shop', name: '店铺营业', icon: 'store', color: '#1677D2' },
+  { id: 'parking', name: '停车场空位', icon: 'square-parking', color: '#1F8F7A' },
+  { id: 'queue', name: '排队情况', icon: 'users-round', color: '#D96A22' },
+  { id: 'other', name: '其他', icon: 'ellipsis', color: '#B8C2CC' }
 ]
 
 Page({

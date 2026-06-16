@@ -47,13 +47,13 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToMyNeeds">
         <view class="menu-icon-wrapper" style="background: rgba(116, 185, 255, 0.15);">
-          <wdd-icon name="send" color="#1178DC" size="36"></wdd-icon>
+          <wdd-icon name="send" color="#1677D2" size="36"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的求助</text>
           <text class="menu-desc">{{myNeedsCount}}个进行中</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToMyTasks">
         <view class="menu-icon-wrapper" style="background: rgba(168, 230, 207, 0.3);">
@@ -63,7 +63,7 @@
           <text class="menu-text">我的接单</text>
           <text class="menu-desc">{{myTasksCount}}个进行中</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -79,7 +79,7 @@
           <text class="menu-text">帮助者资料</text>
           <text class="menu-desc">{{userInfo.help_willingness ? '已完善' : '未设置，点击完善'}}</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -89,13 +89,13 @@
     <view class="menu-list">
       <view class="menu-item" bindtap="goToWallet">
         <view class="menu-icon-wrapper" style="background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 179, 71, 0.15));">
-          <wdd-icon name="wallet" color="#FF8C69" size="38"></wdd-icon>
+          <wdd-icon name="wallet" color="#D96A22" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的钱包</text>
           <text class="menu-desc">余额 ¥{{money.format(userInfo.balance)}}</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToPointRecords">
         <view class="menu-icon-wrapper" style="background: rgba(253, 203, 110, 0.15);">
@@ -105,7 +105,7 @@
           <text class="menu-text">我的积分</text>
           <text class="menu-desc">可兑换免单券、提现免手续费券等权益</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="showInviteModal">
         <view class="menu-icon-wrapper" style="background: rgba(162, 155, 254, 0.15);">
@@ -115,7 +115,7 @@
           <text class="menu-text">邀请好友</text>
           <text class="menu-desc">邀请得积分</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -131,16 +131,16 @@
         <view class="menu-content">
           <text class="menu-text">我的举报</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToMyAppeals">
         <view class="menu-icon-wrapper" style="background: rgba(243, 156, 18, 0.12);">
-          <wdd-icon name="notebook-pen" color="#FF8C69" size="38"></wdd-icon>
+          <wdd-icon name="notebook-pen" color="#D96A22" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的申诉</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -157,7 +157,7 @@
           <text class="menu-text">客服工单处理</text>
           <text class="menu-desc">处理举报和申诉工单</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -174,17 +174,17 @@
           <text class="menu-text">运营分析</text>
           <text class="menu-desc">查看平台运营数据</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToFundApproval">
-        <view class="menu-icon-wrapper" style="background: rgba(93, 184, 230, 0.15);">
-          <wdd-icon name="banknote" color="#1178DC" size="38"></wdd-icon>
+        <view class="menu-icon-wrapper" style="background: rgba(22, 119, 210, 0.12);">
+          <wdd-icon name="banknote" color="#1677D2" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">资金审批</text>
           <text class="menu-desc">处理用户提现申请</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -199,7 +199,7 @@
         <view class="menu-content">
           <text class="menu-text">关于我们</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="showRules">
         <view class="menu-icon-wrapper" style="background: rgba(99, 110, 114, 0.1);">
@@ -208,7 +208,7 @@
         <view class="menu-content">
           <text class="menu-text">积分规则</text>
         </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#8FA8B8" size="28"></wdd-icon>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
   </view>
@@ -230,7 +230,7 @@
   <view class="modal-mask" bindtap="hideInviteModal"></view>
   <view class="modal-content">
     <view class="modal-close" bindtap="hideInviteModal">
-      <wdd-icon name="x" color="#6B8BA4" size="28"></wdd-icon>
+      <wdd-icon name="x" color="#7B8794" size="28"></wdd-icon>
     </view>
     <view class="modal-title">邀请好友</view>
     <view class="invite-content">

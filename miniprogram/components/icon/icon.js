@@ -10,7 +10,7 @@ Component({
     },
     color: {
       type: String,
-      value: '#1178DC'
+      value: '#1677D2'
     },
     size: {
       type: Number,

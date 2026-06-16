@@ -3,12 +3,12 @@ const app = getApp()
 
 // 求助类型配置
 const NEED_TYPES = [
-  { type: 'weather', name: '实时天气', icon: 'cloud-sun', tone: 'blue', color: '#0879E6', lightColor: '#7EC8E8' },
-  { type: 'traffic', name: '道路拥堵', icon: 'car-front', tone: 'green', color: '#13A879', lightColor: '#88D8A3' },
-  { type: 'shop', name: '店铺营业', icon: 'store', tone: 'yellow', color: '#BE8400', lightColor: '#FFE08C' },
-  { type: 'parking', name: '停车空位', icon: 'square-parking', tone: 'blue', color: '#0879E6', lightColor: '#A8D8F0' },
-  { type: 'queue', name: '排队情况', icon: 'users-round', tone: 'orange', color: '#F25B16', lightColor: '#FF9A8B' },
-  { type: 'other', name: '其他', icon: 'ellipsis', tone: 'gray', color: '#374151', lightColor: '#C4D8E5' }
+  { type: 'weather', name: '实时天气', icon: 'cloud-sun', tone: 'blue', color: '#135FA7', lightColor: '#2B8AD8' },
+  { type: 'traffic', name: '道路拥堵', icon: 'car-front', tone: 'green', color: '#13A879', lightColor: '#34A98F' },
+  { type: 'shop', name: '店铺营业', icon: 'store', tone: 'yellow', color: '#BE8400', lightColor: '#F7D57A' },
+  { type: 'parking', name: '停车空位', icon: 'square-parking', tone: 'blue', color: '#135FA7', lightColor: '#D9ECFB' },
+  { type: 'queue', name: '排队情况', icon: 'users-round', tone: 'orange', color: '#F25B16', lightColor: '#E9823A' },
+  { type: 'other', name: '其他', icon: 'ellipsis', tone: 'gray', color: '#374151', lightColor: '#D9E2EC' }
 ]
 
 const TYPE_META = NEED_TYPES.reduce((map, item) => {
@@ -29,6 +29,7 @@ Page({
     quickTypes: NEED_TYPES,
     safeTop: 24,
     currentCity: '当前城市',
+    cityHintText: '当前位置附近的实时求助信息会显示在这里',
     // 刷新控制
     lastRefreshTime: 0,      // 上次刷新时间戳
     refreshInterval: 30000,  // 最小刷新间隔 30秒
@@ -58,35 +59,94 @@ Page({
     this.loadNearbyNeedsWithLocation()
   },
 
-  // 城市名称优先使用已保存的用户资料或定位缓存，未取得时保持中性占位。
+  normalizeCityName(city) {
+    return String(city || '').replace(/市$/, '')
+  },
+
+  setCurrentCity(city) {
+    const cityName = this.normalizeCityName(city)
+    if (!cityName) return false
+
+    this.setData({
+      currentCity: cityName,
+      cityHintText: `${cityName}附近的实时求助信息会显示在这里`
+    })
+    return true
+  },
+
+  // 城市名称优先使用定位缓存，其次使用已保存的用户资料。
   updateCurrentCity() {
     const userInfo = app.globalData.userInfo || wx.getStorageSync('userInfo') || {}
     const userLocation = app.getUserLocation() || {}
     const city = userLocation.city || userInfo.city || userInfo.current_city
 
     if (city) {
-      this.setData({
-        currentCity: String(city).replace(/市$/, '')
-      })
+      return this.setCurrentCity(city)
     }
+
+    return false
   },
 
-  // 带位置获取的任务加载
-  async loadNearbyNeedsWithLocation() {
-    // 如果已登录，先等待位置获取
-    if (app.globalData.isLoggedIn) {
-      let userLocation = app.getUserLocation()
+  // 首页需要展示真实城市：经纬度本身没有城市名，需要通过云函数反向地理编码补齐。
+  async resolveCurrentCity(userLocation) {
+    if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
+      return false
+    }
 
-      // 如果没有位置，尝试获取
-      if (!userLocation) {
-        try {
-          userLocation = await app.updateUserLocation()
-          this.updateCurrentCity()
-        } catch (err) {
-          // 位置获取失败，继续加载任务
+    if (this.updateCurrentCity()) {
+      return true
+    }
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-geo',
+        data: {
+          action: 'reverseGeocode',
+          longitude: Number(userLocation.longitude),
+          latitude: Number(userLocation.latitude)
+        }
+      })
+
+      if (result && result.code === 0 && result.data) {
+        const fullResult = result.data.fullResult || {}
+        const addressComponent = fullResult.address_component || {}
+        const city = result.data.city || addressComponent.city || addressComponent.province || addressComponent.district
+
+        if (city) {
+          app.globalData.userLocation = {
+            ...userLocation,
+            city,
+            province: result.data.province || addressComponent.province || '',
+            district: result.data.district || addressComponent.district || '',
+            address: result.data.address || '',
+            updateTime: userLocation.updateTime || Date.now()
+          }
+          return this.setCurrentCity(city)
         }
       }
+    } catch (err) {
+      console.warn('首页城市解析失败:', err.errMsg || err.message || err)
+    }
 
+    return false
+  },
+
+  // 先获取城市；已登录用户再加载附近任务。
+  async loadNearbyNeedsWithLocation() {
+    let userLocation = app.getUserLocation()
+
+    // 如果没有位置，尝试获取
+    if (!userLocation) {
+      try {
+        userLocation = await app.updateUserLocation()
+      } catch (err) {
+        // 位置获取失败，保留默认城市文案
+      }
+    }
+
+    await this.resolveCurrentCity(userLocation)
+
+    if (app.globalData.isLoggedIn) {
       // 加载任务
       this.loadNearbyNeeds()
     }
@@ -130,11 +190,12 @@ Page({
     if (!userLocation) {
       try {
         userLocation = await app.updateUserLocation()
-        this.updateCurrentCity()
       } catch (err) {
         // 位置获取失败，继续加载任务（会显示"--"）
       }
     }
+
+    await this.resolveCurrentCity(userLocation)
 
     // 重新加载任务
     this.loadNearbyNeeds()
@@ -295,6 +356,7 @@ Page({
         try {
           await app.updateUserLocation()
           userLocation = app.getUserLocation()
+          await this.resolveCurrentCity(userLocation)
         } catch (err) {
           // 如果用户拒绝了权限，显示提示
           if (err.errMsg && err.errMsg.includes('auth')) {
@@ -347,7 +409,7 @@ Page({
             typeName: item.typeName || item.type_name,
             typeIcon: item.typeIcon || item.icon || (TYPE_META[item.type] && TYPE_META[item.type].icon) || 'circle-help',
             iconTone: item.iconTone || (TYPE_META[item.type] && TYPE_META[item.type].tone) || 'blue',
-            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1178DC',
+            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1677D2',
             bgColor: item.bgColor,
             color: item.color,
             description: item.description,

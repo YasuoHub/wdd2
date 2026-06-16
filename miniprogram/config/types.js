@@ -31,12 +31,12 @@ const STATUS_MAP = {
 
 // 任务类型映射
 const TYPE_MAP = {
-  weather: { name: '实时天气', icon: 'cloud-sun', color: '#5DB8E6', bgColor: 'rgba(93, 184, 230, 0.12)' },
-  traffic: { name: '道路拥堵', icon: 'car-front', color: '#FFD166', bgColor: 'rgba(255, 209, 102, 0.16)' },
-  shop: { name: '店铺营业', icon: 'store', color: '#5DB8E6', bgColor: 'rgba(93, 184, 230, 0.1)' },
-  parking: { name: '停车场空位', icon: 'square-parking', color: '#6DD5B0', bgColor: 'rgba(109, 213, 176, 0.14)' },
-  queue: { name: '排队情况', icon: 'users-round', color: '#FF8C69', bgColor: 'rgba(255, 140, 105, 0.14)' },
-  other: { name: '其他', icon: 'ellipsis', color: '#A8C4D4', bgColor: 'rgba(168, 196, 212, 0.14)' }
+  weather: { name: '实时天气', icon: 'cloud-sun', color: '#1677D2', bgColor: 'rgba(22, 119, 210, 0.12)' },
+  traffic: { name: '道路拥堵', icon: 'car-front', color: '#E9B949', bgColor: 'rgba(255, 209, 102, 0.16)' },
+  shop: { name: '店铺营业', icon: 'store', color: '#1677D2', bgColor: 'rgba(22, 119, 210, 0.1)' },
+  parking: { name: '停车场空位', icon: 'square-parking', color: '#1F8F7A', bgColor: 'rgba(31, 143, 122, 0.14)' },
+  queue: { name: '排队情况', icon: 'users-round', color: '#D96A22', bgColor: 'rgba(217, 106, 34, 0.14)' },
+  other: { name: '其他', icon: 'ellipsis', color: '#B8C2CC', bgColor: 'rgba(168, 196, 212, 0.14)' }
 }
 
 module.exports = {

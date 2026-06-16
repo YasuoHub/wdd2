@@ -5,7 +5,7 @@
     <text class="page-title">消息</text>
     <!-- 右上角系统通知铃铛 -->
     <view class="notification-bell" bindtap="openSystemNotifications">
-      <wdd-icon name="bell" color="#1178DC" size="36"></wdd-icon>
+      <wdd-icon name="bell" color="#1677D2" size="36"></wdd-icon>
       <view wx:if="{{systemUnread > 0}}" class="bell-badge">{{systemUnread > 99 ? '99+' : systemUnread}}</view>
     </view>
   </view>
@@ -17,7 +17,7 @@
       bindtap="switchChatTab"
       data-tab="seeker"
     >
-      <wdd-icon name="send" color="{{currentChatTab === 'seeker' ? '#FFFFFF' : '#1178DC'}}" size="26"></wdd-icon>
+      <wdd-icon name="send" color="{{currentChatTab === 'seeker' ? '#FFFFFF' : '#1677D2'}}" size="26"></wdd-icon>
       <text>求助</text>
       <view wx:if="{{seekerChatUnread > 0}}" class="tab-badge">{{seekerChatUnread}}</view>
     </view>
@@ -26,7 +26,7 @@
       bindtap="switchChatTab"
       data-tab="helper"
     >
-      <wdd-icon name="handshake" color="{{currentChatTab === 'helper' ? '#FFFFFF' : '#1178DC'}}" size="28"></wdd-icon>
+      <wdd-icon name="handshake" color="{{currentChatTab === 'helper' ? '#FFFFFF' : '#1677D2'}}" size="28"></wdd-icon>
       <text>帮助</text>
       <view wx:if="{{helperChatUnread > 0}}" class="tab-badge">{{helperChatUnread}}</view>
     </view>
@@ -62,10 +62,10 @@
               <view class="message-nickname">{{item.otherUserNickname}}</view>
               <view class="message-meta-inline">
                 <view class="meta-icon">
-                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || '#1178DC'}}" size="24"></wdd-icon>
+                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || '#1677D2'}}" size="24"></wdd-icon>
                 </view>
                 <view class="meta-location" wx:if="{{item.locationName}}">
-                  <wdd-icon name="map-pin" color="#6B8BA4" size="20"></wdd-icon>
+                  <wdd-icon name="map-pin" color="#7B8794" size="20"></wdd-icon>
                   <text>{{item.locationName}}</text>
                 </view>
                 <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
@@ -113,10 +113,10 @@
               <view class="message-nickname">{{item.otherUserNickname}}</view>
               <view class="message-meta-inline">
                 <view class="meta-icon">
-                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || '#1178DC'}}" size="24"></wdd-icon>
+                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || '#1677D2'}}" size="24"></wdd-icon>
                 </view>
                 <view class="meta-location" wx:if="{{item.locationName}}">
-                  <wdd-icon name="map-pin" color="#6B8BA4" size="20"></wdd-icon>
+                  <wdd-icon name="map-pin" color="#7B8794" size="20"></wdd-icon>
                   <text>{{item.locationName}}</text>
                 </view>
                 <view class="message-status {{item.needStatus}}">{{item.statusText}}</view>
@@ -145,14 +145,14 @@
     <view class="modal-header">
       <text class="modal-title">系统通知</text>
       <view class="modal-close" bindtap="closeSystemNotifications">
-        <wdd-icon name="x" color="#6B8BA4" size="26"></wdd-icon>
+        <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
       </view>
     </view>
 
     <scroll-view class="modal-body" scroll-y enhanced show-scrollbar="{{false}}">
       <view wx:if="{{systemList.length === 0}}" class="modal-empty">
         <view class="modal-empty-icon">
-          <wdd-icon name="bell" color="#8FA8B8" size="70"></wdd-icon>
+          <wdd-icon name="bell" color="#9AA5B1" size="70"></wdd-icon>
         </view>
         <view class="modal-empty-text">暂无系统通知</view>
       </view>
@@ -166,7 +166,7 @@
           data-item="{{item}}"
         >
           <view class="system-icon-wrapper">
-            <wdd-icon name="{{item.icon}}" color="{{item.iconColor || '#1178DC'}}" size="40"></wdd-icon>
+            <wdd-icon name="{{item.icon}}" color="{{item.iconColor || '#1677D2'}}" size="40"></wdd-icon>
           </view>
           <view class="system-info">
             <view class="system-top">

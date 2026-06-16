@@ -2,6 +2,7 @@
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
   <view class="hero {{!isLoggedIn ? 'hero-guest' : ''}}" style="padding-top: {{safeTop}}px;">
+    <image class="hero-bg-map" src="/images/bg-city-map.png" mode="aspectFill"></image>
     <view class="map-grid map-grid-a"></view>
     <view class="map-grid map-grid-b"></view>
     <view class="map-water"></view>
@@ -25,7 +26,7 @@
 
     <view wx:if="{{!isLoggedIn}}" class="hero-login-card">
       <view class="hero-login-icon">
-        <wdd-icon name="circle-user-round" color="#1178DC" size="46"></wdd-icon>
+        <wdd-icon name="circle-user-round" color="#1677D2" size="46"></wdd-icon>
       </view>
       <view class="hero-login-copy">
         <text class="hero-login-title">欢迎来到问当地</text>
@@ -45,23 +46,23 @@
       <view class="primary-action" bindtap="goToPublish">
         <view class="primary-main">
           <view class="action-icon primary">
-            <wdd-icon name="send" color="#1594E8" size="48"></wdd-icon>
+            <wdd-icon name="send" color="#1677D2" size="48"></wdd-icon>
           </view>
           <text class="action-title">发布求助</text>
         </view>
         <view class="primary-footer">
           <text class="action-desc">想问什么，当地人帮你确认</text>
           <view class="primary-arrow">
-            <wdd-icon name="chevron-right" color="#1594E8" size="30"></wdd-icon>
+            <wdd-icon name="chevron-right" color="#1677D2" size="30"></wdd-icon>
           </view>
         </view>
       </view>
       <view class="secondary-action" bindtap="goToTaskHall">
         <view class="action-icon secondary">
-          <wdd-icon name="users-round" color="#1178DC" size="42"></wdd-icon>
+          <wdd-icon name="users-round" color="#1677D2" size="42"></wdd-icon>
         </view>
         <text class="secondary-title">去大厅接单</text>
-        <wdd-icon name="chevron-right" color="#1594E8" size="26"></wdd-icon>
+        <wdd-icon name="chevron-right" color="#1677D2" size="26"></wdd-icon>
       </view>
     </view>
   </view>
@@ -93,7 +94,7 @@
         <view class="section-title-row">
           <text class="section-title">附近求助</text>
           <view class="distance-tag">
-            <wdd-icon name="map-pin" color="#1178DC" size="26"></wdd-icon>
+            <wdd-icon name="map-pin" color="#1677D2" size="26"></wdd-icon>
             <text>5公里内</text>
           </view>
         </view>
@@ -106,10 +107,10 @@
 
     <view wx:if="{{!isLoggedIn}}" class="login-tip-card wdd-card">
       <view class="state-icon">
-        <wdd-icon name="lock-keyhole" color="#1178DC" size="46"></wdd-icon>
+        <wdd-icon name="lock-keyhole" color="#1677D2" size="46"></wdd-icon>
       </view>
       <view class="empty-text">登录后查看附近任务</view>
-      <view class="empty-hint">成都地区的实时求助信息会显示在这里</view>
+      <view class="empty-hint">{{cityHintText}}</view>
     </view>
 
     <loading wx:elif="{{nearbyLoading}}" type="card" text="正在搜索附近任务..." mode="spinner" size="64"></loading>
@@ -127,14 +128,14 @@
         <view class="need-main">
           <view class="need-layout">
             <view class="need-type-icon type-{{item.type}}">
-              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || item.color || '#1178DC'}}" size="50"></wdd-icon>
+              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || item.color || '#1677D2'}}" size="50"></wdd-icon>
             </view>
             <view class="need-body">
               <view class="need-content">{{item.description || '暂无详细描述'}}</view>
               <view class="need-type-label">{{item.typeName}}</view>
               <view class="need-meta">
                 <view class="meta-item location-item">
-                  <wdd-icon name="map-pin" color="#66788F" size="24"></wdd-icon>
+                  <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
                   <text class="location-name">{{item.locationName}}</text>
                   <text wx:if="{{item.distanceText}}" class="distance-text">{{item.distanceText}}</text>
                 </view>
@@ -144,11 +145,11 @@
               <text class="need-amount" wx:if="{{item.rewardAmount > 0}}">¥{{money.format(item.rewardAmount)}}</text>
               <text class="need-amount" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
               <view class="meta-item time-item">
-                <wdd-icon name="clock-3" color="#66788F" size="24"></wdd-icon>
+                <wdd-icon name="clock-3" color="#7B8794" size="24"></wdd-icon>
                 <text>{{item.remainTime}}</text>
               </view>
               <view class="row-arrow-wrap">
-                <wdd-icon name="chevron-right" color="#66788F" size="28"></wdd-icon>
+                <wdd-icon name="chevron-right" color="#7B8794" size="28"></wdd-icon>
               </view>
             </view>
           </view>

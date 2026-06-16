@@ -22,6 +22,17 @@
   box-sizing: border-box;
 }
 
+.hero-bg-map {
+  position: absolute;
+  z-index: 0;
+  top: 36rpx;
+  right: -64rpx;
+  width: 750rpx;
+  height: 520rpx;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
 .topbar,
 .hero-copy,
 .hero-login-card,
@@ -45,7 +56,7 @@
   right: -80rpx;
   width: 620rpx;
   height: 466rpx;
-  opacity: 0.78;
+  opacity: 0.18;
   background-color: rgba(223, 241, 252, 0.72);
 }
 
@@ -54,7 +65,7 @@
   right: -130rpx;
   width: 520rpx;
   height: 306rpx;
-  opacity: 0.45;
+  opacity: 0.12;
   transform: rotate(18deg);
 }
 
@@ -210,7 +221,7 @@
 }
 
 .hero-login-subtitle {
-  color: #66788f;
+  color: var(--text-tertiary);
   font-size: 22rpx;
   line-height: 1.35;
 }
@@ -247,7 +258,7 @@
 .map-pulse {
   position: absolute !important;
   right: 110rpx;
-  top: 278rpx;
+  top: 364rpx;
   width: 124rpx;
   height: 124rpx;
   border: 22rpx solid rgba(21, 148, 232, 0.08);
@@ -595,7 +606,7 @@
 
 .meta-item {
   gap: 7rpx;
-  color: #66788f;
+  color: var(--text-tertiary);
   font-size: 24rpx;
   line-height: 1;
 }

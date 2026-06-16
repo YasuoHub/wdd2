@@ -8,6 +8,22 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 const $ = db.command.aggregate
+const DEFAULT_PUBLIC_DISTANCE = 5000
+
+async function canUseUnlimitedDistance(OPENID) {
+  if (!OPENID) return false
+
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
+    const config = configRes && configRes.data ? configRes.data : {}
+    const customerServiceOpenids = config.customer_service_openids || []
+    const superAdminOpenids = config.super_admin_openids || []
+    return customerServiceOpenids.includes(OPENID) || superAdminOpenids.includes(OPENID)
+  } catch (err) {
+    console.error('判断不限距离权限失败:', err)
+    return false
+  }
+}
 
 // 批量获取用户头像和昵称
 async function batchGetUserMap(userIds) {
@@ -77,6 +93,16 @@ async function getPublicNeeds(event, OPENID) {
       }
     } catch (err) {
       console.error('获取用户资料失败:', err)
+    }
+  }
+
+  const hasDistanceParam = distance !== undefined && distance !== null && distance !== ''
+  let effectiveDistance = hasDistanceParam ? Number(distance) : distance
+  if (hasDistanceParam && Number.isFinite(effectiveDistance) && effectiveDistance === 0) {
+    const allowedUnlimitedDistance = await canUseUnlimitedDistance(OPENID)
+    if (!allowedUnlimitedDistance) {
+      console.log('普通用户请求不限距离，已按默认5公里处理')
+      effectiveDistance = DEFAULT_PUBLIC_DISTANCE
     }
   }
 
@@ -170,10 +196,10 @@ async function getPublicNeeds(event, OPENID) {
   }
 
   // 距离筛选（无论是否有用户位置，只要传入了distance参数就进行筛选）
-  // distance > 0 表示需要筛选，distance = 0 表示全部距离
-  if (distance > 0) {
-    console.log('执行距离筛选:', distance, '米，筛选前数量:', list.length)
-    list = list.filter(item => item.distance <= distance)
+  // distance > 0 表示需要筛选，distance = 0 仅超级管理员/客服表示全部距离
+  if (hasDistanceParam && Number.isFinite(effectiveDistance) && effectiveDistance > 0) {
+    console.log('执行距离筛选:', effectiveDistance, '米，筛选前数量:', list.length)
+    list = list.filter(item => item.distance <= effectiveDistance)
     console.log('筛选后数量:', list.length)
   }
 

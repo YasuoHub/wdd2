@@ -22,7 +22,7 @@
       <!-- 类型 + 悬赏金额 同排 -->
       <view class="info-header">
         <view class="type-tag" style="background: {{task.bgColor}}; color: {{task.color}};">
-          <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="{{task.color || '#1178DC'}}" size="24"></wdd-icon>
+          <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="{{task.color || '#1677D2'}}" size="24"></wdd-icon>
           <text>{{task.typeName}}</text>
         </view>
 
@@ -58,9 +58,9 @@
       <view class="location-section">
         <text class="section-title">求助位置</text>
         <view class="location-box" bindtap="previewLocation">
-          <wdd-icon name="map-pin" color="#6B8BA4" size="26"></wdd-icon>
+          <wdd-icon name="map-pin" color="#7B8794" size="26"></wdd-icon>
           <text class="location-name">{{task.locationName || '未知位置'}}</text>
-          <wdd-icon name="chevron-right" color="#8FA8B8" size="26"></wdd-icon>
+          <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
         </view>
         <view class="order-id-block">
           <text class="order-id-label">任务单号</text>
@@ -74,7 +74,7 @@
       <!-- 求助者信息 -->
       <view class="user-section">
         <view class="section-title title-with-icon">
-          <wdd-icon name="send" color="#1178DC" size="28"></wdd-icon>
+          <wdd-icon name="send" color="#1677D2" size="28"></wdd-icon>
           <text>求助者</text>
         </view>
         <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.user_id}}">
@@ -103,7 +103,7 @@
 
       <!-- 等待接单提示（仅求助者可见） -->
       <view wx:if="{{task.status === 'pending' && isSeeker}}" class="waiting-tip">
-        <wdd-icon name="hourglass" color="#FF8C69" size="24"></wdd-icon>
+        <wdd-icon name="hourglass" color="#D96A22" size="24"></wdd-icon>
         <text>等待附近帮助者接单...</text>
       </view>
     </view>

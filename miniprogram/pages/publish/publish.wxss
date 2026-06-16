@@ -84,7 +84,7 @@
 
 .section-subtitle {
   font-size: 24rpx;
-  color: #66788f;
+  color: var(--text-tertiary);
 }
 
 /* 地点选择触发器 */
@@ -1050,7 +1050,9 @@
 }
 
 .payment-icon {
-  font-size: 32rpx;
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
 }
 
 .payment-name {
@@ -1068,6 +1070,9 @@
 }
 
 .balance-insufficient {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
   margin-top: 12rpx;
   padding: 12rpx 16rpx;
   background: rgba(230, 126, 34, 0.08);

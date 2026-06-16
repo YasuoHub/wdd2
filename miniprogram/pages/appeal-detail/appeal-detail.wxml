@@ -47,7 +47,7 @@
     <view class="section">
       <view class="task-link-btn" bindtap="goToTask" hover-class="task-link-btn-hover">
         <text>查看关联任务</text>
-        <wdd-icon name="chevron-right" color="#8FA8B8" size="26"></wdd-icon>
+        <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
       </view>
     </view>
 

@@ -40,12 +40,12 @@ Page({
       const rating = user.rating || 5.0
       // help_types 英文 id 映射为中文名称和图标
       const HELP_TYPE_MAP = {
-        weather: { name: '实时天气', icon: 'cloud-sun', color: '#5DB8E6' },
-        traffic: { name: '道路拥堵', icon: 'car-front', color: '#FFD166' },
-        shop: { name: '店铺营业', icon: 'store', color: '#5DB8E6' },
-        parking: { name: '停车场空位', icon: 'square-parking', color: '#6DD5B0' },
-        queue: { name: '排队情况', icon: 'users-round', color: '#FF8C69' },
-        other: { name: '其他', icon: 'ellipsis', color: '#A8C4D4' }
+        weather: { name: '实时天气', icon: 'cloud-sun', color: '#1677D2' },
+        traffic: { name: '道路拥堵', icon: 'car-front', color: '#E9B949' },
+        shop: { name: '店铺营业', icon: 'store', color: '#1677D2' },
+        parking: { name: '停车场空位', icon: 'square-parking', color: '#1F8F7A' },
+        queue: { name: '排队情况', icon: 'users-round', color: '#D96A22' },
+        other: { name: '其他', icon: 'ellipsis', color: '#B8C2CC' }
       }
       const helpTypes = (user.help_types || []).map(id => HELP_TYPE_MAP[id] || { name: id, icon: '' })
 
