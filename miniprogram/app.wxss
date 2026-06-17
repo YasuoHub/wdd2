@@ -49,6 +49,7 @@ page {
   --vitality-orange: #d96a22;
   --vitality-coral: #e9823a;
   --vitality-yellow: #e9b949;
+  --money-gold: #c9941e;
   --fresh-mint: #1f8f7a;
   --fresh-green: #34a98f;
   --lavender: #8b96a8;
@@ -314,6 +315,47 @@ page {
   font-weight: 400;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
+}
+
+.money-prefix,
+.money-text {
+  display: inline-block;
+  color: var(--money-gold) !important;
+  font: inherit;
+  font-size: 1.12em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-fill-color: var(--money-gold) !important;
+}
+
+.money-prefix {
+  margin-right: 2rpx;
+}
+
+.money-text {
+  margin-left: 7rpx;
+}
+
+.balance-amount .amount-number,
+.amount-input-wrapper .amount-input {
+  color: var(--money-gold) !important;
+  -webkit-text-fill-color: var(--money-gold) !important;
+}
+
+.menu-desc-money,
+.payment-balance-money,
+.balance-insufficient-text,
+.record-balance-money,
+.apply-balance-money,
+.approval-copy,
+.rule-desc-money,
+.rule-text-money,
+.approve-label-money,
+.task-reward-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  flex-wrap: wrap;
 }
 
 .wdd-divider {

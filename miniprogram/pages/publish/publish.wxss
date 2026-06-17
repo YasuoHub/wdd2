@@ -787,6 +787,14 @@ page {
   color: var(--vitality-orange);
 }
 
+.amount-range-value,
+.quick-amount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
 /* 快捷金额 */
 .quick-amounts {
   display: flex;

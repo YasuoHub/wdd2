@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "bottom-sheet": "/components/bottom-sheet/bottom-sheet"
+  },
   "navigationBarTitleText": "我的钱包",
   "navigationBarBackgroundColor": "#F5F7FA",
   "navigationBarTextStyle": "black",

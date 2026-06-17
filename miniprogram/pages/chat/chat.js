@@ -727,8 +727,8 @@ Page({
     let displayContent = msg.content
     if (msg.type === 'system' && msg.system_type === 'task_completed' && typeof msg.amount === 'number') {
       displayContent = this.data.isSeeker
-        ? `任务已完成，¥${msg.amount}已计入对方的余额`
-        : `任务已完成，¥${msg.amount}已计入您的余额`
+        ? `任务已完成，${msg.amount}元已计入对方的余额`
+        : `任务已完成，${msg.amount}元已计入您的余额`
     }
     if (msg.type === 'system' && msg.system_type === 'report_filed') {
       if (this.data.userInfo && msg.sender_id === this.data.userInfo._id) {

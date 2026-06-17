@@ -6,7 +6,7 @@
   <view class="balance-section">
     <text class="balance-label">可提现余额</text>
     <view class="balance-amount">
-      <text class="amount-symbol">¥</text>
+      <wdd-icon name="coins" color="var(--money-gold)" size="42"></wdd-icon>
       <text class="amount-number">{{money.format(balance)}}</text>
     </view>
   </view>
@@ -14,7 +14,7 @@
   <!-- 关联申请提示 -->
   <view wx:if="{{application}}" class="application-notice">
     <text class="notice-text">审批通过的提现申请</text>
-    <text class="notice-amount">¥{{money.format(application.amount)}}</text>
+    <view class="notice-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(application.amount)}}</text></view>
   </view>
 
   <!-- 提现金额输入 -->
@@ -26,7 +26,7 @@
     </view>
 
     <view class="amount-input-wrapper">
-      <text class="input-symbol">¥</text>
+      <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon>
       <input
         class="amount-input {{application ? 'locked' : ''}}"
         type="digit"
@@ -48,16 +48,16 @@
   <view class="detail-section">
     <view class="detail-row">
       <text class="detail-label">提现金额</text>
-      <text class="detail-value">¥{{money.format(withdrawAmount || 0)}}</text>
+      <view class="detail-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawAmount || 0)}}</text></view>
     </view>
     <view class="detail-row">
       <text class="detail-label">手续费（{{withdrawFeeRate}}%）</text>
-      <text class="detail-value fee">-¥{{money.format(withdrawFee)}}</text>
+      <view class="detail-value fee"><text class="money-prefix">-</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawFee)}}</text></view>
     </view>
     <view class="detail-divider"></view>
     <view class="detail-row total">
       <text class="detail-label">实际到账</text>
-      <text class="detail-value actual">¥{{money.format(actualAmount)}}</text>
+      <view class="detail-value actual"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(actualAmount)}}</text></view>
     </view>
   </view>
 
@@ -66,11 +66,11 @@
     <view class="rules-title">提现规则</view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">最低提现金额：¥{{money.format(withdrawMinAmount)}}</text>
+      <view class="rule-text rule-text-money"><text>最低提现金额：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinAmount)}}</text></view>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">单次最低：¥{{money.format(withdrawMinPerRequest)}}，最高：¥{{money.format(withdrawMaxPerRequest)}}</text>
+      <view class="rule-text rule-text-money"><text>单次最低：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text></view>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
@@ -78,11 +78,11 @@
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">单笔超过¥{{money.format(withdrawApprovalThreshold)}}需审批，不超过即时到账</text>
+      <view class="rule-text rule-text-money"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>需审批，不超过即时到账</text></view>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">单日提现上限：¥{{money.format(withdrawDailyLimit)}}，每日最多{{withdrawDailyTimes}}次</text>
+      <view class="rule-text rule-text-money"><text>单日提现上限：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多{{withdrawDailyTimes}}次</text></view>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>

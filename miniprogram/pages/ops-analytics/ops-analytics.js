@@ -252,7 +252,8 @@ Page({
           ...r,
           _typeName: FLOW_TYPE_MAP[r.type] || r.type || '未知',
           _time: this._formatDateTime(r.create_time),
-          _amountText: (r.amount || 0) >= 0 ? `+¥${this._fmtMoney(r.amount || 0)}` : `-¥${this._fmtMoney(Math.abs(r.amount || 0))}`
+          _amountPrefix: (r.amount || 0) >= 0 ? '+' : '-',
+          _amountAbsText: this._fmtMoney(Math.abs(r.amount || 0))
         }))
 
         const existing = page === 1 ? [] : this.data.fundFlowDetails

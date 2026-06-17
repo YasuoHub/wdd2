@@ -25,7 +25,7 @@
       </view>
       <view class="info-row">
         <text class="label">悬赏</text>
-        <text class="value">¥{{money.format(task.rewardAmount)}}</text>
+        <view class="value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(task.rewardAmount)}}</text></view>
       </view>
       <view class="info-row">
         <text class="label">位置</text>

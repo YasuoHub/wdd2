@@ -13,7 +13,7 @@
 .detail-card {
   position: relative;
   z-index: 1;
-  margin: 0 28rpx 18rpx;
+  margin: 0 28rpx 42rpx;
   padding: 32rpx 30rpx;
   background: #FFFFFF;
   border: 1rpx solid rgba(226, 232, 240, 0.92);

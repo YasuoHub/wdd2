@@ -870,7 +870,7 @@
 /* 聊天页专属任务摘要栏：避免被通用任务卡样式破坏 */
 .chat-container.wdd-page > view.task-card-wrapper {
   position: relative;
-  z-index: 9000;
+  z-index: 9000 !important;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.98);
   border-bottom: 1rpx solid var(--border-light);
@@ -966,9 +966,34 @@
   color: var(--text-tertiary);
   font-size: 23rpx;
   line-height: 1.35;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  overflow: hidden;
+}
+
+.chat-container .task-location-inline {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chat-container .task-reward-inline {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  white-space: nowrap;
+}
+
+.chat-container .task-meta-dot {
+  width: 6rpx;
+  height: 6rpx;
+  margin-right: 4rpx;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.72;
 }
 
 .chat-container .more-btn {

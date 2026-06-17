@@ -131,7 +131,7 @@
               <text>{{item.typeName}}</text>
             </view>
             <view class="need-reward">
-              <text class="need-amount" wx:if="{{item.rewardAmount > 0}}">￥{{money.format(item.rewardAmount)}}</text>
+              <view class="need-amount" wx:if="{{item.rewardAmount > 0}}"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.rewardAmount)}}</text></view>
               <text class="need-amount points" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
             </view>
           </view>

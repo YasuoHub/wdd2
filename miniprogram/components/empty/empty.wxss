@@ -135,7 +135,6 @@
 .error-icon-wrapper,
 .empty-circle,
 .error-circle {
-  background: #eef7fd;
   box-shadow: none;
   animation: none;
 }

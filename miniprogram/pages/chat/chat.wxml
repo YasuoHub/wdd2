@@ -17,8 +17,8 @@
               <text class="task-status-pill status-{{task.status}}">{{task.statusText}}</text>
             </view>
             <view class="task-meta-line">
-              <text>{{task.locationName || '任务地点'}}</text>
-              <text wx:if="{{task.rewardAmount > 0}}"> · 悬赏 ¥{{money.format(task.rewardAmount || 0)}}</text>
+              <text class="task-location-inline">{{task.locationName || '任务地点'}}</text>
+              <view wx:if="{{task.rewardAmount > 0}}" class="task-reward-inline"><view class="task-meta-dot"></view><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(task.rewardAmount || 0)}}</text></view>
             </view>
           </view>
         </view>

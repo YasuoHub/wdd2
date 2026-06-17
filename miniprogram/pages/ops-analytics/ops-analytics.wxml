@@ -32,7 +32,7 @@
       </view>
       <view class="kpi-card">
         <text class="kpi-label">平台收入</text>
-        <text class="kpi-value accent-blue">¥{{kpi.platformRevenueText}}</text>
+        <view class="kpi-value accent-blue"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{kpi.platformRevenueText}}</text></view>
       </view>
       <view class="kpi-card">
         <text class="kpi-label">新增用户</text>
@@ -151,7 +151,7 @@
               <text class="flow-type">{{item._typeName}}</text>
               <text class="flow-time">{{item._time}}</text>
             </view>
-            <text class="flow-amount {{item.amount > 0 ? 'income' : 'expense'}}">{{item._amountText}}</text>
+            <view class="flow-amount {{item.amount > 0 ? 'income' : 'expense'}}"><text class="money-prefix">{{item._amountPrefix}}</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{item._amountAbsText}}</text></view>
           </view>
           <view wx:if="{{fundFlowDetails.length === 0}}" class="empty-tip">暂无流水记录</view>
           <view wx:if="{{fundFlowHasMore}}" class="load-more" bindtap="loadMoreFlow">加载更多</view>

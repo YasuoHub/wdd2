@@ -18,7 +18,7 @@
     <view class="info-divider"></view>
     <view class="info-row">
       <text class="info-label">悬赏金额</text>
-      <text class="info-value amount">¥{{money.format(amount)}}</text>
+      <view class="info-value amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(amount)}}</text></view>
     </view>
     <view class="info-divider"></view>
     <view class="info-row">
@@ -28,17 +28,16 @@
   </view>
 
   <view class="tips-section content-card">
-    <view class="card-title">下一步提示</view>
     <view class="tip-item">
       <view class="tip-icon">
-        <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="34"></wdd-icon>
+        <wdd-icon name="clipboard-list" color="#8A9AAF" size="34"></wdd-icon>
       </view>
       <text class="tip-text">任务有效期内，附近帮助者可在任务大厅响应求助</text>
     </view>
     <view class="tip-divider"></view>
     <view class="tip-item">
       <view class="tip-icon">
-        <wdd-icon name="bell" color="var(--brand-primary)" size="34"></wdd-icon>
+        <wdd-icon name="bell" color="#8A9AAF" size="34"></wdd-icon>
       </view>
       <text class="tip-text">有帮助者响应后，您会收到通知，可立即开始沟通</text>
     </view>

@@ -88,8 +88,7 @@
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <wdd-icon name="circle-dollar-sign" color="var(--vitality-orange)" size="22"></wdd-icon>
-              <text class="amount-value">¥{{money.format(item.rewardAmount || item.points / 10)}}</text>
+              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.rewardAmount || item.points / 10)}}</text></view>
             </view>
           </view>
 

@@ -189,7 +189,7 @@ Page({
     // 二次确认
     wx.showModal({
       title: '确认提现',
-      content: `确认提现 ¥${amount} 吗？手续费 ¥${this.data.withdrawFee}，实际到账 ¥${this.data.actualAmount}`,
+      content: `确认提现金额 ${amount} 元吗？手续费 ${this.data.withdrawFee} 元，实际到账 ${this.data.actualAmount} 元`,
       confirmText: '确认提现',
       confirmColor: '#1677D2',
       success: async (res) => {

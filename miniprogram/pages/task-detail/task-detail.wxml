@@ -31,8 +31,7 @@
           <text>{{task.statusText}}</text>
         </view>
         <view class="reward">
-          <text class="reward-symbol">¥</text>
-          <text class="reward-value">{{money.format(task.rewardAmount || 0)}}</text>
+          <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon><text class="money-text">{{money.format(task.rewardAmount || 0)}}</text>
         </view>
       </view>
 
@@ -161,7 +160,7 @@
       class="action-btn primary full"
       bindtap="takeTask"
     >
-      去帮助 +¥{{money.format(task._takerIncome)}}
+      <text>去帮助</text><text class="money-prefix">+</text><wdd-icon name="coins" color="var(--money-gold)" size="28"></wdd-icon><text class="money-text">{{money.format(task._takerIncome)}}</text>
     </button>
 
     <button

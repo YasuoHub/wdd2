@@ -35,6 +35,9 @@ Page({
     // 申请记录
     applications: [],
     appLoading: false,
+    appHasMore: true,
+    appPage: 0,
+    appPageSize: 20,
 
     // 申请提现弹窗
     showApplyModal: false,
@@ -57,14 +60,14 @@ Page({
     this.loadUserInfo()
     this.loadBalance()
     this.loadRecords()
-    this.loadApplications()
+    this.loadApplications(true)
   },
 
   onShow() {
     this.applyPlatformConfig()
     this.loadBalance()
     this.loadRecords(true)
-    this.loadApplications()
+    this.loadApplications(true)
   },
 
   // 应用平台配置到页面数据（从数据库动态加载的费率/阈值）
@@ -127,20 +130,24 @@ Page({
   },
 
   // 加载申请记录
-  async loadApplications() {
+  async loadApplications(reset = false) {
+    if (this.data.appLoading) return
+
+    const page = reset ? 0 : this.data.appPage
+
     this.setData({ appLoading: true })
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-withdraw-approval',
         data: {
           action: 'getMyApplications',
-          page: 0,
-          pageSize: 20
+          page: page,
+          pageSize: this.data.appPageSize
         }
       })
       if (result.code === 0) {
         const now = new Date()
-        const records = (result.data.records || []).map(item => {
+        const newApplications = (result.data.records || []).map(item => {
           const expireTime = item.expireTime ? new Date(item.expireTime.replace(/-/g, '/')) : null
           const isExpired = item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && expireTime && expireTime < now
           let expireCountdown = ''
@@ -159,12 +166,19 @@ Page({
             expireCountdown
           }
         })
-        this.setData({ applications: records })
+        this.setData({
+          applications: reset ? newApplications : [...this.data.applications, ...newApplications],
+          appPage: page + 1,
+          appHasMore: newApplications.length >= this.data.appPageSize,
+          appLoading: false
+        })
+      } else {
+        this.setData({ appLoading: false })
       }
     } catch (err) {
       console.error('加载申请记录失败:', err)
+      this.setData({ appLoading: false })
     }
-    this.setData({ appLoading: false })
   },
 
   // 加载账单记录
@@ -207,12 +221,19 @@ Page({
   async onPullDownRefresh() {
     await this.loadBalance()
     await this.loadRecords(true)
-    await this.loadApplications()
+    await this.loadApplications(true)
     wx.stopPullDownRefresh()
   },
 
-  // 加载更多
-  onReachBottom() {
+  // 加载更多申请记录
+  loadMoreApplications() {
+    if (this.data.appHasMore && !this.data.appLoading) {
+      this.loadApplications()
+    }
+  },
+
+  // 加载更多收支记录
+  loadMoreRecords() {
     if (this.data.hasMore && !this.data.loading) {
       this.loadRecords()
     }
@@ -318,7 +339,7 @@ Page({
     // 高于阈值 → 走审批流程
     wx.showModal({
       title: '确认申请',
-      content: `提现 ¥${amount}（手续费 ¥${this.data.applyFee}，到账 ¥${this.data.applyActual}），单笔超过 ¥${threshold} 需管理员审批，确认提交？`,
+      content: `提现金额 ${amount} 元（手续费 ${this.data.applyFee} 元，到账 ${this.data.applyActual} 元），单笔超过 ${threshold} 元需管理员审批，确认提交？`,
       confirmText: '确认申请',
       confirmColor: '#1677D2',
       success: async (res) => {
@@ -344,7 +365,7 @@ Page({
       if (result.code === 0) {
         this.setData({ showApplyModal: false })
         wx.showToast({ title: '申请已提交', icon: 'success' })
-        this.loadApplications()
+        this.loadApplications(true)
       } else {
         wx.showToast({ title: result.message, icon: 'none', duration: 3000 })
       }
@@ -375,7 +396,8 @@ Page({
 
   normalizeBalanceRecord(item) {
     const title = item.title || ''
-    const isIncome = item.amount >= 0
+    const amount = Number(item.amount || 0)
+    const isIncome = amount >= 0
     const fallback = isIncome
       ? { icon: 'circle-dollar-sign', color: 'var(--fresh-mint)', bg: 'var(--fresh-mint-14)' }
       : { icon: 'credit-card', color: 'var(--vitality-orange)', bg: 'var(--vitality-orange-14)' }
@@ -392,6 +414,8 @@ Page({
 
     return {
       ...item,
+      amountPrefix: amount > 0 ? '+' : amount < 0 ? '-' : '',
+      displayAmountAbs: MoneyUtils.formatAmount(Math.abs(amount)),
       icon: item.icon && /^[a-z0-9-]+$/.test(item.icon) ? item.icon : matched.icon,
       iconColor: item.iconColor || matched.color,
       iconBg: item.iconBg || matched.bg

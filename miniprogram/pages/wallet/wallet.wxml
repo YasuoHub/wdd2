@@ -12,18 +12,18 @@
       </view>
     </view>
     <view class="balance-amount">
-      <text class="amount-symbol">¥</text>
+      <wdd-icon name="coins" color="#FFFFFF" size="42"></wdd-icon>
       <text class="amount-number">{{money.format(balance)}}</text>
     </view>
     <!-- 冻结金额提示 -->
     <view wx:if="{{frozenBalance > 0}}" class="frozen-info">
       <view class="frozen-row">
         <text class="frozen-label">冻结金额</text>
-        <text class="frozen-value">¥{{money.format(frozenBalance)}}</text>
+        <view class="frozen-value"><text class="money-text">{{money.format(frozenBalance)}}</text></view>
       </view>
       <view class="available-row">
         <text class="available-label">可用余额</text>
-        <text class="available-value">¥{{money.format(availableBalance)}}</text>
+        <view class="available-value"><text class="money-text">{{money.format(availableBalance)}}</text></view>
       </view>
     </view>
     <view class="balance-actions">
@@ -37,15 +37,15 @@
   <!-- 统计卡片 -->
   <view class="stats-section">
     <view class="stat-card">
-      <text class="stat-value">¥{{money.format(totalEarned)}}</text>
+      <view class="stat-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(totalEarned)}}</text></view>
       <text class="stat-label">累计收入</text>
     </view>
     <view class="stat-card">
-      <text class="stat-value">¥{{money.format(totalWithdrawn)}}</text>
+      <view class="stat-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(totalWithdrawn)}}</text></view>
       <text class="stat-label">累计提现</text>
     </view>
     <view class="stat-card">
-      <text class="stat-value">¥{{money.format(totalPaid)}}</text>
+      <view class="stat-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(totalPaid)}}</text></view>
       <text class="stat-label">累计支付</text>
     </view>
   </view>
@@ -60,11 +60,22 @@
       <text class="empty-text">暂无提现申请</text>
     </view>
 
-    <view wx:else class="applications-list">
+    <scroll-view
+      wx:else
+      class="applications-list"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+      lower-threshold="80"
+      bindscrolltolower="loadMoreApplications"
+    >
       <view wx:for="{{applications}}" wx:key="_id" class="application-card">
         <!-- 第一行：金额 + 状态 -->
         <view class="app-row1">
-          <text class="app-amount">¥{{money.format(item.amount)}}</text>
+          <view class="app-amount-wrap">
+            <text class="app-amount-label">申请金额：</text>
+            <view class="app-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.amount)}}</text></view>
+          </view>
           <view class="app-status-tag {{item.status === 'pending' ? 'tag-pending' : item.status === 'approved' ? 'tag-approved' : item.status === 'expired' ? 'tag-expired' : 'tag-rejected'}}">
             {{item.statusText}}
             <text wx:if="{{item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && item.expireCountdown}}"> · {{item.expireCountdown}}后过期</text>
@@ -83,18 +94,22 @@
         <view class="app-action-row">
           <text class="app-time">{{item.applyTime}}</text>
           <button
-            wx:if="{{item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && !item.isExpired}}"
-            class="app-withdraw-btn active"
+            class="app-withdraw-btn {{item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && !item.isExpired ? 'active' : 'disabled'}}"
             bindtap="goToWithdraw"
             data-id="{{item._id}}"
+            disabled="{{!(item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && !item.isExpired)}}"
           >提现</button>
-          <button wx:elif="{{item.status === 'approved' && item.withdrawStatus === 'withdrawn'}}" class="app-withdraw-btn" disabled>已提现</button>
-          <button wx:elif="{{item.status === 'pending'}}" class="app-withdraw-btn" disabled>等待审批</button>
-          <button wx:elif="{{item.status === 'expired' || item.isExpired}}" class="app-withdraw-btn" disabled>已过期</button>
-          <button wx:else class="app-withdraw-btn" disabled>已驳回</button>
         </view>
       </view>
-    </view>
+
+      <view wx:if="{{appLoading}}" class="loading-more">
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <view wx:if="{{!appLoading && !appHasMore && applications.length > 0}}" class="no-more">
+        <text class="no-more-text">没有更多申请了</text>
+      </view>
+    </scroll-view>
   </view>
 
   <!-- 账单列表 -->
@@ -110,35 +125,43 @@
       <text class="empty-text">暂无收支记录</text>
     </view>
 
-    <view wx:else class="records-list">
+    <scroll-view
+      wx:else
+      class="records-list"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+      lower-threshold="80"
+      bindscrolltolower="loadMoreRecords"
+    >
       <view
         wx:for="{{records}}"
         wx:key="_id"
-        class="record-item"
+        class="record-item {{index === records.length - 1 ? 'last' : ''}}"
       >
-        <view class="record-left">
-          <view class="record-icon-wrapper" style="background: {{item.iconBg}}">
-            <wdd-icon name="{{item.icon || 'receipt'}}" color="{{item.iconColor || 'var(--brand-primary)'}}" size="34"></wdd-icon>
-          </view>
-          <view class="record-info">
-            <text class="record-title">{{item.title}}</text>
-            <text class="record-time">{{item.time}}</text>
-          </view>
+        <view class="record-icon-wrapper" style="background: {{item.iconBg}}">
+          <wdd-icon name="{{item.icon || 'receipt'}}" color="{{item.iconColor || 'var(--brand-primary)'}}" size="34"></wdd-icon>
         </view>
-        <view class="record-right">
-          <text class="record-amount {{item.type}}">{{item.amount > 0 ? '+' : ''}}{{money.format(item.amount)}}</text>
-          <text class="record-balance">余额 ¥{{money.format(item.balance)}}</text>
+        <view class="record-content">
+          <view class="record-main-row">
+            <text class="record-title">{{item.title}}</text>
+            <view class="record-amount {{item.type}}"><text class="money-prefix">{{item.amountPrefix}}</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{item.displayAmountAbs}}</text></view>
+          </view>
+          <view class="record-sub-row">
+            <text class="record-time">{{item.time}}</text>
+            <view class="record-balance record-balance-money"><text>余额</text><text class="money-text">{{money.format(item.balance)}}</text></view>
+          </view>
         </view>
       </view>
-    </view>
 
-    <view wx:if="{{loading}}" class="loading-more">
-      <text class="loading-text">加载中...</text>
-    </view>
+      <view wx:if="{{loading}}" class="loading-more">
+        <text class="loading-text">加载中...</text>
+      </view>
 
-    <view wx:if="{{!hasMore && records.length > 0}}" class="no-more">
-      <text class="no-more-text">没有更多记录了</text>
-    </view>
+      <view wx:if="{{!loading && !hasMore && records.length > 0}}" class="no-more">
+        <text class="no-more-text">没有更多记录了</text>
+      </view>
+    </scroll-view>
   </view>
 
   <!-- 申请提现弹窗 -->
@@ -147,10 +170,10 @@
     <view class="modal-content">
       <view class="modal-title">申请提现</view>
       <view class="apply-info">
-        <text class="apply-balance">可提现余额：¥{{money.format(availableBalance)}}</text>
+        <view class="apply-balance apply-balance-money"><text>可提现余额：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
       </view>
       <view class="amount-input-wrapper">
-        <text class="input-symbol">¥</text>
+        <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon>
         <input
           class="amount-input"
           type="digit"
@@ -163,19 +186,19 @@
       <view wx:if="{{applyAmount > 0}}" class="apply-detail">
         <view class="detail-row">
           <text class="detail-label">手续费（{{withdrawFeeRate}}%）</text>
-          <text class="detail-value fee">-¥{{money.format(applyFee)}}</text>
+          <view class="detail-value fee"><text class="money-prefix">-</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(applyFee)}}</text></view>
         </view>
         <view class="detail-row">
           <text class="detail-label">预计到账</text>
-          <text class="detail-value actual">¥{{money.format(applyActual)}}</text>
+          <view class="detail-value actual"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(applyActual)}}</text></view>
         </view>
       </view>
       <!-- 审批提示 -->
       <view wx:if="{{applyAmount > 0}}" class="approval-hint {{needApproval ? 'need-approval' : 'instant'}}">
         <wdd-icon wx:if="{{needApproval}}" name="hourglass" color="#E67E22" size="24"></wdd-icon>
         <wdd-icon wx:else name="circle-check-big" color="#07C160" size="24"></wdd-icon>
-        <text wx:if="{{needApproval}}">单笔超过¥{{money.format(withdrawApprovalThreshold)}}，需管理员审批</text>
-        <text wx:else>未超过¥{{money.format(withdrawApprovalThreshold)}}，即时到账</text>
+        <view wx:if="{{needApproval}}" class="approval-copy"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>，需管理员审批</text></view>
+        <view wx:else class="approval-copy"><text>未超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>，即时到账</text></view>
       </view>
       <view wx:if="{{applyErrorTip}}" class="error-tip">
         <text>{{applyErrorTip}}</text>
@@ -192,21 +215,50 @@
   </view>
 
   <!-- 提现规则弹窗 -->
-  <view class="modal {{showRulesModal ? 'show' : ''}}" wx:if="{{showRulesModal}}">
-    <view class="modal-mask" bindtap="hideRulesModal"></view>
-    <view class="modal-content">
-      <view class="modal-title">提现规则</view>
-      <view class="rules-content">
-        <view class="rule-item"><text class="rule-num">1.</text><text class="rule-desc">最低提现金额：¥{{money.format(withdrawMinAmount)}}</text></view>
-        <view class="rule-item"><text class="rule-num">2.</text><text class="rule-desc">提现手续费：{{withdrawFeeRate}}%</text></view>
-        <view class="rule-item"><text class="rule-num">3.</text><text class="rule-desc">单次最低 ¥{{money.format(withdrawMinPerRequest)}}，最高 ¥{{money.format(withdrawMaxPerRequest)}}</text></view>
-        <view class="rule-item"><text class="rule-num">4.</text><text class="rule-desc">单笔超过 ¥{{money.format(withdrawApprovalThreshold)}} 需提交审批，审批通过后方可提现</text></view>
-        <view class="rule-item"><text class="rule-num">5.</text><text class="rule-desc">不超过 ¥{{money.format(withdrawApprovalThreshold)}} 的提现将即时到账</text></view>
-        <view class="rule-item"><text class="rule-num">6.</text><text class="rule-desc">单日提现上限 ¥{{money.format(withdrawDailyLimit)}}，每日最多 {{withdrawDailyTimes}} 次</text></view>
+  <bottom-sheet show="{{showRulesModal}}" title="提现规则" maxHeight="76vh" bind:close="hideRulesModal">
+    <view class="rules-modal-body">
+      <view class="rule-item">
+        <wdd-icon name="landmark" color="var(--brand-primary)" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">提现门槛</text>
+          <view class="rule-desc rule-desc-money"><text>余额满</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinAmount)}}</text><text>后可申请提现。</text></view>
+        </view>
       </view>
-      <view class="modal-footer">
-        <button class="modal-btn confirm" bindtap="hideRulesModal">我知道了</button>
+      <view class="rule-item">
+        <wdd-icon name="receipt-text" color="var(--vitality-orange)" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">手续费</text>
+          <text class="rule-desc">每笔提现收取 {{withdrawFeeRate}}% 手续费，提交前会展示预计到账金额。</text>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="wallet-cards" color="var(--brand-primary)" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">单次限额</text>
+          <view class="rule-desc rule-desc-money"><text>单次最低</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text><text>。</text></view>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="hourglass" color="#E67E22" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">审批规则</text>
+          <view class="rule-desc rule-desc-money"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>需提交审批，审批通过后方可提现。</text></view>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="circle-check-big" color="var(--fresh-mint)" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">即时到账</text>
+          <view class="rule-desc rule-desc-money"><text>不超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>的提现将按即时到账流程处理。</text></view>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="calendar-days" color="#7B8794" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">每日限制</text>
+          <view class="rule-desc rule-desc-money"><text>单日提现上限</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多 {{withdrawDailyTimes}} 次。</text></view>
+        </view>
       </view>
     </view>
-  </view>
+  </bottom-sheet>
 </view>

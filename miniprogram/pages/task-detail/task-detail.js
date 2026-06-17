@@ -208,7 +208,7 @@ Page({
 
     wx.showModal({
       title: '确认去帮助',
-      content: `完成此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要去帮助吗？`,
+      content: `完成此任务可获得 ${takerIncome} 元（已扣除${feeRate}%平台服务费），确定要去帮助吗？`,
       success: async (res) => {
         if (res.confirm) {
           wx.showLoading({ title: '处理中...' })

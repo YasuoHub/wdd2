@@ -31,16 +31,16 @@
           <!-- 提现金额 -->
           <view class="card-amount-row">
             <text class="amount-label">提现金额</text>
-            <text class="amount-value">¥{{money.format(item.amount)}}</text>
+            <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.amount)}}</text></view>
           </view>
           <!-- 到账金额 -->
           <view class="card-info-row">
             <text class="info-label">预计到账</text>
-            <text class="info-value">¥{{money.format(item.actualAmount)}}</text>
+            <view class="info-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.actualAmount)}}</text></view>
           </view>
           <view class="card-info-row">
             <text class="info-label">手续费</text>
-            <text class="info-value fee">¥{{money.format(item.fee)}}</text>
+            <view class="info-value fee"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.fee)}}</text></view>
           </view>
           <!-- 底部 -->
           <view class="card-footer">
@@ -77,7 +77,7 @@
           <!-- 提现金额 -->
           <view class="card-amount-row">
             <text class="amount-label">提现金额</text>
-            <text class="amount-value">¥{{money.format(item.amount)}}</text>
+            <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.amount)}}</text></view>
           </view>
           <!-- 驳回理由 -->
           <view wx:if="{{item.status === 'rejected' && item.rejectReason}}" class="reject-reason-row">
@@ -113,7 +113,7 @@
       <!-- 申请信息 -->
       <view class="approve-info">
         <text class="approve-label">申请人：{{currentApplication.nickname}}</text>
-        <text class="approve-label">提现金额：¥{{money.format(currentApplication.amount)}}</text>
+        <view class="approve-label approve-label-money"><text>提现金额：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(currentApplication.amount)}}</text></view>
       </view>
 
       <!-- 审批结果 -->

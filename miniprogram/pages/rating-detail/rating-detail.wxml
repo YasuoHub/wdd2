@@ -27,7 +27,7 @@
     <view class="task-card" wx:if="{{task}}">
       <view class="task-header">
         <text class="task-type">{{task.typeName}}</text>
-        <text class="task-points">¥{{money.format(task.price)}}</text>
+        <view class="task-points"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(task.price)}}</text></view>
       </view>
       <text class="task-desc">{{task.description}}</text>
     </view>

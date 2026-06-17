@@ -14,7 +14,7 @@
       </view>
       <view class="opponent-row">
         <text class="opponent-label">任务悬赏</text>
-        <text class="opponent-value">¥{{money.format(taskSummary.rewardAmount || 0)}}</text>
+        <view class="opponent-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(taskSummary.rewardAmount || 0)}}</text></view>
       </view>
       <view class="countdown-wrap">
         <text class="countdown-label">剩余时间：</text>

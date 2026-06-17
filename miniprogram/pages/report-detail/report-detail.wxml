@@ -58,7 +58,7 @@
         </view>
         <view class="task-reward">
           <text class="reward-label">悬赏</text>
-          <text class="reward-value">¥{{money.format(detail.taskInfo.rewardAmount)}}</text>
+          <view class="reward-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(detail.taskInfo.rewardAmount)}}</text></view>
         </view>
         <wdd-icon name="chevron-right" color="#7E879B" size="34"></wdd-icon>
       </view>

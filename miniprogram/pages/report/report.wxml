@@ -29,7 +29,7 @@
       </view>
       <view class="info-row">
         <text class="info-label">任务悬赏</text>
-        <text class="info-value highlight-amount">¥{{money.format(taskSummary.rewardAmount || 0)}}</text>
+        <view class="info-value highlight-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(taskSummary.rewardAmount || 0)}}</text></view>
       </view>
     </view>
     <view class="card-foot">

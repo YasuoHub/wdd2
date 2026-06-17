@@ -30,7 +30,7 @@
         bindtap="goToDetail"
         data-id="{{item._id}}"
       >
-        <view class="amount">¥{{money.format(item.displayAmount)}}</view>
+        <view class="amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayAmount)}}</text></view>
 
         <view class="card-main">
           <view class="status-row">

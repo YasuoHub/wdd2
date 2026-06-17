@@ -195,7 +195,7 @@
       <!-- 金额输入 -->
       <view class="amount-setting">
         <view class="amount-input-wrapper">
-          <text class="amount-symbol">¥</text>
+          <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon>
           <input
             class="amount-input"
             type="digit"
@@ -219,9 +219,9 @@
           bindchange="onAmountChange"
         />
         <view class="amount-range">
-          <text>{{minRewardAmount}}元</text>
-          <text class="amount-current">{{rewardAmount}}元</text>
-          <text>{{maxRewardAmount}}元</text>
+          <view class="amount-range-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(minRewardAmount)}}</text></view>
+          <view class="amount-range-value amount-current"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(rewardAmount)}}</text></view>
+          <view class="amount-range-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(maxRewardAmount)}}</text></view>
         </view>
 
         <!-- 快捷金额选择 -->
@@ -233,7 +233,7 @@
             bindtap="selectQuickAmount"
             data-amount="{{item}}"
           >
-            {{item}}元
+            <wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item)}}</text>
           </view>
         </view>
       </view>
@@ -251,7 +251,7 @@
               <wdd-icon class="payment-icon" name="wallet" color="var(--brand-primary)" size="32"></wdd-icon>
               <text class="payment-name">余额支付</text>
             </view>
-            <text class="payment-balance">可用 ¥{{money.format(availableBalance)}}</text>
+            <view class="payment-balance payment-balance-money"><text>可用</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
           </view>
           <view
             class="payment-option {{paymentMethod === 'wechat' ? 'active' : ''}}"
@@ -267,7 +267,7 @@
         </view>
         <view wx:if="{{paymentMethod === 'balance' && !canBalancePay}}" class="balance-insufficient">
           <wdd-icon name="triangle-alert" color="var(--vitality-orange)" size="24"></wdd-icon>
-          <text>可用余额不足（当前可用 ¥{{money.format(availableBalance)}}），请选择微信支付</text>
+          <view class="balance-insufficient-text"><text>可用余额不足（当前可用</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text><text>），请选择微信支付</text></view>
         </view>
       </view>
 
@@ -285,7 +285,7 @@
     <view class="footer-content">
       <view class="publish-info">
         <text class="publish-label">需支付</text>
-        <text class="publish-amount">¥{{money.format(rewardAmount)}}</text>
+        <view class="publish-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(rewardAmount)}}</text></view>
       </view>
       <view class="amount-detail-trigger" bindtap="showAmountDetail">
         <text>详情</text>
@@ -306,16 +306,16 @@
     <view class="amount-detail sheet-amount-detail">
       <view class="detail-row">
         <text class="detail-label">悬赏金额</text>
-        <text class="detail-value">¥{{money.format(rewardAmount)}}</text>
+        <view class="detail-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(rewardAmount)}}</text></view>
       </view>
       <view class="detail-row">
         <text class="detail-label">平台服务费（{{platformFeeRate}}%）</text>
-        <text class="detail-value fee">-¥{{money.format(platformFee)}}</text>
+        <view class="detail-value fee"><text class="money-prefix">-</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(platformFee)}}</text></view>
       </view>
       <view class="detail-divider"></view>
       <view class="detail-row total">
         <text class="detail-label">帮助者获得</text>
-        <text class="detail-value income">¥{{money.format(takerIncome)}}</text>
+        <view class="detail-value income"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(takerIncome)}}</text></view>
       </view>
     </view>
   </bottom-sheet>
@@ -354,7 +354,7 @@
         <wdd-icon name="landmark" color="var(--brand-primary)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">提现规则</text>
-          <text class="rule-desc">余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>
+          <view class="rule-desc rule-desc-money"><text>余额满</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinAmount)}}</text><text>可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text></view>
         </view>
       </view>
     </view>
