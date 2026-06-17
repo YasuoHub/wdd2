@@ -720,6 +720,7 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
     takerNickname: (userMap && userMap.get(item.taker_id))?.nickname || item.taker_nickname,
     taker_avatar: (userMap && userMap.get(item.taker_id))?.avatar || item.taker_avatar,
     expireTime: item.expire_time,
+    matchTime: item.match_time,
     completeTime: item.complete_time,
     cancelTime: item.cancel_time,
     cancelReason: item.cancel_reason,

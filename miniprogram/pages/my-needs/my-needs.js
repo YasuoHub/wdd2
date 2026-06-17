@@ -11,6 +11,54 @@ const FILTER_MAP = {
   'breaking': { text: '审核中', status: ['breaking'] }
 }
 
+function getBaseAmount(item = {}) {
+  const rewardAmount = Number(item.rewardAmount || item.reward_amount || 0)
+  if (rewardAmount > 0) return rewardAmount
+  const points = Number(item.points || 0)
+  return points > 0 ? points / 10 : 0
+}
+
+function parseDate(value) {
+  if (!value) return null
+  const normalized = typeof value === 'string' ? value.replace(/-/g, '/') : value
+  const date = new Date(normalized)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function padTime(num) {
+  return String(num).padStart(2, '0')
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+}
+
+function formatClock(value, fallback = '') {
+  const date = parseDate(value)
+  if (!date) return fallback
+  const now = new Date()
+  const clock = `${padTime(date.getHours())}:${padTime(date.getMinutes())}`
+  if (isSameDay(now, date)) return clock
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (isSameDay(yesterday, date)) return `昨天 ${clock}`
+
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${clock}`
+}
+
+function formatElapsed(value, fallback = '') {
+  const date = parseDate(value)
+  if (!date) return fallback
+  const diff = Date.now() - date.getTime()
+  if (diff < 60 * 1000) return '刚刚'
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)} 分钟前`
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)} 小时前`
+  return formatClock(value, fallback)
+}
+
 Page({
   data: {
     currentFilter: 'all',
@@ -152,6 +200,12 @@ Page({
       createTime = DateUtil.formatRelativeTime(item.create_time)
     }
 
+    const publishSource = item.create_time || item.createTime
+    const matchSource = item.matchTime || item.match_time || item.takeTime || item.take_time
+    const endSource = item.status === 'completed'
+      ? (item.completeTime || item.complete_time)
+      : (item.cancelTime || item.cancel_time)
+
     // 申诉按钮显示条件：仅客服裁决取消
     const now = new Date()
     const isArbitrationCancelled = item.status === 'cancelled' && item.cancelReason === 'arbitration_cancelled'
@@ -171,6 +225,11 @@ Page({
       statusText: statusInfo.text,
       statusClass: statusInfo.class,
       // 云函数已返回 locationName，直接使用，不要覆盖
+      locationName: item.locationName || '未知位置',
+      displayAmount: getBaseAmount(item),
+      publishTime: formatClock(publishSource, createTime),
+      takerTimeText: formatElapsed(matchSource, createTime || '刚刚'),
+      endTimeText: formatClock(endSource, '待同步'),
       remainTime,
       createTime,
       showAppealBtn

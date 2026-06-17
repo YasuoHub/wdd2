@@ -2,6 +2,7 @@
 const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
 const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needTypes')
+const { MoneyUtils } = require('../../utils/platformRules')
 
 const FILTER_MAP = {
   'all': { text: '', status: ['ongoing', 'completed', 'breaking', 'cancelled'] },
@@ -9,6 +10,75 @@ const FILTER_MAP = {
   'completed': { text: '已完成', status: ['completed'] },
   'breaking': { text: '审核中', status: ['breaking'] },
   'cancelled': { text: '已取消', status: ['cancelled'] }
+}
+
+function getBaseAmount(item = {}) {
+  const rewardAmount = Number(item.rewardAmount || item.reward_amount || 0)
+  if (rewardAmount > 0) return rewardAmount
+  const points = Number(item.points || 0)
+  return points > 0 ? points / 10 : 0
+}
+
+function parseDate(value) {
+  if (!value) return null
+  const normalized = typeof value === 'string' ? value.replace(/-/g, '/') : value
+  const date = new Date(normalized)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function padTime(num) {
+  return String(num).padStart(2, '0')
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+}
+
+function formatClock(value, fallback = '') {
+  const date = parseDate(value)
+  if (!date) return fallback
+  const now = new Date()
+  const clock = `${padTime(date.getHours())}:${padTime(date.getMinutes())}`
+  if (isSameDay(now, date)) return clock
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (isSameDay(yesterday, date)) return `昨天 ${clock}`
+
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${clock}`
+}
+
+function formatElapsed(value, fallback = '') {
+  const date = parseDate(value)
+  if (!date) return fallback
+  const diff = Date.now() - date.getTime()
+  if (diff < 60 * 1000) return '刚刚'
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)} 分钟前`
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)} 小时前`
+  return formatClock(value, fallback)
+}
+
+function getTimeMeta(item, createTime) {
+  if (item.status === 'completed') {
+    return {
+      label: '完成时间',
+      value: formatClock(item.completeTime || item.complete_time, '待同步')
+    }
+  }
+
+  if (item.status === 'cancelled') {
+    return {
+      label: '取消时间',
+      value: formatClock(item.cancelTime || item.cancel_time, '待同步')
+    }
+  }
+
+  return {
+    label: '接单时间',
+    value: formatElapsed(item.create_time || item.createTime, createTime)
+  }
 }
 
 Page({
@@ -158,6 +228,9 @@ Page({
       createTime = DateUtil.formatRelativeTime(item.create_time)
     }
 
+    const baseAmount = getBaseAmount(item)
+    const timeMeta = getTimeMeta(item, createTime)
+
     // 申诉按钮显示条件：仅客服裁决取消
     const now = new Date()
     const isArbitrationCancelled = item.status === 'cancelled' && item.cancelReason === 'arbitration_cancelled'
@@ -178,6 +251,9 @@ Page({
       statusClass: statusInfo.class,
       locationName: item.locationName || '未知位置',
       seekerNickname: item.seeker_nickname || item.seekerNickname || '匿名用户',
+      displayAmount: MoneyUtils.calcTakerIncome(baseAmount),
+      timeLabel: timeMeta.label,
+      timeValue: timeMeta.value,
       remainTime,
       createTime,
       showAppealBtn
