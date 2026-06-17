@@ -238,8 +238,7 @@ async function getChatSessions(userId) {
       title: need.description.length > 15
         ? need.description.substring(0, 15) + '...'
         : need.description,
-      typeIcon: getTypeIcon(need.type),
-      typeName: getTypeName(need.type),
+      type: need.type,
       lastMessage: lastMessageText,
       lastTime: lastTime,
       needStatus: need.status,
@@ -466,28 +465,3 @@ async function getUserInfo(OPENID) {
   }
 }
 
-// 获取类型图标
-function getTypeIcon(type) {
-  const iconMap = {
-    'weather': '🌤️',
-    'traffic': '🚗',
-    'shop': '🏪',
-    'parking': '🅿️',
-    'queue': '👥',
-    'other': '📌'
-  }
-  return iconMap[type] || '📌'
-}
-
-// 获取类型名称
-function getTypeName(type) {
-  const nameMap = {
-    'weather': '天气',
-    'traffic': '路况',
-    'shop': '店铺',
-    'parking': '停车',
-    'queue': '排队',
-    'other': '其他'
-  }
-  return nameMap[type] || '其他'
-}

@@ -14,6 +14,11 @@ Page({
     canChat: false,
     canComplete: false,
     canCancel: false,
+    canReport: false,
+    canAppeal: false,
+    showMoreMenu: false,
+    showActionBar: false,
+    pagePaddingBottom: 0,
     loading: true,
     feeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
   },
@@ -60,6 +65,7 @@ Page({
         // 判断身份
         const isSeeker = userInfo && task.user_id === userInfo._id
         const isTaker = userInfo && task.taker_id === userInfo._id
+        const isParticipant = !!(isSeeker || isTaker)
 
         // 判断可操作权限
         const canTake = userInfo &&
@@ -77,12 +83,16 @@ Page({
                           task.status === 'pending'
 
         // 本地兜底：type / status 字段缺失时补默认值
-        const typeInfo = getByType(task.type)
+        const normalizedType = task.type || task.taskType || task.task_type || task.needType || task.need_type || 'other'
+        const typeInfo = getByType(normalizedType) || getByType('other')
         if (typeInfo) {
-          task.typeName = task.typeName || typeInfo.name
-          task.typeIcon = task.typeIcon || typeInfo.icon
-          task.typeColor = task.typeColor || typeInfo.color
-          task.typeBgColor = task.typeBgColor || typeInfo.bgColor
+          task.type = normalizedType
+          task.typeName = typeInfo.name
+          task.typeIcon = typeInfo.icon
+          task.color = typeInfo.color
+          task.bgColor = typeInfo.bgColor
+          task.typeColor = typeInfo.color
+          task.typeBgColor = typeInfo.bgColor
         }
         const statusInfo = getByStatus(task.status)
         task.statusText = statusInfo.text
@@ -93,10 +103,22 @@ Page({
         task._displayAmount = rewardAmount
         task._platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
         task._takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+        task._distanceText = this.formatDistance(task.distance)
+        task._orderNo = task.need_id || task._id
+        task._locationSubText = this.getLocationSubText(task)
 
-        // 根据底部操作栏按钮数量动态计算 padding-bottom
-        // 进行中求助者有两个按钮，需要更大空间
-        const pagePaddingBottom = (canChat && canComplete) ? 320 : 200
+        const canReport = isParticipant &&
+          ['ongoing', 'completed'].includes(task.status) &&
+          !task.hasMyReport
+
+        const canAppeal = isParticipant &&
+          (task.status === 'completed' || this.canAppealCancelledTask(task)) &&
+          !task.hasMyAppeal
+
+        const hasStatusTip = ['breaking', 'completed', 'cancelled'].includes(task.status)
+        const showActionBar = canTake || canChat || canComplete || canCancel || hasStatusTip
+        const hasTwoActions = (canChat && canComplete)
+        const pagePaddingBottom = showActionBar ? (hasTwoActions ? 188 : 164) : 0
 
         this.setData({
           task,
@@ -106,7 +128,11 @@ Page({
           canChat,
           canComplete,
           canCancel,
+          canReport,
+          canAppeal,
+          showActionBar,
           pagePaddingBottom,
+          showMoreMenu: false,
           loading: false
         })
       } else {
@@ -120,6 +146,56 @@ Page({
       })
       this.setData({ loading: false })
     }
+  },
+
+  formatDistance(distance) {
+    if (distance === undefined || distance === null) return ''
+    const value = Number(distance)
+    if (!isFinite(value) || value >= 999000) return ''
+    return value < 1000 ? `${Math.round(value)}m` : `${(value / 1000).toFixed(1)}km`
+  },
+
+  getLocationSubText(task) {
+    const parts = []
+    if (task.address) parts.push(task.address)
+    if (task._distanceText) parts.push(`距你 ${task._distanceText}`)
+    return parts.join(' · ')
+  },
+
+  canAppealCancelledTask(task) {
+    if (task.status !== 'cancelled' || task.cancelReason !== 'arbitration_cancelled') {
+      return false
+    }
+    const endTime = task.cancelTime || task.cancel_time
+    if (!endTime) return false
+    const deadline = new Date(new Date(endTime).getTime() + 2 * 60 * 60 * 1000)
+    return new Date() <= deadline
+  },
+
+  toggleMoreMenu() {
+    this.setData({ showMoreMenu: !this.data.showMoreMenu })
+  },
+
+  hideMoreMenu() {
+    this.setData({ showMoreMenu: false })
+  },
+
+  noop() {},
+
+  goToReport() {
+    if (!this.data.canReport) return
+    this.hideMoreMenu()
+    wx.navigateTo({
+      url: `/pages/report/report?mode=initiate&needId=${this.data.needId}`
+    })
+  },
+
+  goToAppeal() {
+    if (!this.data.canAppeal) return
+    this.hideMoreMenu()
+    wx.navigateTo({
+      url: `/pages/appeal/appeal?mode=initiate&needId=${this.data.needId}`
+    })
   },
 
   // 接单

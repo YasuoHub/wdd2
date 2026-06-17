@@ -402,7 +402,6 @@ async function getMyTasks(event, OPENID) {
       ...taker,
       need_id: taker.need_id,
       type: need.type,
-      type_name: need.type_name,
       description: need.description,
       location: need.location,
       location_name: need.location_name,
@@ -574,16 +573,6 @@ async function getRatingDetail(event, OPENID) {
     const targetUserRes = await db.collection('wdd-users').doc(rating.target_id).get()
     const targetUser = targetUserRes.data || {}
 
-    // 格式化任务信息
-    const typeMap = {
-      'weather': '实时天气',
-      'traffic': '道路拥堵',
-      'shop': '店铺营业',
-      'parking': '停车场空位',
-      'queue': '排队情况',
-      'other': '其他'
-    }
-
     return {
       code: 0,
       message: '获取成功',
@@ -595,7 +584,7 @@ async function getRatingDetail(event, OPENID) {
           createTime: formatDateTime(rating.create_time)
         },
         task: {
-          typeName: typeMap[need.type] || '其他',
+          type: need.type,
           description: need.description,
           price: need.reward_amount || 0
         },
@@ -712,10 +701,6 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
     _id: item._id,
     need_id: item.need_id || item._id,
     type: item.type,
-    typeName: item.type_name || getTypeName(item.type),
-    typeIcon: getTypeIcon(item.type),
-    bgColor: getTypeBgColor(item.type),
-    color: getTypeColor(item.type),
     description: item.description,
     images: item.images || [],
     // 处理 GeoJSON - 数据库地理位置对象需要转换为普通对象
@@ -744,58 +729,6 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
     hasMyReport: myReportNeedIds ? myReportNeedIds.has(item._id) : false,
     hasMyAppeal: myAppealNeedIds ? myAppealNeedIds.has(item._id) : false
   }
-}
-
-// 获取类型名称
-function getTypeName(type) {
-  const names = {
-    weather: '实时天气',
-    traffic: '道路拥堵',
-    shop: '店铺营业',
-    parking: '停车场空位',
-    queue: '排队情况',
-    other: '其他'
-  }
-  return names[type] || '其他'
-}
-
-// 获取类型图标
-function getTypeIcon(type) {
-  const icons = {
-    weather: '🌤️',
-    traffic: '🚗',
-    shop: '🏪',
-    parking: '🅿️',
-    queue: '👥',
-    other: '💬'
-  }
-  return icons[type] || '💬'
-}
-
-// 获取类型背景色
-function getTypeBgColor(type) {
-  const colors = {
-    weather: 'rgba(116, 185, 255, 0.15)',
-    traffic: 'rgba(253, 203, 110, 0.15)',
-    shop: 'rgba(162, 155, 254, 0.15)',
-    parking: 'rgba(129, 236, 236, 0.15)',
-    queue: 'rgba(253, 121, 168, 0.15)',
-    other: 'rgba(168, 230, 207, 0.15)'
-  }
-  return colors[type] || 'rgba(168, 230, 207, 0.15)'
-}
-
-// 获取类型主色
-function getTypeColor(type) {
-  const colors = {
-    weather: '#74B9FF',
-    traffic: '#FDCB6E',
-    shop: '#A29BFE',
-    parking: '#00CEC9',
-    queue: '#FD79A8',
-    other: '#A8E6CF'
-  }
-  return colors[type] || '#A8E6CF'
 }
 
 // 格式化时间

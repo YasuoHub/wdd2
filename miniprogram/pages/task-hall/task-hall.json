@@ -2,7 +2,8 @@
   "usingComponents": {
     "loading": "/components/loading/loading",
     "empty": "/components/empty/empty",
-    "error": "/components/error/error"
+    "error": "/components/error/error",
+    "bottom-sheet": "/components/bottom-sheet/bottom-sheet"
   },
   "navigationBarTitleText": "任务大厅",
   "navigationBarBackgroundColor": "#F5F7FA",

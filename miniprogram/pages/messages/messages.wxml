@@ -18,7 +18,7 @@
       bindtap="switchChatTab"
       data-tab="seeker"
     >
-      <wdd-icon name="send" color="{{currentChatTab === 'seeker' ? '#FFFFFF' : '#1677D2'}}" size="26"></wdd-icon>
+      <wdd-icon name="send" color="#1677D2" size="26"></wdd-icon>
       <text>求助</text>
       <view wx:if="{{seekerChatUnread > 0}}" class="tab-badge">{{seekerChatUnread}}</view>
     </view>
@@ -27,7 +27,7 @@
       bindtap="switchChatTab"
       data-tab="helper"
     >
-      <wdd-icon name="handshake" color="{{currentChatTab === 'helper' ? '#FFFFFF' : '#1677D2'}}" size="28"></wdd-icon>
+      <wdd-icon name="handshake" color="#1677D2" size="28"></wdd-icon>
       <text>帮助</text>
       <view wx:if="{{helperChatUnread > 0}}" class="tab-badge">{{helperChatUnread}}</view>
     </view>
@@ -137,28 +137,17 @@
       </view>
     </block>
   </scroll-view>
-</view>
 
-<!-- 系统通知弹窗 -->
-<view class="notification-modal {{showSystemModal ? 'show' : ''}}" wx:if="{{showSystemModal}}">
-  <view class="modal-mask" bindtap="closeSystemNotifications"></view>
-  <view class="modal-content">
-    <view class="modal-header">
-      <text class="modal-title">系统通知</text>
-      <view class="modal-close" bindtap="closeSystemNotifications">
-        <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
-      </view>
-    </view>
-
-    <scroll-view class="modal-body" scroll-y enhanced show-scrollbar="{{false}}">
-      <view wx:if="{{systemList.length === 0}}" class="modal-empty">
-        <view class="modal-empty-icon">
+  <bottom-sheet show="{{showSystemModal}}" title="系统通知" maxHeight="82vh" bind:close="closeSystemNotifications">
+    <scroll-view class="system-sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <view wx:if="{{systemList.length === 0}}" class="system-sheet-empty">
+        <view class="system-sheet-empty-icon">
           <wdd-icon name="bell" color="#9AA5B1" size="70"></wdd-icon>
         </view>
-        <view class="modal-empty-text">暂无系统通知</view>
+        <view class="system-sheet-empty-text">暂无系统通知</view>
       </view>
 
-      <view wx:else class="system-list">
+      <view wx:else class="system-list sheet-system-list">
         <view
           wx:for="{{systemList}}"
           wx:key="_id"
@@ -179,5 +168,5 @@
         </view>
       </view>
     </scroll-view>
-  </view>
+  </bottom-sheet>
 </view>

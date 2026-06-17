@@ -2,7 +2,6 @@
 .container {
   width: 100%;
   min-height: 100vh;
-  padding-bottom: 32rpx;
   background: linear-gradient(180deg, #f5f7fa 0%, #ffffff 58%, #f5f7fa 100%);
   font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
   font-synthesis: none;
@@ -117,7 +116,6 @@
 .need-layout,
 .need-meta,
 .meta-item,
-.need-side,
 .distance-tag {
   display: flex;
   align-items: center;
@@ -401,7 +399,7 @@
 
 .quick-panel {
   margin: 0 34rpx;
-  padding: 28rpx 44rpx 26rpx;
+  padding: 28rpx 0rpx 26rpx;
   border: 1rpx solid rgba(22, 119, 210, 0.07);
   border-radius: 27rpx;
   background: rgba(255, 255, 255, 0.96);
@@ -534,14 +532,15 @@
 .need-layout {
   position: relative;
   min-height: 132rpx;
+  padding-right: 40rpx;
 }
 
 .need-type-icon {
-  width: 96rpx;
-  height: 96rpx;
-  margin-right: 26rpx;
-  border-radius: 50%;
-  background: #eef7fd;
+  width: 58rpx;
+  height: 58rpx;
+  margin-right: 22rpx;
+  border-radius: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -550,15 +549,15 @@
 
 .need-type-icon.type-queue,
 .need-type-icon.type-parking {
-  background: #e8f7ef;
+  background: transparent;
 }
 
 .need-type-icon.type-shop {
-  background: #fff3cf;
+  background: transparent;
 }
 
 .need-type-icon.type-other {
-  background: #f0f2f5;
+  background: transparent;
 }
 
 .need-body {
@@ -566,7 +565,16 @@
   min-width: 0;
 }
 
+.need-topline {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  min-width: 0;
+}
+
 .need-content {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: #202832;
   font-size: 29rpx;
@@ -576,32 +584,16 @@
   white-space: nowrap;
 }
 
-.need-type-label {
-  display: inline-block;
-  margin-top: 11rpx;
-  padding: 5rpx 11rpx;
-  border-radius: 6rpx;
-  background: rgba(8, 121, 230, 0.1);
-  color: #135fa7;
-  font-size: 21rpx;
-  line-height: 1;
-  font-weight: 500;
-}
-
-.need-row.type-queue .need-type-label,
-.need-row.type-parking .need-type-label {
-  background: rgba(19, 168, 121, 0.13);
-  color: #0a9a6b;
-}
-
-.need-row.type-shop .need-type-label {
-  background: rgba(255, 209, 102, 0.24);
-  color: #a87500;
+.need-reward {
+  flex-shrink: 0;
 }
 
 .need-meta {
-  gap: 14rpx;
-  margin-top: 18rpx;
+  min-width: 0;
+  gap: 8rpx;
+  margin-top: 17rpx;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .meta-item {
@@ -609,48 +601,54 @@
   color: var(--text-tertiary);
   font-size: 24rpx;
   line-height: 1;
+  white-space: nowrap;
+}
+
+.location-item {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .location-name {
-  max-width: 172rpx;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.distance-text {
-  margin-left: 8rpx;
+.distance-item,
+.time-item,
+.meta-dot {
+  flex-shrink: 0;
 }
 
-.need-side {
-  align-self: stretch;
-  min-width: 140rpx;
-  margin-left: 12rpx;
-  padding-right: 31rpx;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
+.meta-dot {
+  color: #b3bfcc;
+  font-size: 24rpx;
+  line-height: 1;
 }
 
 .need-amount {
   color: #d96a22;
-  font-size: 34rpx;
+  font-size: 32rpx;
   line-height: 1;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .time-item {
-  margin-top: 23rpx;
+  margin-top: 0;
   white-space: nowrap;
 }
 
 .row-arrow-wrap {
   position: absolute;
-  top: 52rpx;
+  top: 50%;
   right: 0;
   width: 28rpx;
   height: 28rpx;
   opacity: 0.75;
+  transform: translateY(-50%);
 }
 
 .login-tip-card {
@@ -743,195 +741,39 @@
     font-size: 23rpx;
   }
 }
-/* ============================================
-   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
-   ============================================ */
-.container,
-.chat-container {
-  background: #f5f7fa;
+@import "../../styles/wdd-polish.wxss";
+
+/* 首页附近任务行精修：与任务大厅保持同一套信息语言 */
+.need-feed {
+  padding: 0 22rpx;
+  border: 1rpx solid rgba(217, 226, 236, 0.9);
+  border-radius: 26rpx;
+  box-shadow: 0 10rpx 30rpx rgba(15, 23, 42, 0.055);
 }
 
-.header,
-.footer,
-.input-area,
-.popup-content,
-.modal-content,
-.rules-modal-content {
-  background: #ffffff;
-  border-color: var(--border-light);
-  box-shadow: var(--shadow-card);
+.need-row {
+  border-bottom: 1rpx solid var(--border-light);
 }
 
-.section-card,
-.task-card,
-.user-card,
-.menu-list,
-.quick-panel,
-.need-feed,
-.login-tip-card,
-.balance-section,
-.record-card,
-.ticket-card,
-.report-card,
-.appeal-card,
-.profile-card,
-.rating-card,
-.info-card,
-.form-card,
-.stat-card,
-.card {
-  background: #ffffff;
-  border: 1rpx solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+.need-type-icon {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 0;
+  background: transparent;
 }
 
-.location-bar,
-.filter-item,
-.sort-section,
-.distance-section,
-.type-badge,
-.card-location,
-.distance-tag,
-.quick-tag,
-.type-item,
-.time-option,
-.quick-point,
-.quick-amount,
-.payment-option,
-.amount-detail,
-.rules-tip,
-.points-tip-wrapper,
-.input-wrapper,
-.toolbar-toggle-btn,
-.more-btn,
-.system-message-text,
-.time-divider text {
-  background: #f8fafc;
-  border-color: var(--border-light);
-  box-shadow: none;
+.need-content {
+  color: #111827;
+  font-size: 29rpx;
+  font-weight: 700;
 }
 
-.filter-item.active,
-.type-item.active,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active {
-  background: rgba(22, 119, 210, 0.08);
-  border-color: rgba(22, 119, 210, 0.34);
-  box-shadow: none;
+.need-amount {
+  color: #d96a22;
+  font-weight: 800;
 }
 
-.filter-item.active .filter-name,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active .payment-name {
-  color: var(--sky-deep);
-  font-weight: 600;
-}
-
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.amount-badge,
-.quick-amount.active,
-.quick-point.active,
-.time-recommend,
-.btn-vitality {
-  background: var(--vitality-orange);
-  box-shadow: var(--shadow-orange);
-}
-
-.balance-value.points,
-.balance-value.available,
-.points-number,
-.publish-points,
-.publish-amount {
-  color: var(--text-primary);
-  background: none;
-  -webkit-text-fill-color: currentColor;
-}
-
-.wdd-amount,
-.need-amount,
-.amount-current,
-.amount-symbol,
-.detail-value.fee,
-.warning-text,
-.balance-value.insufficient,
-.task-points-mini {
-  color: var(--vitality-orange);
-}
-
-.detail-value.income,
-.tag-mint,
-.status-success,
-.success-text {
-  color: var(--fresh-mint);
-}
-
-.message-item.other .message-bubble.text {
-  background: #ffffff;
-  border: 1rpx solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.message-item.self .message-bubble.text {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.popup-overlay,
-.modal-mask,
-.rules-modal {
-  background: rgba(15, 23, 42, 0.46);
-}
-
-.helper-profile-tip,
-.balance-insufficient,
-.task-ended-bar.breaking-bar {
-  background: #fff8e6;
-  border-color: rgba(233, 185, 73, 0.34);
-}
-
-image,
-button,
-view {
-  letter-spacing: 0;
-}
-/* 城市服务按钮对比修正 */
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  color: #ffffff;
-}
-
-.publish-btn.disabled,
-.send-btn[disabled],
-.disabled {
-  color: var(--text-muted);
+.distance-tag {
+  min-height: 38rpx;
+  padding: 4rpx 12rpx;
 }

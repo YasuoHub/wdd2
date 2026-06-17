@@ -12,7 +12,7 @@ page { background: var(--bg-secondary); }
   flex: 1; display: flex; align-items: center; justify-content: center;
   font-size: 30rpx; color: var(--text-secondary); position: relative; z-index: 1;
 }
-.tab-item.active { color: var(--primary-color, #07c160); font-weight: 600; }
+.tab-item.active { color: var(--primary-color, #07c160); font-weight: 400; }
 .tab-indicator {
   position: absolute; left: 40rpx; bottom: 0; width: calc(50% - 40rpx);
   height: 4rpx; background: var(--primary-color, #07c160);
@@ -45,7 +45,7 @@ page { background: var(--bg-secondary); }
   display: flex; align-items: center; gap: 10rpx; margin-bottom: 16rpx;
 }
 .type-icon { font-size: 32rpx; flex-shrink: 0; }
-.card-title { flex: 1; font-size: 30rpx; font-weight: 600; color: var(--text-primary); }
+.card-title { flex: 1; font-size: 30rpx; font-weight: 400; color: var(--text-primary); }
 .status-tag {
   flex-shrink: 0; font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 20rpx;
 }
@@ -58,7 +58,7 @@ page { background: var(--bg-secondary); }
 }
 .info-label { color: var(--text-tertiary); width: 140rpx; flex-shrink: 0; }
 .info-value { color: var(--text-primary); }
-.info-value.reward { color: #e86a4a; font-weight: 600; }
+.info-value.reward { color: #e86a4a; font-weight: 400; }
 
 /* 用户行 */
 .card-users-row {
@@ -80,195 +80,93 @@ page { background: var(--bg-secondary); }
 }
 
 .loading-more, .no-more { text-align: center; padding: 24rpx 0; font-size: 26rpx; color: var(--text-tertiary); }
-/* ============================================
-   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
-   ============================================ */
-.container,
-.chat-container {
-  background: #f5f7fa;
-}
+@import "../../styles/wdd-polish.wxss";
 
-.header,
-.footer,
-.input-area,
-.popup-content,
-.modal-content,
-.rules-modal-content {
-  background: #ffffff;
-  border-color: var(--border-light);
-  box-shadow: var(--shadow-card);
-}
-
-.section-card,
-.task-card,
-.user-card,
-.menu-list,
-.quick-panel,
-.need-feed,
-.login-tip-card,
-.balance-section,
-.record-card,
-.ticket-card,
-.report-card,
-.appeal-card,
-.profile-card,
-.rating-card,
-.info-card,
-.form-card,
-.stat-card,
-.card {
-  background: #ffffff;
+/* 工单列表精修：偏后台记录，突出状态与编号 */
+.tab-bar {
+  margin: 18rpx 24rpx 6rpx;
+  height: 76rpx;
+  padding: 6rpx;
+  border-radius: 22rpx;
   border: 1rpx solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card-ios);
 }
 
-.location-bar,
-.filter-item,
-.sort-section,
-.distance-section,
-.type-badge,
-.card-location,
-.distance-tag,
-.quick-tag,
-.type-item,
-.time-option,
-.quick-point,
-.quick-amount,
-.payment-option,
-.amount-detail,
-.rules-tip,
-.points-tip-wrapper,
-.input-wrapper,
-.toolbar-toggle-btn,
-.more-btn,
-.system-message-text,
-.time-divider text {
-  background: #f8fafc;
-  border-color: var(--border-light);
-  box-shadow: none;
+.tab-item {
+  border-radius: 16rpx;
+  font-size: 28rpx;
 }
 
-.filter-item.active,
-.type-item.active,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active {
+.tab-item.active {
   background: rgba(22, 119, 210, 0.08);
-  border-color: rgba(22, 119, 210, 0.34);
-  box-shadow: none;
-}
-
-.filter-item.active .filter-name,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active .payment-name {
   color: var(--sky-deep);
-  font-weight: 600;
 }
 
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
+.tab-indicator {
+  display: none;
 }
 
-.amount-badge,
-.quick-amount.active,
-.quick-point.active,
-.time-recommend,
-.btn-vitality {
-  background: var(--vitality-orange);
-  box-shadow: var(--shadow-orange);
+.ticket-list {
+  gap: 20rpx;
+  padding: 22rpx 24rpx 32rpx;
 }
 
-.balance-value.points,
-.balance-value.available,
-.points-number,
-.publish-points,
-.publish-amount {
-  color: var(--text-primary);
-  background: none;
-  -webkit-text-fill-color: currentColor;
+.ticket-card {
+  border-radius: 24rpx;
+  border: 1rpx solid rgba(217, 226, 236, 0.92);
+  box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.055);
 }
 
-.wdd-amount,
-.need-amount,
-.amount-current,
-.amount-symbol,
-.detail-value.fee,
-.warning-text,
-.balance-value.insufficient,
-.task-points-mini {
-  color: var(--vitality-orange);
+.ticket-card.resolved {
+  opacity: 1;
+  background: #fbfcfd;
 }
 
-.detail-value.income,
-.tag-mint,
-.status-success,
-.success-text {
-  color: var(--fresh-mint);
+.card-left {
+  width: 6rpx;
+  opacity: 0.82;
 }
 
-.message-item.other .message-bubble.text {
-  background: #ffffff;
+.left-report {
+  background: #d64545;
+}
+
+.left-appeal {
+  background: #d96a22;
+}
+
+.card-body {
+  padding: 26rpx 26rpx 22rpx;
+}
+
+.card-title {
+  color: #111827;
+  font-weight: 400;
+}
+
+.card-info-row {
+  margin-bottom: 12rpx;
+}
+
+.info-label {
+  color: var(--text-tertiary);
+}
+
+.info-value.reward {
+  color: #d96a22;
+  font-weight: 400;
+}
+
+.card-users-row {
+  padding: 16rpx 18rpx;
+  margin: 14rpx 0;
   border: 1rpx solid var(--border-light);
-  box-shadow: var(--shadow-sm);
+  border-radius: 18rpx;
+  background: #f8fafc;
 }
 
-.message-item.self .message-bubble.text {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.popup-overlay,
-.modal-mask,
-.rules-modal {
-  background: rgba(15, 23, 42, 0.46);
-}
-
-.helper-profile-tip,
-.balance-insufficient,
-.task-ended-bar.breaking-bar {
-  background: #fff8e6;
-  border-color: rgba(233, 185, 73, 0.34);
-}
-
-image,
-button,
-view {
-  letter-spacing: 0;
-}
-/* 城市服务按钮对比修正 */
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  color: #ffffff;
-}
-
-.publish-btn.disabled,
-.send-btn[disabled],
-.disabled {
-  color: var(--text-muted);
+.supplement-tag {
+  background: rgba(22, 119, 210, 0.08);
+  border: 1rpx solid rgba(22, 119, 210, 0.16);
+  color: var(--sky-deep);
 }

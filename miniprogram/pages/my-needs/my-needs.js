@@ -1,7 +1,7 @@
 // 我的求助列表页面逻辑
 const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
-const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
+const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needTypes')
 
 const FILTER_MAP = {
   'all': { text: '', status: ['pending', 'ongoing', 'completed', 'cancelled', 'breaking'] },
@@ -129,7 +129,7 @@ Page({
 
   // 格式化任务数据
   formatNeed(item) {
-    const typeInfo = TYPE_MAP[item.type] || TYPE_MAP['other']
+    const typeInfo = getByType(resolveTaskType(item))
     const statusInfo = STATUS_MAP[item.status] || STATUS_MAP['pending']
 
     // 优先使用后端已格式化的字段，兼容旧字段
@@ -152,13 +152,12 @@ Page({
       createTime = DateUtil.formatRelativeTime(item.create_time)
     }
 
-    // 申诉按钮显示条件：仅已完成 或 客服裁决取消
+    // 申诉按钮显示条件：仅客服裁决取消
     const now = new Date()
-    const isCompleted = item.status === 'completed'
     const isArbitrationCancelled = item.status === 'cancelled' && item.cancelReason === 'arbitration_cancelled'
-    const endTime = isCompleted ? item.completeTime : (isArbitrationCancelled ? item.cancelTime : null)
+    const endTime = isArbitrationCancelled ? item.cancelTime : null
     const appealDeadline = endTime ? new Date(new Date(endTime).getTime() + 2 * 60 * 60 * 1000) : null
-    const showAppealBtn = (isCompleted || isArbitrationCancelled) &&
+    const showAppealBtn = isArbitrationCancelled &&
       !item.hasMyAppeal &&
       appealDeadline &&
       now <= appealDeadline

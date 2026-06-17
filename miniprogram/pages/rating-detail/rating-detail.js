@@ -1,5 +1,6 @@
 // 评价详情页面 - 查看已提交的评价
 const app = getApp()
+const { getByType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -44,9 +45,10 @@ Page({
       })
 
       if (result.code === 0 && result.data) {
+        const typeInfo = getByType(result.data.task && result.data.task.type)
         this.setData({
           rating: result.data.rating,
-          task: result.data.task,
+          task: result.data.task ? { ...result.data.task, typeName: typeInfo.name } : result.data.task,
           targetUser: result.data.targetUser,
           loading: false
         })

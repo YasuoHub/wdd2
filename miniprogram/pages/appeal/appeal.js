@@ -1,4 +1,5 @@
 const app = getApp()
+const { getByType, resolveTaskType } = require('../../utils/needTypes')
 
 // 申诉类型映射（value → label），提交时传 value，展示用 label
 const APPEAL_TYPES = [
@@ -57,10 +58,12 @@ Page({
       wx.hideLoading()
       if (result.code === 0 && result.data.hasAppeal) {
         const data = result.data
+        const taskType = resolveTaskType(data.taskInfo)
+        const typeInfo = getByType(taskType)
         this.setData({
           opponentInfo: data.initiator,
           mySupplement: data.mySupplement || null,
-          taskSummary: data.taskInfo,
+          taskSummary: data.taskInfo ? { ...data.taskInfo, type: taskType, typeName: typeInfo.name } : data.taskInfo,
           supplementDeadline: data.supplementDeadline,
           canSupplement: data.canSupplement && !data.mySupplement,
           isLoading: false

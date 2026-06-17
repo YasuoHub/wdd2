@@ -195,19 +195,19 @@ async function getTaskTypeRanking(startDate, endDate) {
 
   const data = await fetchAll(db.collection('wdd-needs'), {
     create_time: _.gte(start).and(_.lte(end)),
-    type_name: _.neq(null)
+    type: _.neq(null)
   })
 
   const typeMap = {}
   data.forEach(item => {
-    const name = item.type_name || '其他'
-    typeMap[name] = (typeMap[name] || 0) + 1
+    const type = item.type || 'other'
+    typeMap[type] = (typeMap[type] || 0) + 1
   })
 
   const total = data.length
   const ranking = Object.entries(typeMap)
-    .map(([typeName, count]) => ({
-      typeName,
+    .map(([type, count]) => ({
+      type,
       count,
       percentage: total > 0 ? Math.round((count / total) * 10000) / 10000 : 0
     }))

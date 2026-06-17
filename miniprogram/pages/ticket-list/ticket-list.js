@@ -1,5 +1,5 @@
 const DateUtil = require('../../utils/dateUtil')
-const { TYPE_MAP } = require('../../config/types')
+const { getByType, normalizeType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -97,9 +97,13 @@ Page({
 
       if (result.code === 0) {
         const list = (result.data.list || []).map(item => {
-          const typeMeta = TYPE_MAP[item.taskType] || TYPE_MAP.other
+          const taskType = normalizeType(item.taskType)
+          const typeMeta = getByType(taskType)
           return {
             ...item,
+            taskType,
+            taskTypeName: typeMeta.name,
+            taskTitle: typeMeta.name,
             taskIcon: typeMeta.icon,
             taskIconColor: typeMeta.color
           }

@@ -3,7 +3,7 @@ const app = getApp()
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
 const DateUtil = require('../../utils/dateUtil')
 const chatCache = require('../../utils/chatCache')
-const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
+const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -536,14 +536,14 @@ Page({
 
       if (result.code === 0) {
         const taskData = result.data
-        const typeInfo = TYPE_MAP[taskData.type] || TYPE_MAP['other']
+        const typeInfo = getByType(resolveTaskType(taskData))
         const statusInfo = STATUS_MAP[taskData.status] || STATUS_MAP['pending']
         const currentUser = this.data.userInfo || app.globalData.userInfo || {}
         const isSeeker = result.data.role === 'seeker' || taskData.user_id === currentUser._id
         const otherUser = this.buildOtherUser(taskData, isSeeker)
         const task = {
           _id: taskData._id,
-          type: taskData.type,
+          type: typeInfo.type,
           typeName: typeInfo.name,
           typeIcon: typeInfo.icon,
           description: taskData.description,

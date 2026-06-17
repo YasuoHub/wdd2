@@ -119,7 +119,7 @@ Component({
 
           // 百分比文字
           ctx.fillStyle = '#fff'
-          ctx.font = 'bold 9px sans-serif'
+          ctx.font = '9px sans-serif'
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
           const pctText = Math.round(pct * 100) + '%'

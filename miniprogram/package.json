@@ -5,7 +5,9 @@
   "main": "app.js",
   "scripts": {
     "dev": "echo \"请在微信开发者工具中运行\"",
-    "build": "echo \"请在微信开发者工具中运行\""
+    "build": "npm run check && echo \"请在微信开发者工具中运行\"",
+    "check": "npm run check:encoding",
+    "check:encoding": "node scripts/check-text-encoding.js"
   },
   "dependencies": {},
   "devDependencies": {}

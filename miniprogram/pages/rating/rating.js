@@ -1,5 +1,6 @@
 // 星级评价页面逻辑
 const app = getApp()
+const { getByType } = require('../../utils/needTypes')
 
 // 评分对应的文字
 const RATING_TEXTS = ['', '非常差', '差', '一般', '好', '非常好']
@@ -75,14 +76,7 @@ Page({
 
       if (result.code === 0) {
         const taskData = result.data
-        const typeMap = {
-          'weather': '实时天气',
-          'traffic': '道路拥堵',
-          'shop': '店铺营业',
-          'parking': '停车场空位',
-          'queue': '排队情况',
-          'other': '其他'
-        }
+        const typeInfo = getByType(taskData.type)
 
         // 根据评价类型确定评价对象
         const isSeeker = this.data.ratingType === 'seeker'
@@ -97,7 +91,7 @@ Page({
         this.setData({
           targetUser,
           task: {
-            typeName: typeMap[taskData.type] || '其他',
+            typeName: typeInfo.name,
             description: taskData.description,
             price: taskData.reward_amount || 0
           }
@@ -199,6 +193,8 @@ Page({
       wx.hideLoading()
 
       if (result.code === 0) {
+        this.notifyRatingSubmitted(needId, ratingType)
+
         wx.showToast({
           title: '评价成功',
           icon: 'success'
@@ -219,6 +215,51 @@ Page({
         title: err.message || '提交失败',
         icon: 'none'
       })
+    }
+  },
+
+  // 通知返回页刷新评价状态，并先做一次本地乐观更新
+  notifyRatingSubmitted(needId, ratingType) {
+    app.globalData.refreshMyNeeds = true
+    app.globalData.refreshMyTasks = true
+
+    const pages = getCurrentPages()
+    const prevPage = pages[pages.length - 2]
+    if (!prevPage || !needId) return
+
+    const markRated = (listName) => {
+      const list = prevPage.data && prevPage.data[listName]
+      if (!Array.isArray(list)) return
+
+      const nextList = list.map(item => {
+        if (item._id === needId || item.need_id === needId) {
+          return { ...item, hasRated: true }
+        }
+        return item
+      })
+
+      prevPage.setData({ [listName]: nextList })
+    }
+
+    markRated('needs')
+    markRated('tasks')
+
+    if (prevPage.data && prevPage.data.task && prevPage.data.task._id === needId) {
+      prevPage.setData({ 'task.hasRated': true })
+    }
+
+    if (typeof prevPage.refreshData === 'function') {
+      prevPage.refreshData()
+      return
+    }
+
+    if (typeof prevPage.loadTaskDetail === 'function') {
+      prevPage.loadTaskDetail()
+      return
+    }
+
+    if (typeof prevPage.loadTaskInfo === 'function') {
+      prevPage.loadTaskInfo()
     }
   }
 })

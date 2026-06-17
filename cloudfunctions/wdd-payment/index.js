@@ -272,7 +272,6 @@ async function confirmPayment(event, OPENID) {
         },
         location_name: loc.name,
         type: metadata.type,
-        type_name: metadata.typeName,
         description: metadata.description || '',
         images: metadata.images || [],
         points: 0, // 积分字段保留但设为0
@@ -314,7 +313,7 @@ async function confirmPayment(event, OPENID) {
         user_id: user._id,
         type: 'system',
         title: '求助发布成功',
-        content: `您发布的"${metadata.typeName || '求助'}"已上线，悬赏金额¥${orderInTx.amount}，正在为您匹配附近帮助者...`,
+        content: `您发布的求助任务已上线，悬赏金额¥${orderInTx.amount}，正在为您匹配附近帮助者...`,
         need_id: needRes._id,
         is_read: false,
         create_time: new Date()
@@ -461,7 +460,6 @@ async function payByBalance(event, OPENID) {
         },
         location_name: loc.name,
         type: (metadata && metadata.type) || '',
-        type_name: (metadata && metadata.typeName) || '',
         description: (metadata && metadata.description) || '',
         images: (metadata && metadata.images) || [],
         points: 0,
@@ -493,7 +491,7 @@ async function payByBalance(event, OPENID) {
         user_id: user._id,
         type: 'system',
         title: '求助发布成功',
-        content: `您发布的"${(metadata && metadata.typeName) || '求助'}"已上线，悬赏金额¥${amount}（余额支付），正在为您匹配附近帮助者...`,
+        content: `您发布的求助任务已上线，悬赏金额¥${amount}（余额支付），正在为您匹配附近帮助者...`,
         need_id: needRes._id,
         is_read: false,
         create_time: new Date()

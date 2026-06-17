@@ -40,7 +40,7 @@
 .legend-pct {
   font-size: 22rpx;
   color: #333;
-  font-weight: 600;
+  font-weight: 400;
 }
 .empty-tip {
   text-align: center;

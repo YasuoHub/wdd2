@@ -99,10 +99,9 @@ async function submitAppeal(event, OPENID) {
     return { code: -1, message: '只有任务双方可以发起申诉' }
   }
 
-  // 前置校验：仅已完成 或 客服裁决取消 的任务可申诉
-  const isCompleted = need.status === 'completed'
+  // 前置校验：正常完成代表求助者已验收，仅客服裁决取消的任务可申诉
   const isArbitrationCancelled = need.status === 'cancelled' && need.cancel_reason === 'arbitration_cancelled'
-  if (!isCompleted && !isArbitrationCancelled) {
+  if (!isArbitrationCancelled) {
     return { code: -1, message: '当前任务状态不允许申诉' }
   }
 
@@ -117,7 +116,7 @@ async function submitAppeal(event, OPENID) {
 
   // 时效校验：任务结束后 72 小时内可申诉
   const now = new Date()
-  const endTime = isCompleted ? new Date(need.complete_time) : new Date(need.cancel_time)
+  const endTime = new Date(need.cancel_time)
   const deadline = new Date(endTime.getTime() + 72 * 60 * 60 * 1000)
   if (now > deadline) {
     return { code: -1, message: '申诉时效已过，任务结束后超过72小时无法申诉' }
@@ -470,7 +469,6 @@ async function getAppealDetail(event, OPENID) {
       taskInfo = {
         _id: need._id,
         type: need.type,
-        typeName: need.type_name || need.typeName || '',
         rewardAmount: need.reward_amount || need.rewardAmount || 0,
         status: need.status
       }
@@ -618,7 +616,6 @@ async function getMyAppealList(event, OPENID) {
   needRes.data.forEach(n => {
     needMap[n._id] = {
       type: n.type,
-      typeName: n.type_name || n.typeName || '',
       rewardAmount: n.reward_amount || n.rewardAmount || 0
     }
   })
@@ -721,7 +718,7 @@ async function sendAppealNotice(need, initiatorId, appealId) {
         user_id: otherUserId,
         type: 'appeal_notice',
         title: '申诉通知',
-        content: `【申诉通知】用户"${initiatorNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起申诉，申诉类型：${label}。请在24小时内补充提交申诉材料，超时未提交将视为放弃申诉权利，平台将仅依据对方材料进行仲裁。`,
+        content: `【申诉通知】用户"${initiatorNickname}"于${timeStr}对求助任务（任务单号：${taskNumber}）发起申诉，申诉类型：${label}。请在24小时内补充提交申诉材料，超时未提交将视为放弃申诉权利，平台将仅依据对方材料进行仲裁。`,
         need_id: need._id,
         appeal_id: appealId,
         is_read: false,

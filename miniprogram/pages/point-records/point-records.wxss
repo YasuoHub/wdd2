@@ -3,7 +3,6 @@
 .container {
   min-height: 100vh;
   background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
-  padding-bottom: 40rpx;
   box-sizing: border-box;
   width: 100%;
 }
@@ -28,7 +27,7 @@
 
 .points-title {
   font-size: 34rpx;
-  font-weight: 700;
+  font-weight: 400;
   opacity: 0.98;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
 }
@@ -66,7 +65,7 @@
 
 .total-number {
   font-size: 104rpx;
-  font-weight: 800;
+  font-weight: 400;
   line-height: 1;
   margin-right: 16rpx;
   text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
@@ -75,7 +74,7 @@
 .total-unit {
   font-size: 34rpx;
   opacity: 0.95;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .points-detail {
@@ -99,12 +98,12 @@
   font-size: 24rpx;
   opacity: 0.9;
   margin-bottom: 10rpx;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .detail-value {
   font-size: 40rpx;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .points-hint {
@@ -120,7 +119,7 @@
   gap: 10rpx;
   font-size: 24rpx;
   opacity: 0.95;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .hint-text text {
@@ -147,7 +146,7 @@
 
 .title-text {
   font-size: 34rpx;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text-primary);
 }
 
@@ -217,7 +216,7 @@
 .empty-text {
   font-size: 34rpx;
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: 400;
   margin-bottom: 16rpx;
 }
 
@@ -257,7 +256,7 @@
   align-items: center;
   justify-content: center;
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 400;
   margin-right: 24rpx;
   flex-shrink: 0;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
@@ -289,7 +288,7 @@
 .record-title {
   font-size: 30rpx;
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 400;
   flex: 1;
   margin-right: 20rpx;
   line-height: 1.4;
@@ -297,7 +296,7 @@
 
 .record-amount {
   font-size: 34rpx;
-  font-weight: 700;
+  font-weight: 400;
   flex-shrink: 0;
   line-height: 0.4;
 }
@@ -322,7 +321,7 @@
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   padding: 8rpx 18rpx;
   border-radius: var(--radius-full);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .record-time {
@@ -376,204 +375,13 @@
   position: relative; background: #fff; border-radius: 24rpx 24rpx 0 0;
   width: 100%; padding: 40rpx 30rpx; max-height: 80vh; overflow-y: auto; z-index: 1;
 }
-.modal-title { font-size: 36rpx; font-weight: 600; text-align: center; margin-bottom: 24rpx; }
+.modal-title { font-size: 36rpx; font-weight: 400; text-align: center; margin-bottom: 24rpx; }
 
 .modal-body { padding: 8rpx 0 16rpx; }
 .rule-section { margin-bottom: 24rpx; }
-.section-title { display: block; font-size: 28rpx; font-weight: 600; color: var(--text-primary); margin-bottom: 10rpx; }
+.section-title { display: block; font-size: 28rpx; font-weight: 400; color: var(--text-primary); margin-bottom: 10rpx; }
 .section-text { display: block; font-size: 26rpx; color: var(--text-secondary); line-height: 1.7; padding-left: 8rpx; }
 
 .modal-footer { display: flex; justify-content: center; margin-top: 24rpx; }
 .modal-btn.confirm { width: 320rpx; height: 80rpx; background: #1677D2; color: #fff; border-radius: 40rpx; font-size: 30rpx; display: flex; align-items: center; justify-content: center; }
-/* ============================================
-   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
-   ============================================ */
-.container,
-.chat-container {
-  background: #f5f7fa;
-}
-
-.header,
-.footer,
-.input-area,
-.popup-content,
-.modal-content,
-.rules-modal-content {
-  background: #ffffff;
-  border-color: var(--border-light);
-  box-shadow: var(--shadow-card);
-}
-
-.section-card,
-.task-card,
-.user-card,
-.menu-list,
-.quick-panel,
-.need-feed,
-.login-tip-card,
-.balance-section,
-.record-card,
-.ticket-card,
-.report-card,
-.appeal-card,
-.profile-card,
-.rating-card,
-.info-card,
-.form-card,
-.stat-card,
-.card {
-  background: #ffffff;
-  border: 1rpx solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-}
-
-.location-bar,
-.filter-item,
-.sort-section,
-.distance-section,
-.type-badge,
-.card-location,
-.distance-tag,
-.quick-tag,
-.type-item,
-.time-option,
-.quick-point,
-.quick-amount,
-.payment-option,
-.amount-detail,
-.rules-tip,
-.points-tip-wrapper,
-.input-wrapper,
-.toolbar-toggle-btn,
-.more-btn,
-.system-message-text,
-.time-divider text {
-  background: #f8fafc;
-  border-color: var(--border-light);
-  box-shadow: none;
-}
-
-.filter-item.active,
-.type-item.active,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active {
-  background: rgba(22, 119, 210, 0.08);
-  border-color: rgba(22, 119, 210, 0.34);
-  box-shadow: none;
-}
-
-.filter-item.active .filter-name,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active .payment-name {
-  color: var(--sky-deep);
-  font-weight: 600;
-}
-
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.amount-badge,
-.quick-amount.active,
-.quick-point.active,
-.time-recommend,
-.btn-vitality {
-  background: var(--vitality-orange);
-  box-shadow: var(--shadow-orange);
-}
-
-.balance-value.points,
-.balance-value.available,
-.points-number,
-.publish-points,
-.publish-amount {
-  color: var(--text-primary);
-  background: none;
-  -webkit-text-fill-color: currentColor;
-}
-
-.wdd-amount,
-.need-amount,
-.amount-current,
-.amount-symbol,
-.detail-value.fee,
-.warning-text,
-.balance-value.insufficient,
-.task-points-mini {
-  color: var(--vitality-orange);
-}
-
-.detail-value.income,
-.tag-mint,
-.status-success,
-.success-text {
-  color: var(--fresh-mint);
-}
-
-.message-item.other .message-bubble.text {
-  background: #ffffff;
-  border: 1rpx solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.message-item.self .message-bubble.text {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.popup-overlay,
-.modal-mask,
-.rules-modal {
-  background: rgba(15, 23, 42, 0.46);
-}
-
-.helper-profile-tip,
-.balance-insufficient,
-.task-ended-bar.breaking-bar {
-  background: #fff8e6;
-  border-color: rgba(233, 185, 73, 0.34);
-}
-
-image,
-button,
-view {
-  letter-spacing: 0;
-}
-/* 城市服务按钮对比修正 */
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  color: #ffffff;
-}
-
-.publish-btn.disabled,
-.send-btn[disabled],
-.disabled {
-  color: var(--text-muted);
-}
+@import "../../styles/wdd-polish.wxss";

@@ -419,7 +419,7 @@ async function sendReportNotice(need, reporterId, reportId, reportTypeLabel) {
         user_id: otherUserId,
         type: 'report_notice',
         title: '举报通知',
-        content: `【举报通知】用户"${reporterNickname}"于${timeStr}对任务「${need.type_name || '求助'}」（任务单号：${taskNumber}）发起举报，举报类型：${label}。请在24小时内提交反驳材料，超时未提交将视为放弃权利，平台将仅依据对方材料进行仲裁。`,
+        content: `【举报通知】用户"${reporterNickname}"于${timeStr}对求助任务（任务单号：${taskNumber}）发起举报，举报类型：${label}。请在24小时内提交反驳材料，超时未提交将视为放弃权利，平台将仅依据对方材料进行仲裁。`,
         need_id: need._id,
         report_id: reportId,
         is_read: false,
@@ -576,7 +576,6 @@ async function getReportDetail(event, OPENID) {
       taskInfo = {
         _id: need._id,
         type: need.type,
-        typeName: need.type_name || need.typeName || '',
         rewardAmount: need.reward_amount || need.rewardAmount || 0,
         status: need.status
       }
@@ -715,7 +714,6 @@ async function getMyReportList(event, OPENID) {
   needRes.data.forEach(n => {
     needMap[n._id] = {
       type: n.type,
-      typeName: n.type_name || n.typeName || '',
       rewardAmount: n.reward_amount || n.rewardAmount || 0
     }
   })

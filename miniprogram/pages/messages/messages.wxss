@@ -37,7 +37,7 @@
 
 .page-title {
   font-size: 44rpx;
-  font-weight: 800;
+  font-weight: 400;
   color: #1f2d3d;
   letter-spacing: 0;
 }
@@ -50,7 +50,7 @@
   );
   color: white;
   font-size: 22rpx;
-  font-weight: 700;
+  font-weight: 400;
   padding: 10rpx 24rpx;
   border-radius: var(--radius-full);
   box-shadow: var(--shadow-orange);
@@ -101,7 +101,7 @@
   );
   color: white;
   font-size: 20rpx;
-  font-weight: 700;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,7 +137,7 @@
   box-shadow: var(--shadow-card);
   border: 1rpx solid rgba(22, 119, 210, 0.12);
   transition: all 0.3s ease;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .tab.active {
@@ -168,7 +168,7 @@
   );
   color: white;
   font-size: 20rpx;
-  font-weight: 700;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -313,7 +313,7 @@
 /* 昵称 - 自适应宽度 */
 .message-nickname {
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -335,7 +335,6 @@
   width: 42rpx;
   height: 42rpx;
   border-radius: 14rpx;
-  background: rgba(22, 119, 210, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,13 +419,13 @@
 .message-time {
   font-size: 22rpx;
   color: var(--text-light);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* 消息状态标签 */
 .message-status {
   font-size: 22rpx;
-  font-weight: 600;
+  font-weight: 400;
   padding: 6rpx 18rpx;
   border-radius: var(--radius-full);
   position: relative;
@@ -474,7 +473,7 @@
   );
   color: white;
   font-size: 22rpx;
-  font-weight: 700;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -584,7 +583,7 @@
 
 .system-title {
   font-size: 30rpx;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text-primary);
   flex: 1;
   min-width: 0;
@@ -596,7 +595,7 @@
 .system-time {
   font-size: 22rpx;
   color: var(--text-light);
-  font-weight: 500;
+  font-weight: 400;
   flex-shrink: 0;
 }
 
@@ -652,7 +651,7 @@
 
 .empty-text {
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text-primary);
   margin-bottom: 12rpx;
 }
@@ -689,104 +688,21 @@
   color: var(--text-tertiary);
 }
 
-/* 系统通知弹窗 */
-.notification-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.notification-modal.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.modal-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8rpx);
-}
-
-.modal-content {
-  position: relative;
-  background: linear-gradient(
-    180deg,
-    var(--bg-primary) 0%,
-    var(--bg-card) 100%
-  );
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  max-height: 80vh;
+/* 系统通知底部抽屉 */
+.system-sheet-body {
+  max-height: calc(82vh - 140rpx);
   width: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
+  padding: 4rpx 0 8rpx;
 }
 
-.notification-modal.show .modal-content {
-  transform: translateY(0);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 32rpx;
-  border-bottom: 2rpx solid var(--border-light);
-}
-
-.modal-title {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.modal-close {
-  width: 56rpx;
-  height: 56rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(22, 119, 210, 0.1);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.modal-close:active {
-  background: var(--border-color);
-}
-
-.modal-body {
-  flex: 1;
-  padding: 24rpx 32rpx;
-  max-height: calc(80vh - 120rpx);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* 弹窗内的系统列表 */
-.modal-body .system-list {
-  width: 100%;
-  box-sizing: border-box;
+.sheet-system-list {
+  padding-bottom: 8rpx;
 }
 
 .modal-empty {
   text-align: center;
-  padding: 120rpx 40rpx;
+  padding: 116rpx 40rpx 124rpx;
 }
 
 .modal-empty-icon {
@@ -799,195 +715,4 @@
   font-size: 28rpx;
   color: var(--text-light);
 }
-/* ============================================
-   城市服务风格视觉覆盖：清爽可信、交易清楚、低装饰
-   ============================================ */
-.container,
-.chat-container {
-  background: #f5f7fa;
-}
-
-.header,
-.footer,
-.input-area,
-.popup-content,
-.modal-content,
-.rules-modal-content {
-  background: #ffffff;
-  border-color: var(--border-light);
-  box-shadow: var(--shadow-card);
-}
-
-.section-card,
-.task-card,
-.user-card,
-.menu-list,
-.quick-panel,
-.need-feed,
-.login-tip-card,
-.balance-section,
-.record-card,
-.ticket-card,
-.report-card,
-.appeal-card,
-.profile-card,
-.rating-card,
-.info-card,
-.form-card,
-.stat-card,
-.card {
-  background: #ffffff;
-  border: 1rpx solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-}
-
-.location-bar,
-.filter-item,
-.sort-section,
-.distance-section,
-.type-badge,
-.card-location,
-.distance-tag,
-.quick-tag,
-.type-item,
-.time-option,
-.quick-point,
-.quick-amount,
-.payment-option,
-.amount-detail,
-.rules-tip,
-.points-tip-wrapper,
-.input-wrapper,
-.toolbar-toggle-btn,
-.more-btn,
-.system-message-text,
-.time-divider text {
-  background: #f8fafc;
-  border-color: var(--border-light);
-  box-shadow: none;
-}
-
-.filter-item.active,
-.type-item.active,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active {
-  background: rgba(22, 119, 210, 0.08);
-  border-color: rgba(22, 119, 210, 0.34);
-  box-shadow: none;
-}
-
-.filter-item.active .filter-name,
-.quick-tag.active,
-.time-option.active,
-.payment-option.active .payment-name {
-  color: var(--sky-deep);
-  font-weight: 600;
-}
-
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.amount-badge,
-.quick-amount.active,
-.quick-point.active,
-.time-recommend,
-.btn-vitality {
-  background: var(--vitality-orange);
-  box-shadow: var(--shadow-orange);
-}
-
-.balance-value.points,
-.balance-value.available,
-.points-number,
-.publish-points,
-.publish-amount {
-  color: var(--text-primary);
-  background: none;
-  -webkit-text-fill-color: currentColor;
-}
-
-.wdd-amount,
-.need-amount,
-.amount-current,
-.amount-symbol,
-.detail-value.fee,
-.warning-text,
-.balance-value.insufficient,
-.task-points-mini {
-  color: var(--vitality-orange);
-}
-
-.detail-value.income,
-.tag-mint,
-.status-success,
-.success-text {
-  color: var(--fresh-mint);
-}
-
-.message-item.other .message-bubble.text {
-  background: #ffffff;
-  border: 1rpx solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.message-item.self .message-bubble.text {
-  background: var(--sky-primary);
-  box-shadow: var(--shadow-sky);
-}
-
-.popup-overlay,
-.modal-mask,
-.rules-modal {
-  background: rgba(15, 23, 42, 0.46);
-}
-
-.helper-profile-tip,
-.balance-insufficient,
-.task-ended-bar.breaking-bar {
-  background: #fff8e6;
-  border-color: rgba(233, 185, 73, 0.34);
-}
-
-image,
-button,
-view {
-  letter-spacing: 0;
-}
-/* 城市服务按钮对比修正 */
-.primary-action,
-.hero-login-btn,
-.publish-btn,
-.send-btn,
-.take-btn,
-.sign-in-btn,
-.invite-btn,
-.rules-modal-btn,
-.empty-btn.primary,
-.modal-btn.confirm,
-.logout-section.login-btn,
-.picker-icon-wrapper,
-.tool-icon {
-  color: #ffffff;
-}
-
-.publish-btn.disabled,
-.send-btn[disabled],
-.disabled {
-  color: var(--text-muted);
-}
+@import "../../styles/wdd-polish.wxss";

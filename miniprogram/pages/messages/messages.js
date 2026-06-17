@@ -1,7 +1,7 @@
 // 消息中心页面逻辑
 const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
-const { STATUS_MAP, TYPE_MAP } = require('../../config/types')
+const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -217,9 +217,10 @@ Page({
       if (result.code === 0) {
         // 分离求助聊天和帮助聊天
         const chatList = result.data.chatList.map(item => {
-          const typeMeta = TYPE_MAP[item.type] || TYPE_MAP.other
+          const typeMeta = getByType(resolveTaskType(item))
           return {
             ...item,
+            type: typeMeta.type,
             typeIcon: typeMeta.icon,
             typeColor: typeMeta.color,
             typeBgColor: typeMeta.bgColor,

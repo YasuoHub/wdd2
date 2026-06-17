@@ -1,5 +1,6 @@
 const app = getApp()
 const { REPORT_TYPES, REPORT_TYPE_LABELS } = require('../../config/types')
+const { getByType, resolveTaskType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -49,10 +50,12 @@ Page({
       wx.hideLoading()
       if (result.code === 0 && result.data.hasReport) {
         const data = result.data
+        const taskType = resolveTaskType(data.taskInfo)
+        const typeInfo = getByType(taskType)
         this.setData({
           opponentInfo: data.initiator,
           mySupplement: data.mySupplement || null,
-          taskSummary: data.taskInfo,
+          taskSummary: data.taskInfo ? { ...data.taskInfo, type: taskType, typeName: typeInfo.name } : data.taskInfo,
           supplementDeadline: data.supplementDeadline,
           canSupplement: data.canSupplement,
           isLoading: false

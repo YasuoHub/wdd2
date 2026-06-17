@@ -143,7 +143,7 @@ exports.main = async (event, context) => {
               user_id: need.user_id,
               type: 'task_matched',
               title: '有帮助者接单了！',
-              content: `${taker.nickname} 已承接您的"${need.type_name}"求助，快去看看吧`,
+              content: `${taker.nickname} 已承接您的求助任务，快去看看吧`,
               need_id: needId,
               is_read: false,
               create_time: db.serverDate()
@@ -155,7 +155,7 @@ exports.main = async (event, context) => {
               user_id: takerId,
               type: 'system',
               title: '接单成功',
-              content: `您已成功承接"${need.type_name}"任务，请及时提供帮助`,
+              content: '您已成功承接求助任务，请及时提供帮助',
               need_id: needId,
               is_read: false,
               create_time: db.serverDate()

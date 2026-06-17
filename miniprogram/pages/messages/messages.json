@@ -5,6 +5,7 @@
   "backgroundColor": "#F5F7FA",
   "usingComponents": {
     "empty": "/components/empty/empty",
-    "error": "/components/error/error"
+    "error": "/components/error/error",
+    "bottom-sheet": "/components/bottom-sheet/bottom-sheet"
   }
 }

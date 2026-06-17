@@ -1,4 +1,5 @@
 const DateUtil = require('../../utils/dateUtil')
+const { getByType, resolveTaskType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -38,8 +39,12 @@ Page({
         const data = result.data
 
         // 格式化任务时间
+        const taskType = resolveTaskType(data.task)
+        const taskTypeInfo = getByType(taskType)
         const task = data.task ? {
           ...data.task,
+          type: taskType,
+          typeName: taskTypeInfo.name,
           createTimeFormatted: DateUtil.formatDateTime(data.task.createTime),
           takeTimeFormatted: DateUtil.formatDateTime(data.task.takeTime)
         } : null

@@ -1,0 +1,23 @@
+<view wx:if="{{show}}" class="sheet-overlay" bindtap="onMaskTap">
+  <view
+    class="sheet-panel"
+    style="max-height: {{maxHeight}}; transform: translateY({{dragOffset}}rpx);"
+    catchtap="preventBubble"
+  >
+    <view
+      class="sheet-drag-area"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchEnd"
+    >
+      <view class="sheet-grabber"></view>
+      <view wx:if="{{title}}" class="sheet-header">
+        <text class="sheet-title">{{title}}</text>
+      </view>
+    </view>
+    <view class="sheet-body">
+      <slot></slot>
+    </view>
+  </view>
+</view>

@@ -38,7 +38,7 @@
 /* 标题 */
 .error-title {
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 400;
   color: #2C3E50;
   margin-bottom: 16rpx;
   text-align: center;
@@ -69,7 +69,7 @@
   padding: 24rpx 56rpx;
   border-radius: 9999rpx;
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 400;
   transition: all 0.3s ease;
   border: none;
   line-height: 1;

@@ -2,22 +2,18 @@
 const app = getApp()
 const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
-
-// 求助类型配置
-const NEED_TYPES = [
-  { id: 'weather', name: '实时天气', icon: 'cloud-sun', color: '#1677D2', bgColor: 'rgba(22, 119, 210, 0.12)' },
-  { id: 'traffic', name: '道路拥堵', icon: 'car-front', color: '#1F8F7A', bgColor: 'rgba(31, 143, 122, 0.12)' },
-  { id: 'shop', name: '店铺营业', icon: 'store', color: '#946B00', bgColor: 'rgba(255, 209, 102, 0.22)' },
-  { id: 'parking', name: '停车场空位', icon: 'square-parking', color: '#1677D2', bgColor: 'rgba(22, 119, 210, 0.12)' },
-  { id: 'queue', name: '排队情况', icon: 'users-round', color: '#D96A22', bgColor: 'rgba(217, 106, 34, 0.12)' },
-  { id: 'other', name: '其他', icon: 'ellipsis', color: '#4B5563', bgColor: 'rgba(75, 85, 99, 0.1)' }
-]
+const { NEED_TYPES, getByType } = require('../../utils/needTypes')
 
 // 有效期选项
 const TIME_OPTIONS = PLATFORM_RULES.EXPIRE_OPTIONS
 
+// 详细描述最少字数
+const MIN_DESCRIPTION_LENGTH = 5
+
 // 快捷金额选项（元）
 const QUICK_AMOUNTS = [1, 5, 10, 20, 50]
+const USED_LOCATION_LIMIT = 6
+const USED_LOCATION_STORAGE_PREFIX = 'publishUsedLocations'
 
 Page({
   data: {
@@ -27,15 +23,8 @@ Page({
     locationName: '',
     selectedLocation: '',
 
-    // 常用地点（成都）
-    quickLocations: [
-      { name: '春熙路', longitude: 104.0784, latitude: 30.6574 },
-      { name: '太古里', longitude: 104.0779, latitude: 30.6566 },
-      { name: '天府广场', longitude: 104.0668, latitude: 30.5728 },
-      { name: '宽窄巷子', longitude: 104.0556, latitude: 30.6633 },
-      { name: '锦里', longitude: 104.0486, latitude: 30.6424 },
-      { name: '成都东站', longitude: 104.1396, latitude: 30.6304 }
-    ],
+    // 当前用户发布成功后保存在本地的曾用地点
+    quickLocations: [],
 
     // 求助类型
     needTypes: NEED_TYPES,
@@ -81,12 +70,14 @@ Page({
     maxImageCount: 3,
     maxImageSize: 10 * 1024 * 1024,
 
-    // 平台规则弹窗
-    showRulesModal: false
+    // 展示状态
+    showRulesModal: false,
+    showAmountDetailSheet: false
   },
 
   onLoad(options) {
     this.initUserInfo()
+    this.loadUsedLocations()
     this.initMapCenter()
     if (options.type) {
       this.autoSelectType(options.type)
@@ -96,6 +87,7 @@ Page({
   },
 
   onShow() {
+    this.loadUsedLocations()
     this.refreshPlatformConfig()
     this.updateAmountCalculation()
     this.loadBalance()
@@ -201,6 +193,64 @@ Page({
     }
   },
 
+  getUsedLocationStorageKey() {
+    const userInfo = app.getUserInfo && app.getUserInfo()
+    const userId = userInfo && (userInfo._id || userInfo.openid || userInfo._openid)
+    return userId ? `${USED_LOCATION_STORAGE_PREFIX}:${userId}` : USED_LOCATION_STORAGE_PREFIX
+  },
+
+  normalizeUsedLocation(location = {}) {
+    const name = String(location.name || '').trim()
+    const longitude = Number(location.longitude)
+    const latitude = Number(location.latitude)
+
+    if (!name || !Number.isFinite(longitude) || !Number.isFinite(latitude)) {
+      return null
+    }
+
+    return {
+      name,
+      longitude,
+      latitude,
+      address: String(location.address || '').trim()
+    }
+  },
+
+  loadUsedLocations() {
+    try {
+      const locations = wx.getStorageSync(this.getUsedLocationStorageKey())
+      const normalized = Array.isArray(locations)
+        ? locations
+          .map(item => this.normalizeUsedLocation(item))
+          .filter(Boolean)
+          .slice(0, USED_LOCATION_LIMIT)
+        : []
+
+      this.setData({ quickLocations: normalized })
+    } catch (err) {
+      console.error('加载曾用地点失败:', err)
+      this.setData({ quickLocations: [] })
+    }
+  },
+
+  saveUsedLocation(location) {
+    const normalized = this.normalizeUsedLocation(location)
+    if (!normalized) return
+
+    const locations = [
+      normalized,
+      ...this.data.quickLocations.filter(item => item.name !== normalized.name)
+    ].slice(0, USED_LOCATION_LIMIT)
+
+    this.setData({ quickLocations: locations })
+
+    try {
+      wx.setStorageSync(this.getUsedLocationStorageKey(), locations)
+    } catch (err) {
+      console.error('保存曾用地点失败:', err)
+    }
+  },
+
   // 更新金额计算（平台抽成、帮助者收入）
   updateAmountCalculation() {
     const { rewardAmount } = this.data
@@ -293,15 +343,17 @@ Page({
     this.checkCanPublish()
   },
 
-  // 选择常用地点
+  // 选择曾用地点
   selectQuickLocation(e) {
     const location = e.currentTarget.dataset.location
     this.setData({
       locationName: location.name,
       selectedLocation: location.name,
       longitude: location.longitude,
-      latitude: location.latitude
+      latitude: location.latitude,
+      addressDetail: location.address || ''
     })
+    this.saveUsedLocation(location)
     this.checkCanPublish()
   },
 
@@ -314,6 +366,7 @@ Page({
   // 描述输入
   onDescriptionInput(e) {
     this.setData({ description: e.detail.value })
+    this.checkCanPublish()
   },
 
   // 选择有效期
@@ -351,10 +404,11 @@ Page({
 
   // 检查是否可以发布
   checkCanPublish() {
-    const { locationName, selectedType, rewardAmount } = this.data
-    const canPublish = locationName && selectedType
+    const { locationName, selectedType, rewardAmount, description } = this.data
+    const descriptionText = description.trim()
+    const canPublish = !!(locationName && selectedType && descriptionText.length >= MIN_DESCRIPTION_LENGTH
       && rewardAmount >= PLATFORM_RULES.MIN_REWARD_AMOUNT
-      && rewardAmount <= PLATFORM_RULES.MAX_REWARD_AMOUNT
+      && rewardAmount <= PLATFORM_RULES.MAX_REWARD_AMOUNT)
     this.setData({ canPublish })
   },
 
@@ -430,6 +484,18 @@ Page({
     this.setData({ showRulesModal: false })
   },
 
+  // 显示费用详情
+  showAmountDetail() {
+    this.setData({ showAmountDetailSheet: true })
+  },
+
+  // 关闭费用详情
+  hideAmountDetail() {
+    this.setData({ showAmountDetailSheet: false })
+  },
+
+  preventHide() {},
+
   // 发布求助（金额支付版）
   async handlePublish() {
     if (this.data.isPublishing) return
@@ -469,6 +535,11 @@ Page({
       wx.showToast({ title: '请先选择求助类型', icon: 'none', duration: 2000 })
       return
     }
+    const descriptionText = description.trim()
+    if (descriptionText.length < MIN_DESCRIPTION_LENGTH) {
+      wx.showToast({ title: `详细描述不少于${MIN_DESCRIPTION_LENGTH}个字`, icon: 'none', duration: 2000 })
+      return
+    }
     if (rewardAmount < PLATFORM_RULES.MIN_REWARD_AMOUNT) {
       wx.showToast({ title: `悬赏金额最少${PLATFORM_RULES.MIN_REWARD_AMOUNT}元`, icon: 'none', duration: 2000 })
       return
@@ -479,7 +550,7 @@ Page({
     }
     if (!this.data.canPublish) return
 
-    const typeInfo = NEED_TYPES.find(t => t.id === selectedType)
+    const typeInfo = getByType(selectedType)
 
     this.setData({ isPublishing: true })
 
@@ -498,8 +569,7 @@ Page({
           coordinates: [this.data.longitude, this.data.latitude]
         },
         type: selectedType,
-        typeName: typeInfo.name,
-        description: description,
+        description: descriptionText,
         expireMinutes: selectedTime,
         images: imageUrls
       }
@@ -519,11 +589,18 @@ Page({
         wx.hideLoading()
 
         if (result.code === 0) {
+          this.saveUsedLocation({
+            name: locationName,
+            longitude: this.data.longitude,
+            latitude: this.data.latitude,
+            address: this.data.addressDetail || ''
+          })
+
           app.globalData.refreshMyNeeds = true
           wx.setStorageSync('forceRefreshIndex', true)
           wx.setStorageSync('forceRefreshTaskHall', true)
 
-          const targetUrl = `/pages/publish-success/publish-success?needId=${result.data.needId}&amount=${rewardAmount}&typeName=${encodeURIComponent(typeInfo.name)}`
+          const targetUrl = `/pages/publish-success/publish-success?needId=${result.data.needId}&amount=${rewardAmount}&type=${selectedType}&locationName=${encodeURIComponent(locationName)}`
           wx.redirectTo({ url: targetUrl })
         } else {
           throw new Error(result.message || '发布失败')
@@ -579,12 +656,19 @@ Page({
       wx.hideLoading()
 
       if (confirmResult.code === 0) {
+        this.saveUsedLocation({
+          name: locationName,
+          longitude: this.data.longitude,
+          latitude: this.data.latitude,
+          address: this.data.addressDetail || ''
+        })
+
         // 设置刷新标记
         app.globalData.refreshMyNeeds = true
         wx.setStorageSync('forceRefreshIndex', true)
         wx.setStorageSync('forceRefreshTaskHall', true)
 
-        const targetUrl = `/pages/publish-success/publish-success?needId=${confirmResult.data.needId}&amount=${rewardAmount}&typeName=${encodeURIComponent(typeInfo.name)}`
+        const targetUrl = `/pages/publish-success/publish-success?needId=${confirmResult.data.needId}&amount=${rewardAmount}&type=${selectedType}&locationName=${encodeURIComponent(locationName)}`
         console.log('[发布] 准备跳转:', targetUrl)
         // 跳转到发布成功页
         wx.redirectTo({

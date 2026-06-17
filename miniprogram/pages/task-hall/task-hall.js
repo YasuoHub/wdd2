@@ -2,16 +2,17 @@
 const app = getApp()
 
 const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
+const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 
 // 筛选标签
 const FILTERS = [
   { id: 'all', name: '全部', icon: 'sparkles', color: '#1677D2' },
-  { id: 'weather', name: '天气', icon: 'cloud-sun', color: '#1677D2' },
-  { id: 'traffic', name: '路况', icon: 'car-front', color: '#1F8F7A' },
-  { id: 'shop', name: '店铺', icon: 'store', color: '#946B00' },
-  { id: 'parking', name: '停车', icon: 'square-parking', color: '#1677D2' },
-  { id: 'queue', name: '排队', icon: 'users-round', color: '#D96A22' },
-  { id: 'other', name: '其他', icon: 'ellipsis', color: '#4B5563' }
+  ...NEED_TYPES.map(item => ({
+    id: item.type,
+    name: item.shortName,
+    icon: item.icon,
+    color: item.color
+  }))
 ]
 
 // 排序选项
@@ -31,11 +32,6 @@ const LIMITED_DISTANCE_OPTIONS = [
 const UNLIMITED_DISTANCE_OPTION = { value: 0, label: '不限距离', icon: 'circle-ellipsis', color: '#7B8794' }
 const DISTANCE_OPTIONS = [...LIMITED_DISTANCE_OPTIONS, UNLIMITED_DISTANCE_OPTION]
 const DEFAULT_DISTANCE_OPTION = LIMITED_DISTANCE_OPTIONS[2]
-
-const TYPE_META = FILTERS.reduce((map, item) => {
-  map[item.id] = item
-  return map
-}, {})
 
 Page({
   data: {
@@ -217,6 +213,7 @@ Page({
         console.log('获取到任务数量:', list.length, '总数:', total)
 
         const processedList = list.map(item => {
+          const typeMeta = withTypeMeta(item)
           // 只有有效距离（小于 999km）才显示距离文本
           let distanceText = ''
           if (item.distance && item.distance < 999000) {
@@ -226,9 +223,11 @@ Page({
           }
           return {
             ...item,
+            type: typeMeta.type,
+            typeName: typeMeta.typeName,
             distanceText,
-            typeIcon: item.typeIcon || (TYPE_META[item.type] && TYPE_META[item.type].icon) || 'circle-help',
-            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1677D2'
+            typeIcon: typeMeta.typeIcon,
+            iconColor: typeMeta.iconColor
           }
         })
 

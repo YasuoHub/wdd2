@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "bottom-sheet": "/components/bottom-sheet/bottom-sheet"
+  },
   "navigationBarTitleText": "发布求助",
   "navigationBarBackgroundColor": "#F5F7FA",
   "navigationBarTextStyle": "black"

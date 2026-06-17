@@ -1,23 +1,26 @@
 // 发布成功页面
-const { MoneyUtils } = require('../../utils/platformRules')
+const app = getApp()
+const { getByType } = require('../../utils/needTypes')
 
 Page({
   data: {
     needId: '',
     amount: 0,
     typeName: '',
-    takerIncome: '0.00',
+    taskLocation: '任务地点',
     showAnimation: false
   },
 
   onLoad(options) {
-    const { needId, amount, typeName } = options
+    const { needId, amount, type, locationName } = options
     const parsedAmount = parseFloat(amount) || 0
+    const typeInfo = getByType(type)
+
     this.setData({
       needId: needId || '',
       amount: parsedAmount,
-      typeName: decodeURIComponent(typeName || '求助'),
-      takerIncome: MoneyUtils.calcTakerIncome(parsedAmount)
+      typeName: typeInfo.name,
+      taskLocation: decodeURIComponent(locationName || '任务地点')
     })
 
     // 触发入场动画

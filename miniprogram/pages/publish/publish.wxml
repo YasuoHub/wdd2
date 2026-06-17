@@ -41,9 +41,9 @@
         <wdd-icon name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
 
-      <!-- 常用地点快捷选择 -->
-      <view class="quick-locations">
-        <text class="quick-label">常用地点：</text>
+      <!-- 曾用地点快捷选择 -->
+      <view wx:if="{{quickLocations.length > 0}}" class="quick-locations">
+        <text class="quick-label">曾用地点：</text>
         <view class="quick-tags">
           <text
             wx:for="{{quickLocations}}"
@@ -60,10 +60,10 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon type">
-          <wdd-icon name="target" color="#946B00" size="34"></wdd-icon>
+          <wdd-icon name="target" color="#1677D2" size="34"></wdd-icon>
         </view>
         <view class="section-info">
-          <text class="section-title">求助类型</text>
+          <text class="section-title">求助类型 <text class="required-mark">*</text></text>
           <text class="section-subtitle">选择你想了解的信息类型</text>
         </view>
       </view>
@@ -92,11 +92,11 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon desc">
-          <wdd-icon name="notebook-pen" color="#D96A22" size="34"></wdd-icon>
+          <wdd-icon name="notebook-pen" color="#1677D2" size="34"></wdd-icon>
         </view>
         <view class="section-info">
-          <text class="section-title">详细描述</text>
-          <text class="section-subtitle">选填，让帮助者更了解你的需求</text>
+          <text class="section-title">详细描述 <text class="required-mark">*</text></text>
+          <text class="section-subtitle">不少于5个字，请写清楚你想确认的信息</text>
         </view>
       </view>
 
@@ -111,6 +111,32 @@
       <text class="char-count">{{description.length}}/500</text>
     </view>
 
+    <!-- 有效期选择 -->
+    <view class="section-card">
+      <view class="section-header">
+        <view class="section-icon time">
+          <wdd-icon name="clock-3" color="#1677D2" size="34"></wdd-icon>
+        </view>
+        <view class="section-info">
+          <text class="section-title">有效时间 <text class="required-mark">*</text></text>
+          <text class="section-subtitle">超时自动取消，金额原路退回</text>
+        </view>
+      </view>
+
+      <view class="time-options">
+        <view
+          wx:for="{{timeOptions}}"
+          wx:key="value"
+          class="time-option {{selectedTime === item.value ? 'active' : ''}}"
+          bindtap="selectTime"
+          data-time="{{item.value}}"
+        >
+          <text class="time-value">{{item.label}}</text>
+          <text wx:if="{{item.recommended}}" class="time-recommend">推荐</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 图片上传 -->
     <view class="section-card">
       <view class="section-header">
@@ -118,7 +144,7 @@
           <wdd-icon name="image-plus" color="#1677D2" size="34"></wdd-icon>
         </view>
         <view class="section-info">
-          <text class="section-title">添加图片</text>
+          <text class="section-title">图片描述</text>
           <text class="section-subtitle">选填，最多3张，每张不超过10MB</text>
         </view>
       </view>
@@ -154,37 +180,11 @@
       </view>
     </view>
 
-    <!-- 有效期选择 -->
-    <view class="section-card">
-      <view class="section-header">
-        <view class="section-icon time">
-          <wdd-icon name="clock-3" color="#1F8F7A" size="34"></wdd-icon>
-        </view>
-        <view class="section-info">
-          <text class="section-title">有效时间</text>
-          <text class="section-subtitle">超时自动取消，金额原路退回</text>
-        </view>
-      </view>
-
-      <view class="time-options">
-        <view
-          wx:for="{{timeOptions}}"
-          wx:key="value"
-          class="time-option {{selectedTime === item.value ? 'active' : ''}}"
-          bindtap="selectTime"
-          data-time="{{item.value}}"
-        >
-          <text class="time-value">{{item.label}}</text>
-          <text wx:if="{{item.recommended}}" class="time-recommend">推荐</text>
-        </view>
-      </view>
-    </view>
-
     <!-- 悬赏金额 -->
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon amount">
-          <wdd-icon name="circle-dollar-sign" color="#D96A22" size="34"></wdd-icon>
+          <wdd-icon name="circle-dollar-sign" color="#1677D2" size="34"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">悬赏金额</text>
@@ -238,23 +238,6 @@
         </view>
       </view>
 
-      <!-- 金额明细与平台规则 -->
-      <view class="amount-detail">
-        <view class="detail-row">
-          <text class="detail-label">悬赏金额</text>
-          <text class="detail-value">¥{{money.format(rewardAmount)}}</text>
-        </view>
-        <view class="detail-row">
-          <text class="detail-label">平台服务费（{{platformFeeRate}}%）</text>
-          <text class="detail-value fee">-¥{{money.format(platformFee)}}</text>
-        </view>
-        <view class="detail-divider"></view>
-        <view class="detail-row total">
-          <text class="detail-label">帮助者实际获得</text>
-          <text class="detail-value income">¥{{money.format(takerIncome)}}</text>
-        </view>
-      </view>
-
       <!-- 支付方式选择 -->
       <view class="payment-method-section">
         <text class="section-label">支付方式</text>
@@ -291,13 +274,10 @@
       <!-- 平台规则提示 -->
       <view class="rules-tip" bindtap="showPlatformRules">
         <wdd-icon name="info" color="#1677D2" size="28"></wdd-icon>
-        <text class="rules-text">平台规则：{{feePolicy}}。{{refundPolicy}}</text>
+        <text class="rules-text">平台规则：服务费、退款与提现说明</text>
         <wdd-icon name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
     </view>
-
-    <!-- 底部占位 -->
-    <view class="bottom-spacer"></view>
   </scroll-view>
 
   <!-- 底部发布按钮 -->
@@ -306,6 +286,10 @@
       <view class="publish-info">
         <text class="publish-label">需支付</text>
         <text class="publish-amount">¥{{money.format(rewardAmount)}}</text>
+      </view>
+      <view class="amount-detail-trigger" bindtap="showAmountDetail">
+        <text>详情</text>
+        <wdd-icon name="chevron-up" color="#7B8794" size="22"></wdd-icon>
       </view>
       <button
         class="publish-btn {{!canPublish ? 'disabled' : ''}}"
@@ -318,53 +302,61 @@
     </view>
   </view>
 
-  <!-- 平台规则弹窗 -->
-  <view wx:if="{{showRulesModal}}" class="rules-modal" bindtap="hidePlatformRules">
-    <view class="rules-modal-content" catchtap="preventHide">
-      <view class="rules-modal-header">
-        <text class="rules-modal-title">平台规则说明</text>
-        <view class="rules-modal-close" bindtap="hidePlatformRules">
-          <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
-        </view>
+  <bottom-sheet show="{{showAmountDetailSheet}}" title="费用详情" bind:close="hideAmountDetail">
+    <view class="amount-detail sheet-amount-detail">
+      <view class="detail-row">
+        <text class="detail-label">悬赏金额</text>
+        <text class="detail-value">¥{{money.format(rewardAmount)}}</text>
       </view>
-      <view class="rules-modal-body">
-        <view class="rule-item">
-          <wdd-icon name="circle-dollar-sign" color="#D96A22" size="40"></wdd-icon>
-          <view class="rule-content">
-            <text class="rule-title">悬赏支付</text>
-            <text class="rule-desc">发布任务时需先支付悬赏金额，支付成功后任务才会上线。</text>
-          </view>
-        </view>
-        <view class="rule-item">
-          <wdd-icon name="chart-column" color="#1677D2" size="40"></wdd-icon>
-          <view class="rule-content">
-            <text class="rule-title">平台服务费</text>
-            <text class="rule-desc">平台对每单任务收取{{platformFeeRate}}%服务费，用于平台运营和技术维护。</text>
-          </view>
-        </view>
-        <view class="rule-item">
-          <wdd-icon name="refresh-cw" color="#7B8794" size="40"></wdd-icon>
-          <view class="rule-content">
-            <text class="rule-title">取消退款</text>
-            <text class="rule-desc">任务超时无人接单或手动取消，悬赏金额将原路退回至您的支付账户。</text>
-          </view>
-        </view>
-        <view class="rule-item">
-          <wdd-icon name="circle-check-big" color="#1F8F7A" size="40"></wdd-icon>
-          <view class="rule-content">
-            <text class="rule-title">任务完成</text>
-            <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入余额。</text>
-          </view>
-        </view>
-        <view class="rule-item">
-          <wdd-icon name="landmark" color="#1677D2" size="40"></wdd-icon>
-          <view class="rule-content">
-            <text class="rule-title">提现规则</text>
-            <text class="rule-desc">余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>
-          </view>
-        </view>
+      <view class="detail-row">
+        <text class="detail-label">平台服务费（{{platformFeeRate}}%）</text>
+        <text class="detail-value fee">-¥{{money.format(platformFee)}}</text>
       </view>
-      <button class="rules-modal-btn" bindtap="hidePlatformRules">我知道了</button>
+      <view class="detail-divider"></view>
+      <view class="detail-row total">
+        <text class="detail-label">帮助者获得</text>
+        <text class="detail-value income">¥{{money.format(takerIncome)}}</text>
+      </view>
     </view>
-  </view>
+  </bottom-sheet>
+
+  <bottom-sheet show="{{showRulesModal}}" title="平台规则说明" maxHeight="80vh" bind:close="hidePlatformRules">
+    <view class="rules-modal-body">
+      <view class="rule-item">
+        <wdd-icon name="circle-dollar-sign" color="#D96A22" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">悬赏支付</text>
+          <text class="rule-desc">发布任务时需先支付悬赏金额，支付成功后任务才会上线。</text>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="chart-column" color="#1677D2" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">平台服务费</text>
+          <text class="rule-desc">平台对每单任务收取{{platformFeeRate}}%服务费，用于平台运营和技术维护。</text>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="refresh-cw" color="#7B8794" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">取消退款</text>
+          <text class="rule-desc">任务超时无人接单或手动取消，悬赏金额将原路退回至您的支付账户。</text>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="circle-check-big" color="#1F8F7A" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">任务完成</text>
+          <text class="rule-desc">求助者确认完成后，帮助者获得悬赏金额（扣除服务费），计入余额。</text>
+        </view>
+      </view>
+      <view class="rule-item">
+        <wdd-icon name="landmark" color="#1677D2" size="40"></wdd-icon>
+        <view class="rule-content">
+          <text class="rule-title">提现规则</text>
+          <text class="rule-desc">余额满{{withdrawMinAmount}}元可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text>
+        </view>
+      </view>
+    </view>
+  </bottom-sheet>
 </view>

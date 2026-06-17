@@ -1,5 +1,6 @@
 // 运营分析页面
 const CLOUD_FUNC = 'wdd-ops-analytics'
+const { getByType } = require('../../utils/needTypes')
 
 // 余额流水类型映射
 const FLOW_TYPE_MAP = {
@@ -163,7 +164,7 @@ Page({
 
         case 'getTaskTypeRanking':
           updateData.typeRanking = (data.ranking || []).map(d => ({
-            label: d.typeName, value: d.count
+            label: getByType(d.type).name, value: d.count
           }))
           break
 

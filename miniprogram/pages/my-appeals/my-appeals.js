@@ -1,5 +1,5 @@
 const DateUtil = require('../../utils/dateUtil')
-const { TYPE_MAP } = require('../../config/types')
+const { getByType, resolveTaskType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -56,10 +56,11 @@ Page({
       const moreKey = status === 'pending' ? 'pendingHasMore' : 'processedHasMore'
 
       const formattedList = list.map(item => {
-        const taskType = item.taskInfo && item.taskInfo.type
-        const typeMeta = TYPE_MAP[taskType] || {}
+        const taskType = resolveTaskType(item.taskInfo)
+        const typeMeta = getByType(taskType)
         return {
           ...item,
+          taskInfo: item.taskInfo ? { ...item.taskInfo, type: taskType, typeName: typeMeta.name } : item.taskInfo,
           createTimeText: DateUtil.formatDateTime(item.createTime),
           taskIcon: typeMeta.icon || 'clipboard-list',
           taskColor: typeMeta.color || '#636e72',

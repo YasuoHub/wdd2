@@ -1,16 +1,7 @@
 // 帮助者信息完善页面
 const app = getApp()
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
-
-// 帮助类型选项
-const HELP_TYPES = [
-  { id: 'weather', name: '实时天气', icon: 'cloud-sun', color: '#1677D2' },
-  { id: 'traffic', name: '道路拥堵', icon: 'car-front', color: '#E9B949' },
-  { id: 'shop', name: '店铺营业', icon: 'store', color: '#1677D2' },
-  { id: 'parking', name: '停车场空位', icon: 'square-parking', color: '#1F8F7A' },
-  { id: 'queue', name: '排队情况', icon: 'users-round', color: '#D96A22' },
-  { id: 'other', name: '其他', icon: 'ellipsis', color: '#B8C2CC' }
-]
+const { NEED_TYPES } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -68,7 +59,7 @@ Page({
 
   // 初始化帮助类型（添加选中状态）
   initHelpTypes() {
-    const helpTypes = HELP_TYPES.map(item => ({
+    const helpTypes = NEED_TYPES.map(item => ({
       ...item,
       selected: false
     }))

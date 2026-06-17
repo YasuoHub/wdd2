@@ -1,18 +1,16 @@
 <!-- 发布成功页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page {{showAnimation ? 'show' : ''}}">
-  <view class="wdd-page-bg"></view>
-  <!-- 成功动画区域 -->
   <view class="success-section">
     <view class="success-icon">
-      <wdd-icon name="circle-check-big" color="#FFFFFF" size="72"></wdd-icon>
+      <wdd-icon name="check" color="#1677D2" size="74"></wdd-icon>
     </view>
-    <text class="success-title">发布成功！</text>
-    <text class="success-subtitle">您的求助已上线，正在为您匹配附近帮助者</text>
+    <text class="success-title">发布成功</text>
+    <text class="success-subtitle">您的求助已进入任务大厅，等待附近帮助者接单</text>
   </view>
 
-  <!-- 任务信息卡片 -->
-  <view class="task-info-card">
+  <view class="task-info-card content-card">
+    <view class="card-title">任务摘要</view>
     <view class="info-row">
       <text class="info-label">求助类型</text>
       <text class="info-value">{{typeName}}</text>
@@ -24,28 +22,32 @@
     </view>
     <view class="info-divider"></view>
     <view class="info-row">
-      <text class="info-label">帮助者获得</text>
-      <text class="info-value income">¥{{money.format(takerIncome)}}</text>
+      <text class="info-label">任务地点</text>
+      <text class="info-value location">{{taskLocation}}</text>
     </view>
   </view>
 
-  <!-- 提示信息 -->
-  <view class="tips-section">
+  <view class="tips-section content-card">
+    <view class="card-title">下一步提示</view>
     <view class="tip-item">
-      <wdd-icon name="timer" color="#1677D2" size="30"></wdd-icon>
-      <text class="tip-text">任务有效期内，系统会自动匹配附近的帮助者</text>
+      <view class="tip-icon">
+        <wdd-icon name="clipboard-list" color="#1677D2" size="34"></wdd-icon>
+      </view>
+      <text class="tip-text">任务有效期内，附近帮助者可在任务大厅接单</text>
     </view>
+    <view class="tip-divider"></view>
     <view class="tip-item">
-      <wdd-icon name="message-circle" color="#1677D2" size="30"></wdd-icon>
+      <view class="tip-icon">
+        <wdd-icon name="bell" color="#1677D2" size="34"></wdd-icon>
+      </view>
       <text class="tip-text">有帮助者接单后，您会收到通知，可立即开始沟通</text>
     </view>
-    <view class="tip-item">
-      <wdd-icon name="wallet" color="#D96A22" size="30"></wdd-icon>
-      <text class="tip-text">任务取消后，悬赏金额将原路退回至您的账户</text>
+    <view class="refund-tip">
+      <wdd-icon name="info" color="#5E7187" size="30"></wdd-icon>
+      <text>退款提示：任务取消后，悬赏金额将原路退回至您的账户</text>
     </view>
   </view>
 
-  <!-- 底部按钮 -->
   <view class="footer">
     <button class="btn-primary" bindtap="goToTaskDetail">
       查看任务详情

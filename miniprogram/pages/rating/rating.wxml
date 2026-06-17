@@ -1,6 +1,11 @@
 <!-- 星级评价页面 -->
 <view class="container wdd-page">
   <view class="wdd-page-bg"></view>
+  <view class="rating-hero">
+    <text class="hero-title">请对本次<text class="hero-highlight">{{ratingType === 'seeker' ? '帮助' : '求助'}}</text>进行评价</text>
+    <text class="hero-subtitle">你的评价将帮助对方获得更多机会</text>
+  </view>
+
   <!-- 评价对象信息 -->
   <view class="target-card">
     <view class="target-avatar">
@@ -14,49 +19,57 @@
     </view>
   </view>
 
-  <!-- 星级评分 -->
-  <view class="rating-section">
-    <text class="rating-title">请对本次{{ratingType === 'seeker' ? '帮助' : '求助'}}进行评价</text>
-    <view class="stars-wrapper">
-      <view
-        wx:for="{{[1,2,3,4,5]}}"
-        wx:key="*this"
-        class="star {{rating >= item ? 'active' : ''}}"
-        bindtap="setRating"
-        data-score="{{item}}"
-      >
-        <wdd-icon name="star" color="{{rating >= item ? '#FFD166' : '#C4D8E5'}}" size="58"></wdd-icon>
+  <view class="rating-card">
+    <!-- 星级评分 -->
+    <view class="rating-section">
+      <text class="rating-title">总体评分</text>
+      <view class="stars-wrapper">
+        <view
+          wx:for="{{[1,2,3,4,5]}}"
+          wx:key="*this"
+          class="star {{rating >= item ? 'active' : ''}}"
+          bindtap="setRating"
+          data-score="{{item}}"
+        >
+          <text class="star-symbol">{{rating >= item ? '★' : '☆'}}</text>
+        </view>
+      </view>
+      <text class="rating-text">{{rating === 5 ? '非常满意' : ratingText}}</text>
+    </view>
+
+    <!-- 评价标签 -->
+    <view class="tags-section" wx:if="{{rating > 0}}">
+      <text class="section-title">评价标签 <text class="section-title-muted">（多选）</text></text>
+      <view class="tags-wrapper">
+        <view
+          wx:for="{{ratingTags}}"
+          wx:key="*this"
+          class="tag {{item.selected ? 'active' : ''}}"
+          bindtap="toggleTag"
+          data-index="{{index}}"
+        >
+          <text>{{item.text}}</text>
+          <view wx:if="{{item.selected}}" class="tag-check">
+            <wdd-icon name="check" color="#FFFFFF" size="22"></wdd-icon>
+          </view>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 评价标签 -->
-  <view class="tags-section" wx:if="{{rating > 0}}">
-    <text class="section-title">选择标签（可多选）</text>
-    <view class="tags-wrapper">
-      <view
-        wx:for="{{ratingTags}}"
-        wx:key="*this"
-        class="tag {{item.selected ? 'active' : ''}}"
-        bindtap="toggleTag"
-        data-index="{{index}}"
-      >
-        {{item.text}}
+    <!-- 评价内容 -->
+    <view class="comment-section">
+      <text class="section-title">详细评价 <text class="section-title-muted">（选填）</text></text>
+      <view class="comment-box">
+        <textarea
+          class="comment-input"
+          placeholder="可以补充说说这次体验"
+          maxlength="200"
+          bindinput="onCommentInput"
+          value="{{comment}}"
+        />
+        <text class="char-count">{{comment.length}}/200</text>
       </view>
     </view>
-  </view>
-
-  <!-- 评价内容 -->
-  <view class="comment-section">
-    <text class="section-title">详细评价（选填）</text>
-    <textarea
-      class="comment-input"
-      placeholder="说说你的感受，帮助其他用户了解TA..."
-      maxlength="200"
-      bindinput="onCommentInput"
-      value="{{comment}}"
-    />
-    <text class="char-count">{{comment.length}}/200</text>
   </view>
 
   <!-- 提交按钮 -->
@@ -73,11 +86,20 @@
   <!-- 评价说明 -->
   <view class="tips-section">
     <view class="tips-title">
-      <wdd-icon name="lightbulb" color="#FFD166" size="26"></wdd-icon>
+      <wdd-icon name="info" color="#9AA5B1" size="24"></wdd-icon>
       <text>评价说明</text>
     </view>
-    <text class="tips-item">• 评价后无法修改，请认真填写</text>
-    <text class="tips-item">• 好的评价会帮助TA获得更多机会</text>
-    <text class="tips-item">• 恶意评价将被平台处理</text>
+    <view class="tips-item">
+      <wdd-icon name="shield-check" color="#A7B0BC" size="24"></wdd-icon>
+      <text>评价提交后无法修改，请认真对待每一次评价</text>
+    </view>
+    <view class="tips-item">
+      <wdd-icon name="shield-check" color="#A7B0BC" size="24"></wdd-icon>
+      <text>好的评价会帮助对方获得更多任务机会</text>
+    </view>
+    <view class="tips-item">
+      <wdd-icon name="shield-check" color="#A7B0BC" size="24"></wdd-icon>
+      <text>恶意评价、虚假内容将被平台处理</text>
+    </view>
   </view>
 </view>

@@ -132,26 +132,31 @@
               <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || item.color || '#1677D2'}}" size="50"></wdd-icon>
             </view>
             <view class="need-body">
-              <view class="need-content">{{item.description || '暂无详细描述'}}</view>
-              <view class="need-type-label">{{item.typeName}}</view>
+              <view class="need-topline">
+                <view class="need-content">{{item.description || '暂无详细描述'}}</view>
+                <view class="need-reward">
+                  <text class="need-amount" wx:if="{{item.rewardAmount > 0}}">¥{{money.format(item.rewardAmount)}}</text>
+                  <text class="need-amount" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
+                </view>
+              </view>
               <view class="need-meta">
                 <view class="meta-item location-item">
                   <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
                   <text class="location-name">{{item.locationName}}</text>
-                  <text wx:if="{{item.distanceText}}" class="distance-text">{{item.distanceText}}</text>
+                </view>
+                <text wx:if="{{item.distanceText}}" class="meta-dot">·</text>
+                <view wx:if="{{item.distanceText}}" class="meta-item distance-item">
+                  <text>{{item.distanceText}}</text>
+                </view>
+                <text class="meta-dot">·</text>
+                <view class="meta-item time-item">
+                  <wdd-icon name="clock-3" color="#7B8794" size="24"></wdd-icon>
+                  <text>{{item.remainTime}}</text>
                 </view>
               </view>
             </view>
-            <view class="need-side">
-              <text class="need-amount" wx:if="{{item.rewardAmount > 0}}">¥{{money.format(item.rewardAmount)}}</text>
-              <text class="need-amount" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
-              <view class="meta-item time-item">
-                <wdd-icon name="clock-3" color="#7B8794" size="24"></wdd-icon>
-                <text>{{item.remainTime}}</text>
-              </view>
-              <view class="row-arrow-wrap">
-                <wdd-icon name="chevron-right" color="#7B8794" size="28"></wdd-icon>
-              </view>
+            <view class="row-arrow-wrap">
+              <wdd-icon name="chevron-right" color="#7B8794" size="28"></wdd-icon>
             </view>
           </view>
         </view>

@@ -2,181 +2,201 @@
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page" style="padding-bottom: {{pagePaddingBottom}}rpx;">
   <view class="wdd-page-bg"></view>
-  <!-- 加载中 -->
+
   <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 
-  <!-- 任务内容 -->
   <block wx:elif="{{task}}">
-    <!-- 任务状态卡片 -->
-    <view class="status-card {{task.status}}">
-      <view class="status-icon">
-        <wdd-icon name="{{task.statusIcon || 'circle-help'}}" color="#FFFFFF" size="34"></wdd-icon>
-      </view>
-      <view class="status-info">
-        <text class="status-text">{{task.statusText}}</text>
-        <text wx:if="{{task.remainTime && task.status === 'pending'}}" class="remain-time">剩余 {{task.remainTime}}</text>
+    <view wx:if="{{canReport || canAppeal}}" class="top-tools">
+      <view class="page-more" bindtap="toggleMoreMenu">
+        <wdd-icon name="ellipsis" color="#111827" size="34"></wdd-icon>
       </view>
     </view>
 
-    <!-- 任务信息卡片 -->
-    <view class="info-card">
-      <!-- 类型 + 悬赏金额 同排 -->
-      <view class="info-header">
-        <view class="type-tag" style="background: {{task.bgColor}}; color: {{task.color}};">
+    <view wx:if="{{showMoreMenu}}" class="menu-mask" catchtap="hideMoreMenu">
+      <view class="more-popover" catchtap="noop">
+        <view wx:if="{{canReport}}" class="menu-item" bindtap="goToReport">
+          <wdd-icon name="flag" color="#D96A22" size="26"></wdd-icon>
+          <text>举报</text>
+        </view>
+        <view wx:if="{{canAppeal}}" class="menu-item" bindtap="goToAppeal">
+          <wdd-icon name="shield-alert" color="#D96A22" size="26"></wdd-icon>
+          <text>申诉</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="detail-card hero-card status-{{task.status}}">
+      <view class="hero-topline">
+        <view class="status-pill status-pill-{{task.status}}">
+          <text>{{task.statusText}}</text>
+        </view>
+        <view class="reward">
+          <text class="reward-symbol">¥</text>
+          <text class="reward-value">{{money.format(task.rewardAmount || 0)}}</text>
+        </view>
+      </view>
+
+      <text class="task-title">{{task.description || '暂无求助内容'}}</text>
+
+      <view class="hero-meta">
+        <view class="type-chip" style="background: {{task.bgColor}}; color: {{task.color}};">
           <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="{{task.color || '#1677D2'}}" size="24"></wdd-icon>
           <text>{{task.typeName}}</text>
         </view>
-
-        <view class="amount-badge">
-          <text class="amount-symbol">¥</text>
-          <text class="amount-value">{{task.rewardAmount || 0}}</text>
-        </view>
-      </view>
-
-      <!-- 描述 -->
-      <view class="description-section">
-        <text class="section-title">求助内容</text>
-        <text class="description-text">{{task.description || '暂无描述'}}</text>
-      </view>
-
-      <!-- 图片展示 -->
-      <view class="images-section" wx:if="{{task.images && task.images.length > 0}}">
-        <text class="section-title">求助图片</text>
-        <view class="images-list">
-          <image
-            wx:for="{{task.images}}"
-            wx:key="index"
-            class="task-image"
-            src="{{item}}"
-            mode="aspectFill"
-            bindtap="previewTaskImages"
-            data-index="{{index}}"
-          />
-        </view>
-      </view>
-
-      <!-- 位置 -->
-      <view class="location-section">
-        <text class="section-title">求助位置</text>
-        <view class="location-box" bindtap="previewLocation">
-          <wdd-icon name="map-pin" color="#7B8794" size="26"></wdd-icon>
-          <text class="location-name">{{task.locationName || '未知位置'}}</text>
-          <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
-        </view>
-        <view class="order-id-block">
-          <text class="order-id-label">任务单号</text>
-          <text class="order-id-value">{{task._id}}</text>
-        </view>
+        <text class="publish-time">{{task.createTime || '发布时间未知'}}</text>
       </view>
     </view>
 
-    <!-- 用户信息卡片 -->
-    <view class="user-card">
-      <!-- 求助者信息 -->
-      <view class="user-section">
-        <view class="section-title title-with-icon">
-          <wdd-icon name="send" color="#1677D2" size="28"></wdd-icon>
+    <view class="detail-card location-card" bindtap="previewLocation">
+      <view class="section-heading">求助位置</view>
+      <view class="location-row">
+        <view class="location-marker">
+          <wdd-icon name="map-pin" color="#1677D2" size="68"></wdd-icon>
+        </view>
+        <view class="location-main">
+          <text class="location-name">{{task.locationName || '未知位置'}}</text>
+          <text wx:if="{{task._locationSubText}}" class="location-sub">{{task._locationSubText}}</text>
+        </view>
+        <wdd-icon name="chevron-right" color="#7B8794" size="32"></wdd-icon>
+      </view>
+    </view>
+
+    <view class="detail-card content-card">
+      <view class="section-heading">求助内容</view>
+      <text class="content-text">{{task.description || '暂无补充说明'}}</text>
+
+      <view class="images-list" wx:if="{{task.images && task.images.length > 0}}">
+        <image
+          wx:for="{{task.images}}"
+          wx:key="index"
+          class="task-image"
+          src="{{item}}"
+          mode="aspectFill"
+          bindtap="previewTaskImages"
+          data-index="{{index}}"
+        />
+      </view>
+    </view>
+
+    <view class="detail-card info-table">
+      <view class="section-heading">任务信息</view>
+
+      <view class="info-row">
+        <view class="info-label">
+          <wdd-icon name="clipboard-list" color="#7B8794" size="28"></wdd-icon>
+          <text>任务单号</text>
+        </view>
+        <text class="info-value">{{task._orderNo}}</text>
+      </view>
+
+      <view class="info-row clickable" bindtap="goToPublicProfile" data-userid="{{task.user_id}}">
+        <view class="info-label">
+          <wdd-icon name="user-round" color="#7B8794" size="28"></wdd-icon>
           <text>求助者</text>
         </view>
-        <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.user_id}}">
-          <image class="user-avatar" src="{{task.user_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
-          <view class="user-meta">
-            <text class="user-name">{{task.user_nickname || '匿名用户'}}</text>
-            <text wx:if="{{isSeeker}}" class="user-tag">我自己</text>
-          </view>
+        <view class="person-value">
+          <image class="person-avatar" src="{{task.user_avatar || task.seekerAvatar || '/images/default-avatar.png'}}" mode="aspectFill" />
+          <text>{{isSeeker ? '我（求助者）' : (task.user_nickname || task.userNickname || task.seekerNickname || '匿名用户')}}</text>
+          <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
         </view>
       </view>
 
-      <!-- 帮助者信息（如果有） -->
-      <view wx:if="{{task.taker_id}}" class="user-section">
-        <view class="section-title title-with-icon">
-          <wdd-icon name="handshake" color="#119B72" size="28"></wdd-icon>
+      <view wx:if="{{task.taker_id}}" class="info-row clickable" bindtap="goToPublicProfile" data-userid="{{task.taker_id}}">
+        <view class="info-label">
+          <wdd-icon name="users-round" color="#7B8794" size="28"></wdd-icon>
           <text>帮助者</text>
         </view>
-        <view class="user-info" bindtap="goToPublicProfile" data-userid="{{task.taker_id}}">
-          <image class="user-avatar" src="{{task.taker_avatar || '/images/default-avatar.png'}}" mode="aspectFill"/>
-          <view class="user-meta">
-            <text class="user-name">{{task.taker_nickname || '匿名用户'}}</text>
-            <text wx:if="{{isTaker}}" class="user-tag">我自己</text>
-          </view>
+        <view class="person-value">
+          <image class="person-avatar" src="{{task.taker_avatar || '/images/default-avatar.png'}}" mode="aspectFill" />
+          <text>{{isTaker ? '我（帮助者）' : (task.taker_nickname || task.takerNickname || '匿名用户')}}</text>
+          <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
         </view>
       </view>
 
-      <!-- 等待接单提示（仅求助者可见） -->
-      <view wx:if="{{task.status === 'pending' && isSeeker}}" class="waiting-tip">
-        <wdd-icon name="hourglass" color="#D96A22" size="24"></wdd-icon>
-        <text>等待附近帮助者接单...</text>
+      <view wx:else class="info-row">
+        <view class="info-label">
+          <wdd-icon name="users-round" color="#7B8794" size="28"></wdd-icon>
+          <text>帮助者</text>
+        </view>
+        <text class="info-value muted">等待接单</text>
       </view>
-    </view>
 
-    <!-- 时间信息 -->
-    <view class="time-card">
-      <view class="time-row">
-        <text class="time-label">发布时间</text>
-        <text class="time-value">{{task.createTime}}</text>
+      <view class="info-row">
+        <view class="info-label">
+          <wdd-icon name="clock-3" color="#7B8794" size="28"></wdd-icon>
+          <text>发布时间</text>
+        </view>
+        <text class="info-value">{{task.createTime || '-'}}</text>
       </view>
-      <view wx:if="{{task.matchTime}}" class="time-row">
-        <text class="time-label">接单时间</text>
-        <text class="time-value">{{task.matchTime}}</text>
+
+      <view wx:if="{{task.matchTime}}" class="info-row">
+        <view class="info-label">
+          <wdd-icon name="clock-3" color="#7B8794" size="28"></wdd-icon>
+          <text>接单时间</text>
+        </view>
+        <text class="info-value">{{task.matchTime}}</text>
       </view>
-      <view wx:if="{{task.completeTime}}" class="time-row">
-        <text class="time-label">完成时间</text>
-        <text class="time-value">{{task.completeTime}}</text>
+
+      <view wx:if="{{task.completeTime}}" class="info-row">
+        <view class="info-label">
+          <wdd-icon name="circle-check-big" color="#7B8794" size="28"></wdd-icon>
+          <text>完成时间</text>
+        </view>
+        <text class="info-value">{{task.completeTime}}</text>
+      </view>
+
+      <view wx:if="{{task.cancelTime}}" class="info-row">
+        <view class="info-label">
+          <wdd-icon name="circle-x" color="#7B8794" size="28"></wdd-icon>
+          <text>取消时间</text>
+        </view>
+        <text class="info-value">{{task.cancelTime}}</text>
       </view>
     </view>
   </block>
 
-  <!-- 底部操作栏 -->
-  <view wx:if="{{!loading && task}}" class="action-bar">
-    <!-- 待匹配状态：帮助者可以接单 -->
+  <view wx:if="{{!loading && task && showActionBar}}" class="action-bar">
     <button
       wx:if="{{canTake}}"
-      class="action-btn primary large"
+      class="action-btn primary full"
       bindtap="takeTask"
     >
-      立即接单 (+¥{{money.format(task._takerIncome)}})
+      立即接单 +¥{{money.format(task._takerIncome)}}
     </button>
 
-    <!-- 已接单状态：可以聊天 -->
     <button
-      wx:if="{{canChat}}"
-      class="action-btn primary large"
+      wx:if="{{canCancel}}"
+      class="action-btn secondary full"
+      bindtap="cancelTask"
+    >
+      取消任务
+    </button>
+
+    <view wx:if="{{canChat && canComplete}}" class="action-row">
+      <button class="action-btn secondary" bindtap="goToChat">进入聊天</button>
+      <button class="action-btn primary" bindtap="completeTask">确认完成</button>
+    </view>
+
+    <button
+      wx:if="{{canChat && !canComplete}}"
+      class="action-btn primary full"
       bindtap="goToChat"
     >
       进入聊天
     </button>
 
-    <!-- 求助者专属操作 -->
-    <view wx:if="{{isSeeker}}" class="seeker-actions">
-      <button
-        wx:if="{{canComplete}}"
-        class="action-btn success"
-        bindtap="completeTask"
-      >
-        确认完成
-      </button>
-      <button
-        wx:if="{{canCancel}}"
-        class="action-btn danger"
-        bindtap="cancelTask"
-      >
-        取消任务
-      </button>
-    </view>
-
-    <!-- 审核中提示 -->
     <view wx:if="{{task.status === 'breaking'}}" class="status-tip warning">
-      <wdd-icon name="hourglass" color="#E67E22" size="24"></wdd-icon>
-      <text>任务正在审核中，暂不可操作</text>
+      <wdd-icon name="clock-3" color="#D96A22" size="24"></wdd-icon>
+      <text>审核中，等待客服裁定</text>
     </view>
 
-    <!-- 已完成/已取消提示 -->
     <view wx:if="{{task.status === 'completed'}}" class="status-tip success">
-      <wdd-icon name="circle-check-big" color="#6DD5B0" size="24"></wdd-icon>
+      <wdd-icon name="circle-check-big" color="#1F8F7A" size="24"></wdd-icon>
       <text>任务已完成</text>
     </view>
+
     <view wx:if="{{task.status === 'cancelled'}}" class="status-tip danger">
-      <wdd-icon name="circle-x" color="#FF6B6B" size="24"></wdd-icon>
+      <wdd-icon name="circle-x" color="#D96A22" size="24"></wdd-icon>
       <text>任务已取消</text>
     </view>
   </view>

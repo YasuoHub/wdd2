@@ -151,7 +151,7 @@ async function completeTask(event, OPENID) {
         type: 'task_income',
         amount: takerIncome,
         balance: latestTakerBalance,
-        description: `任务「${need.type_name || '求助'}」收入`,
+        description: '求助任务收入',
         need_id: needId,
         create_time: new Date()
       }
@@ -176,7 +176,7 @@ async function completeTask(event, OPENID) {
           amount: -rewardAmount,
           balance: latestSeekerRes.data.balance || 0,
           frozen_balance: latestSeekerRes.data.frozen_balance || 0,
-          description: `任务「${need.type_name || '求助'}」完成，余额支出`,
+          description: '求助任务完成，余额支出',
           need_id: needId,
           create_time: new Date()
         }
@@ -272,7 +272,7 @@ async function cancelTask(event, OPENID) {
         user_id: currentUserId,
         type: 'task_cancelled',
         title: '任务已取消',
-        content: `您发布的「${need.type_name || '求助'}」任务已取消，如有支付将原路退回`,
+        content: '您发布的求助任务已取消，如有支付将原路退回',
         need_id: needId,
         is_read: false,
         create_time: new Date()
@@ -488,7 +488,7 @@ async function sendCompletionNotification(takerId, need, takerIncome) {
         user_id: takerId,
         type: 'task_completed',
         title: '任务已完成',
-        content: `你帮助完成的「${need.type_name || '求助'}」任务已确认完成，¥${takerIncome}已计入您的余额`,
+        content: `你帮助完成的求助任务已确认完成，¥${takerIncome}已计入您的余额`,
         need_id: need._id,
         is_read: false,
         create_time: new Date()
@@ -507,7 +507,7 @@ async function sendCompletionNotificationToSeeker(seekerId, need, rewardAmount) 
         user_id: seekerId,
         type: 'task_completed',
         title: '任务已完成',
-        content: `您发布的「${need.type_name || '求助'}」任务已完成，悬赏金额¥${rewardAmount}已结算给帮助者`,
+        content: `您发布的求助任务已完成，悬赏金额¥${rewardAmount}已结算给帮助者`,
         need_id: need._id,
         is_read: false,
         create_time: new Date()

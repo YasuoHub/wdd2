@@ -49,7 +49,7 @@
 /* 标题 */
 .empty-title {
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 400;
   color: #2C3E50;
   margin-bottom: 16rpx;
   text-align: center;
@@ -74,7 +74,7 @@
   padding: 24rpx 56rpx;
   border-radius: 9999rpx;
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 400;
   transition: all 0.3s ease;
   border: none;
   line-height: 1;
@@ -108,7 +108,6 @@
    城市服务风格视觉覆盖：公共状态组件
    ============================================ */
 .loading-container,
-.empty-container,
 .error-container,
 .loading-card,
 .empty-card,
@@ -116,6 +115,18 @@
   background: #ffffff;
   border: 1rpx solid var(--border-light);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.empty-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.empty-card {
+  background: #ffffff;
+  border: 1rpx solid var(--border-light);
   box-shadow: var(--shadow-card);
 }
 

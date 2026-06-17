@@ -59,7 +59,7 @@
 .loading-text {
   color: #7B8794;
   margin-top: 24rpx;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* 骨架屏 */

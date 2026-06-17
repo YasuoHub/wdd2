@@ -253,7 +253,7 @@ async function cancelPendingNeed(need) {
         user_id: need.user_id,
         type: 'task_cancelled',
         title: '任务已超时取消',
-        content: `您发布的「${need.type_name || '求助'}」任务已超时，如有支付将原路退回`,
+        content: '您发布的求助任务已超时，如有支付将原路退回',
         need_id: need._id,
         is_read: false,
         create_time: new Date()
@@ -363,7 +363,7 @@ async function urgeTaskCompletion(need) {
       user_id: need.user_id,
       type: 'ongoing_urge',
       title: '任务已超时，请尽快处理',
-      content: `您的「${need.type_name || '求助'}」任务已过期超过 24 小时，请尽快确认完成或联系帮助者。`,
+      content: '您的求助任务已过期超过 24 小时，请尽快确认完成或联系帮助者。',
       need_id: need._id,
       is_read: false,
       create_time: new Date()
@@ -375,7 +375,7 @@ async function urgeTaskCompletion(need) {
       user_id: taker.taker_id,
       type: 'ongoing_urge',
       title: '任务已超时，请尽快完成',
-      content: `您承接的「${need.type_name || '求助'}」任务已过期超过 24 小时，请尽快提供信息反馈。超时 72 小时将自动完成并结算。`,
+      content: '您承接的求助任务已过期超过 24 小时，请尽快提供信息反馈。超时 72 小时将自动完成并结算。',
       need_id: need._id,
       is_read: false,
       create_time: new Date()
@@ -467,7 +467,7 @@ async function autoCompleteOngoingNeed(need) {
         type: 'task_income',
         amount: takerIncome,
         balance: latestTakerBalance,
-        description: `任务「${need.type_name || '求助'}」自动完成收入`,
+        description: '求助任务自动完成收入',
         need_id: need._id,
         create_time: new Date()
       }
@@ -491,7 +491,7 @@ async function autoCompleteOngoingNeed(need) {
           amount: -rewardAmount,
           balance: latestSeekerRes.data.balance || 0,
           frozen_balance: latestSeekerRes.data.frozen_balance || 0,
-          description: `任务「${need.type_name || '求助'}」自动完成，余额支出`,
+          description: '求助任务自动完成，余额支出',
           need_id: need._id,
           create_time: new Date()
         }
@@ -504,7 +504,7 @@ async function autoCompleteOngoingNeed(need) {
         user_id: need.user_id,
         type: 'task_auto_completed',
         title: '任务已自动完成',
-        content: `您的「${need.type_name || '求助'}」任务因超时 72 小时未处理，已自动完成并结算给帮助者。`,
+        content: '您的求助任务因超时 72 小时未处理，已自动完成并结算给帮助者。',
         need_id: need._id,
         is_read: false,
         create_time: new Date()
@@ -517,7 +517,7 @@ async function autoCompleteOngoingNeed(need) {
           user_id: taker.taker_id,
           type: 'task_completed',
           title: '任务已自动完成，收入已到账',
-          content: `您承接的「${need.type_name || '求助'}」任务因超时未处理，已自动完成。收入 ¥${formatAmount(takerIncome)} 已到账。`,
+          content: `您承接的求助任务因超时未处理，已自动完成。收入 ¥${formatAmount(takerIncome)} 已到账。`,
           need_id: need._id,
           is_read: false,
           create_time: new Date()

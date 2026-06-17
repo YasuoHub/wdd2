@@ -16,7 +16,7 @@
             bindtap="selectFilter"
             data-filter="{{item.id}}"
           >
-            <wdd-icon name="{{item.icon}}" color="{{activeFilter === item.id ? '#FFFFFF' : item.color}}" size="28"></wdd-icon>
+            <wdd-icon name="{{item.icon}}" color="{{activeFilter === item.id ? '#1677D2' : '#7B8794'}}" size="28"></wdd-icon>
             <text class="filter-name">{{item.name}}</text>
           </view>
         </view>
@@ -98,7 +98,7 @@
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <wdd-icon name="circle-dollar-sign" color="#FFFFFF" size="22"></wdd-icon>
+              <wdd-icon name="circle-dollar-sign" color="#D96A22" size="22"></wdd-icon>
               <text class="amount-value">¥{{money.format(item.rewardAmount || item.points / 10)}}</text>
             </view>
           </view>
@@ -156,52 +156,36 @@
   </view>
 
   <!-- 排序选项弹窗 -->
-  <view wx:if="{{showSortPopup}}" class="popup-overlay" bindtap="hidePopups">
-    <view class="popup-content sort-popup" catchtap="preventBubble">
-      <view class="popup-header">
-        <text class="popup-title">排序方式</text>
-        <view class="popup-close" bindtap="hidePopups">
-          <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
-        </view>
-      </view>
-      <view class="popup-options">
-        <view
-          wx:for="{{sortOptions}}"
-          wx:key="value"
-          class="popup-option {{currentSort.value === item.value ? 'active' : ''}}"
-          bindtap="selectSort"
-          data-sort="{{item}}"
-        >
-          <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
-          <text class="option-label">{{item.label}}</text>
-          <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
-        </view>
+  <bottom-sheet show="{{showSortPopup}}" title="排序方式" maxHeight="70vh" bind:close="hidePopups">
+    <view class="popup-options">
+      <view
+        wx:for="{{sortOptions}}"
+        wx:key="value"
+        class="popup-option {{currentSort.value === item.value ? 'active' : ''}}"
+        bindtap="selectSort"
+        data-sort="{{item}}"
+      >
+        <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
+        <text class="option-label">{{item.label}}</text>
+        <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
       </view>
     </view>
-  </view>
+  </bottom-sheet>
 
   <!-- 距离选项弹窗 -->
-  <view wx:if="{{showDistancePopup}}" class="popup-overlay" bindtap="hidePopups">
-    <view class="popup-content distance-popup" catchtap="preventBubble">
-      <view class="popup-header">
-        <text class="popup-title">距离范围</text>
-        <view class="popup-close" bindtap="hidePopups">
-          <wdd-icon name="x" color="#7B8794" size="26"></wdd-icon>
-        </view>
-      </view>
-      <view class="popup-options">
-        <view
-          wx:for="{{distanceOptions}}"
-          wx:key="value"
-          class="popup-option {{currentDistance.value === item.value ? 'active' : ''}}"
-          bindtap="selectDistance"
-          data-distance="{{item}}"
-        >
-          <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
-          <text class="option-label">{{item.label}}</text>
-          <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
-        </view>
+  <bottom-sheet show="{{showDistancePopup}}" title="距离范围" maxHeight="70vh" bind:close="hidePopups">
+    <view class="popup-options">
+      <view
+        wx:for="{{distanceOptions}}"
+        wx:key="value"
+        class="popup-option {{currentDistance.value === item.value ? 'active' : ''}}"
+        bindtap="selectDistance"
+        data-distance="{{item}}"
+      >
+        <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
+        <text class="option-label">{{item.label}}</text>
+        <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
       </view>
     </view>
-  </view>
+  </bottom-sheet>
 </view>

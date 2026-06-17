@@ -1,20 +1,6 @@
 // 首页逻辑 - 城市绿洲风格
 const app = getApp()
-
-// 求助类型配置
-const NEED_TYPES = [
-  { type: 'weather', name: '实时天气', icon: 'cloud-sun', tone: 'blue', color: '#135FA7', lightColor: '#2B8AD8' },
-  { type: 'traffic', name: '道路拥堵', icon: 'car-front', tone: 'green', color: '#13A879', lightColor: '#34A98F' },
-  { type: 'shop', name: '店铺营业', icon: 'store', tone: 'yellow', color: '#BE8400', lightColor: '#F7D57A' },
-  { type: 'parking', name: '停车空位', icon: 'square-parking', tone: 'blue', color: '#135FA7', lightColor: '#D9ECFB' },
-  { type: 'queue', name: '排队情况', icon: 'users-round', tone: 'orange', color: '#F25B16', lightColor: '#E9823A' },
-  { type: 'other', name: '其他', icon: 'ellipsis', tone: 'gray', color: '#374151', lightColor: '#D9E2EC' }
-]
-
-const TYPE_META = NEED_TYPES.reduce((map, item) => {
-  map[item.type] = item
-  return map
-}, {})
+const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -395,6 +381,7 @@ Page({
 
       if (result.code === 0) {
         const list = (result.data.list || []).map(item => {
+          const typeMeta = withTypeMeta(item)
           // 只有有效距离（小于 999km）才显示距离文本
           let distanceText = ''
           if (item.distance && item.distance < 999000) {
@@ -405,13 +392,13 @@ Page({
           return {
             _id: item._id,
             need_id: item.need_id || item._id,
-            type: item.type,
-            typeName: item.typeName || item.type_name,
-            typeIcon: item.typeIcon || item.icon || (TYPE_META[item.type] && TYPE_META[item.type].icon) || 'circle-help',
-            iconTone: item.iconTone || (TYPE_META[item.type] && TYPE_META[item.type].tone) || 'blue',
-            iconColor: item.iconColor || item.color || (TYPE_META[item.type] && TYPE_META[item.type].color) || '#1677D2',
-            bgColor: item.bgColor,
-            color: item.color,
+            type: typeMeta.type,
+            typeName: typeMeta.typeName,
+            typeIcon: typeMeta.typeIcon,
+            iconTone: typeMeta.iconTone,
+            iconColor: typeMeta.iconColor,
+            bgColor: typeMeta.bgColor,
+            color: typeMeta.color,
             description: item.description,
             location: item.location,
             locationName: item.locationName || '未知位置',
