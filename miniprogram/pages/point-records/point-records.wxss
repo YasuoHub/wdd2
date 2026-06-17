@@ -134,7 +134,7 @@
   padding: 40rpx;
   min-height: 600rpx;
   box-shadow: var(--shadow-sm);
-  border: 2rpx solid rgba(22, 119, 210, 0.08);
+  border: 2rpx solid var(--brand-primary-08);
 }
 
 .section-title {
@@ -210,7 +210,7 @@
   align-items: center;
   justify-content: center;
   font-size: 88rpx;
-  box-shadow: 0 6rpx 30rpx rgba(22, 119, 210, 0.15);
+  box-shadow: 0 6rpx 30rpx var(--brand-primary-16);
 }
 
 .empty-text {
@@ -240,7 +240,7 @@
 }
 
 .record-item:active {
-  background: rgba(22, 119, 210, 0.03);
+  background: var(--brand-primary-05);
   border-radius: 16rpx;
 }
 
@@ -263,12 +263,12 @@
 }
 
 .record-icon.income {
-  background: linear-gradient(135deg, rgba(22, 119, 210, 0.15) 0%, rgba(126, 200, 232, 0.1) 100%);
+  background: linear-gradient(135deg, var(--brand-primary-16) 0%, rgba(126, 200, 232, 0.1) 100%);
   color: var(--sky-dark);
 }
 
 .record-icon.expense {
-  background: linear-gradient(135deg, rgba(217, 106, 34, 0.15) 0%, rgba(233, 130, 58, 0.1) 100%);
+  background: linear-gradient(135deg, var(--vitality-orange-15) 0%, rgba(233, 130, 58, 0.1) 100%);
   color: var(--danger-color);
 }
 
@@ -383,5 +383,5 @@
 .section-text { display: block; font-size: 26rpx; color: var(--text-secondary); line-height: 1.7; padding-left: 8rpx; }
 
 .modal-footer { display: flex; justify-content: center; margin-top: 24rpx; }
-.modal-btn.confirm { width: 320rpx; height: 80rpx; background: #1677D2; color: #fff; border-radius: 40rpx; font-size: 30rpx; display: flex; align-items: center; justify-content: center; }
+.modal-btn.confirm { width: 320rpx; height: 80rpx; background: var(--brand-primary); color: #fff; border-radius: 40rpx; font-size: 30rpx; display: flex; align-items: center; justify-content: center; }
 @import "../../styles/wdd-polish.wxss";

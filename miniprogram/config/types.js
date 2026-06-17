@@ -12,8 +12,8 @@ const REPORT_TYPES = [
   { value: 'sensitive_content', label: '发布违规敏感内容' },
   { value: 'malicious_difficulty', label: '恶意刁难、无故拖延不配合' },
   { value: 'false_info', label: '提供虚假实时信息（谎报天气/拥堵/营业状态）' },
-  { value: 'location_mismatch', label: '接单后定位不符、不在求助地点' },
-  { value: 'no_response', label: '恶意接单后不回复、不提供帮助' },
+  { value: 'location_mismatch', label: '响应后定位不符、不在求助地点' },
+  { value: 'no_response', label: '响应后不回复、不提供帮助' },
   { value: 'other_violation', label: '其他违规行为' }
 ]
 

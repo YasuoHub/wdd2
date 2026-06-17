@@ -24,7 +24,7 @@
       <view class="section-title">提供帮助</view>
       <view class="tag-list">
         <view wx:for="{{userInfo.helpTypes}}" wx:key="index" class="tag">
-          <wdd-icon name="{{item.icon}}" color="{{item.color || '#1677D2'}}" size="24"></wdd-icon>
+          <wdd-icon name="{{item.icon}}" color="{{item.color || 'var(--brand-primary)'}}" size="24"></wdd-icon>
           <text style="margin-left: 8rpx;">{{item.name}}</text>
         </view>
       </view>

@@ -118,7 +118,7 @@
       >
         <view class="record-left">
           <view class="record-icon-wrapper" style="background: {{item.iconBg}}">
-            <wdd-icon name="{{item.icon || 'receipt'}}" color="{{item.iconColor || '#1677D2'}}" size="34"></wdd-icon>
+            <wdd-icon name="{{item.icon || 'receipt'}}" color="{{item.iconColor || 'var(--brand-primary)'}}" size="34"></wdd-icon>
           </view>
           <view class="record-info">
             <text class="record-title">{{item.title}}</text>

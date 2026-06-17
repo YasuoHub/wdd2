@@ -5,7 +5,7 @@
     <!-- 使用线性图标 -->
     <block wx:if="{{iconType === 'icon'}}">
       <view class="empty-circle">
-        <wdd-icon name="{{icon}}" color="#1677D2" size="82"></wdd-icon>
+        <wdd-icon name="{{icon}}" color="var(--brand-primary)" size="82"></wdd-icon>
       </view>
     </block>
 

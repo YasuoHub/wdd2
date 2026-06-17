@@ -6,10 +6,10 @@ const NEED_TYPES = [
     name: '实时天气',
     shortName: '天气',
     icon: 'cloud-sun',
-    color: '#1677D2',
-    lightColor: '#2B8AD8',
-    bgColor: 'rgba(22, 119, 210, 0.12)',
-    tone: 'blue'
+    color: 'var(--brand-primary)',
+    lightColor: 'var(--brand-primary-light)',
+    bgColor: 'var(--brand-primary-10)',
+    tone: 'brand'
   },
   {
     type: 'traffic',
@@ -17,10 +17,10 @@ const NEED_TYPES = [
     name: '道路拥堵',
     shortName: '路况',
     icon: 'car-front',
-    color: '#E9B949',
-    lightColor: '#F7D57A',
-    bgColor: 'rgba(255, 209, 102, 0.16)',
-    tone: 'yellow'
+    color: 'var(--brand-primary)',
+    lightColor: 'var(--brand-primary-light)',
+    bgColor: 'var(--brand-primary-10)',
+    tone: 'brand'
   },
   {
     type: 'shop',
@@ -28,10 +28,10 @@ const NEED_TYPES = [
     name: '店铺营业',
     shortName: '店铺',
     icon: 'store',
-    color: '#1677D2',
-    lightColor: '#D9ECFB',
-    bgColor: 'rgba(22, 119, 210, 0.1)',
-    tone: 'blue'
+    color: 'var(--brand-primary)',
+    lightColor: 'var(--brand-primary-light)',
+    bgColor: 'var(--brand-primary-10)',
+    tone: 'brand'
   },
   {
     type: 'parking',
@@ -39,10 +39,10 @@ const NEED_TYPES = [
     name: '停车场空位',
     shortName: '停车',
     icon: 'square-parking',
-    color: '#1F8F7A',
-    lightColor: '#34A98F',
-    bgColor: 'rgba(31, 143, 122, 0.14)',
-    tone: 'green'
+    color: 'var(--brand-primary)',
+    lightColor: 'var(--brand-primary-light)',
+    bgColor: 'var(--brand-primary-10)',
+    tone: 'brand'
   },
   {
     type: 'queue',
@@ -50,10 +50,10 @@ const NEED_TYPES = [
     name: '排队情况',
     shortName: '排队',
     icon: 'users-round',
-    color: '#D96A22',
-    lightColor: '#E9823A',
-    bgColor: 'rgba(217, 106, 34, 0.14)',
-    tone: 'orange'
+    color: 'var(--brand-primary)',
+    lightColor: 'var(--brand-primary-light)',
+    bgColor: 'var(--brand-primary-10)',
+    tone: 'brand'
   },
   {
     type: 'other',
@@ -61,10 +61,10 @@ const NEED_TYPES = [
     name: '其他',
     shortName: '其他',
     icon: 'ellipsis',
-    color: '#B8C2CC',
-    lightColor: '#D9E2EC',
-    bgColor: 'rgba(168, 196, 212, 0.14)',
-    tone: 'gray'
+    color: 'var(--brand-primary)',
+    lightColor: 'var(--brand-primary-light)',
+    bgColor: 'var(--brand-primary-08)',
+    tone: 'brand'
   }
 ]
 

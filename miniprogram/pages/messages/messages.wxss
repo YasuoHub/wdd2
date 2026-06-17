@@ -79,7 +79,7 @@
   background: rgba(255, 255, 255, 0.94);
   border-radius: 24rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(22, 119, 210, 0.14);
+  border: 1rpx solid var(--brand-primary-16);
   transition: all 0.3s ease;
 }
 
@@ -135,7 +135,7 @@
   color: var(--text-tertiary);
   position: relative;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(22, 119, 210, 0.12);
+  border: 1rpx solid var(--brand-primary-12);
   transition: all 0.3s ease;
   font-weight: 400;
 }
@@ -224,7 +224,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: 28rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(22, 119, 210, 0.1);
+  border: 1rpx solid var(--brand-primary-10);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -249,7 +249,7 @@
 
 .message-card.unread {
   background: rgba(232, 246, 255, 0.92);
-  border-color: rgba(22, 119, 210, 0.22);
+  border-color: var(--brand-primary-20);
 }
 
 .message-card.unread::before {
@@ -283,7 +283,7 @@
   font-size: 36rpx;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 10rpx 26rpx rgba(22, 119, 210, 0.18);
+  box-shadow: 0 10rpx 26rpx var(--brand-primary-18);
   position: relative;
   overflow: hidden;
 }
@@ -504,13 +504,12 @@
 
 /* 系统通知卡片 */
 .system-card {
-  display: flex;
-  gap: 20rpx;
+  display: block;
   padding: 28rpx;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 26rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(22, 119, 210, 0.1);
+  border: 1rpx solid var(--brand-primary-10);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -544,27 +543,20 @@
 }
 
 .system-icon-wrapper {
-  width: 88rpx;
-  height: 88rpx;
-  background: rgba(22, 119, 210, 0.1);
-  border-radius: 24rpx;
+  width: 44rpx;
+  height: 44rpx;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   box-shadow: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .system-icon-wrapper::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, var(--bg-glass) 0%, transparent 100%);
+  display: none;
 }
 
 .system-info {
@@ -579,6 +571,14 @@
   align-items: center;
   margin-bottom: 12rpx;
   gap: 16rpx;
+}
+
+.system-title-line {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
 }
 
 .system-title {

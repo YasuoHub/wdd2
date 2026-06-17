@@ -36,7 +36,7 @@
         <text class="value">{{task.createTimeFormatted}}</text>
       </view>
       <view class="info-row" wx:if="{{task.takeTimeFormatted}}">
-        <text class="label">接单时间</text>
+        <text class="label">响应时间</text>
         <text class="value">{{task.takeTimeFormatted}}</text>
       </view>
     </view>
@@ -57,7 +57,7 @@
     <!-- 聊天入口 -->
     <view class="section chat-entry" wx:if="{{task}}" bindtap="goToChat">
       <view class="chat-entry-content">
-        <wdd-icon name="message-circle" color="#1677D2" size="32"></wdd-icon>
+        <wdd-icon name="message-circle" color="var(--brand-primary)" size="32"></wdd-icon>
         <text class="chat-text">查看双方聊天记录</text>
         <wdd-icon name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>

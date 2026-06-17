@@ -19,7 +19,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20rpx 28rpx;
-  background: linear-gradient(90deg, #1677D2, #3a8fd4);
+  background: linear-gradient(90deg, var(--brand-primary), #3a8fd4);
   border-radius: 10rpx;
   box-sizing: border-box;
 }

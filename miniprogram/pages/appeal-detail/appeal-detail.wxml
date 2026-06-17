@@ -1,73 +1,114 @@
-<!-- 申诉详情 - 纯展示 -->
-<view class="page-bg"></view>
+<wxs src="../../utils/money.wxs" module="money" />
 
-<view class="container wdd-page">
-  <view class="wdd-page-bg"></view>
+<view class="detail-page">
   <view wx:if="{{loading}}" class="loading-wrap">
     <text>加载中...</text>
   </view>
 
   <block wx:elif="{{detail}}">
-    <!-- 申诉信息 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">申诉信息</text>
-        <text class="inline-status status-{{detail.status}}">
-          <text wx:if="{{detail.status === 'pending'}}">处理中</text>
-          <text wx:elif="{{detail.status === 'cancelled'}}">已撤销</text>
-          <text wx:elif="{{detail.status === 'resolved'}}">已处理</text>
-        </text>
+    <view class="section-card primary-card">
+      <view class="card-head">
+        <text class="card-title">{{copy.infoTitle}}</text>
+        <text class="status-pill status-{{detail.statusClass}}">{{detail.statusLabel}}</text>
       </view>
-      <view class="section-card">
-        <view class="info-row">
-          <text class="info-label">申诉类型</text>
-          <text class="info-value type-tag">{{detail.appealTypeLabel}}</text>
+
+      <view class="info-line">
+        <text class="info-label">{{copy.typeLabel}}</text>
+        <text class="type-pill">{{detail.typeLabel}}</text>
+      </view>
+      <view class="info-line">
+        <text class="info-label">{{copy.reasonLabel}}</text>
+        <text class="info-value">{{detail.reasonText}}</text>
+      </view>
+      <view class="info-line desc-line">
+        <text class="info-label">{{copy.descriptionLabel}}</text>
+        <text class="info-value desc-text">{{detail.descriptionText}}</text>
+      </view>
+
+      <view class="evidence-block">
+        <text class="evidence-title">{{copy.evidenceLabel}}</text>
+        <view wx:if="{{detail.hasEvidence}}" class="evidence-grid">
+          <image
+            wx:for="{{detail.evidenceImages}}"
+            wx:key="index"
+            class="evidence-thumb"
+            src="{{item}}"
+            mode="aspectFill"
+            data-url="{{item}}"
+            bindtap="previewImage"
+          />
         </view>
-        <view class="info-row">
-          <text class="info-label">申诉理由</text>
-          <text class="info-value">{{detail.reason}}</text>
+        <view wx:else class="evidence-empty">暂无图片</view>
+        <text class="evidence-count">{{detail.evidenceCountText}}</text>
+      </view>
+    </view>
+
+    <view class="section-card link-card" bindtap="goToTask" hover-class="card-hover">
+      <text class="card-title">{{copy.taskTitle}}</text>
+      <view class="task-row">
+        <view class="task-icon" style="background: {{detail.taskInfo.typeBgColor}};">
+          <wdd-icon name="{{detail.taskInfo.typeIcon}}" color="{{detail.taskInfo.typeColor}}" size="30"></wdd-icon>
         </view>
-        <view wx:if="{{detail.images.length > 0}}" class="info-row">
-          <text class="info-label">证据图片</text>
-          <view class="image-gallery">
-            <image
-              wx:for="{{detail.images}}"
-              wx:key="index"
-              class="thumb"
-              src="{{item}}"
-              mode="aspectFill"
-              data-url="{{item}}"
-              bindtap="previewImage"
-            />
+        <view class="task-main">
+          <text class="task-title">{{detail.taskInfo.title}}</text>
+          <view class="task-meta">
+            <wdd-icon name="map-pin" color="#7E879B" size="28"></wdd-icon>
+            <text class="task-location">{{detail.taskInfo.locationName}}</text>
           </view>
         </view>
+        <view class="task-reward">
+          <text class="reward-label">悬赏</text>
+          <text class="reward-value">¥{{money.format(detail.taskInfo.rewardAmount)}}</text>
+        </view>
+        <wdd-icon name="chevron-right" color="#7E879B" size="34"></wdd-icon>
       </view>
     </view>
 
-    <!-- 查看关联任务 -->
-    <view class="section">
-      <view class="task-link-btn" bindtap="goToTask" hover-class="task-link-btn-hover">
-        <text>查看关联任务</text>
-        <wdd-icon name="chevron-right" color="#9AA5B1" size="26"></wdd-icon>
+    <view class="section-card link-card" bindtap="goToTarget" hover-class="card-hover">
+      <text class="card-title">{{copy.targetTitle}}</text>
+      <view class="target-row">
+        <image class="target-avatar" src="{{detail.targetUser.avatar}}" mode="aspectFill" />
+        <view class="target-main">
+          <view class="target-name-line">
+            <text class="target-name">{{detail.targetUser.nickname}}</text>
+            <text class="role-pill">{{detail.targetUser.roleLabel}}</text>
+          </view>
+          <text class="credit-text">信誉分 {{detail.targetUser.creditScore}}</text>
+        </view>
+        <wdd-icon name="chevron-right" color="#7E879B" size="34"></wdd-icon>
       </view>
     </view>
 
-    <!-- 时间信息 -->
-    <view class="section">
-      <view class="section-title">时间信息</view>
-      <view class="section-card">
-        <view class="info-row">
-          <text class="info-label">提交时间</text>
-          <text class="info-value">{{detail.createTimeText}}</text>
+    <view class="section-card time-card">
+      <text class="card-title">时间信息</text>
+      <view class="time-list">
+        <view class="time-row">
+          <text class="time-label">提交时间</text>
+          <text class="time-value">{{detail.createTimeText}}</text>
         </view>
-        <view wx:if="{{detail.cancelTimeText}}" class="info-row">
-          <text class="info-label">撤销时间</text>
-          <text class="info-value">{{detail.cancelTimeText}}</text>
+        <view class="time-row">
+          <text class="time-label">更新时间</text>
+          <view class="time-value">
+            <text>{{detail.updateTimeText}}</text>
+            <text wx:if="{{detail.updateStatusText}}" class="time-state"> · {{detail.updateStatusText}}</text>
+          </view>
         </view>
-        <view class="info-row">
-          <text class="info-label">更新时间</text>
-          <text class="info-value">{{detail.updateTimeText}}</text>
+        <view class="time-row">
+          <text class="time-label">撤销时间</text>
+          <text class="time-value">{{detail.cancelTimeText}}</text>
         </view>
+        <view class="time-row">
+          <text class="time-label">处理完成时间</text>
+          <text class="time-value">{{detail.resolveTimeText}}</text>
+        </view>
+      </view>
+
+      <view class="notice-box">
+        <view class="notice-title-row">
+          <wdd-icon name="info" color="#1677D2" size="28"></wdd-icon>
+          <text class="notice-title">{{copy.noticeTitle}}</text>
+        </view>
+        <text class="notice-text">{{copy.noticeText}}</text>
       </view>
     </view>
   </block>

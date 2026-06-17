@@ -616,6 +616,8 @@ async function getMyAppealList(event, OPENID) {
   needRes.data.forEach(n => {
     needMap[n._id] = {
       type: n.type,
+      description: n.description || '',
+      locationName: n.location_name || n.locationName || '',
       rewardAmount: n.reward_amount || n.rewardAmount || 0
     }
   })
@@ -641,6 +643,56 @@ async function getMyAppealList(event, OPENID) {
   }
 }
 
+function buildNeedSummary(need) {
+  if (!need) return null
+  return {
+    _id: need._id,
+    type: need.type || '',
+    title: need.title || need.description || '求助任务',
+    description: need.description || '',
+    locationName: need.location_name || need.locationName || '',
+    rewardAmount: need.reward_amount || need.rewardAmount || 0,
+    status: need.status || ''
+  }
+}
+
+async function buildAppealTargetUser(appeal, parties) {
+  if (!parties || !parties.need) return null
+
+  const targetUserId = appeal.initiator_id === parties.seekerId
+    ? parties.takerId
+    : parties.seekerId
+  if (!targetUserId) return null
+
+  const userRes = await db.collection('wdd-users').doc(targetUserId).get().catch(() => null)
+  const user = userRes ? userRes.data : null
+  const roleLabel = targetUserId === parties.takerId ? '帮助者' : '求助者'
+
+  return {
+    id: targetUserId,
+    nickname: user ? (user.nickname || '未知用户') : '未知用户',
+    avatar: user ? (user.avatar || '') : '',
+    roleLabel,
+    creditScore: user ? (user.credit_score ?? 100) : 100
+  }
+}
+
+async function getAppealTicketInfo(appealId) {
+  const ticketRes = await db.collection('wdd-tickets')
+    .where({ appeal_id: appealId })
+    .orderBy('create_time', 'desc')
+    .limit(1)
+    .get()
+    .catch(() => ({ data: [] }))
+  const ticket = ticketRes.data[0]
+  if (!ticket) return null
+
+  return {
+    status: ticket.status || '',
+    resolveTime: ticket.resolve_time || (ticket.status === 'resolved' ? ticket.update_time : null)
+  }
+}
+
 // 按 ID 查询申诉详情
 async function getAppealDetailById(event, OPENID) {
   const { appealId } = event
@@ -660,6 +712,10 @@ async function getAppealDetailById(event, OPENID) {
     return { code: -1, message: '无权查看此申诉' }
   }
 
+  const parties = await getTaskParties(appeal.need_id)
+  const targetUser = await buildAppealTargetUser(appeal, parties)
+  const ticketInfo = await getAppealTicketInfo(appeal._id)
+
   return {
     code: 0,
     data: {
@@ -672,7 +728,10 @@ async function getAppealDetailById(event, OPENID) {
       status: appeal.status,
       createTime: appeal.create_time,
       cancelTime: appeal.cancel_time || null,
-      updateTime: appeal.update_time
+      updateTime: appeal.update_time,
+      resolveTime: ticketInfo ? ticketInfo.resolveTime : null,
+      taskInfo: buildNeedSummary(parties.need),
+      targetUser
     }
   }
 }

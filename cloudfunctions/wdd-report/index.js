@@ -714,6 +714,8 @@ async function getMyReportList(event, OPENID) {
   needRes.data.forEach(n => {
     needMap[n._id] = {
       type: n.type,
+      description: n.description || '',
+      locationName: n.location_name || n.locationName || '',
       rewardAmount: n.reward_amount || n.rewardAmount || 0
     }
   })
@@ -739,6 +741,56 @@ async function getMyReportList(event, OPENID) {
   }
 }
 
+function buildNeedSummary(need) {
+  if (!need) return null
+  return {
+    _id: need._id,
+    type: need.type || '',
+    title: need.title || need.description || '求助任务',
+    description: need.description || '',
+    locationName: need.location_name || need.locationName || '',
+    rewardAmount: need.reward_amount || need.rewardAmount || 0,
+    status: need.status || ''
+  }
+}
+
+async function buildReportTargetUser(report, parties) {
+  if (!parties || !parties.need) return null
+
+  const targetUserId = report.reporter_id === parties.seekerId
+    ? parties.takerId
+    : parties.seekerId
+  if (!targetUserId) return null
+
+  const userRes = await db.collection('wdd-users').doc(targetUserId).get().catch(() => null)
+  const user = userRes ? userRes.data : null
+  const roleLabel = targetUserId === parties.takerId ? '帮助者' : '求助者'
+
+  return {
+    id: targetUserId,
+    nickname: user ? (user.nickname || '未知用户') : '未知用户',
+    avatar: user ? (user.avatar || '') : '',
+    roleLabel,
+    creditScore: user ? (user.credit_score ?? 100) : 100
+  }
+}
+
+async function getReportTicketInfo(reportId) {
+  const ticketRes = await db.collection('wdd-tickets')
+    .where({ report_id: reportId })
+    .orderBy('create_time', 'desc')
+    .limit(1)
+    .get()
+    .catch(() => ({ data: [] }))
+  const ticket = ticketRes.data[0]
+  if (!ticket) return null
+
+  return {
+    status: ticket.status || '',
+    resolveTime: ticket.resolve_time || (ticket.status === 'resolved' ? ticket.update_time : null)
+  }
+}
+
 // 按 ID 查询举报详情
 async function getReportDetailById(event, OPENID) {
   const { reportId } = event
@@ -758,6 +810,10 @@ async function getReportDetailById(event, OPENID) {
     return { code: -1, message: '无权查看此举报' }
   }
 
+  const parties = await getTaskParties(report.need_id)
+  const targetUser = await buildReportTargetUser(report, parties)
+  const ticketInfo = await getReportTicketInfo(report._id)
+
   return {
     code: 0,
     data: {
@@ -770,7 +826,10 @@ async function getReportDetailById(event, OPENID) {
       status: report.status,
       createTime: report.create_time,
       cancelTime: report.cancel_time || null,
-      updateTime: report.update_time
+      updateTime: report.update_time,
+      resolveTime: ticketInfo ? ticketInfo.resolveTime : null,
+      taskInfo: buildNeedSummary(parties.need),
+      targetUser
     }
   }
 }

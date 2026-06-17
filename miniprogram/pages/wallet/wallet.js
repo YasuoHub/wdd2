@@ -377,15 +377,15 @@ Page({
     const title = item.title || ''
     const isIncome = item.amount >= 0
     const fallback = isIncome
-      ? { icon: 'circle-dollar-sign', color: '#1F8F7A', bg: 'rgba(31, 143, 122, 0.14)' }
-      : { icon: 'credit-card', color: '#D96A22', bg: 'rgba(217, 106, 34, 0.14)' }
+      ? { icon: 'circle-dollar-sign', color: 'var(--fresh-mint)', bg: 'var(--fresh-mint-14)' }
+      : { icon: 'credit-card', color: 'var(--vitality-orange)', bg: 'var(--vitality-orange-14)' }
 
     const iconMap = [
-      { match: '收入', icon: 'hand-coins', color: '#1F8F7A', bg: 'rgba(31, 143, 122, 0.14)' },
-      { match: '支付', icon: 'credit-card', color: '#D96A22', bg: 'rgba(217, 106, 34, 0.14)' },
-      { match: '退款', icon: 'refresh-cw', color: '#1F8F7A', bg: 'rgba(31, 143, 122, 0.14)' },
-      { match: '提现手续费', icon: 'receipt-text', color: '#D96A22', bg: 'rgba(217, 106, 34, 0.14)' },
-      { match: '提现', icon: 'landmark', color: '#1677D2', bg: 'rgba(22, 119, 210, 0.12)' }
+      { match: '收入', icon: 'hand-coins', color: 'var(--fresh-mint)', bg: 'var(--fresh-mint-14)' },
+      { match: '支付', icon: 'credit-card', color: 'var(--vitality-orange)', bg: 'var(--vitality-orange-14)' },
+      { match: '退款', icon: 'refresh-cw', color: 'var(--fresh-mint)', bg: 'var(--fresh-mint-14)' },
+      { match: '提现手续费', icon: 'receipt-text', color: 'var(--vitality-orange)', bg: 'var(--vitality-orange-14)' },
+      { match: '提现', icon: 'landmark', color: 'var(--brand-primary)', bg: 'var(--brand-primary-12)' }
     ]
 
     const matched = iconMap.find(meta => title.includes(meta.match)) || fallback

@@ -14,8 +14,8 @@
 .empty-card {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 36rpx;
-  box-shadow: 0 4rpx 24rpx rgba(22, 119, 210, 0.1);
-  border: 2rpx solid rgba(22, 119, 210, 0.08);
+  box-shadow: 0 4rpx 24rpx var(--brand-primary-10);
+  border: 2rpx solid var(--brand-primary-08);
   margin: 32rpx;
 }
 
@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.15);
+  box-shadow: 0 8rpx 32rpx var(--brand-primary-16);
   animation: float 4s ease-in-out infinite;
 }
 
@@ -85,15 +85,15 @@
 }
 
 .empty-btn.primary {
-  background: linear-gradient(135deg, #1677D2 0%, #2B8AD8 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
   color: white;
-  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.35);
+  box-shadow: 0 8rpx 32rpx var(--brand-primary-35);
 }
 
 .empty-btn.secondary {
-  background: rgba(22, 119, 210, 0.1);
-  color: #1677D2;
-  border: 2rpx solid rgba(22, 119, 210, 0.2);
+  background: var(--brand-primary-10);
+  color: var(--brand-primary);
+  border: 2rpx solid var(--brand-primary-20);
 }
 
 .btn-hover {
@@ -102,7 +102,7 @@
 }
 
 .empty-btn.primary.btn-hover {
-  box-shadow: 0 4rpx 16rpx rgba(22, 119, 210, 0.25);
+  box-shadow: 0 4rpx 16rpx var(--brand-primary-30);
 }
 /* ============================================
    城市服务风格视觉覆盖：公共状态组件

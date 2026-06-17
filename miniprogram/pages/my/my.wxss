@@ -29,7 +29,7 @@
   border-radius: 32rpx;
   padding: 42rpx;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(22, 119, 210, 0.12);
+  border: 1rpx solid var(--brand-primary-12);
   position: relative;
   z-index: 1;
   overflow: hidden;
@@ -43,7 +43,7 @@
   left: 0;
   right: 0;
   height: 6rpx;
-  /* background: linear-gradient(90deg, #1677D2 0%, #2B8AD8 50%, #D9ECFB 100%); */
+  /* background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-primary-light) 50%, #D9ECFB 100%); */
 }
 
 .user-header {
@@ -60,7 +60,7 @@
   border-radius: var(--radius-full);
   overflow: hidden;
   border: 4rpx solid white;
-  box-shadow: 0 6rpx 24rpx rgba(22, 119, 210, 0.35);
+  box-shadow: 0 6rpx 24rpx var(--brand-primary-35);
   background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
   display: flex;
   align-items: center;
@@ -122,7 +122,7 @@
   padding: 32rpx 0;
   background: rgba(240, 248, 255, 0.7);
   border-radius: var(--radius-md);
-  border: 2rpx solid rgba(22, 119, 210, 0.12);
+  border: 2rpx solid var(--brand-primary-12);
   position: relative;
   overflow: hidden;
 }
@@ -134,7 +134,7 @@
   left: 0;
   right: 0;
   height: 100%;
-  background: linear-gradient(135deg, rgba(22, 119, 210, 0.05) 0%, rgba(217, 236, 251, 0.03) 100%);
+  background: linear-gradient(135deg, var(--brand-primary-05) 0%, rgba(217, 236, 251, 0.03) 100%);
 }
 
 .balance-item {
@@ -173,7 +173,7 @@
 .balance-divider {
   width: 2rpx;
   height: 70rpx;
-  background: linear-gradient(180deg, transparent 0%, rgba(22, 119, 210, 0.3) 50%, transparent 100%);
+  background: linear-gradient(180deg, transparent 0%, var(--brand-primary-30) 50%, transparent 100%);
 }
 
 /* ============================================
@@ -191,7 +191,7 @@
   color: white;
   font-size: 32rpx;
   font-weight: 400;
-  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
+  box-shadow: 0 8rpx 32rpx var(--brand-primary-35);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -224,7 +224,7 @@
 
 .sign-in-btn:active {
   transform: scale(0.98);
-  box-shadow: 0 4rpx 20rpx rgba(22, 119, 210, 0.3);
+  box-shadow: 0 4rpx 20rpx var(--brand-primary-30);
 }
 
 .sign-in-btn.signed {
@@ -263,7 +263,7 @@
   border-radius: 28rpx;
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  border: 1rpx solid rgba(22, 119, 210, 0.1);
+  border: 1rpx solid var(--brand-primary-10);
 }
 
 .menu-item {
@@ -277,52 +277,29 @@
 }
 
 .menu-item:active {
-  background: rgba(22, 119, 210, 0.05);
+  background: var(--brand-primary-05);
 }
 
 .menu-item:last-child {
   border-bottom: none;
 }
 
-/* 菜单图标 - 多彩渐变 */
+/* 菜单图标 - 仅保留线形图标 */
 .menu-icon-wrapper {
   width: 76rpx;
   height: 76rpx;
-  border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   position: relative;
   overflow: hidden;
+  background: transparent;
   box-shadow: none;
 }
 
 .menu-icon-wrapper::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
-}
-
-/* 不同菜单项的图标颜色 - 状态配色 */
-.menu-item:nth-child(1) .menu-icon-wrapper {
-  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
-}
-
-.menu-item:nth-child(2) .menu-icon-wrapper {
-  background: linear-gradient(135deg, var(--vitality-orange) 0%, var(--vitality-coral) 100%);
-}
-
-.menu-item:nth-child(3) .menu-icon-wrapper {
-  background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
-}
-
-.menu-item:nth-child(4) .menu-icon-wrapper {
-  background: linear-gradient(135deg, var(--vitality-yellow) 0%, #FFE08C 100%);
+  display: none;
 }
 
 .menu-content {
@@ -400,7 +377,7 @@
 /* ============================================
    底部信息
    ============================================ */
-.footer {
+.container .footer {
   text-align: center;
   padding: 48rpx 32rpx;
   font-size: 24rpx;
@@ -410,6 +387,8 @@
   gap: 10rpx;
   position: relative;
   z-index: 1;
+  background: transparent;
+  border-color: transparent;
 }
 
 /* ============================================
@@ -453,7 +432,7 @@
   overflow: hidden;
   padding: 52rpx;
   box-shadow: var(--shadow-lg);
-  border: 2rpx solid rgba(22, 119, 210, 0.1);
+  border: 2rpx solid var(--brand-primary-10);
   transform: translateY(20rpx) scale(0.95);
   transition: all 0.3s ease;
 }
@@ -473,13 +452,13 @@
   justify-content: center;
   font-size: 34rpx;
   color: var(--text-light);
-  background: rgba(22, 119, 210, 0.1);
+  background: var(--brand-primary-10);
   border-radius: 50%;
   transition: all 0.3s ease;
 }
 
 .modal-close:active {
-  background: rgba(22, 119, 210, 0.2);
+  background: var(--brand-primary-20);
   transform: scale(0.9);
 }
 
@@ -505,7 +484,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.35);
+  box-shadow: 0 8rpx 32rpx var(--brand-primary-35);
   position: relative;
   overflow: hidden;
   animation: float 3s ease-in-out infinite;
@@ -541,7 +520,7 @@
   padding: 32rpx;
   border-radius: var(--radius-md);
   border: none;
-  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
+  box-shadow: 0 8rpx 32rpx var(--brand-primary-35);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -556,7 +535,7 @@
   line-height: 1.8; margin-bottom: 12rpx;
 }
 .body-text.brand {
-  text-align: center; font-weight: 400; color: #1677D2; margin-top: 16rpx;
+  text-align: center; font-weight: 400; color: var(--brand-primary); margin-top: 16rpx;
 }
 
 .rule-section {
@@ -575,7 +554,7 @@
   display: flex; justify-content: center; margin-top: 24rpx;
 }
 .modal-btn.confirm {
-  width: 320rpx; height: 80rpx; background: #1677D2; color: #fff;
+  width: 320rpx; height: 80rpx; background: var(--brand-primary); color: #fff;
   border-radius: 40rpx; font-size: 30rpx; display: flex;
   align-items: center; justify-content: center;
 }
@@ -607,7 +586,7 @@
 
 .invite-btn:active {
   transform: scale(0.98);
-  box-shadow: 0 4rpx 20rpx rgba(22, 119, 210, 0.3);
+  box-shadow: 0 4rpx 20rpx var(--brand-primary-30);
 }
 
 .invite-btn::after {

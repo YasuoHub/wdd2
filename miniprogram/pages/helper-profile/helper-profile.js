@@ -8,8 +8,8 @@ Page({
     // 帮助意愿
     helpWillingness: '', // 'willing' | 'request_only'
     willingnessOptions: [
-      { value: 'willing', label: '愿意帮助他人', desc: '可以接单帮助附近的人', icon: 'handshake' },
-      { value: 'request_only', label: '仅求助不帮助', desc: '只发布求助，不接单', icon: 'send' }
+      { value: 'willing', label: '愿意帮助他人', desc: '可以帮助附近的人', icon: 'handshake' },
+      { value: 'request_only', label: '仅求助不帮助', desc: '只发布求助，不帮助他人', icon: 'send' }
     ],
 
     // 常去地点（最多3个）

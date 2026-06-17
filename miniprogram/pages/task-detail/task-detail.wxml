@@ -15,11 +15,11 @@
     <view wx:if="{{showMoreMenu}}" class="menu-mask" catchtap="hideMoreMenu">
       <view class="more-popover" catchtap="noop">
         <view wx:if="{{canReport}}" class="menu-item" bindtap="goToReport">
-          <wdd-icon name="flag" color="#D96A22" size="26"></wdd-icon>
+          <wdd-icon name="flag" color="var(--vitality-orange)" size="26"></wdd-icon>
           <text>举报</text>
         </view>
         <view wx:if="{{canAppeal}}" class="menu-item" bindtap="goToAppeal">
-          <wdd-icon name="shield-alert" color="#D96A22" size="26"></wdd-icon>
+          <wdd-icon name="shield-alert" color="var(--vitality-orange)" size="26"></wdd-icon>
           <text>申诉</text>
         </view>
       </view>
@@ -40,7 +40,7 @@
 
       <view class="hero-meta">
         <view class="type-chip" style="background: {{task.bgColor}}; color: {{task.color}};">
-          <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="{{task.color || '#1677D2'}}" size="24"></wdd-icon>
+          <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="{{task.color || task.typeColor || 'var(--brand-primary)'}}" size="24"></wdd-icon>
           <text>{{task.typeName}}</text>
         </view>
         <text class="publish-time">{{task.createTime || '发布时间未知'}}</text>
@@ -51,7 +51,7 @@
       <view class="section-heading">求助位置</view>
       <view class="location-row">
         <view class="location-marker">
-          <wdd-icon name="map-pin" color="#1677D2" size="68"></wdd-icon>
+          <wdd-icon name="map-pin" color="var(--brand-primary)" size="48"></wdd-icon>
         </view>
         <view class="location-main">
           <text class="location-name">{{task.locationName || '未知位置'}}</text>
@@ -118,7 +118,7 @@
           <wdd-icon name="users-round" color="#7B8794" size="28"></wdd-icon>
           <text>帮助者</text>
         </view>
-        <text class="info-value muted">等待接单</text>
+        <text class="info-value muted">等待帮助者响应</text>
       </view>
 
       <view class="info-row">
@@ -132,7 +132,7 @@
       <view wx:if="{{task.matchTime}}" class="info-row">
         <view class="info-label">
           <wdd-icon name="clock-3" color="#7B8794" size="28"></wdd-icon>
-          <text>接单时间</text>
+          <text>响应时间</text>
         </view>
         <text class="info-value">{{task.matchTime}}</text>
       </view>
@@ -161,7 +161,7 @@
       class="action-btn primary full"
       bindtap="takeTask"
     >
-      立即接单 +¥{{money.format(task._takerIncome)}}
+      去帮助 +¥{{money.format(task._takerIncome)}}
     </button>
 
     <button
@@ -186,17 +186,17 @@
     </button>
 
     <view wx:if="{{task.status === 'breaking'}}" class="status-tip warning">
-      <wdd-icon name="clock-3" color="#D96A22" size="24"></wdd-icon>
+      <wdd-icon name="clock-3" color="var(--vitality-orange)" size="24"></wdd-icon>
       <text>审核中，等待客服裁定</text>
     </view>
 
     <view wx:if="{{task.status === 'completed'}}" class="status-tip success">
-      <wdd-icon name="circle-check-big" color="#1F8F7A" size="24"></wdd-icon>
+      <wdd-icon name="circle-check-big" color="var(--fresh-mint)" size="24"></wdd-icon>
       <text>任务已完成</text>
     </view>
 
     <view wx:if="{{task.status === 'cancelled'}}" class="status-tip danger">
-      <wdd-icon name="circle-x" color="#D96A22" size="24"></wdd-icon>
+      <wdd-icon name="circle-x" color="var(--vitality-orange)" size="24"></wdd-icon>
       <text>任务已取消</text>
     </view>
   </view>

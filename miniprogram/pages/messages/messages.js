@@ -347,19 +347,19 @@ Page({
   // 获取通知图标
   getNotificationIcon(type) {
     const iconMap = {
-      'task_completed': { name: 'circle-check-big', color: '#1F8F7A' },
+      'task_completed': { name: 'circle-check-big', color: 'var(--fresh-mint)' },
       'task_cancelled': { name: 'circle-x', color: '#FF6B6B' },
-      'task_matched': { name: 'target', color: '#1677D2' },
-      'points_received': { name: 'coins', color: '#D96A22' },
-      'system': { name: 'megaphone', color: '#1677D2' },
-      'appeal_notice': { name: 'scale', color: '#D96A22' },
+      'task_matched': { name: 'target', color: 'var(--brand-primary)' },
+      'points_received': { name: 'coins', color: 'var(--vitality-orange)' },
+      'system': { name: 'megaphone', color: 'var(--brand-primary)' },
+      'appeal_notice': { name: 'scale', color: 'var(--vitality-orange)' },
       'report_notice': { name: 'siren', color: '#FF6B6B' },
-      'appeal_reminder': { name: 'clock-3', color: '#E9B949' },
-      'report_reminder': { name: 'clock-3', color: '#E9B949' },
-      'arbitration_result': { name: 'file-check-2', color: '#1F8F7A' },
-      'task_auto_completed': { name: 'circle-check-big', color: '#1F8F7A' }
+      'appeal_reminder': { name: 'clock-3', color: 'var(--vitality-yellow)' },
+      'report_reminder': { name: 'clock-3', color: 'var(--vitality-yellow)' },
+      'arbitration_result': { name: 'file-check-2', color: 'var(--fresh-mint)' },
+      'task_auto_completed': { name: 'circle-check-big', color: 'var(--fresh-mint)' }
     }
-    return iconMap[type] || { name: 'megaphone', color: '#1677D2' }
+    return iconMap[type] || { name: 'megaphone', color: 'var(--brand-primary)' }
   },
 
   // 点击系统通知

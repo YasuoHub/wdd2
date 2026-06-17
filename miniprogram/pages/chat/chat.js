@@ -546,6 +546,8 @@ Page({
           type: typeInfo.type,
           typeName: typeInfo.name,
           typeIcon: typeInfo.icon,
+          typeColor: typeInfo.color,
+          typeBgColor: typeInfo.bgColor,
           description: taskData.description,
           rewardAmount: taskData.reward_amount || taskData.rewardAmount || 0,
           status: taskData.status,

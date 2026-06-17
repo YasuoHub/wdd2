@@ -35,7 +35,7 @@ page { background: var(--bg-secondary); }
 
 /* 左侧色条 */
 .card-left { width: 6rpx; flex-shrink: 0; }
-.left-pending { background: #1677D2; }
+.left-pending { background: var(--brand-primary); }
 .left-approved { background: #07c160; }
 .left-rejected { background: #e74c3c; }
 
@@ -55,7 +55,7 @@ page { background: var(--bg-secondary); }
 .status-tag {
   flex-shrink: 0; font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 20rpx;
 }
-.status-pending { color: #1677D2; background: rgba(22, 119, 210,0.1); }
+.status-pending { color: var(--brand-primary); background: var(--brand-primary-10); }
 .status-approved { color: #07c160; background: rgba(7,193,96,0.08); }
 .status-rejected { color: #e74c3c; background: rgba(231,76,60,0.08); }
 
@@ -91,7 +91,7 @@ page { background: var(--bg-secondary); }
 
 /* 审批按钮 */
 .approve-btn {
-  font-size: 24rpx; color: #fff; background: #1677D2;
+  font-size: 24rpx; color: #fff; background: var(--brand-primary);
   padding: 8rpx 28rpx; border-radius: 32rpx; font-weight: 400;
 }
 
@@ -129,5 +129,5 @@ page { background: var(--bg-secondary); }
 .modal-footer { display: flex; gap: 20rpx; margin-top: 32rpx; }
 .modal-btn { flex: 1; height: 80rpx; border-radius: 40rpx; font-size: 30rpx; display: flex; align-items: center; justify-content: center; }
 .modal-btn.cancel { background: var(--bg-secondary); color: var(--text-primary); }
-.modal-btn.confirm { background: #1677D2; color: #fff; }
+.modal-btn.confirm { background: var(--brand-primary); color: #fff; }
 @import "../../styles/wdd-polish.wxss";

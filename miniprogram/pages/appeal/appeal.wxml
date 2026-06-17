@@ -5,7 +5,7 @@
   <block wx:if="{{mode === 'supplement' && taskSummary}}">
     <view class="opponent-card">
       <view class="opponent-title">
-        <wdd-icon name="clipboard-list" color="#1677D2" size="30"></wdd-icon>
+        <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="30"></wdd-icon>
         <text>任务摘要</text>
       </view>
       <view class="opponent-row">
@@ -22,7 +22,7 @@
       </view>
       <button class="detail-btn" bindtap="goToTaskDetail">
         <text>查看任务详情</text>
-        <wdd-icon name="chevron-right" color="#1677D2" size="24"></wdd-icon>
+        <wdd-icon name="chevron-right" color="var(--brand-primary)" size="24"></wdd-icon>
       </button>
     </view>
   </block>

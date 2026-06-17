@@ -64,32 +64,37 @@
 
     <view wx:else class="card-list">
       <view wx:for="{{pendingList}}" wx:key="_id" class="card">
-        <!-- 左侧色条 -->
-        <view class="card-accent" style="background: {{item.taskColor}};"></view>
-
         <view class="card-main">
-          <!-- 头部：类型标签 + 状态 -->
           <view class="card-header">
-            <view class="type-tag-wrap">
-              <text class="type-tag">{{item.reportTypeLabel}}</text>
+            <text class="status-tag status-pending">处理中</text>
+            <view class="task-tag">
+              <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || 'var(--brand-primary)'}}" size="22"></wdd-icon>
+              <text>{{item.displayTaskName}}</text>
             </view>
           </view>
 
-          <!-- 理由 -->
-          <view class="card-body">
-            <text class="reason-text">{{item.reason}}</text>
+          <text class="card-title">{{item.displayTitle}}</text>
+
+          <view class="info-list">
+            <view class="info-row">
+              <text class="info-label">被举报对象</text>
+              <text class="info-value">{{item.displayTarget}}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">举报原因</text>
+              <text class="info-value">{{item.reportTypeLabel}}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">生成时间</text>
+              <text class="info-value">{{item.createTimeText || ''}}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">悬赏金额</text>
+              <text class="info-value amount-value">¥{{money.format(item.displayRewardAmount)}}</text>
+            </view>
           </view>
 
-          <!-- 关联任务 -->
-          <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
-            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1677D2'}}" size="26"></wdd-icon>
-            <text class="task-type">{{item.taskInfo.typeName}}</text>
-            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
-          </view>
-
-          <!-- 底部：时间 + 操作 -->
           <view class="card-footer">
-            <text class="time-text">生成时间：{{item.createTimeText || ''}}</text>
             <view class="card-actions">
               <view class="btn btn-cancel" data-id="{{item._id}}" bindtap="cancelReport" hover-class="btn-cancel-hover">
                 <text>撤销</text>
@@ -143,28 +148,37 @@
 
     <view wx:else class="card-list">
       <view wx:for="{{processedList}}" wx:key="_id" class="card processed">
-        <view class="card-accent" style="background: {{item.status === 'cancelled' ? '#b2bec3' : item.taskColor}};"></view>
-
         <view class="card-main">
           <view class="card-header">
-            <view class="type-tag-wrap">
-              <text class="type-tag {{item.status === 'cancelled' ? 'cancelled' : ''}}">{{item.reportTypeLabel}}</text>
-            </view>
             <text class="status-tag status-{{item.status}}">{{item.status === 'cancelled' ? '已撤销' : '已处理'}}</text>
+            <view class="task-tag {{item.status === 'cancelled' ? 'cancelled' : ''}}">
+              <wdd-icon name="{{item.taskIcon}}" color="{{item.status === 'cancelled' ? '#98A2AE' : (item.taskColor || 'var(--brand-primary)')}}" size="22"></wdd-icon>
+              <text>{{item.displayTaskName}}</text>
+            </view>
           </view>
 
-          <view class="card-body">
-            <text class="reason-text">{{item.reason}}</text>
-          </view>
+          <text class="card-title">{{item.displayTitle}}</text>
 
-          <view wx:if="{{item.taskInfo}}" class="card-task" style="background: {{item.taskBgColor}};">
-            <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || '#1677D2'}}" size="26"></wdd-icon>
-            <text class="task-type">{{item.taskInfo.typeName}}</text>
-            <text wx:if="{{item.taskInfo.rewardAmount}}" class="task-reward">¥{{money.format(item.taskInfo.rewardAmount)}}</text>
+          <view class="info-list">
+            <view class="info-row">
+              <text class="info-label">被举报对象</text>
+              <text class="info-value">{{item.displayTarget}}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">举报原因</text>
+              <text class="info-value">{{item.reportTypeLabel}}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">生成时间</text>
+              <text class="info-value">{{item.createTimeText || ''}}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">悬赏金额</text>
+              <text class="info-value amount-value">¥{{money.format(item.displayRewardAmount)}}</text>
+            </view>
           </view>
 
           <view class="card-footer">
-            <text class="time-text">生成时间：{{item.createTimeText || ''}}</text>
             <view class="card-actions">
               <view class="btn btn-detail" data-id="{{item._id}}" bindtap="goDetail" hover-class="btn-detail-hover">
                 <text>详情</text>

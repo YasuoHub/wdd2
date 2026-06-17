@@ -1,3 +1,1 @@
-/* 申诉详情页样式 - 复用举报详情样式 */
 @import "../report-detail/report-detail.wxss";
-@import "../../styles/wdd-polish.wxss";

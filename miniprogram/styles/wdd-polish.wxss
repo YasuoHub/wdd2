@@ -113,8 +113,8 @@
 .quick-tag.active,
 .time-option.active,
 .payment-option.active {
-  background: var(--surface-tag-blue, rgba(22, 119, 210, 0.08));
-  border-color: rgba(22, 119, 210, 0.34);
+  background: var(--surface-tag-blue, var(--brand-primary-08));
+  border-color: var(--brand-primary-34);
   color: var(--sky-deep);
   box-shadow: none;
 }
@@ -167,8 +167,8 @@
 .quick-amount.active,
 .quick-point.active,
 .time-recommend {
-  background: var(--surface-tag-orange, rgba(217, 106, 34, 0.1));
-  border: 1rpx solid rgba(217, 106, 34, 0.2);
+  background: var(--surface-tag-orange, var(--vitality-orange-10));
+  border: 1rpx solid var(--vitality-orange-20);
   color: var(--vitality-orange);
   box-shadow: none;
   font-variant-numeric: tabular-nums;
@@ -212,23 +212,23 @@
 .status-badge.pending,
 .status-tag.status-pending,
 .task-status-pill.status-pending {
-  background: var(--surface-tag-yellow, rgba(233, 185, 73, 0.16));
+  background: var(--surface-tag-yellow, var(--vitality-yellow-16));
   border-color: rgba(148, 107, 0, 0.16);
   color: #946b00;
 }
 
 .status-badge.ongoing,
 .task-status-pill.status-ongoing {
-  background: var(--surface-tag-blue, rgba(22, 119, 210, 0.08));
-  border-color: rgba(22, 119, 210, 0.18);
+  background: var(--surface-tag-blue, var(--brand-primary-08));
+  border-color: var(--brand-primary-18);
   color: var(--sky-deep);
 }
 
 .status-badge.completed,
 .status-tip.success,
 .task-status-pill.status-completed {
-  background: var(--surface-tag-green, rgba(31, 143, 122, 0.1));
-  border-color: rgba(31, 143, 122, 0.18);
+  background: var(--surface-tag-green, var(--fresh-mint-10));
+  border-color: var(--fresh-mint-18);
   color: var(--fresh-mint);
 }
 
@@ -236,7 +236,7 @@
 .status-tip.warning,
 .task-status-pill.status-breaking {
   background: #fff8e6;
-  border-color: rgba(233, 185, 73, 0.26);
+  border-color: var(--vitality-yellow-26);
   color: #946b00;
 }
 
@@ -252,13 +252,17 @@
 
 .status-card .status-icon,
 .state-icon,
-.type-icon,
-.quick-type-icon,
-.need-type-icon,
 .hero-login-icon {
   border-radius: 20rpx;
-  background: rgba(22, 119, 210, 0.08);
-  border: 1rpx solid rgba(22, 119, 210, 0.1);
+  background: var(--brand-primary-08);
+  box-shadow: none;
+}
+
+.type-icon,
+.quick-type-icon,
+.need-type-icon {
+  background: transparent;
+  border: 0;
   box-shadow: none;
 }
 
@@ -273,7 +277,7 @@
 .waiting-tip,
 .tips-section {
   background: #fff8e6;
-  border-color: rgba(233, 185, 73, 0.3);
+  border-color: var(--vitality-yellow-30);
 }
 
 .balance-value.points,

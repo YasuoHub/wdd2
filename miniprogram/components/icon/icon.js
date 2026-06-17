@@ -10,7 +10,7 @@ Component({
     },
     color: {
       type: String,
-      value: '#1677D2'
+      value: 'var(--brand-primary)'
     },
     size: {
       type: Number,

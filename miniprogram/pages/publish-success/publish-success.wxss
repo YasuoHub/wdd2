@@ -30,7 +30,7 @@
 .success-icon {
   width: 108rpx;
   height: 108rpx;
-  border: 8rpx solid #1677d2;
+  border: 8rpx solid var(--brand-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;

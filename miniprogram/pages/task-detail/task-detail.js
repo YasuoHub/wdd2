@@ -207,8 +207,8 @@ Page({
     const feeRate = Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
 
     wx.showModal({
-      title: '确认接单',
-      content: `承接此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要接单吗？`,
+      title: '确认去帮助',
+      content: `完成此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要去帮助吗？`,
       success: async (res) => {
         if (res.confirm) {
           wx.showLoading({ title: '处理中...' })
@@ -225,7 +225,7 @@ Page({
 
             if (result.code === 0) {
               wx.showToast({
-                title: '接单成功',
+                title: '已开始帮助',
                 icon: 'success'
               })
 
@@ -241,7 +241,7 @@ Page({
           } catch (err) {
             wx.hideLoading()
             wx.showToast({
-              title: err.message || '接单失败',
+              title: err.message || '操作失败',
               icon: 'none'
             })
           }

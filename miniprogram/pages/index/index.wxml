@@ -27,7 +27,7 @@
 
     <view wx:if="{{!isLoggedIn}}" class="hero-login-card">
       <view class="hero-login-icon">
-        <wdd-icon name="circle-user-round" color="#1677D2" size="46"></wdd-icon>
+        <wdd-icon name="circle-user-round" color="var(--brand-primary)" size="46"></wdd-icon>
       </view>
       <view class="hero-login-copy">
         <text class="hero-login-title">欢迎来到问当地</text>
@@ -47,23 +47,23 @@
       <view class="primary-action" bindtap="goToPublish">
         <view class="primary-main">
           <view class="action-icon primary">
-            <wdd-icon name="send" color="#1677D2" size="48"></wdd-icon>
+            <wdd-icon name="send" color="var(--brand-primary)" size="48"></wdd-icon>
           </view>
           <text class="action-title">发布求助</text>
         </view>
         <view class="primary-footer">
           <text class="action-desc">想问什么，当地人帮你确认</text>
           <view class="primary-arrow">
-            <wdd-icon name="chevron-right" color="#1677D2" size="30"></wdd-icon>
+            <wdd-icon name="chevron-right" color="var(--brand-primary)" size="30"></wdd-icon>
           </view>
         </view>
       </view>
       <view class="secondary-action" bindtap="goToTaskHall">
         <view class="action-icon secondary">
-          <wdd-icon name="users-round" color="#1677D2" size="42"></wdd-icon>
+          <wdd-icon name="users-round" color="var(--brand-primary)" size="42"></wdd-icon>
         </view>
-        <text class="secondary-title">去大厅接单</text>
-        <wdd-icon name="chevron-right" color="#1677D2" size="26"></wdd-icon>
+        <text class="secondary-title">去大厅</text>
+        <wdd-icon name="chevron-right" color="var(--brand-primary)" size="26"></wdd-icon>
       </view>
     </view>
   </view>
@@ -78,15 +78,11 @@
         data-type="{{item.type}}"
       >
         <view class="quick-type-icon">
-          <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="52"></wdd-icon>
+          <wdd-icon name="{{item.icon}}" color="var(--brand-primary)" size="64"></wdd-icon>
         </view>
         <text class="quick-type-name">{{item.name}}</text>
       </view>
     </view>
-  </view>
-
-  <view wx:if="{{isLoggedIn && userInfo.total_points < 10}}" class="points-tip">
-    积分不足？去<text class="link" bindtap="goToSignIn">签到</text>获取积分
   </view>
 
   <view class="nearby-section">
@@ -95,7 +91,7 @@
         <view class="section-title-row">
           <text class="section-title">附近求助</text>
           <view class="distance-tag">
-            <wdd-icon name="map-pin" color="#1677D2" size="26"></wdd-icon>
+            <wdd-icon name="map-pin" color="var(--brand-primary)" size="26"></wdd-icon>
             <text>5公里内</text>
           </view>
         </view>
@@ -108,13 +104,15 @@
 
     <view wx:if="{{!isLoggedIn}}" class="login-tip-card wdd-card">
       <view class="state-icon">
-        <wdd-icon name="lock-keyhole" color="#1677D2" size="46"></wdd-icon>
+        <wdd-icon name="lock-keyhole" color="var(--brand-primary)" size="46"></wdd-icon>
       </view>
       <view class="empty-text">登录后查看附近任务</view>
       <view class="empty-hint">{{cityHintText}}</view>
     </view>
 
-    <loading wx:elif="{{nearbyLoading}}" type="card" text="正在搜索附近任务..." mode="spinner" size="64"></loading>
+    <view wx:elif="{{nearbyLoading}}" class="nearby-loading-card">
+      <loading type="card" text="正在搜索附近任务..." mode="spinner" size="64"></loading>
+    </view>
 
     <error wx:elif="{{nearbyError}}" type="card" icon="triangle-alert" title="加载失败" desc="网络异常，请稍后重试" showRetry="true" retryText="重新加载" bind:retry="reloadNearbyNeeds"></error>
 
@@ -127,36 +125,29 @@
         data-id="{{item._id}}"
       >
         <view class="need-main">
-          <view class="need-layout">
-            <view class="need-type-icon type-{{item.type}}">
-              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || item.color || '#1677D2'}}" size="50"></wdd-icon>
+          <view class="need-card-head">
+            <view class="need-type-badge">
+              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="var(--brand-primary)" size="34"></wdd-icon>
+              <text>{{item.typeName}}</text>
             </view>
-            <view class="need-body">
-              <view class="need-topline">
-                <view class="need-content">{{item.description || '暂无详细描述'}}</view>
-                <view class="need-reward">
-                  <text class="need-amount" wx:if="{{item.rewardAmount > 0}}">¥{{money.format(item.rewardAmount)}}</text>
-                  <text class="need-amount" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
-                </view>
-              </view>
-              <view class="need-meta">
-                <view class="meta-item location-item">
-                  <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
-                  <text class="location-name">{{item.locationName}}</text>
-                </view>
-                <text wx:if="{{item.distanceText}}" class="meta-dot">·</text>
-                <view wx:if="{{item.distanceText}}" class="meta-item distance-item">
-                  <text>{{item.distanceText}}</text>
-                </view>
-                <text class="meta-dot">·</text>
-                <view class="meta-item time-item">
-                  <wdd-icon name="clock-3" color="#7B8794" size="24"></wdd-icon>
-                  <text>{{item.remainTime}}</text>
-                </view>
-              </view>
+            <view class="need-reward">
+              <text class="need-amount" wx:if="{{item.rewardAmount > 0}}">￥{{money.format(item.rewardAmount)}}</text>
+              <text class="need-amount points" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
             </view>
-            <view class="row-arrow-wrap">
-              <wdd-icon name="chevron-right" color="#7B8794" size="28"></wdd-icon>
+          </view>
+
+          <view class="need-content">{{item.description || '暂无详细描述'}}</view>
+
+          <view class="need-card-foot">
+            <view class="need-location">
+              <wdd-icon name="map-pin" color="var(--brand-primary)" size="32"></wdd-icon>
+              <text class="location-name">{{item.locationName}}</text>
+              <text wx:if="{{item.distanceText}}" class="meta-dot">·</text>
+              <text wx:if="{{item.distanceText}}" class="distance-text">{{item.distanceText}}</text>
+            </view>
+            <view class="need-time">
+              <wdd-icon name="clock-3" color="#7B8794" size="32"></wdd-icon>
+              <text>{{item.remainTime}}</text>
             </view>
           </view>
         </view>

@@ -16,7 +16,7 @@
             bindtap="selectFilter"
             data-filter="{{item.id}}"
           >
-            <wdd-icon name="{{item.icon}}" color="{{activeFilter === item.id ? '#1677D2' : '#7B8794'}}" size="28"></wdd-icon>
+            <wdd-icon name="{{item.icon}}" color="{{activeFilter === item.id ? item.color : 'var(--text-tertiary)'}}" size="28"></wdd-icon>
             <text class="filter-name">{{item.name}}</text>
           </view>
         </view>
@@ -26,12 +26,12 @@
     <!-- 排序和距离筛选 -->
     <view class="sub-filter-bar">
       <view class="sort-section" bindtap="showSortOptions">
-        <wdd-icon name="{{currentSort.icon}}" color="#1677D2" size="24"></wdd-icon>
+        <wdd-icon name="{{currentSort.icon}}" color="{{currentSort.color || 'var(--brand-primary)'}}" size="24"></wdd-icon>
         <text class="sort-label">{{currentSort.label}}</text>
         <wdd-icon name="chevron-down" color="#7B8794" size="18"></wdd-icon>
       </view>
       <view class="distance-section" bindtap="showDistanceOptions">
-        <wdd-icon name="{{currentDistance.icon}}" color="#1677D2" size="24"></wdd-icon>
+        <wdd-icon name="{{currentDistance.icon}}" color="{{currentDistance.color || 'var(--brand-primary)'}}" size="24"></wdd-icon>
         <text class="distance-label">{{currentDistance.label}}</text>
         <wdd-icon name="chevron-down" color="#7B8794" size="18"></wdd-icon>
       </view>
@@ -67,16 +67,6 @@
     enhanced
     show-scrollbar="{{false}}"
   >
-    <!-- 统计信息 -->
-    <view class="stats-bar" wx:if="{{taskList.length > 0 || isLoading}}">
-      <text class="stats-text">{{taskList.length > 0 ? '附近共有 ' + totalCount + ' 个求助' : '正在搜索附近求助...'}}</text>
-      <view wx:if="{{isLocating}}" class="locating-indicator">
-        <view class="locating-dot"></view>
-        <view class="locating-dot"></view>
-        <view class="locating-dot"></view>
-      </view>
-    </view>
-
     <!-- 任务列表 -->
     <view wx:if="{{taskList.length > 0}}" class="task-list">
       <view
@@ -94,21 +84,21 @@
           <!-- 头部：类型和积分 -->
           <view class="card-header">
             <view class="type-badge" style="background: {{item.bgColor}}">
-              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || '#1677D2'}}" size="28"></wdd-icon>
+              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || 'var(--brand-primary)'}}" size="28"></wdd-icon>
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <wdd-icon name="circle-dollar-sign" color="#D96A22" size="22"></wdd-icon>
+              <wdd-icon name="circle-dollar-sign" color="var(--vitality-orange)" size="22"></wdd-icon>
               <text class="amount-value">¥{{money.format(item.rewardAmount || item.points / 10)}}</text>
             </view>
           </view>
 
           <!-- 描述内容 -->
-          <view class="card-desc">{{item.description || '暂无详细描述，点击接单后沟通详情'}}</view>
+          <view class="card-desc">{{item.description || '暂无详细描述，点击去帮助后沟通详情'}}</view>
 
           <!-- 位置信息 -->
           <view class="card-location">
-            <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
+            <wdd-icon name="map-pin" color="var(--brand-primary)" size="24"></wdd-icon>
             <text class="location-text">{{item.locationName}}</text>
             <text class="distance-tag">{{item.distanceText}}</text>
           </view>
@@ -120,15 +110,15 @@
               <text class="publisher-name">{{item.userNickname || '匿名用户'}}</text>
             </view>
             <view class="time-info">
-              <wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon>
+              <wdd-icon name="clock-3" color="var(--brand-primary)" size="22"></wdd-icon>
               <text class="time-text">{{item.remainTime}}</text>
             </view>
           </view>
         </view>
 
-        <!-- 接单按钮 -->
+        <!-- 帮助按钮 -->
         <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.rewardAmount || 0}}">
-          <text class="take-text">接单</text>
+          <text class="take-text">去帮助</text>
         </view>
       </view>
     </view>
@@ -152,7 +142,7 @@
 
   <!-- 快速回到顶部 -->
   <view wx:if="{{showBackToTop}}" class="back-to-top" bindtap="scrollToTop">
-    <wdd-icon name="arrow-up" color="#1677D2" size="36"></wdd-icon>
+    <wdd-icon name="arrow-up" color="var(--brand-primary)" size="36"></wdd-icon>
   </view>
 
   <!-- 排序选项弹窗 -->
@@ -167,7 +157,7 @@
       >
         <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
         <text class="option-label">{{item.label}}</text>
-        <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
+        <wdd-icon wx:if="{{currentSort.value === item.value}}" name="check" color="var(--brand-primary)" size="30"></wdd-icon>
       </view>
     </view>
   </bottom-sheet>
@@ -184,7 +174,7 @@
       >
         <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="32"></wdd-icon>
         <text class="option-label">{{item.label}}</text>
-        <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="#1677D2" size="30"></wdd-icon>
+        <wdd-icon wx:if="{{currentDistance.value === item.value}}" name="check" color="var(--brand-primary)" size="30"></wdd-icon>
       </view>
     </view>
   </bottom-sheet>

@@ -19,7 +19,7 @@
   <!-- 补充材料模式：任务摘要卡片 -->
   <view class="card task-card" wx:if="{{mode === 'supplement' && taskSummary}}">
     <view class="card-head">
-      <wdd-icon name="clipboard-list" color="#1677D2" size="30"></wdd-icon>
+      <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="30"></wdd-icon>
       <text class="card-head-title">任务摘要</text>
     </view>
     <view class="card-body">
@@ -72,7 +72,7 @@
     <view class="card" wx:if="{{mode !== 'supplement'}}">
       <view class="form-group">
         <view class="form-label">
-          <wdd-icon name="tag" color="#1677D2" size="26"></wdd-icon>
+          <wdd-icon name="tag" color="var(--brand-primary)" size="26"></wdd-icon>
           <text>举报类型</text>
           <text class="required">*</text>
         </view>
@@ -89,7 +89,7 @@
     <view class="card">
       <view class="form-group">
         <view class="form-label">
-          <wdd-icon name="pencil" color="#1677D2" size="26"></wdd-icon>
+          <wdd-icon name="pencil" color="var(--brand-primary)" size="26"></wdd-icon>
           <text>{{mode === 'supplement' ? '情况说明' : '举报理由'}}</text>
           <text class="required">*</text>
         </view>
@@ -113,7 +113,7 @@
     <view class="card">
       <view class="form-group">
         <view class="form-label">
-          <wdd-icon name="image-plus" color="#1677D2" size="26"></wdd-icon>
+          <wdd-icon name="image-plus" color="var(--brand-primary)" size="26"></wdd-icon>
           <text>证据截图</text>
           <text class="required">*</text>
         </view>
@@ -162,7 +162,7 @@
     <view class="modal-mask" bindtap="hideConfirm"></view>
     <view class="modal-content">
       <view class="modal-icon">
-        <wdd-icon name="triangle-alert" color="#D96A22" size="48"></wdd-icon>
+        <wdd-icon name="triangle-alert" color="var(--vitality-orange)" size="48"></wdd-icon>
       </view>
       <view class="modal-title">确认提交举报</view>
       <view class="modal-body">

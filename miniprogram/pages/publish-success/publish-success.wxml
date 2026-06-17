@@ -3,10 +3,10 @@
 <view class="container wdd-page {{showAnimation ? 'show' : ''}}">
   <view class="success-section">
     <view class="success-icon">
-      <wdd-icon name="check" color="#1677D2" size="74"></wdd-icon>
+      <wdd-icon name="check" color="var(--brand-primary)" size="74"></wdd-icon>
     </view>
     <text class="success-title">发布成功</text>
-    <text class="success-subtitle">您的求助已进入任务大厅，等待附近帮助者接单</text>
+    <text class="success-subtitle">您的求助已进入任务大厅，等待附近帮助者响应</text>
   </view>
 
   <view class="task-info-card content-card">
@@ -31,16 +31,16 @@
     <view class="card-title">下一步提示</view>
     <view class="tip-item">
       <view class="tip-icon">
-        <wdd-icon name="clipboard-list" color="#1677D2" size="34"></wdd-icon>
+        <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="34"></wdd-icon>
       </view>
-      <text class="tip-text">任务有效期内，附近帮助者可在任务大厅接单</text>
+      <text class="tip-text">任务有效期内，附近帮助者可在任务大厅响应求助</text>
     </view>
     <view class="tip-divider"></view>
     <view class="tip-item">
       <view class="tip-icon">
-        <wdd-icon name="bell" color="#1677D2" size="34"></wdd-icon>
+        <wdd-icon name="bell" color="var(--brand-primary)" size="34"></wdd-icon>
       </view>
-      <text class="tip-text">有帮助者接单后，您会收到通知，可立即开始沟通</text>
+      <text class="tip-text">有帮助者响应后，您会收到通知，可立即开始沟通</text>
     </view>
     <view class="refund-tip">
       <wdd-icon name="info" color="#5E7187" size="30"></wdd-icon>

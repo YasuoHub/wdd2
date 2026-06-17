@@ -6,7 +6,7 @@
     <text class="page-title">消息</text>
     <!-- 右上角系统通知铃铛 -->
     <view class="notification-bell" bindtap="openSystemNotifications">
-      <wdd-icon name="bell" color="#1677D2" size="36"></wdd-icon>
+      <wdd-icon name="bell" color="var(--brand-primary)" size="36"></wdd-icon>
       <view wx:if="{{systemUnread > 0}}" class="bell-badge">{{systemUnread > 99 ? '99+' : systemUnread}}</view>
     </view>
   </view>
@@ -18,7 +18,7 @@
       bindtap="switchChatTab"
       data-tab="seeker"
     >
-      <wdd-icon name="send" color="#1677D2" size="26"></wdd-icon>
+      <wdd-icon name="send" color="var(--brand-primary)" size="26"></wdd-icon>
       <text>求助</text>
       <view wx:if="{{seekerChatUnread > 0}}" class="tab-badge">{{seekerChatUnread}}</view>
     </view>
@@ -27,7 +27,7 @@
       bindtap="switchChatTab"
       data-tab="helper"
     >
-      <wdd-icon name="handshake" color="#1677D2" size="28"></wdd-icon>
+      <wdd-icon name="handshake" color="var(--brand-primary)" size="28"></wdd-icon>
       <text>帮助</text>
       <view wx:if="{{helperChatUnread > 0}}" class="tab-badge">{{helperChatUnread}}</view>
     </view>
@@ -63,7 +63,7 @@
               <view class="message-nickname">{{item.otherUserNickname}}</view>
               <view class="message-meta-inline">
                 <view class="meta-icon">
-                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || '#1677D2'}}" size="24"></wdd-icon>
+                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || 'var(--brand-primary)'}}" size="24"></wdd-icon>
                 </view>
                 <view class="meta-location" wx:if="{{item.locationName}}">
                   <wdd-icon name="map-pin" color="#7B8794" size="20"></wdd-icon>
@@ -89,7 +89,7 @@
     <!-- 帮助聊天 -->
     <block wx:if="{{currentChatTab === 'helper'}}">
       <block wx:if="{{helperChatList.length === 0}}">
-        <empty type="normal" icon="handshake" title="暂无帮助聊天" desc="去任务大厅接单开始聊天吧" showBtn="true" btnText="去大厅" btnType="primary" bind:btnTap="goToHall"></empty>
+        <empty type="normal" icon="handshake" title="暂无帮助聊天" desc="去任务大厅帮助他人开始聊天吧" showBtn="true" btnText="去大厅" btnType="primary" bind:btnTap="goToHall"></empty>
         <view wx:if="{{hiddenHelperCount > 0}}" class="hidden-tip">已折叠超过30天的任务</view>
       </block>
 
@@ -114,7 +114,7 @@
               <view class="message-nickname">{{item.otherUserNickname}}</view>
               <view class="message-meta-inline">
                 <view class="meta-icon">
-                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || '#1677D2'}}" size="24"></wdd-icon>
+                  <wdd-icon name="{{item.typeIcon}}" color="{{item.typeColor || 'var(--brand-primary)'}}" size="24"></wdd-icon>
                 </view>
                 <view class="meta-location" wx:if="{{item.locationName}}">
                   <wdd-icon name="map-pin" color="#7B8794" size="20"></wdd-icon>
@@ -155,12 +155,14 @@
           bindtap="onSystemNotificationTap"
           data-item="{{item}}"
         >
-          <view class="system-icon-wrapper">
-            <wdd-icon name="{{item.icon}}" color="{{item.iconColor || '#1677D2'}}" size="40"></wdd-icon>
-          </view>
           <view class="system-info">
             <view class="system-top">
-              <view class="system-title">{{item.title}}</view>
+              <view class="system-title-line">
+                <view class="system-icon-wrapper">
+                  <wdd-icon name="{{item.icon}}" color="{{item.iconColor || 'var(--brand-primary)'}}" size="40"></wdd-icon>
+                </view>
+                <view class="system-title">{{item.title}}</view>
+              </view>
               <view class="system-time">{{item.timeText}}</view>
             </view>
             <view class="system-content">{{item.content}}</view>

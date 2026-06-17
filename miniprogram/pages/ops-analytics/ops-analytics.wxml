@@ -72,7 +72,7 @@
       <view class="card-title">转化漏斗（期内事件数）</view>
       <view class="card-body">
         <view wx:if="{{loading.funnel}}" class="skeleton" style="height: 360rpx;"></view>
-        <chart-funnel wx:else data="{{funnelStages}}" labels="{{['发布', '接单', '完成', '评价']}}"></chart-funnel>
+        <chart-funnel wx:else data="{{funnelStages}}" labels="{{['发布', '响应', '完成', '评价']}}"></chart-funnel>
       </view>
     </view>
 
@@ -96,7 +96,7 @@
 
     <!-- 8. 等待时间分布 -->
     <view class="chart-card">
-      <view class="card-title">等待时间分布（发布到接单）</view>
+      <view class="card-title">等待时间分布（发布到响应）</view>
       <view class="card-body">
         <view wx:if="{{loading.waitTime}}" class="skeleton" style="height: 500rpx;"></view>
         <chart-pie wx:else data="{{waitTimeData}}"></chart-pie>

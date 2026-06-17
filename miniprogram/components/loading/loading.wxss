@@ -15,14 +15,14 @@
   padding: 80rpx 40rpx;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 36rpx;
-  box-shadow: 0 4rpx 24rpx rgba(22, 119, 210, 0.1);
+  box-shadow: 0 4rpx 24rpx var(--brand-primary-10);
   margin: 32rpx;
 }
 
 /* 转圈加载 */
 .loading-spinner {
-  border: 4rpx solid rgba(22, 119, 210, 0.2);
-  border-top-color: #1677D2;
+  border: 4rpx solid var(--brand-primary-20);
+  border-top-color: var(--brand-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -41,7 +41,7 @@
 .dot {
   width: 16rpx;
   height: 16rpx;
-  background: linear-gradient(135deg, #1677D2 0%, #2B8AD8 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out both;
 }

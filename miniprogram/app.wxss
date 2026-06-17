@@ -26,6 +26,25 @@ page {
   --sky-dark: #0f66bd;
   --sky-deep: #135fa7;
 
+  /* 品牌色令牌 - 后续换品牌系列优先改这里 */
+  --brand-primary: var(--sky-primary);
+  --brand-primary-light: var(--sky-light);
+  --brand-primary-soft: var(--sky-soft);
+  --brand-primary-pale: var(--sky-pale);
+  --brand-primary-dark: var(--sky-dark);
+  --brand-primary-deep: var(--sky-deep);
+  --brand-primary-05: rgba(22, 119, 210, 0.05);
+  --brand-primary-08: rgba(22, 119, 210, 0.08);
+  --brand-primary-10: rgba(22, 119, 210, 0.1);
+  --brand-primary-12: rgba(22, 119, 210, 0.12);
+  --brand-primary-16: rgba(22, 119, 210, 0.16);
+  --brand-primary-18: rgba(22, 119, 210, 0.18);
+  --brand-primary-20: rgba(22, 119, 210, 0.2);
+  --brand-primary-30: rgba(22, 119, 210, 0.3);
+  --brand-primary-34: rgba(22, 119, 210, 0.34);
+  --brand-primary-35: rgba(22, 119, 210, 0.35);
+  --brand-primary-50: rgba(22, 119, 210, 0.5);
+
   /* 辅助色 - 只用于明确状态和交易信息 */
   --vitality-orange: #d96a22;
   --vitality-coral: #e9823a;
@@ -34,6 +53,51 @@ page {
   --fresh-green: #34a98f;
   --lavender: #8b96a8;
   --pink-soft: #d65f76;
+  --vitality-orange-05: rgba(217, 106, 34, 0.05);
+  --vitality-orange-08: rgba(217, 106, 34, 0.08);
+  --vitality-orange-10: rgba(217, 106, 34, 0.1);
+  --vitality-orange-12: rgba(217, 106, 34, 0.12);
+  --vitality-orange-14: rgba(217, 106, 34, 0.14);
+  --vitality-orange-15: rgba(217, 106, 34, 0.15);
+  --vitality-orange-18: rgba(217, 106, 34, 0.18);
+  --vitality-orange-20: rgba(217, 106, 34, 0.2);
+  --vitality-orange-24: rgba(217, 106, 34, 0.24);
+  --vitality-orange-30: rgba(217, 106, 34, 0.3);
+  --vitality-orange-35: rgba(217, 106, 34, 0.35);
+  --vitality-orange-50: rgba(217, 106, 34, 0.5);
+  --fresh-mint-08: rgba(31, 143, 122, 0.08);
+  --fresh-mint-10: rgba(31, 143, 122, 0.1);
+  --fresh-mint-12: rgba(31, 143, 122, 0.12);
+  --fresh-mint-14: rgba(31, 143, 122, 0.14);
+  --fresh-mint-15: rgba(31, 143, 122, 0.15);
+  --fresh-mint-18: rgba(31, 143, 122, 0.18);
+  --fresh-mint-20: rgba(31, 143, 122, 0.2);
+  --fresh-mint-30: rgba(31, 143, 122, 0.3);
+  --vitality-yellow-14: rgba(233, 185, 73, 0.14);
+  --vitality-yellow-16: rgba(233, 185, 73, 0.16);
+  --vitality-yellow-26: rgba(233, 185, 73, 0.26);
+  --vitality-yellow-28: rgba(233, 185, 73, 0.28);
+  --vitality-yellow-30: rgba(233, 185, 73, 0.3);
+
+  /* 任务类型色令牌 */
+  --type-weather-color: var(--brand-primary);
+  --type-weather-light: var(--brand-primary-light);
+  --type-weather-bg: var(--brand-primary-12);
+  --type-shop-color: var(--brand-primary);
+  --type-shop-light: var(--brand-primary-soft);
+  --type-shop-bg: var(--brand-primary-10);
+  --type-traffic-color: var(--brand-primary);
+  --type-traffic-light: var(--brand-primary-light);
+  --type-traffic-bg: var(--brand-primary-10);
+  --type-parking-color: var(--brand-primary);
+  --type-parking-light: var(--brand-primary-light);
+  --type-parking-bg: var(--brand-primary-10);
+  --type-queue-color: var(--brand-primary);
+  --type-queue-light: var(--brand-primary-light);
+  --type-queue-bg: var(--brand-primary-10);
+  --type-other-color: var(--brand-primary);
+  --type-other-light: var(--brand-primary-light);
+  --type-other-bg: var(--brand-primary-08);
 
   /* 背景色 */
   --bg-primary: #f5f7fa;
@@ -61,19 +125,19 @@ page {
   --shadow-sm: 0 2rpx 8rpx rgba(15, 23, 42, 0.04);
   --shadow-md: 0 6rpx 18rpx rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 12rpx 32rpx rgba(15, 23, 42, 0.08);
-  --shadow-sky: 0 4rpx 14rpx rgba(22, 119, 210, 0.18);
-  --shadow-orange: 0 4rpx 14rpx rgba(217, 106, 34, 0.18);
-  --shadow-green: 0 4rpx 14rpx rgba(31, 143, 122, 0.18);
+  --shadow-sky: 0 4rpx 14rpx var(--brand-primary-18);
+  --shadow-orange: 0 4rpx 14rpx var(--vitality-orange-18);
+  --shadow-green: 0 4rpx 14rpx var(--fresh-mint-18);
   --shadow-card: 0 4rpx 16rpx rgba(15, 23, 42, 0.05);
   --shadow-float: 0 12rpx 34rpx rgba(15, 23, 42, 0.12);
   --shadow-card-ios: 0 10rpx 30rpx rgba(15, 23, 42, 0.06), 0 1rpx 0 rgba(255, 255, 255, 0.82) inset;
   --shadow-press-ios: 0 6rpx 18rpx rgba(15, 23, 42, 0.05);
   --surface-ios: rgba(255, 255, 255, 0.96);
   --surface-subtle: #f8fafc;
-  --surface-tag-blue: rgba(22, 119, 210, 0.08);
-  --surface-tag-orange: rgba(217, 106, 34, 0.1);
-  --surface-tag-green: rgba(31, 143, 122, 0.1);
-  --surface-tag-yellow: rgba(233, 185, 73, 0.16);
+  --surface-tag-blue: var(--brand-primary-08);
+  --surface-tag-orange: var(--vitality-orange-10);
+  --surface-tag-green: var(--fresh-mint-10);
+  --surface-tag-yellow: var(--vitality-yellow-16);
 
   /* 圆角 - 克制、真实小程序质感 */
   --radius-xs: 8rpx;
@@ -124,12 +188,12 @@ page {
   height: 520rpx;
   opacity: 0.72;
   background:
-    radial-gradient(circle at 68% 36%, rgba(22, 119, 210, 0.12) 0, rgba(22, 119, 210, 0.12) 116rpx, transparent 118rpx),
-    radial-gradient(circle at 30% 72%, rgba(31, 143, 122, 0.08) 0, rgba(31, 143, 122, 0.08) 96rpx, transparent 98rpx),
+    radial-gradient(circle at 68% 36%, var(--brand-primary-12) 0, var(--brand-primary-12) 116rpx, transparent 118rpx),
+    radial-gradient(circle at 30% 72%, var(--fresh-mint-08) 0, var(--fresh-mint-08) 96rpx, transparent 98rpx),
     linear-gradient(90deg, transparent 0, transparent 31%, rgba(82, 97, 111, 0.12) 31%, rgba(82, 97, 111, 0.12) 31.6%, transparent 31.6%, transparent 100%),
     linear-gradient(0deg, transparent 0, transparent 42%, rgba(82, 97, 111, 0.1) 42%, rgba(82, 97, 111, 0.1) 42.6%, transparent 42.6%, transparent 100%),
-    linear-gradient(135deg, transparent 0, transparent 54%, rgba(22, 119, 210, 0.16) 54%, rgba(22, 119, 210, 0.16) 55%, transparent 55%, transparent 100%),
-    linear-gradient(24deg, transparent 0, transparent 62%, rgba(31, 143, 122, 0.1) 62%, rgba(31, 143, 122, 0.1) 63%, transparent 63%, transparent 100%);
+    linear-gradient(135deg, transparent 0, transparent 54%, var(--brand-primary-16) 54%, var(--brand-primary-16) 55%, transparent 55%, transparent 100%),
+    linear-gradient(24deg, transparent 0, transparent 62%, var(--fresh-mint-10) 62%, var(--fresh-mint-10) 63%, transparent 63%, transparent 100%);
 }
 
 .wdd-page-bg::after {
@@ -141,13 +205,13 @@ page {
   height: 360rpx;
   opacity: 0.56;
   background:
-    radial-gradient(circle at 26% 46%, rgba(31, 143, 122, 0.08) 0, rgba(31, 143, 122, 0.08) 118rpx, transparent 120rpx),
-    radial-gradient(circle at 74% 56%, rgba(217, 106, 34, 0.06) 0, rgba(217, 106, 34, 0.06) 76rpx, transparent 78rpx),
-    linear-gradient(112deg, transparent 0, transparent 48%, rgba(22, 119, 210, 0.1) 48%, rgba(22, 119, 210, 0.1) 49%, transparent 49%, transparent 100%),
+    radial-gradient(circle at 26% 46%, var(--fresh-mint-08) 0, var(--fresh-mint-08) 118rpx, transparent 120rpx),
+    radial-gradient(circle at 74% 56%, var(--vitality-orange-05) 0, var(--vitality-orange-05) 76rpx, transparent 78rpx),
+    linear-gradient(112deg, transparent 0, transparent 48%, var(--brand-primary-10) 48%, var(--brand-primary-10) 49%, transparent 49%, transparent 100%),
     linear-gradient(8deg, transparent 0, transparent 56%, rgba(82, 97, 111, 0.08) 56%, rgba(82, 97, 111, 0.08) 56.7%, transparent 56.7%, transparent 100%);
 }
 
-.wdd-page > view:not(.wdd-page-bg),
+.wdd-page > view:not(.wdd-page-bg):not(.action-bar):not(.footer):not(.back-to-top):not(.menu-mask):not(.modal-mask):not(.popup-mask):not(.overlay-mask),
 .wdd-page > scroll-view,
 .wdd-page > swiper,
 .wdd-page > form,
@@ -168,8 +232,8 @@ page {
   opacity: 0.14;
   pointer-events: none;
   background:
-    linear-gradient(135deg, transparent 0 45%, rgba(22, 119, 210, 0.16) 45% 46%, transparent 46% 100%),
-    linear-gradient(28deg, transparent 0 58%, rgba(31, 143, 122, 0.1) 58% 59%, transparent 59% 100%);
+    linear-gradient(135deg, transparent 0 45%, var(--brand-primary-16) 45% 46%, transparent 46% 100%),
+    linear-gradient(28deg, transparent 0 58%, var(--fresh-mint-10) 58% 59%, transparent 59% 100%);
 }
 
 .wdd-card {
@@ -219,7 +283,7 @@ page {
   height: 64rpx;
   border-radius: 20rpx;
   background: var(--surface-tag-blue);
-  border: 1rpx solid rgba(22, 119, 210, 0.1);
+  border: 1rpx solid var(--brand-primary-10);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,7 +296,7 @@ page {
 }
 
 .wdd-btn-primary {
-  background: #1677d2;
+  background: var(--brand-primary);
   color: #fff;
   box-shadow: var(--shadow-sky);
   border-radius: var(--radius-full);
@@ -362,10 +426,10 @@ button::after {
 @keyframes breathe {
   0%,
   100% {
-    box-shadow: 0 0 20rpx rgba(22, 119, 210, 0.3);
+    box-shadow: 0 0 20rpx var(--brand-primary-30);
   }
   50% {
-    box-shadow: 0 0 40rpx rgba(22, 119, 210, 0.5);
+    box-shadow: 0 0 40rpx var(--brand-primary-35);
   }
 }
 
@@ -480,7 +544,7 @@ button::after {
 }
 
 .btn-primary:active {
-  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.2);
+  box-shadow: 0 2rpx 12rpx var(--brand-primary-20);
 }
 
 /* 次要按钮 */
@@ -529,22 +593,22 @@ button::after {
 }
 
 .tag-sky {
-  background: rgba(22, 119, 210, 0.08);
+  background: var(--brand-primary-08);
   color: var(--sky-deep);
 }
 
 .tag-orange {
-  background: rgba(217, 106, 34, 0.1);
+  background: var(--vitality-orange-10);
   color: var(--vitality-orange);
 }
 
 .tag-mint {
-  background: rgba(31, 143, 122, 0.1);
+  background: var(--fresh-mint-10);
   color: var(--fresh-mint);
 }
 
 .tag-yellow {
-  background: rgba(233, 185, 73, 0.14);
+  background: var(--vitality-yellow-14);
   color: #946b00;
 }
 

@@ -49,7 +49,7 @@
   border-radius: 32rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.08);
+  box-shadow: 0 2rpx 12rpx var(--brand-primary-08);
 }
 
 .section-title {
@@ -76,7 +76,7 @@
   align-items: center;
   gap: 16rpx;
   padding: 24rpx 0;
-  border-bottom: 2rpx solid rgba(22, 119, 210, 0.15);
+  border-bottom: 2rpx solid var(--brand-primary-16);
 }
 
 .input-symbol {
@@ -136,7 +136,7 @@
   border-radius: 32rpx;
   padding: 32rpx;
   margin-bottom: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.08);
+  box-shadow: 0 2rpx 12rpx var(--brand-primary-08);
 }
 
 .detail-row {
@@ -173,7 +173,7 @@
 
 .detail-divider {
   height: 2rpx;
-  background: rgba(22, 119, 210, 0.12);
+  background: var(--brand-primary-12);
   margin: 8rpx 0;
 }
 
@@ -182,7 +182,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: 32rpx;
   padding: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.08);
+  box-shadow: 0 2rpx 12rpx var(--brand-primary-08);
 }
 
 .rules-title {
@@ -222,7 +222,7 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(40rpx);
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 24rpx rgba(22, 119, 210, 0.1);
+  box-shadow: 0 -4rpx 24rpx var(--brand-primary-10);
 }
 
 .submit-btn {
@@ -240,7 +240,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(22, 119, 210, 0.4);
+  box-shadow: 0 8rpx 32rpx var(--brand-primary-35);
 }
 
 .submit-btn.disabled {

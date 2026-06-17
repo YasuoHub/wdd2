@@ -62,7 +62,7 @@ page {
   padding: 28rpx;
   margin-bottom: 20rpx;
   box-shadow: var(--shadow-sm);
-  border: 2rpx solid rgba(22, 119, 210, 0.1);
+  border: 2rpx solid var(--brand-primary-10);
   animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -166,7 +166,7 @@ page {
   border-radius: var(--radius-md);
   background: var(--bg-card);
   box-shadow: var(--shadow-md);
-  border: 2rpx solid rgba(22, 119, 210, 0.12);
+  border: 2rpx solid var(--brand-primary-12);
   animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -392,7 +392,7 @@ page {
 
 .upload-btn:active {
   border-color: var(--sky-primary);
-  background: rgba(22, 119, 210, 0.06);
+  background: var(--brand-primary-08);
 }
 
 .upload-icon {
@@ -441,7 +441,7 @@ page {
 
 .submit-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 2rpx 12rpx rgba(22, 119, 210, 0.2);
+  box-shadow: 0 2rpx 12rpx var(--brand-primary-20);
 }
 
 .submit-btn.disabled {

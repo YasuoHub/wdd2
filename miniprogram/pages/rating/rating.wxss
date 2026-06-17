@@ -43,7 +43,7 @@
 }
 
 .hero-highlight {
-  color: #1677d2;
+  color: var(--brand-primary);
 }
 
 .hero-subtitle {
@@ -134,12 +134,12 @@
 }
 
 .star.active .star-symbol {
-  color: #1677d2;
+  color: var(--brand-primary);
 }
 
 .rating-text {
   display: block;
-  color: #1677d2;
+  color: var(--brand-primary);
   font-size: 28rpx;
   font-weight: 400;
   line-height: 1.4;
@@ -202,9 +202,9 @@
 }
 
 .tag.active {
-  color: #1677d2;
-  background: rgba(22, 119, 210, 0.04);
-  border-color: #1677d2;
+  color: var(--brand-primary);
+  background: var(--brand-primary-05);
+  border-color: var(--brand-primary);
   box-shadow: none;
 }
 
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #1677d2;
+  background: var(--brand-primary);
 }
 
 .comment-section {
@@ -328,14 +328,14 @@
 }
 
 .submit-btn.active {
-  background: #1677d2;
-  box-shadow: 0 12rpx 26rpx rgba(22, 119, 210, 0.24);
+  background: var(--brand-primary);
+  box-shadow: 0 12rpx 26rpx var(--brand-primary-20);
   transform: none;
 }
 
 .submit-btn.active:active {
   transform: scale(0.985);
-  box-shadow: 0 8rpx 18rpx rgba(22, 119, 210, 0.18);
+  box-shadow: 0 8rpx 18rpx var(--brand-primary-18);
 }
 
 .submit-btn::after {

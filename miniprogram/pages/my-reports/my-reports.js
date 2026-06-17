@@ -61,10 +61,14 @@ Page({
         return {
           ...item,
           taskInfo: item.taskInfo ? { ...item.taskInfo, type: taskType, typeName: typeMeta.name } : item.taskInfo,
+          displayTitle: (item.taskInfo && (item.taskInfo.title || item.taskInfo.description || item.taskInfo.locationName)) || item.reason || '举报记录',
+          displayTaskName: item.taskInfo ? typeMeta.name : '关联任务',
+          displayTarget: item.reportedNickname || item.targetNickname || item.reportedUserNickname || '任务相关用户',
+          displayRewardAmount: item.taskInfo ? (item.taskInfo.rewardAmount || 0) : 0,
           createTimeText: DateUtil.formatDateTime(item.createTime),
           taskIcon: typeMeta.icon || 'clipboard-list',
-          taskColor: typeMeta.color || '#636e72',
-          taskBgColor: typeMeta.bgColor || 'rgba(99, 110, 114, 0.1)'
+          taskColor: typeMeta.color || 'var(--type-other-color)',
+          taskBgColor: typeMeta.bgColor || 'var(--type-other-bg)'
         }
       })
 

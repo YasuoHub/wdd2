@@ -518,7 +518,7 @@ Page({
     if (userInfo.credit_score === 0) {
       wx.showModal({
         title: '账号限制',
-        content: '您的信誉分已扣至0分，已限制发单及接单权限',
+        content: '您的信誉分已扣至0分，已限制发布求助及帮助权限',
         showCancel: false
       })
       return

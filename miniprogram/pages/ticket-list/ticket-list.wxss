@@ -98,7 +98,7 @@ page { background: var(--bg-secondary); }
 }
 
 .tab-item.active {
-  background: rgba(22, 119, 210, 0.08);
+  background: var(--brand-primary-08);
   color: var(--sky-deep);
 }
 
@@ -132,7 +132,7 @@ page { background: var(--bg-secondary); }
 }
 
 .left-appeal {
-  background: #d96a22;
+  background: var(--vitality-orange);
 }
 
 .card-body {
@@ -153,7 +153,7 @@ page { background: var(--bg-secondary); }
 }
 
 .info-value.reward {
-  color: #d96a22;
+  color: var(--vitality-orange);
   font-weight: 400;
 }
 
@@ -166,7 +166,7 @@ page { background: var(--bg-secondary); }
 }
 
 .supplement-tag {
-  background: rgba(22, 119, 210, 0.08);
-  border: 1rpx solid rgba(22, 119, 210, 0.16);
+  background: var(--brand-primary-08);
+  border: 1rpx solid var(--brand-primary-16);
   color: var(--sky-deep);
 }

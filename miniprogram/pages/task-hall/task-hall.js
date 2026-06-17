@@ -6,7 +6,7 @@ const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 
 // 筛选标签
 const FILTERS = [
-  { id: 'all', name: '全部', icon: 'sparkles', color: '#1677D2' },
+  { id: 'all', name: '全部', icon: 'sparkles', color: 'var(--brand-primary)' },
   ...NEED_TYPES.map(item => ({
     id: item.type,
     name: item.shortName,
@@ -17,19 +17,19 @@ const FILTERS = [
 
 // 排序选项
 const SORT_OPTIONS = [
-  { value: 'distance', label: '距离最近', icon: 'map-pin', color: '#1677D2' },
-  { value: 'reward', label: '金额最高', icon: 'circle-dollar-sign', color: '#D96A22' },
-  { value: 'time', label: '时间最新', icon: 'clock-3', color: '#7B8794' }
+  { value: 'distance', label: '距离最近', icon: 'map-pin', color: 'var(--brand-primary)' },
+  { value: 'reward', label: '金额最高', icon: 'circle-dollar-sign', color: 'var(--vitality-orange)' },
+  { value: 'time', label: '时间最新', icon: 'clock-3', color: 'var(--text-tertiary)' }
 ]
 
 // 距离选项
 const LIMITED_DISTANCE_OPTIONS = [
-  { value: 1000, label: '1公里内', icon: 'locate-fixed', color: '#1677D2' },
-  { value: 3000, label: '3公里内', icon: 'route', color: '#1677D2' },
-  { value: 5000, label: '5公里内', icon: 'map-pin', color: '#1677D2' },
-  { value: 10000, label: '10公里内', icon: 'map', color: '#1677D2' }
+  { value: 1000, label: '1公里内', icon: 'locate-fixed', color: 'var(--brand-primary)' },
+  { value: 3000, label: '3公里内', icon: 'route', color: 'var(--brand-primary)' },
+  { value: 5000, label: '5公里内', icon: 'map-pin', color: 'var(--brand-primary)' },
+  { value: 10000, label: '10公里内', icon: 'map', color: 'var(--brand-primary)' }
 ]
-const UNLIMITED_DISTANCE_OPTION = { value: 0, label: '不限距离', icon: 'circle-ellipsis', color: '#7B8794' }
+const UNLIMITED_DISTANCE_OPTION = { value: 0, label: '不限距离', icon: 'circle-ellipsis', color: 'var(--text-tertiary)' }
 const DISTANCE_OPTIONS = [...LIMITED_DISTANCE_OPTIONS, UNLIMITED_DISTANCE_OPTION]
 const DEFAULT_DISTANCE_OPTION = LIMITED_DISTANCE_OPTIONS[2]
 
@@ -409,7 +409,7 @@ Page({
     if (userInfo.credit_score === 0) {
       wx.showModal({
         title: '账号限制',
-        content: '您的信誉分已扣至0分，已限制发单及接单权限',
+        content: '您的信誉分已扣至0分，已限制发布求助及帮助权限',
         showCancel: false
       })
       return
@@ -419,8 +419,8 @@ Page({
     const feeRate = Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
 
     wx.showModal({
-      title: '确认接单',
-      content: `承接此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要接单吗？`,
+      title: '确认去帮助',
+      content: `完成此任务可获得 ¥${takerIncome}（已扣除${feeRate}%平台服务费），确定要去帮助吗？`,
       confirmColor: '#A8E6CF',
       success: (res) => {
         if (res.confirm) {
@@ -433,7 +433,7 @@ Page({
   // 执行接单
   async doTakeTask(needId) {
     try {
-      wx.showLoading({ title: '接单中...' })
+      wx.showLoading({ title: '处理中...' })
 
       // 调用云函数
       const { result } = await wx.cloud.callFunction({
@@ -445,7 +445,7 @@ Page({
 
       if (result.code === 0) {
         wx.showToast({
-          title: '接单成功',
+          title: '已开始帮助',
           icon: 'success'
         })
 
@@ -467,7 +467,7 @@ Page({
     } catch (err) {
       wx.hideLoading()
       wx.showToast({
-        title: err.message || '接单失败',
+        title: err.message || '操作失败',
         icon: 'none'
       })
     }
@@ -485,7 +485,7 @@ Page({
   showHelp() {
     wx.showModal({
       title: '任务大厅',
-      content: '这里展示成都地区的所有待帮助任务。您可以根据类型、距离筛选，点击"接单"即可开始帮助。',
+      content: '这里展示成都地区的所有待帮助任务。您可以根据类型、距离筛选，点击"去帮助"即可开始帮助。',
       showCancel: false
     })
   },

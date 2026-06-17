@@ -5,7 +5,7 @@ page {
   --text-primary: #333;
   --text-secondary: #666;
   --text-muted: #999;
-  --primary-color: #1677D2;
+  --primary-color: var(--brand-primary);
   background: var(--bg-primary);
 }
 
@@ -116,7 +116,7 @@ page {
 }
 
 .kpi-value.accent-green { color: #2ecc71; }
-.kpi-value.accent-blue { color: #1677D2; }
+.kpi-value.accent-blue { color: var(--brand-primary); }
 .kpi-value.accent-orange { color: #f39c12; }
 
 /* ===== 图表卡片 ===== */
@@ -209,7 +209,7 @@ page {
 .loc-bar-fill {
   height: 100%;
   border-radius: 8rpx;
-  background: linear-gradient(90deg, #1677D2, #3a8fd4);
+  background: linear-gradient(90deg, var(--brand-primary), #3a8fd4);
   transition: width 0.5s ease;
 }
 

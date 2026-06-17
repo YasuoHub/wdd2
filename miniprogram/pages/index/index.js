@@ -477,13 +477,6 @@ Page({
     })
   },
 
-  // 跳转到签到（在"我的"页面）
-  goToSignIn() {
-    wx.switchTab({
-      url: '/pages/my/my'
-    })
-  },
-
   // 跳转到任务大厅
   goToTaskHall() {
     wx.switchTab({

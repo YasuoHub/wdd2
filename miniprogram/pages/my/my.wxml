@@ -47,8 +47,8 @@
     <view class="menu-title">我的任务</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToMyNeeds">
-        <view class="menu-icon-wrapper" style="background: rgba(116, 185, 255, 0.15);">
-          <wdd-icon name="send" color="#1677D2" size="36"></wdd-icon>
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="send" color="var(--brand-primary)" size="36"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的求助</text>
@@ -57,11 +57,11 @@
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToMyTasks">
-        <view class="menu-icon-wrapper" style="background: rgba(168, 230, 207, 0.3);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="handshake" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
-          <text class="menu-text">我的接单</text>
+          <text class="menu-text">我的帮助</text>
           <text class="menu-desc">{{myTasksCount}}个进行中</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
@@ -73,7 +73,7 @@
     <view class="menu-title">帮助者设置</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToHelperProfile">
-        <view class="menu-icon-wrapper" style="background: linear-gradient(135deg, rgba(168, 230, 207, 0.3), rgba(129, 199, 132, 0.2));">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="user-round-cog" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -89,8 +89,8 @@
     <view class="menu-title">资产管理</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToWallet">
-        <view class="menu-icon-wrapper" style="background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 179, 71, 0.15));">
-          <wdd-icon name="wallet" color="#D96A22" size="38"></wdd-icon>
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="wallet" color="var(--vitality-orange)" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的钱包</text>
@@ -99,7 +99,7 @@
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToPointRecords">
-        <view class="menu-icon-wrapper" style="background: rgba(253, 203, 110, 0.15);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="star" color="#C9941E" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -109,7 +109,7 @@
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="showInviteModal">
-        <view class="menu-icon-wrapper" style="background: rgba(162, 155, 254, 0.15);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="gift" color="#7B61D1" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -126,7 +126,7 @@
     <view class="menu-title">服务记录</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToMyReports">
-        <view class="menu-icon-wrapper" style="background: rgba(231, 76, 60, 0.12);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="shield-alert" color="#FF6B6B" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -135,8 +135,8 @@
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToMyAppeals">
-        <view class="menu-icon-wrapper" style="background: rgba(243, 156, 18, 0.12);">
-          <wdd-icon name="notebook-pen" color="#D96A22" size="38"></wdd-icon>
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="notebook-pen" color="var(--vitality-orange)" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的申诉</text>
@@ -151,7 +151,7 @@
     <view class="menu-title">客服系统</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToTicketList">
-        <view class="menu-icon-wrapper" style="background: rgba(231, 76, 60, 0.15);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="headphones" color="#FF6B6B" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -168,7 +168,7 @@
     <view class="menu-title">超级管理员</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToOpsAnalytics">
-        <view class="menu-icon-wrapper" style="background: rgba(39, 174, 96, 0.15);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="chart-column" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -178,8 +178,8 @@
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="goToFundApproval">
-        <view class="menu-icon-wrapper" style="background: rgba(22, 119, 210, 0.12);">
-          <wdd-icon name="banknote" color="#1677D2" size="38"></wdd-icon>
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="banknote" color="var(--brand-primary)" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">资金审批</text>
@@ -194,7 +194,7 @@
     <view class="menu-title">其他</view>
     <view class="menu-list">
       <view class="menu-item" bindtap="showAbout">
-        <view class="menu-icon-wrapper" style="background: rgba(253, 121, 168, 0.15);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="info" color="#FF6B9D" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
@@ -203,7 +203,7 @@
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
       <view class="menu-item" bindtap="showRules">
-        <view class="menu-icon-wrapper" style="background: rgba(99, 110, 114, 0.1);">
+        <view class="menu-icon-wrapper">
           <wdd-icon name="clipboard-list" color="#5E7187" size="38"></wdd-icon>
         </view>
         <view class="menu-content">

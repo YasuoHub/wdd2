@@ -119,33 +119,33 @@
   border-radius: 10rpx;
   font-size: 28rpx;
   font-weight: 400;
-  color: #1677D2;
-  background: rgba(22, 119, 210, 0.1);
+  color: var(--brand-primary);
+  background: var(--brand-primary-10);
 }
 
 .status-pill-pending {
   color: #B7791F;
-  background: rgba(233, 185, 73, 0.16);
+  background: var(--vitality-yellow-16);
 }
 
 .status-pill-ongoing {
-  color: #1677D2;
-  background: rgba(22, 119, 210, 0.1);
+  color: var(--brand-primary);
+  background: var(--brand-primary-10);
 }
 
 .status-pill-breaking {
-  color: #D96A22;
-  background: rgba(217, 106, 34, 0.12);
+  color: var(--vitality-orange);
+  background: var(--vitality-orange-12);
 }
 
 .status-pill-completed {
-  color: #1F8F7A;
-  background: rgba(31, 143, 122, 0.12);
+  color: var(--fresh-mint);
+  background: var(--fresh-mint-12);
 }
 
 .status-pill-cancelled {
   color: #9A3412;
-  background: rgba(217, 106, 34, 0.12);
+  background: var(--vitality-orange-12);
 }
 
 .reward {
@@ -396,14 +396,14 @@
 
 .action-btn.primary {
   color: #FFFFFF;
-  background: #1677D2;
-  border-color: #1677D2;
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
 }
 
 .action-btn.secondary {
-  color: #1677D2;
+  color: var(--brand-primary);
   background: #FFFFFF;
-  border-color: #1677D2;
+  border-color: var(--brand-primary);
 }
 
 .action-btn:active {
@@ -423,16 +423,16 @@
 }
 
 .status-tip.warning {
-  color: #D96A22;
-  background: rgba(217, 106, 34, 0.1);
+  color: var(--vitality-orange);
+  background: var(--vitality-orange-10);
 }
 
 .status-tip.success {
-  color: #1F8F7A;
-  background: rgba(31, 143, 122, 0.1);
+  color: var(--fresh-mint);
+  background: var(--fresh-mint-10);
 }
 
 .status-tip.danger {
-  color: #D96A22;
-  background: rgba(217, 106, 34, 0.1);
+  color: var(--vitality-orange);
+  background: var(--vitality-orange-10);
 }

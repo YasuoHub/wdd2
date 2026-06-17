@@ -9,7 +9,7 @@
       <view class="task-card-collapsed">
         <view class="task-summary-left">
           <view class="type-icon">
-            <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="#1677D2" size="38"></wdd-icon>
+            <wdd-icon name="{{task.typeIcon || 'circle-help'}}" color="var(--brand-primary)" size="38"></wdd-icon>
           </view>
           <view class="task-summary-copy">
             <view class="task-title-row">
@@ -30,16 +30,16 @@
 
     <!-- 下拉菜单内容 -->
     <view wx:if="{{showTaskMenu}}" class="task-menu-content show">
-      <view wx:if="{{canCompleteTask}}" class="menu-item" bindtap="onCompleteMenuTap">
+      <view wx:if="{{canCompleteTask}}" class="menu-item" catchtap="onCompleteMenuTap">
         <wdd-icon name="circle-check-big" color="#6DD5B0" size="28"></wdd-icon>
         <text class="menu-item-text">完成</text>
       </view>
-      <view wx:if="{{showReportBtn}}" class="menu-item" bindtap="goToReport">
+      <view wx:if="{{showReportBtn}}" class="menu-item" catchtap="goToReport">
         <wdd-icon name="siren" color="#FF6B6B" size="28"></wdd-icon>
         <text class="menu-item-text">举报</text>
       </view>
-      <view class="menu-item" bindtap="goToTaskDetail">
-        <wdd-icon name="clipboard-list" color="#1677D2" size="28"></wdd-icon>
+      <view class="menu-item" catchtap="goToTaskDetail">
+        <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="28"></wdd-icon>
         <text class="menu-item-text">详情</text>
       </view>
     </view>
@@ -166,7 +166,7 @@
     bindtap="scrollToBottomAndClear"
     wx:if="{{newMessageCount > 0}}"
   >
-    <wdd-icon name="arrow-down" color="#1677D2" size="24"></wdd-icon>
+    <wdd-icon name="arrow-down" color="var(--brand-primary)" size="24"></wdd-icon>
     <text class="btn-text">{{newMessageCount}}条新消息</text>
   </view>
 
@@ -180,7 +180,7 @@
 
     <!-- 任务已结束：显示提示 -->
     <view wx:elif="{{task.status !== 'ongoing'}}" class="task-ended-bar">
-      <wdd-icon name="circle-check-big" color="#1F8F7A" size="34"></wdd-icon>
+      <wdd-icon name="circle-check-big" color="var(--fresh-mint)" size="34"></wdd-icon>
       <text class="task-ended-text">任务已结束</text>
     </view>
 

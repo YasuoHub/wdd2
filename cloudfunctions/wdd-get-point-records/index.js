@@ -56,17 +56,21 @@ exports.main = async (event, context) => {
 async function getBalanceRecords(userId, page, pageSize) {
   // 余额记录使用 0-based 分页（客户端 wallet.js 从 0 开始传）
   const skip = page * pageSize
+  const visibleRecordWhere = {
+    user_id: userId,
+    type: _.nin(['freeze', 'unfreeze'])
+  }
 
   // 查询总数
   const countRes = await db.collection('wdd-balance-records')
-    .where({ user_id: userId })
+    .where(visibleRecordWhere)
     .count()
 
   const total = countRes.total
 
   // 查询记录
   const recordsRes = await db.collection('wdd-balance-records')
-    .where({ user_id: userId })
+    .where(visibleRecordWhere)
     .orderBy('create_time', 'desc')
     .skip(skip)
     .limit(pageSize)

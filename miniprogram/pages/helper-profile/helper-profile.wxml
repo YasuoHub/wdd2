@@ -12,7 +12,7 @@
   <!-- 帮助意愿选择 -->
   <view class="section">
     <view class="section-title">
-      <wdd-icon name="circle-question-mark" color="#1677D2" size="30"></wdd-icon>
+      <wdd-icon class="section-icon" name="circle-question-mark" color="var(--brand-primary)" size="30"></wdd-icon>
       <text>帮助意愿</text>
       <text class="required">*</text>
     </view>
@@ -25,7 +25,7 @@
         bindtap="selectWillingness"
       >
         <view class="willingness-icon">
-          <wdd-icon name="{{item.icon}}" color="#1677D2" size="38"></wdd-icon>
+          <wdd-icon name="{{item.icon}}" color="var(--brand-primary)" size="38"></wdd-icon>
         </view>
         <view class="willingness-content">
           <view class="willingness-label">{{item.label}}</view>
@@ -41,7 +41,7 @@
   <!-- 常去地点 -->
   <view class="section" wx:if="{{helpWillingness === 'willing'}}">
     <view class="section-title">
-      <wdd-icon name="map-pin" color="#1677D2" size="30"></wdd-icon>
+      <wdd-icon class="section-icon" name="map-pin" color="var(--brand-primary)" size="30"></wdd-icon>
       <text>常去地点</text>
       <text class="optional">（最多{{maxLocations}}个）</text>
     </view>
@@ -78,7 +78,7 @@
   <!-- 可帮助类型 -->
   <view class="section" wx:if="{{helpWillingness === 'willing'}}">
     <view class="section-title">
-      <wdd-icon name="target" color="#1677D2" size="30"></wdd-icon>
+      <wdd-icon class="section-icon" name="target" color="var(--brand-primary)" size="30"></wdd-icon>
       <text>可帮助类型</text>
       <text class="required">*</text>
     </view>
@@ -87,7 +87,7 @@
         wx:for="{{helpTypes}}"
         wx:key="id"
         class="help-type-item {{item.selected ? 'active' : ''}}"
-        style="{{item.selected ? 'background-color: ' + item.color + '20; border-color: ' + item.color : ''}}"
+        style="{{item.selected ? 'background-color: ' + item.bgColor + '; border-color: ' + item.color : ''}}"
         data-id="{{item.id}}"
         bindtap="toggleHelpType"
       >
