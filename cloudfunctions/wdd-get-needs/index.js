@@ -225,6 +225,19 @@ async function loadCurrentUserProfile(OPENID) {
   return userRes.data.length > 0 ? userRes.data[0] : null
 }
 
+function getLocationCoordinates(location) {
+  const rawLocation = location && typeof location.toJSON === 'function'
+    ? location.toJSON()
+    : location
+  const coordinates = rawLocation && Array.isArray(rawLocation.coordinates)
+    ? rawLocation.coordinates
+    : []
+  const longitude = normalizeCoordinate(coordinates[0])
+  const latitude = normalizeCoordinate(coordinates[1])
+  if (!isValidLatitude(latitude) || !isValidLongitude(longitude)) return null
+  return { latitude, longitude }
+}
+
 async function getPublicNeedsOptimized(event, OPENID) {
   const {
     filter,
@@ -251,14 +264,14 @@ async function getPublicNeedsOptimized(event, OPENID) {
   }
 
   const currentPoint = getGeoPointFromLatLon(latitude, longitude)
-  const fallbackPoint = currentPoint || getGeoPointFromFrequentLocations(userProfile)
+  const centerPoint = currentPoint || getGeoPointFromFrequentLocations(userProfile)
   const needsDistanceQuery = sort === 'distance' || (hasDistanceParam && Number.isFinite(effectiveDistance) && effectiveDistance > 0)
 
   let list = []
   let total = 0
 
   if (needsDistanceQuery) {
-    if (!fallbackPoint) {
+    if (!centerPoint) {
       return {
         code: 0,
         message: '缺少定位，无法按距离筛选',
@@ -274,18 +287,22 @@ async function getPublicNeedsOptimized(event, OPENID) {
       }
     }
 
-    const geoNearOptions = {
-      distanceField: 'distance',
-      spherical: true,
-      near: db.Geo.Point(fallbackPoint.longitude, fallbackPoint.latitude),
-      query: where
-    }
-    if (Number.isFinite(effectiveDistance) && effectiveDistance > 0) {
-      geoNearOptions.maxDistance = effectiveDistance
+    const buildGeoNearOptions = () => {
+      const options = {
+        distanceField: 'distance',
+        spherical: true,
+        key: 'location',
+        near: db.Geo.Point(centerPoint.longitude, centerPoint.latitude),
+        query: where
+      }
+      if (Number.isFinite(effectiveDistance) && effectiveDistance > 0) {
+        options.maxDistance = effectiveDistance
+      }
+      return options
     }
 
     const baseAggregate = () => {
-      const aggregate = db.collection('wdd-needs').aggregate().geoNear(geoNearOptions)
+      const aggregate = db.collection('wdd-needs').aggregate().geoNear(buildGeoNearOptions())
       if (sort === 'reward' || sort === 'points') {
         aggregate.sort({ reward_amount: -1, create_time: -1 })
       } else if (sort === 'time') {

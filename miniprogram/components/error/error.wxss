@@ -22,6 +22,9 @@
 /* 图标区域 */
 .error-icon-wrapper {
   margin-bottom: 36rpx;
+  background: none !important;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
 .error-circle {
@@ -117,8 +120,7 @@
 .loading-icon,
 .empty-icon-wrapper,
 .error-icon-wrapper,
-.empty-circle,
-.error-circle {
+.empty-circle {
   background: #eef7fd;
   box-shadow: none;
   animation: none;
