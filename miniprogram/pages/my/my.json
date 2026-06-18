@@ -3,5 +3,7 @@
   "navigationBarBackgroundColor": "#F5F7FA",
   "navigationBarTextStyle": "black",
   "backgroundColor": "#F5F7FA",
-  "usingComponents": {}
+  "usingComponents": {
+    "bottom-sheet": "/components/bottom-sheet/bottom-sheet"
+  }
 }

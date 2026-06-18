@@ -49,23 +49,21 @@
   <view class="menu-section">
     <view class="menu-title">我的任务</view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="goToMyNeeds">
+      <view class="menu-item no-desc" bindtap="goToMyNeeds">
         <view class="menu-icon-wrapper">
           <wdd-icon name="send" color="var(--brand-primary)" size="36"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的求助</text>
-          <text class="menu-desc">{{myNeedsCount}}个进行中</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
-      <view class="menu-item" bindtap="goToMyTasks">
+      <view class="menu-item no-desc" bindtap="goToMyTasks">
         <view class="menu-icon-wrapper">
           <wdd-icon name="handshake" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的帮助</text>
-          <text class="menu-desc">{{myTasksCount}}个进行中</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
@@ -75,13 +73,12 @@
   <view class="menu-section">
     <view class="menu-title">帮助者设置</view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="goToHelperProfile">
+      <view class="menu-item no-desc" bindtap="goToHelperProfile">
         <view class="menu-icon-wrapper">
           <wdd-icon name="user-round-cog" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">帮助者资料</text>
-          <text class="menu-desc">{{userInfo.help_willingness ? '已完善' : '未设置，点击完善'}}</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
@@ -91,33 +88,30 @@
   <view class="menu-section">
     <view class="menu-title">资产管理</view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="goToWallet">
+      <view class="menu-item no-desc" bindtap="goToWallet">
         <view class="menu-icon-wrapper">
           <wdd-icon name="wallet" color="var(--vitality-orange)" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的钱包</text>
-          <view class="menu-desc menu-desc-money"><text>余额</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(userInfo.balance)}}</text></view>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
-      <view class="menu-item" bindtap="goToPointRecords">
+      <view class="menu-item no-desc" bindtap="goToPointRecords">
         <view class="menu-icon-wrapper">
           <wdd-icon name="star" color="#C9941E" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">我的积分</text>
-          <text class="menu-desc">可兑换免单券、提现免手续费券等权益</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
-      <view class="menu-item" bindtap="showInviteModal">
+      <view class="menu-item no-desc" bindtap="showInviteModal">
         <view class="menu-icon-wrapper">
           <wdd-icon name="gift" color="#7B61D1" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">邀请好友</text>
-          <text class="menu-desc">邀请得积分</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
@@ -153,13 +147,12 @@
   <view wx:if="{{isCustomerService}}" class="menu-section">
     <view class="menu-title">客服系统</view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="goToTicketList">
+      <view class="menu-item no-desc" bindtap="goToTicketList">
         <view class="menu-icon-wrapper">
           <wdd-icon name="headphones" color="#FF6B6B" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">客服工单处理</text>
-          <text class="menu-desc">处理举报和申诉工单</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
@@ -170,23 +163,21 @@
   <view wx:if="{{isSuperAdmin}}" class="menu-section">
     <view class="menu-title">超级管理员</view>
     <view class="menu-list">
-      <view class="menu-item" bindtap="goToOpsAnalytics">
+      <view class="menu-item no-desc" bindtap="goToOpsAnalytics">
         <view class="menu-icon-wrapper">
           <wdd-icon name="chart-column" color="#119B72" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">运营分析</text>
-          <text class="menu-desc">查看平台运营数据</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
-      <view class="menu-item" bindtap="goToFundApproval">
+      <view class="menu-item no-desc" bindtap="goToFundApproval">
         <view class="menu-icon-wrapper">
           <wdd-icon name="banknote" color="var(--brand-primary)" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
           <text class="menu-text">资金审批</text>
-          <text class="menu-desc">处理用户提现申请</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
@@ -202,15 +193,6 @@
         </view>
         <view class="menu-content">
           <text class="menu-text">关于我们</text>
-        </view>
-        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
-      </view>
-      <view class="menu-item no-desc" bindtap="showRules">
-        <view class="menu-icon-wrapper">
-          <wdd-icon name="clipboard-list" color="#5E7187" size="38"></wdd-icon>
-        </view>
-        <view class="menu-content">
-          <text class="menu-text">积分规则</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
@@ -248,46 +230,52 @@
   </view>
 </view>
 
-<!-- 关于我们弹窗 -->
-<view class="modal {{showAboutModal ? 'show' : ''}}" wx:if="{{showAboutModal}}">
-  <view class="modal-mask" bindtap="hideAboutModal"></view>
-  <view class="modal-content">
-    <view class="modal-title">关于问当地</view>
-    <view class="modal-body">
-      <text class="body-text">问当地是一款基于地理位置的即时互帮互助小程序。</text>
-      <text class="body-text">无论你是想了解异地的实时天气、路况，还是确认某家店是否营业，都可以找当地的用户帮你确认。</text>
-      <text class="body-text brand">成都起步，互帮互助。</text>
+<!-- 关于我们 -->
+<bottom-sheet show="{{showAboutModal}}" title="关于问当地" maxHeight="64vh" bind:close="hideAboutModal">
+  <view class="about-sheet-body">
+    <view class="about-hero">
+      <view class="about-logo">
+        <wdd-icon name="map-pinned" color="#FFFFFF" size="48"></wdd-icon>
+      </view>
+      <view class="about-hero-content">
+        <text class="about-name">问当地</text>
+        <text class="about-summary">连接当下需要答案的人，和正在现场、了解当地的人。</text>
+      </view>
     </view>
-    <view class="modal-footer">
-      <button class="modal-btn confirm" bindtap="hideAboutModal">我知道了</button>
-    </view>
-  </view>
-</view>
 
-<!-- 积分规则弹窗 -->
-<view class="modal {{showRulesModal ? 'show' : ''}}" wx:if="{{showRulesModal}}">
-  <view class="modal-mask" bindtap="hideRulesModal"></view>
-  <view class="modal-content">
-    <view class="modal-title">积分规则</view>
-    <view class="modal-body">
-      <view class="rule-section">
-        <text class="section-title">获取方式</text>
-        <text class="section-text">1. 新用户注册：+100积分</text>
-        <text class="section-text">2. 每日签到：+5~30积分（连续签到递增）</text>
-        <text class="section-text">3. 邀请好友：双方各+50积分</text>
+    <view class="about-scenarios">
+      <view class="about-scenario">
+        <view class="scenario-icon weather">
+          <wdd-icon name="cloud-sun" color="var(--brand-primary)" size="32"></wdd-icon>
+        </view>
+        <view class="scenario-copy">
+          <text class="scenario-title">异地天气</text>
+          <text class="scenario-desc">出发前确认目的地真实体感和现场情况。</text>
+        </view>
       </view>
-      <view class="rule-section">
-        <text class="section-title">积分用途</text>
-        <text class="section-text">积分可兑换平台内免单券、提现免手续费券等权益（功能开发中，敬请期待）。</text>
+      <view class="about-scenario">
+        <view class="scenario-icon traffic">
+          <wdd-icon name="car-front" color="var(--vitality-orange)" size="32"></wdd-icon>
+        </view>
+        <view class="scenario-copy">
+          <text class="scenario-title">路况拥堵</text>
+          <text class="scenario-desc">自驾途中，快速了解前方道路是否顺畅。</text>
+        </view>
       </view>
-      <view class="rule-section">
-        <text class="section-title">重要说明</text>
-        <text class="section-text">积分仅用于平台内权益兑换，不可提现、不可转让、无现金价值。</text>
-        <text class="section-text">平台保留调整积分发放规则、有效期、可兑换权益种类与比例的权利。</text>
+      <view class="about-scenario">
+        <view class="scenario-icon shop">
+          <wdd-icon name="store" color="var(--fresh-mint)" size="32"></wdd-icon>
+        </view>
+        <view class="scenario-copy">
+          <text class="scenario-title">店铺营业</text>
+          <text class="scenario-desc">探店前找附近用户确认，少跑冤枉路。</text>
+        </view>
       </view>
     </view>
-    <view class="modal-footer">
-      <button class="modal-btn confirm" bindtap="hideRulesModal">我知道了</button>
+
+    <view class="about-brand-line">
+      <wdd-icon name="handshake" color="var(--brand-primary)" size="30"></wdd-icon>
+      <text>成都起步，互帮互助</text>
     </view>
   </view>
-</view>
+</bottom-sheet>

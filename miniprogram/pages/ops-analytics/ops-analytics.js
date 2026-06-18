@@ -39,6 +39,8 @@ Page({
     fundFlowDetails: [],
     fundFlowPage: 1,
     fundFlowHasMore: false,
+    fundFlowLoadingMore: false,
+    fundFlowLoaded: false,
 
     // 加载状态
     loading: {
@@ -63,6 +65,10 @@ Page({
 
     this.setData({ today, startDate: start30, endDate: today })
     this._checkAuth()
+  },
+
+  onReachBottom() {
+    this.loadMoreFlow()
   },
 
   // ===================== 权限检查 =====================
@@ -239,7 +245,17 @@ Page({
   // 加载资金流水明细
   async _loadFlowDetails(page = 1) {
     const { startDate, endDate } = this.data
-    this.setData({ 'loading.fundFlowDetails': true })
+    if (page > 1 && (this.data.fundFlowLoadingMore || this.data.loading.fundFlowDetails)) return
+
+    if (page === 1) {
+      this.setData({
+        'loading.fundFlowDetails': true,
+        fundFlowLoadingMore: false,
+        fundFlowLoaded: false
+      })
+    } else {
+      this.setData({ fundFlowLoadingMore: true })
+    }
 
     try {
       const { result } = await wx.cloud.callFunction({
@@ -261,19 +277,31 @@ Page({
           fundFlowDetails: [...existing, ...records],
           fundFlowPage: page,
           fundFlowHasMore: result.data.hasMore || false,
+          fundFlowLoaded: true,
+          fundFlowLoadingMore: false,
           'loading.fundFlowDetails': false
         })
       } else {
-        this.setData({ 'loading.fundFlowDetails': false })
+        this.setData({
+          fundFlowHasMore: false,
+          fundFlowLoaded: true,
+          fundFlowLoadingMore: false,
+          'loading.fundFlowDetails': false
+        })
       }
     } catch (err) {
       console.error('流水明细加载失败:', err)
-      this.setData({ 'loading.fundFlowDetails': false })
+      this.setData({
+        fundFlowHasMore: false,
+        fundFlowLoaded: true,
+        fundFlowLoadingMore: false,
+        'loading.fundFlowDetails': false
+      })
     }
   },
 
   loadMoreFlow() {
-    if (!this.data.fundFlowHasMore) return
+    if (!this.data.fundFlowHasMore || this.data.fundFlowLoadingMore || this.data.loading.fundFlowDetails) return
     this._loadFlowDetails(this.data.fundFlowPage + 1)
   },
 
@@ -297,7 +325,14 @@ Page({
     // 重置加载状态
     const loading = {}
     Object.keys(this.data.loading).forEach(k => { loading[k] = true })
-    this.setData({ loading, fundFlowDetails: [], fundFlowPage: 1 })
+    this.setData({
+      loading,
+      fundFlowDetails: [],
+      fundFlowPage: 1,
+      fundFlowHasMore: false,
+      fundFlowLoadingMore: false,
+      fundFlowLoaded: false
+    })
     this._loadAll()
   },
 
@@ -314,7 +349,14 @@ Page({
   _reload() {
     const loading = {}
     Object.keys(this.data.loading).forEach(k => { loading[k] = true })
-    this.setData({ loading, fundFlowDetails: [], fundFlowPage: 1 })
+    this.setData({
+      loading,
+      fundFlowDetails: [],
+      fundFlowPage: 1,
+      fundFlowHasMore: false,
+      fundFlowLoadingMore: false,
+      fundFlowLoaded: false
+    })
     this._loadAll()
   },
 

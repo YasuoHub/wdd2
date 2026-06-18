@@ -263,8 +263,11 @@ async function confirmPayment(event, OPENID) {
     }
 
     // 3. 创建任务
+    const taskNo = generateTaskNo()
+
     const needRes = await transaction.collection('wdd-needs').add({
       data: {
+        task_no: taskNo,
         user_id: user._id,
         location: {
           type: 'Point',
@@ -327,6 +330,7 @@ async function confirmPayment(event, OPENID) {
       message: '支付成功，任务已发布',
       data: {
         needId: needRes._id,
+        taskNo: taskNo,
         orderId: orderId,
         amount: orderInTx.amount
       }
@@ -451,8 +455,11 @@ async function payByBalance(event, OPENID) {
     })
 
     // 创建任务
+    const taskNo = generateTaskNo()
+
     const needRes = await transaction.collection('wdd-needs').add({
       data: {
+        task_no: taskNo,
         user_id: user._id,
         location: {
           type: 'Point',
@@ -505,6 +512,7 @@ async function payByBalance(event, OPENID) {
       message: '发布成功',
       data: {
         needId: needRes._id,
+        taskNo: taskNo,
         orderId: orderId,
         amount: amount
       }
@@ -907,6 +915,16 @@ function generateOrderNo() {
     String(now.getSeconds()).padStart(2, '0')
   const randomStr = Math.random().toString(36).substr(2, 6).toUpperCase()
   return `WDD${dateStr}${timeStr}${randomStr}`
+}
+
+// 生成 16 位任务单号：W + 年月日 + 9 位随机码
+function generateTaskNo() {
+  const now = new Date()
+  const dateStr = now.getFullYear().toString().slice(2) +
+    String(now.getMonth() + 1).padStart(2, '0') +
+    String(now.getDate()).padStart(2, '0')
+  const randomStr = Math.random().toString(36).slice(2, 11).toUpperCase().padEnd(9, '0')
+  return `W${dateStr}${randomStr}`
 }
 
 // 生成模拟支付参数

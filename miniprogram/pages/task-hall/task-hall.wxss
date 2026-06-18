@@ -542,6 +542,7 @@
   word-break: break-all;
   overflow-wrap: break-word;
   display: block;
+  margin-bottom: 26rpx;
 }
 
 .card-location {
@@ -639,6 +640,16 @@
 
 .take-btn::before {
   display: none;
+}
+
+.take-btn.disabled {
+  background: #c8d0d9;
+  box-shadow: none;
+  opacity: 0.72;
+}
+
+.take-btn.disabled:active {
+  transform: none;
 }
 
 .take-text {

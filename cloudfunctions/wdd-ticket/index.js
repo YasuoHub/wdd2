@@ -143,7 +143,7 @@ async function getTicketList(event, OPENID) {
       status: ticket.status,
       taskType: need ? need.type : '',
       taskTitle: need ? '求助任务' : '未知任务',
-      taskNumber: need ? need._id.toUpperCase() : '',
+      taskNumber: need ? need.task_no : '',
       rewardAmount: need ? need.reward_amount : 0,
       expireTime: need ? need.expire_time : null,
       seekerNickname: seeker ? seeker.nickname : '未知用户',

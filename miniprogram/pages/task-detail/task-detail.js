@@ -104,7 +104,7 @@ Page({
         task._platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
         task._takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
         task._distanceText = this.formatDistance(task.distance)
-        task._orderNo = task.need_id || task._id
+        task._orderNo = task.task_no
         task._locationSubText = this.getLocationSubText(task)
 
         const canReport = isParticipant &&

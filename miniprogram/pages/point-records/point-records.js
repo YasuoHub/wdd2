@@ -72,17 +72,17 @@ Page({
       })
 
       if (result.code === 0) {
-        const { records, hasMore, currentPoints } = result.data
+        const { records = [], hasMore, currentPoints } = result.data
 
-        // 计算新的 page：如果是刷新，从第2页开始；如果是加载更多，page+1
-        // 但如果 hasMore 为 false，保持当前 page
-        const newPage = isRefresh ? 2 : (hasMore ? this.data.page + 1 : this.data.page)
+        // 计算新的 page：有下一页时才推进页码，避免触底后重复请求空页。
+        const newPage = hasMore ? (isRefresh ? 2 : this.data.page + 1) : (isRefresh ? 1 : this.data.page)
+        const nextRecords = isRefresh ? records : [...this.data.records, ...records]
 
         this.setData({
           currentPoints,
-          records: isRefresh ? records : [...this.data.records, ...records],
+          records: nextRecords,
           hasMore,
-          isEmpty: records.length === 0 && isRefresh,
+          isEmpty: nextRecords.length === 0,
           page: newPage
         })
       } else {
@@ -97,19 +97,22 @@ Page({
     } finally {
       this.setData({
         isLoading: false,
-        isRefreshing: false
+        isRefreshing: false,
+        isLoadingMore: false
       })
     }
   },
 
   // 刷新数据
-  refreshData() {
+  async refreshData() {
     this.setData({
       page: 1,
       records: [],
-      hasMore: true
+      hasMore: true,
+      isEmpty: false,
+      isLoadingMore: false
     })
-    this.loadPointRecords(true)
+    await this.loadPointRecords(true)
   },
 
   // 仅刷新积分余额（不刷新列表）
@@ -134,19 +137,21 @@ Page({
   },
 
   // 下拉刷新
-  onPullDownRefresh() {
-    this.refreshData()
+  async onPullDownRefresh() {
+    await this.refreshData()
     wx.stopPullDownRefresh()
   },
 
-  // 上拉加载更多
+  // 加载更多积分记录
+  async loadMoreRecords() {
+    if (!this.data.hasMore || this.data.isLoading || this.data.isLoadingMore) return
+    this.setData({ isLoadingMore: true })
+    await this.loadPointRecords()
+  },
+
+  // 兼容页面触底场景，主要加载入口来自列表内部滚动
   onReachBottom() {
-    if (this.data.hasMore && !this.data.isLoadingMore) {
-      this.setData({ isLoadingMore: true })
-      this.loadPointRecords().then(() => {
-        this.setData({ isLoadingMore: false })
-      })
-    }
+    this.loadMoreRecords()
   },
 
   // 返回上一页

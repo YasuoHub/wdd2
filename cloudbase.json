@@ -14,6 +14,14 @@
       },
       {
         "collectionName": "wdd-needs",
+        "name": "task_no_unique",
+        "unique": true,
+        "keys": [
+          { "name": "task_no", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-needs",
         "name": "status_expire_time",
         "unique": false,
         "keys": [

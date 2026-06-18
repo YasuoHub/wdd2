@@ -12,6 +12,11 @@ Component({
         this.setData({ _stages: [] })
         return
       }
+      const hasData = newData.some(d => (Number(d.value) || 0) > 0)
+      if (!hasData) {
+        this.setData({ _stages: [] })
+        return
+      }
       const maxVal = Math.max(...newData.map(d => d.value || 0), 1)
       const stages = newData.map((d, i) => {
         const prev = i > 0 ? (newData[i - 1].value || 0) : d.value || 0

@@ -116,7 +116,7 @@
         </view>
 
         <!-- 帮助按钮 -->
-        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.rewardAmount || 0}}">
+        <view class="take-btn {{item.isOwnTask ? 'disabled' : ''}}" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.rewardAmount || 0}}" data-is-own-task="{{item.isOwnTask}}">
           <text class="take-text">去帮助</text>
         </view>
       </view>

@@ -12,10 +12,7 @@ const FILTER_MAP = {
 }
 
 function getBaseAmount(item = {}) {
-  const rewardAmount = Number(item.rewardAmount || item.reward_amount || 0)
-  if (rewardAmount > 0) return rewardAmount
-  const points = Number(item.points || 0)
-  return points > 0 ? points / 10 : 0
+  return Number(item.rewardAmount || item.reward_amount || 0)
 }
 
 function parseDate(value) {
@@ -166,12 +163,15 @@ Page({
     } catch (err) {
       wx.hideLoading()
       console.error('加载任务失败:', err)
-      this.setData({ loading: false })
-
-      // 使用模拟数据展示效果
-      if (this.data.page === 1) {
-        this.setMockData()
-      }
+      this.setData({
+        loading: false,
+        hasMore: false,
+        ...(this.data.page === 1 ? { needs: [] } : {})
+      })
+      wx.showToast({
+        title: err.message || '加载失败，请稍后重试',
+        icon: 'none'
+      })
     }
   },
 
@@ -180,7 +180,7 @@ Page({
     const typeInfo = getByType(resolveTaskType(item))
     const statusInfo = STATUS_MAP[item.status] || STATUS_MAP['pending']
 
-    // 优先使用后端已格式化的字段，兼容旧字段
+    // 优先使用后端已格式化的字段
     let remainTime = item.remainTime || ''
     if (!remainTime && item.expire_time) {
       const expire = new Date(item.expire_time)
@@ -363,7 +363,7 @@ Page({
 
     wx.showModal({
       title: '确认完成',
-      content: '确认已获得所需信息？完成后积分将转给帮助者。',
+      content: '确认已获得所需信息？完成后悬赏将结算给帮助者。',
       confirmColor: '#6DD5B0',
       success: (res) => {
         if (res.confirm) {
@@ -415,44 +415,6 @@ Page({
   goToPublish() {
     wx.switchTab({
       url: '/pages/index/index'
-    })
-  },
-
-  // 模拟数据
-  setMockData() {
-    const mockData = [
-      {
-        _id: '1',
-        type: 'shop',
-        description: '春熙路的星巴克今天开门吗？想确认一下营业时间和人流情况',
-        location: { name: '春熙路' },
-        points: 15,
-        status: 'ongoing',
-        create_time: new Date(Date.now() - 3600000)
-      },
-      {
-        _id: '2',
-        type: 'weather',
-        description: '天府广场现在在下雨吗？准备出门',
-        location: { name: '天府广场' },
-        points: 10,
-        status: 'completed',
-        create_time: new Date(Date.now() - 86400000)
-      },
-      {
-        _id: '3',
-        type: 'parking',
-        description: '太古里停车场现在好停车吗？有位置吗',
-        location: { name: '太古里' },
-        points: 12,
-        status: 'cancelled',
-        create_time: new Date(Date.now() - 172800000)
-      }
-    ]
-
-    this.setData({
-      needs: mockData.map(item => this.formatNeed(item)),
-      hasMore: false
     })
   }
 })

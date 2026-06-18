@@ -9,7 +9,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon location">
-          <wdd-icon name="map-pinned" color="var(--brand-primary)" size="34"></wdd-icon>
+          <wdd-icon name="map-pinned" color="var(--brand-primary)" size="44"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">求助地点</text>
@@ -60,7 +60,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon type">
-          <wdd-icon name="target" color="var(--brand-primary)" size="34"></wdd-icon>
+          <wdd-icon name="target" color="var(--brand-primary)" size="44"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">求助类型 <text class="required-mark">*</text></text>
@@ -77,8 +77,8 @@
           data-type="{{item.id}}"
           style="--type-color: {{item.color}}; --type-bg: {{item.bgColor}}"
         >
-          <view class="type-icon-wrapper" style="background: {{item.bgColor}}">
-            <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="40"></wdd-icon>
+          <view class="type-icon-wrapper">
+            <wdd-icon name="{{item.icon}}" color="{{item.color}}" size="54"></wdd-icon>
           </view>
           <text class="type-name">{{item.name}}</text>
           <view wx:if="{{selectedType === item.id}}" class="type-check">
@@ -92,7 +92,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon desc">
-          <wdd-icon name="notebook-pen" color="var(--brand-primary)" size="34"></wdd-icon>
+          <wdd-icon name="notebook-pen" color="var(--brand-primary)" size="44"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">详细描述 <text class="required-mark">*</text></text>
@@ -115,7 +115,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon time">
-          <wdd-icon name="clock-3" color="var(--brand-primary)" size="34"></wdd-icon>
+          <wdd-icon name="clock-3" color="var(--brand-primary)" size="44"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">有效时间 <text class="required-mark">*</text></text>
@@ -141,7 +141,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon image">
-          <wdd-icon name="image-plus" color="var(--brand-primary)" size="34"></wdd-icon>
+          <wdd-icon name="image-plus" color="var(--brand-primary)" size="44"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">图片描述</text>
@@ -184,7 +184,7 @@
     <view class="section-card">
       <view class="section-header">
         <view class="section-icon amount">
-          <wdd-icon name="circle-dollar-sign" color="var(--brand-primary)" size="34"></wdd-icon>
+          <wdd-icon name="circle-dollar-sign" color="var(--brand-primary)" size="44"></wdd-icon>
         </view>
         <view class="section-info">
           <text class="section-title">悬赏金额</text>
@@ -220,7 +220,6 @@
         />
         <view class="amount-range">
           <view class="amount-range-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(minRewardAmount)}}</text></view>
-          <view class="amount-range-value amount-current"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(rewardAmount)}}</text></view>
           <view class="amount-range-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(maxRewardAmount)}}</text></view>
         </view>
 
@@ -251,7 +250,7 @@
               <wdd-icon class="payment-icon" name="wallet" color="var(--brand-primary)" size="32"></wdd-icon>
               <text class="payment-name">余额支付</text>
             </view>
-            <view class="payment-balance payment-balance-money"><text>可用</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
+            <view class="payment-balance payment-balance-money"><text>可用   </text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
           </view>
           <view
             class="payment-option {{paymentMethod === 'wechat' ? 'active' : ''}}"

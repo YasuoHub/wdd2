@@ -12,19 +12,28 @@ Component({
   },
 
   data: {
-    legend: []
+    legend: [],
+    hasData: false
   },
 
   lifetimes: {
-    attached() {
+    ready() {
+      this._syncDataState()
       this._initCanvas()
+    },
+    detached() {
+      if (this._initTimer) clearTimeout(this._initTimer)
     }
   },
 
   observers: {
     'data'() {
-      if (this._ctx) {
+      this._syncDataState()
+      if (this._ctx && this.data.hasData) {
         this._draw()
+      } else if (this._ctx) {
+        this._clearCanvas()
+        this.setData({ legend: [] })
       } else {
         this._pendingDraw = true
       }
@@ -32,15 +41,38 @@ Component({
   },
 
   methods: {
-    _initCanvas() {
+    _syncDataState() {
+      const hasData = this._hasRenderableData(this.properties.data || [])
+      if (this.data.hasData !== hasData) {
+        this.setData({ hasData })
+      }
+      if (!hasData && this.data.legend.length > 0) {
+        this.setData({ legend: [] })
+      }
+    },
+
+    _hasRenderableData(data) {
+      if (!Array.isArray(data) || data.length === 0) return false
+      return data.some(d => (Number(d.value) || 0) > 0)
+    },
+
+    _initCanvas(retry = 0) {
       const query = this.createSelectorQuery()
       query.select('#pie-canvas')
         .fields({ node: true, size: true })
         .exec((res) => {
-          if (!res || !res[0] || !res[0].node) return
+          if (!res || !res[0] || !res[0].node) {
+            this._retryInitCanvas(retry)
+            return
+          }
           const canvas = res[0].node
           const dpr = wx.getSystemInfoSync().pixelRatio || 2
           const size = res[0].width
+
+          if (!size) {
+            this._retryInitCanvas(retry)
+            return
+          }
 
           canvas.width = size * dpr
           canvas.height = size * dpr
@@ -49,11 +81,33 @@ Component({
           this._dpr = dpr
           this._size = size
 
-          if (this._pendingDraw) {
+          if (this.data.hasData) {
             this._pendingDraw = false
             this._draw()
+          } else {
+            this._pendingDraw = false
+            this._clearCanvas()
           }
         })
+    },
+
+    _retryInitCanvas(retry) {
+      if (retry >= 6) return
+      if (this._initTimer) clearTimeout(this._initTimer)
+      this._initTimer = setTimeout(() => {
+        this._initCanvas(retry + 1)
+      }, 80)
+    },
+
+    _clearCanvas() {
+      const ctx = this._ctx
+      const dpr = this._dpr
+      const size = this._size
+      if (!ctx || !size) return
+      ctx.save()
+      ctx.scale(dpr, dpr)
+      ctx.clearRect(0, 0, size, size)
+      ctx.restore()
     },
 
     _draw() {
@@ -63,6 +117,11 @@ Component({
       const data = this.properties.data || []
 
       if (!ctx || !size) return
+      if (!this._hasRenderableData(data)) {
+        this._clearCanvas()
+        this.setData({ legend: [] })
+        return
+      }
 
       ctx.save()
       ctx.scale(dpr, dpr)

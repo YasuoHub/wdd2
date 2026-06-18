@@ -103,7 +103,7 @@
         </view>
       </view>
 
-      <view class="notice-box">
+      <view wx:if="{{detail.statusClass !== 'resolved'}}" class="notice-box">
         <view class="notice-title-row">
           <wdd-icon name="info" color="#1677D2" size="28"></wdd-icon>
           <text class="notice-title">{{copy.noticeTitle}}</text>

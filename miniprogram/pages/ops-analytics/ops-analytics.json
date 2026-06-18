@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "运营分析",
+  "onReachBottomDistance": 160,
   "usingComponents": {
     "chart-line": "/components/chart-line/chart-line",
     "chart-bar": "/components/chart-bar/chart-bar",

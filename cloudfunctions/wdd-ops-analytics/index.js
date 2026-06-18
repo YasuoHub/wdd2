@@ -16,6 +16,32 @@ const WAIT_BUCKETS = [
   { key: '>1h', label: '1小时以上', min: 60, max: Infinity }
 ]
 
+const TASK_TYPE_ALIASES = {
+  weather: 'weather',
+  traffic: 'traffic',
+  shop: 'shop',
+  parking: 'parking',
+  queue: 'queue',
+  other: 'other',
+  real_time_weather: 'weather',
+  road_traffic: 'traffic',
+  store: 'shop',
+  business: 'shop',
+  carpark: 'parking',
+  line: 'queue',
+  实时天气: 'weather',
+  天气: 'weather',
+  道路拥堵: 'traffic',
+  路况: 'traffic',
+  店铺营业: 'shop',
+  店铺: 'shop',
+  停车场空位: 'parking',
+  停车: 'parking',
+  排队情况: 'queue',
+  排队: 'queue',
+  其他: 'other'
+}
+
 exports.main = async (event, context) => {
   const { action, startDate, endDate, page = 1, pageSize = 20 } = event
   const { OPENID } = cloud.getWXContext()
@@ -63,8 +89,8 @@ async function isSuperAdmin(openid) {
 
 /** 解析日期范围，返回 { start: Date, end: Date }，start 为 00:00:00，end 为 23:59:59 */
 function parseDateRange(startDate, endDate) {
-  const start = new Date(startDate + 'T00:00:00.000Z')
-  const end = new Date(endDate + 'T23:59:59.999Z')
+  const start = new Date(`${startDate}T00:00:00.000+08:00`)
+  const end = new Date(`${endDate}T23:59:59.999+08:00`)
   return { start, end }
 }
 
@@ -83,8 +109,35 @@ function getDateArray(startDate, endDate) {
 
 /** 将 Date 对象转为北京时间日期字符串 YYYY-MM-DD */
 function toBeijingDate(date) {
-  const d = new Date(date.getTime() + 8 * 3600000)
+  const source = new Date(date)
+  if (!Number.isFinite(source.getTime())) return ''
+  const d = new Date(source.getTime() + 8 * 3600000)
   return d.toISOString().split('T')[0]
+}
+
+function isDateInRange(date, start, end) {
+  if (!date) return false
+  const time = new Date(date).getTime()
+  return Number.isFinite(time) && time >= start.getTime() && time <= end.getTime()
+}
+
+function getTaskType(item = {}) {
+  const raw = item.type || item.taskType || item.task_type || item.needType || item.need_type || item.category || ''
+  const key = String(raw).trim()
+  return TASK_TYPE_ALIASES[key] || 'other'
+}
+
+function getCompleteTime(item = {}) {
+  return item.complete_time || (item.status === 'completed' ? item.update_time : null)
+}
+
+function getCancelTime(item = {}) {
+  return item.cancel_time || (item.status === 'cancelled' ? item.update_time : null)
+}
+
+function getLocationName(item = {}) {
+  const raw = item.location_name || item.locationName || (item.location && item.location.name) || ''
+  return String(raw).trim()
 }
 
 /** 补零：对日期范围内缺失的日期填默认值 */
@@ -98,7 +151,7 @@ function fillZeroTrend(dateArray, dataMap, key) {
 }
 
 /** 分页查询全部数据（自动处理云数据库 100 条限制） */
-async function fetchAll(collection, query, maxLimit = 2000) {
+async function fetchAll(collection, query, maxLimit = 10000) {
   let allData = []
   let offset = 0
   const batchSize = 100
@@ -116,17 +169,18 @@ async function fetchAll(collection, query, maxLimit = 2000) {
 async function getKpiOverview(startDate, endDate) {
   const { start, end } = parseDateRange(startDate, endDate)
 
-  const [totalRes, completedRes, cancelledRes, revenueData, newUsersRes] = await Promise.all([
+  const [totalRes, completedDataAll, cancelledDataAll, newUsersRes] = await Promise.all([
     db.collection('wdd-needs').where({ create_time: _.gte(start).and(_.lte(end)) }).count(),
-    db.collection('wdd-needs').where({ create_time: _.gte(start).and(_.lte(end)), status: 'completed' }).count(),
-    db.collection('wdd-needs').where({ create_time: _.gte(start).and(_.lte(end)), status: 'cancelled' }).count(),
-    fetchAll(db.collection('wdd-needs'), { status: 'completed', complete_time: _.gte(start).and(_.lte(end)) }),
+    fetchAll(db.collection('wdd-needs'), { status: 'completed' }),
+    fetchAll(db.collection('wdd-needs'), { status: 'cancelled' }),
     db.collection('wdd-users').where({ create_time: _.gte(start).and(_.lte(end)) }).count()
   ])
 
-  const resolved = completedRes.total + cancelledRes.total
-  const completionRate = resolved > 0 ? completedRes.total / resolved : 0
-  const platformRevenue = revenueData.reduce((sum, n) => sum + (n.platform_fee || 0), 0)
+  const completedData = completedDataAll.filter(n => isDateInRange(getCompleteTime(n), start, end))
+  const cancelledData = cancelledDataAll.filter(n => isDateInRange(getCancelTime(n), start, end))
+  const resolved = completedData.length + cancelledData.length
+  const completionRate = resolved > 0 ? completedData.length / resolved : 0
+  const platformRevenue = completedData.reduce((sum, n) => sum + (n.platform_fee || 0), 0)
 
   return {
     code: 0,
@@ -145,14 +199,13 @@ async function getRevenueTrend(startDate, endDate) {
   const { start, end } = parseDateRange(startDate, endDate)
   const dateArray = getDateArray(startDate, endDate)
 
-  const data = await fetchAll(db.collection('wdd-needs'), {
-    status: 'completed',
-    complete_time: _.gte(start).and(_.lte(end))
-  })
+  const data = (await fetchAll(db.collection('wdd-needs'), {
+    status: 'completed'
+  })).filter(item => isDateInRange(getCompleteTime(item), start, end))
 
   const dateMap = {}
   data.forEach(item => {
-    const date = toBeijingDate(item.complete_time)
+    const date = toBeijingDate(getCompleteTime(item))
     if (!dateMap[date]) dateMap[date] = 0
     dateMap[date] += (item.platform_fee || 0)
   })
@@ -194,13 +247,12 @@ async function getTaskTypeRanking(startDate, endDate) {
   const { start, end } = parseDateRange(startDate, endDate)
 
   const data = await fetchAll(db.collection('wdd-needs'), {
-    create_time: _.gte(start).and(_.lte(end)),
-    type: _.neq(null)
+    create_time: _.gte(start).and(_.lte(end))
   })
 
   const typeMap = {}
   data.forEach(item => {
-    const type = item.type || 'other'
+    const type = getTaskType(item)
     typeMap[type] = (typeMap[type] || 0) + 1
   })
 
@@ -221,19 +273,21 @@ async function getTaskTypeRanking(startDate, endDate) {
 async function getConversionFunnel(startDate, endDate) {
   const { start, end } = parseDateRange(startDate, endDate)
 
-  const [publishedRes, matchedRes, completedRes, ratedRes] = await Promise.all([
+  const [publishedRes, matchedDataAll, completedDataAll, ratedRes] = await Promise.all([
     db.collection('wdd-needs').where({ create_time: _.gte(start).and(_.lte(end)) }).count(),
-    db.collection('wdd-needs').where({ match_time: _.gte(start).and(_.lte(end)) }).count(),
-    db.collection('wdd-needs').where({ status: 'completed', complete_time: _.gte(start).and(_.lte(end)) }).count(),
+    fetchAll(db.collection('wdd-needs'), { match_time: _.gte(start).and(_.lte(end)) }),
+    fetchAll(db.collection('wdd-needs'), { status: 'completed' }),
     db.collection('wdd-ratings').where({ create_time: _.gte(start).and(_.lte(end)) }).count()
   ])
+
+  const completedData = completedDataAll.filter(n => isDateInRange(getCompleteTime(n), start, end))
 
   return {
     code: 0,
     data: {
       published: publishedRes.total,
-      matched: matchedRes.total,
-      completed: completedRes.total,
+      matched: matchedDataAll.length,
+      completed: completedData.length,
       rated: ratedRes.total
     }
   }
@@ -245,19 +299,27 @@ async function getCompletionCancelTrend(startDate, endDate) {
   const { start, end } = parseDateRange(startDate, endDate)
   const dateArray = getDateArray(startDate, endDate)
 
-  const data = await fetchAll(db.collection('wdd-needs'), {
-    create_time: _.gte(start).and(_.lte(end)),
-    status: _.in(['completed', 'cancelled'])
-  })
+  const [completedData, cancelledData] = await Promise.all([
+    fetchAll(db.collection('wdd-needs'), { status: 'completed' }),
+    fetchAll(db.collection('wdd-needs'), { status: 'cancelled' })
+  ])
 
   // 按日期分组统计
   const dateMap = {}
-  data.forEach(item => {
-    const date = toBeijingDate(item.create_time)
-    if (!dateMap[date]) dateMap[date] = { completed: 0, cancelled: 0 }
-    if (item.status === 'completed') dateMap[date].completed++
-    else if (item.status === 'cancelled') dateMap[date].cancelled++
-  })
+  completedData
+    .filter(item => isDateInRange(getCompleteTime(item), start, end))
+    .forEach(item => {
+      const date = toBeijingDate(getCompleteTime(item))
+      if (!dateMap[date]) dateMap[date] = { completed: 0, cancelled: 0 }
+      dateMap[date].completed++
+    })
+  cancelledData
+    .filter(item => isDateInRange(getCancelTime(item), start, end))
+    .forEach(item => {
+      const date = toBeijingDate(getCancelTime(item))
+      if (!dateMap[date]) dateMap[date] = { completed: 0, cancelled: 0 }
+      dateMap[date].cancelled++
+    })
 
   const trend = dateArray.map(date => {
     const d = dateMap[date] || { completed: 0, cancelled: 0 }
@@ -279,14 +341,13 @@ async function getReportRateTrend(startDate, endDate) {
   const dateArray = getDateArray(startDate, endDate)
 
   // 按天统计已完成任务数（作为分母）
-  const needsData = await fetchAll(db.collection('wdd-needs'), {
-    status: 'completed',
-    complete_time: _.gte(start).and(_.lte(end))
-  })
+  const needsData = (await fetchAll(db.collection('wdd-needs'), {
+    status: 'completed'
+  })).filter(item => isDateInRange(getCompleteTime(item), start, end))
 
   const completedByDate = {}
   needsData.forEach(item => {
-    const date = toBeijingDate(item.complete_time)
+    const date = toBeijingDate(getCompleteTime(item))
     completedByDate[date] = (completedByDate[date] || 0) + 1
   })
 
@@ -300,8 +361,8 @@ async function getReportRateTrend(startDate, endDate) {
   reportsData.forEach(item => {
     const date = toBeijingDate(item.create_time)
     reportsByDate[date] = (reportsByDate[date] || 0) + 1
-    // 有效举报：状态不是 cancelled（未被举报人撤销）
-    if (item.status !== 'cancelled') {
+    // 有效举报：客服已处理并确认进入裁决结果
+    if (item.status === 'resolved') {
       validReportsByDate[date] = (validReportsByDate[date] || 0) + 1
     }
   })
@@ -332,9 +393,12 @@ async function getWaitTimeDistribution(startDate, endDate) {
 
   // 初始化分桶
   const buckets = WAIT_BUCKETS.map(b => ({ ...b, count: 0 }))
+  let validCount = 0
 
   data.forEach(item => {
     const waitMinutes = (new Date(item.match_time).getTime() - new Date(item.create_time).getTime()) / 60000
+    if (!Number.isFinite(waitMinutes) || waitMinutes < 0) return
+    validCount++
     for (const bucket of buckets) {
       if (waitMinutes >= bucket.min && waitMinutes < bucket.max) {
         bucket.count++
@@ -343,7 +407,7 @@ async function getWaitTimeDistribution(startDate, endDate) {
     }
   })
 
-  const total = data.length
+  const total = validCount
   const distribution = buckets.map(b => ({
     bucket: b.key,
     label: b.label,
@@ -367,9 +431,10 @@ async function getAvgMatchTimeTrend(startDate, endDate) {
   // 按匹配日期分组
   const dateMap = {}
   data.forEach(item => {
+    const waitMinutes = (new Date(item.match_time).getTime() - new Date(item.create_time).getTime()) / 60000
+    if (!Number.isFinite(waitMinutes) || waitMinutes < 0) return
     const date = toBeijingDate(item.match_time)
     if (!dateMap[date]) dateMap[date] = { totalWait: 0, count: 0 }
-    const waitMinutes = (new Date(item.match_time).getTime() - new Date(item.create_time).getTime()) / 60000
     dateMap[date].totalWait += waitMinutes
     dateMap[date].count++
   })
@@ -391,13 +456,13 @@ async function getHotLocationRanking(startDate, endDate) {
   const { start, end } = parseDateRange(startDate, endDate)
 
   const data = await fetchAll(db.collection('wdd-needs'), {
-    create_time: _.gte(start).and(_.lte(end)),
-    location_name: _.neq(null).and(_.neq(''))
+    create_time: _.gte(start).and(_.lte(end))
   })
 
   const locationMap = {}
   data.forEach(item => {
-    const name = item.location_name || '未知地点'
+    const name = getLocationName(item)
+    if (!name) return
     locationMap[name] = (locationMap[name] || 0) + 1
   })
 
@@ -416,14 +481,13 @@ async function getFundFlow(startDate, endDate) {
   const dateArray = getDateArray(startDate, endDate)
 
   // 平台收入：从已完成任务的 platform_fee 按天汇总
-  const revenueData = await fetchAll(db.collection('wdd-needs'), {
-    status: 'completed',
-    complete_time: _.gte(start).and(_.lte(end))
-  })
+  const revenueData = (await fetchAll(db.collection('wdd-needs'), {
+    status: 'completed'
+  })).filter(item => isDateInRange(getCompleteTime(item), start, end))
 
   const incomeByDate = {}
   revenueData.forEach(item => {
-    const date = toBeijingDate(item.complete_time)
+    const date = toBeijingDate(getCompleteTime(item))
     incomeByDate[date] = (incomeByDate[date] || 0) + (item.platform_fee || 0)
   })
 

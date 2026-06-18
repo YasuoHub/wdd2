@@ -3,7 +3,9 @@
 <view class="container wdd-page" style="padding-bottom: {{pagePaddingBottom}}rpx;">
   <view class="wdd-page-bg"></view>
 
-  <loading wx:if="{{loading}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
+  <view wx:if="{{loading}}" class="page-loading-card">
+    <loading type="normal" text="加载中..." mode="spinner" size="56"></loading>
+  </view>
 
   <block wx:elif="{{task}}">
     <view wx:if="{{canReport || canAppeal}}" class="top-tools">

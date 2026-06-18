@@ -83,28 +83,7 @@ exports.main = async (event, context) => {
     })
     results.push({ step: '任务表举报申诉标记字段初始化', updated: needFlagRes.stats.updated || 0 })
 
-    // 4. 将现有任务的 points 字段迁移到 reward_amount（10积分=1元）
-    // 云开发不支持 update 中使用聚合表达式，改为循环处理
-    const migrateQuery = await db.collection('wdd-needs').where({
-      points: db.command.exists(true),
-      reward_amount: 0
-    }).get()
-
-    let migratedCount = 0
-    for (const need of migrateQuery.data) {
-      if (need.points > 0) {
-        await db.collection('wdd-needs').doc(need._id).update({
-          data: {
-            reward_amount: need.points / 10,
-            update_time: db.serverDate()
-          }
-        })
-        migratedCount++
-      }
-    }
-    results.push({ step: '积分字段迁移为金额', updated: migratedCount })
-
-    // 5. 为 wdd-reports 集合新增 supplement 相关字段（兼容旧数据）
+    // 4. 为 wdd-reports 集合新增 supplement 相关字段
     const reportSupplementRes = await db.collection('wdd-reports').where({
       supplement_deadline: db.command.exists(false)
     }).update({

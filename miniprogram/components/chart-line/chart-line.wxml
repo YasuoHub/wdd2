@@ -1,5 +1,6 @@
-<view class="chart-line-wrap">
+<view class="chart-line-wrap" style="height: {{height}}rpx;">
   <canvas type="2d" id="line-canvas" class="chart-canvas"></canvas>
+  <view wx:if="{{!hasData}}" class="empty-tip">暂无数据</view>
   <view class="chart-tooltip" wx:if="{{tooltip.visible}}" style="left: {{tooltip.x}}px; top: {{tooltip.y}}px;">
     <view class="tooltip-item" wx:for="{{tooltip.items}}" wx:key="label">
       <view class="tooltip-dot" style="background: {{item.color}};"></view>

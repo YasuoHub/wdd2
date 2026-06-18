@@ -15,19 +15,27 @@ Component({
   data: {
     tooltip: { visible: false, x: 0, y: 0, items: [] },
     canvasWidth: 0,
-    canvasHeight: 0
+    canvasHeight: 0,
+    hasData: false
   },
 
   lifetimes: {
-    attached() {
+    ready() {
+      this._syncDataState()
       this._initCanvas()
+    },
+    detached() {
+      if (this._initTimer) clearTimeout(this._initTimer)
     }
   },
 
   observers: {
     'data, height'() {
-      if (this._ctx) {
+      this._syncDataState()
+      if (this._ctx && this.data.hasData) {
         this._draw()
+      } else if (this._ctx) {
+        this._clearCanvas()
       } else {
         // canvas 尚未就绪，等待 ready
         this._pendingDraw = true
@@ -36,7 +44,19 @@ Component({
   },
 
   methods: {
-    async _initCanvas() {
+    _syncDataState() {
+      const hasData = this._hasRenderableData(this.properties.data || [])
+      if (this.data.hasData !== hasData) {
+        this.setData({ hasData, 'tooltip.visible': false })
+      }
+    },
+
+    _hasRenderableData(data) {
+      if (!Array.isArray(data) || data.length === 0) return false
+      return data.some(d => (Number(d.value1) || 0) > 0 || (Number(d.value2) || 0) > 0)
+    },
+
+    async _initCanvas(retry = 0) {
       const sysInfo = wx.getSystemInfoSync()
       const dpr = sysInfo.pixelRatio || 2
       const query = this.createSelectorQuery()
@@ -45,11 +65,17 @@ Component({
         .exec((res) => {
           if (!res || !res[0] || !res[0].node) {
             console.error('chart-line: canvas 节点未找到')
+            this._retryInitCanvas(retry)
             return
           }
           const canvas = res[0].node
           const boxWidth = res[0].width
-          const boxHeight = (this.properties.height / 750) * sysInfo.screenWidth
+          const boxHeight = res[0].height || (this.properties.height / 750) * sysInfo.screenWidth
+
+          if (!boxWidth || !boxHeight) {
+            this._retryInitCanvas(retry)
+            return
+          }
 
           canvas.width = boxWidth * dpr
           canvas.height = boxHeight * dpr
@@ -61,11 +87,34 @@ Component({
 
           this.setData({ canvasWidth: boxWidth, canvasHeight: boxHeight })
 
-          if (this._pendingDraw) {
+          if (this.data.hasData) {
             this._pendingDraw = false
             this._draw()
+          } else {
+            this._pendingDraw = false
+            this._clearCanvas()
           }
         })
+    },
+
+    _retryInitCanvas(retry) {
+      if (retry >= 6) return
+      if (this._initTimer) clearTimeout(this._initTimer)
+      this._initTimer = setTimeout(() => {
+        this._initCanvas(retry + 1)
+      }, 80)
+    },
+
+    _clearCanvas() {
+      const ctx = this._ctx
+      const dpr = this._dpr
+      const w = this._boxWidth
+      const h = this._boxHeight
+      if (!ctx || !w || !h) return
+      ctx.save()
+      ctx.scale(dpr, dpr)
+      ctx.clearRect(0, 0, w, h)
+      ctx.restore()
     },
 
     _draw() {
@@ -79,6 +128,10 @@ Component({
       const isDual = labels.length >= 2 && data.length > 0 && data[0].value2 !== undefined
 
       if (!ctx || !w || !h) return
+      if (!this._hasRenderableData(data)) {
+        this._clearCanvas()
+        return
+      }
 
       ctx.save()
       ctx.scale(dpr, dpr)

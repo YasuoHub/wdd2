@@ -191,7 +191,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 已折叠超过30天的任务 - 底部提示 */
+/* 已折叠超过30天的消息 - 底部提示 */
 .hidden-tip {
   padding: 32rpx 0 64rpx;
   text-align: center;

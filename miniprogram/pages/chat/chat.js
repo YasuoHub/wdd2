@@ -937,7 +937,7 @@ Page({
                         const newStatus = this.data.task && this.data.task.status
                         if (newStatus === 'completed') {
                           chatCache.markCompleted(currentNeedId)
-                        } else if (newStatus === 'cancelled' || newStatus === 'expired') {
+                        } else if (newStatus === 'cancelled') {
                           chatCache.invalidate(currentNeedId)
                         } else {
                           // 其他状态变化(如 breaking)也写一次,刷新缓存里的 taskMeta

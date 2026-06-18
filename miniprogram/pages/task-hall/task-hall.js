@@ -212,8 +212,12 @@ Page({
 
         console.log('获取到任务数量:', list.length, '总数:', total)
 
+        const currentUser = app.globalData.userInfo || wx.getStorageSync('userInfo') || {}
+        const currentUserId = currentUser._id
+
         const processedList = list.map(item => {
           const typeMeta = withTypeMeta(item)
+          const isOwnTask = !!(currentUserId && item.user_id === currentUserId)
           // 只有有效距离（小于 999km）才显示距离文本
           let distanceText = ''
           if (item.distance && item.distance < 999000) {
@@ -227,7 +231,8 @@ Page({
             typeName: typeMeta.typeName,
             distanceText,
             typeIcon: typeMeta.typeIcon,
-            iconColor: typeMeta.iconColor
+            iconColor: typeMeta.iconColor,
+            isOwnTask
           }
         })
 
@@ -381,6 +386,11 @@ Page({
   async takeTask(e) {
     const id = e.currentTarget.dataset.id
     const rewardAmount = parseFloat(e.currentTarget.dataset.amount) || 0
+    const isOwnTask = e.currentTarget.dataset.isOwnTask === true || e.currentTarget.dataset.isOwnTask === 'true'
+
+    if (isOwnTask) {
+      return
+    }
 
     // 检查登录
     if (!app.globalData.isLoggedIn) {

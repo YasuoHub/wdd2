@@ -211,10 +211,10 @@ async function getPublicNeeds(event, OPENID) {
       break
     case 'points':
     case 'reward':
-      // 按悬赏金额从高到低排序（优先用 reward_amount，兼容旧数据用 points）
+      // 按悬赏金额从高到低排序
       list.sort((a, b) => {
-        const aReward = a.reward_amount || (a.points ? a.points / 10 : 0)
-        const bReward = b.reward_amount || (b.points ? b.points / 10 : 0)
+        const aReward = a.reward_amount || 0
+        const bReward = b.reward_amount || 0
         return bReward - aReward
       })
       break
@@ -700,6 +700,8 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
   return {
     _id: item._id,
     need_id: item.need_id || item._id,
+    user_id: item.user_id,
+    task_no: item.task_no,
     type: item.type,
     description: item.description,
     images: item.images || [],

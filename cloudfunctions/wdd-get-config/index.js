@@ -12,10 +12,37 @@ const DEFAULT_CONFIG = {
   platform_fee_rate: 0.15,
   withdraw_fee_rate: 0.01,
   withdraw_min_amount: 2,
+  withdraw_min_per_request: 1,
+  withdraw_max_per_request: 5000,
+  withdraw_approval_threshold: 100,
   min_reward_amount: 1,
   max_reward_amount: 500,
   withdraw_daily_limit: 5000,
   withdraw_daily_times: 3
+}
+
+const PUBLIC_CONFIG_KEYS = [
+  'platform_fee_rate',
+  'withdraw_fee_rate',
+  'withdraw_min_amount',
+  'withdraw_min_per_request',
+  'withdraw_max_per_request',
+  'withdraw_approval_threshold',
+  'min_reward_amount',
+  'max_reward_amount',
+  'withdraw_daily_limit',
+  'withdraw_daily_times'
+]
+
+function pickPublicConfig(config) {
+  const merged = {
+    ...DEFAULT_CONFIG,
+    ...(config || {})
+  }
+  return PUBLIC_CONFIG_KEYS.reduce((result, key) => {
+    result[key] = merged[key]
+    return result
+  }, {})
 }
 
 exports.main = async (event, context) => {
@@ -28,7 +55,6 @@ exports.main = async (event, context) => {
     if (action === 'isCustomerService') {
       const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
       const csOpenids = configRes && configRes.data ? (configRes.data.customer_service_openids || []) : []
-      console.log('判断客服id:', OPENID, csOpenids)
       return {
         code: 0,
         data: { isCustomerService: OPENID ? csOpenids.includes(OPENID) : false },
@@ -40,7 +66,6 @@ exports.main = async (event, context) => {
     if (action === 'isSuperAdmin') {
       const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
       const saOpenids = configRes && configRes.data ? (configRes.data.super_admin_openids || []) : []
-      console.log('判断超管id:', OPENID, saOpenids)
       return {
         code: 0,
         data: { isSuperAdmin: OPENID ? saOpenids.includes(OPENID) : false },
@@ -59,12 +84,7 @@ exports.main = async (event, context) => {
       config = null
     }
 
-    const result = {
-      ...DEFAULT_CONFIG,
-      ...config
-    }
-
-    delete result._openid
+    const result = pickPublicConfig(config)
 
     return {
       code: 0,

@@ -12,8 +12,7 @@ Page({
     showInviteModal: false,
     isCustomerService: false,
     isSuperAdmin: false,
-    showAboutModal: false,
-    showRulesModal: false
+    showAboutModal: false
   },
 
   onLoad() {
@@ -174,7 +173,6 @@ Page({
       }
     } catch (err) {
       console.error('加载任务数量失败:', err)
-      // 使用模拟数据
       this.setData({
         myNeedsCount: 0,
         myTasksCount: 0
@@ -398,15 +396,6 @@ Page({
 
   hideAboutModal() {
     this.setData({ showAboutModal: false })
-  },
-
-  // 显示积分规则
-  showRules() {
-    this.setData({ showRulesModal: true })
-  },
-
-  hideRulesModal() {
-    this.setData({ showRulesModal: false })
   },
 
   // 退出登录

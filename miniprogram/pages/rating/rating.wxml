@@ -77,7 +77,7 @@
     <button
       class="submit-btn {{rating > 0 ? 'active' : ''}}"
       bindtap="submitRating"
-      disabled="{{rating === 0 || submitting}}"
+      disabled="{{rating === 0 || submitting || loadFailed}}"
     >
       {{submitting ? '提交中...' : '提交评价'}}
     </button>

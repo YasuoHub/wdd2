@@ -13,10 +13,7 @@ const FILTER_MAP = {
 }
 
 function getBaseAmount(item = {}) {
-  const rewardAmount = Number(item.rewardAmount || item.reward_amount || 0)
-  if (rewardAmount > 0) return rewardAmount
-  const points = Number(item.points || 0)
-  return points > 0 ? points / 10 : 0
+  return Number(item.rewardAmount || item.reward_amount || 0)
 }
 
 function parseDate(value) {
@@ -194,12 +191,15 @@ Page({
     } catch (err) {
       wx.hideLoading()
       console.error('加载任务失败:', err)
-      this.setData({ loading: false })
-
-      // 使用模拟数据展示效果
-      if (this.data.page === 1) {
-        this.setMockData()
-      }
+      this.setData({
+        loading: false,
+        hasMore: false,
+        ...(this.data.page === 1 ? { tasks: [] } : {})
+      })
+      wx.showToast({
+        title: err.message || '加载失败，请稍后重试',
+        icon: 'none'
+      })
     }
   },
 
@@ -208,7 +208,7 @@ Page({
     const typeInfo = getByType(resolveTaskType(item))
     const statusInfo = STATUS_MAP[item.status] || STATUS_MAP['ongoing']
 
-    // 优先使用后端已格式化的字段，兼容旧字段
+    // 优先使用后端已格式化的字段
     let remainTime = item.remainTime || ''
     if (!remainTime && item.expire_time) {
       const expire = new Date(item.expire_time)
@@ -315,40 +315,6 @@ Page({
   goToHall() {
     wx.switchTab({
       url: '/pages/task-hall/task-hall'
-    })
-  },
-
-  // 模拟数据
-  setMockData() {
-    const mockData = [
-      {
-        _id: '1',
-        need_id: '101',
-        type: 'weather',
-        description: '天府广场现在在下雨吗？准备出门',
-        location: { name: '天府广场' },
-        points: 10,
-        status: 'ongoing',
-        seeker_nickname: '小明',
-        create_time: new Date(Date.now() - 1800000)
-      },
-      {
-        _id: '2',
-        need_id: '102',
-        type: 'shop',
-        description: '春熙路HM开门了吗？',
-        location: { name: '春熙路' },
-        points: 15,
-        status: 'completed',
-        seeker_nickname: '小红',
-        create_time: new Date(Date.now() - 172800000)
-      }
-    ]
-
-    this.setData({
-      tasks: mockData.map(item => this.formatTask(item)),
-      stats: { total: 12, ongoing: 2, points: 156 },
-      hasMore: false
     })
   }
 })

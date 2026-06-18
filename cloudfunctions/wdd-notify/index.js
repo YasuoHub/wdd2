@@ -16,7 +16,7 @@ const MESSAGE_LIST_VISIBLE_DAYS = 30
 // 规则：
 //   - pending / ongoing / breaking：始终保留（进行中或仲裁中）
 //   - completed：complete_time + N 天内可见
-//   - cancelled / expired：cancel_time + N 天内可见
+//   - cancelled：cancel_time + N 天内可见
 //   - 终态字段缺失：依次回退到 update_time、create_time
 function isSessionVisible(need) {
   if (!need || !need.status) return true
@@ -112,7 +112,7 @@ async function getChatSessions(userId) {
     // 用户作为求助者的任务
     db.collection('wdd-needs').where({
       user_id: userId,
-      status: _.in(['ongoing', 'completed', 'breaking', 'cancelled', 'expired'])
+      status: _.in(['ongoing', 'completed', 'breaking', 'cancelled'])
     }).get(),
     // 用户作为帮助者的任务
     db.collection('wdd-need-takers').where({
@@ -124,8 +124,8 @@ async function getChatSessions(userId) {
   const allMyNeeds = needsRes.data
   const myNeeds = allMyNeeds.filter(need => {
     if (!isSessionVisible(need)) return false
-    // 已取消/已过期的任务，如果无人接单，不显示在消息列表
-    if (['cancelled', 'expired'].includes(need.status) && !need.taker_id) return false
+    // 已取消的任务如果无人接单，不显示在消息列表
+    if (need.status === 'cancelled' && !need.taker_id) return false
     return true
   })
   const hiddenSeekerCount = allMyNeeds.length - myNeeds.length

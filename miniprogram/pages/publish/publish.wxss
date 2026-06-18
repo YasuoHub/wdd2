@@ -50,9 +50,9 @@ page {
 }
 
 .section-icon {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 22rpx;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,8 +66,8 @@ page {
 .section-icon.image,
 .section-icon.amount,
 .section-icon.points {
-  background: var(--brand-primary-10);
-  border: 1rpx solid var(--brand-primary-16);
+  background: transparent;
+  border: 0;
 }
 
 .section-info {
@@ -279,14 +279,15 @@ page {
 }
 
 .type-icon-wrapper {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 24rpx;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16rpx;
-  background: var(--type-bg);
+  margin-bottom: 14rpx;
+  background: transparent;
+  border: 0;
 }
 
 .type-name {
@@ -1057,8 +1058,8 @@ page {
 .section-icon.image,
 .section-icon.amount,
 .section-icon.points {
-  background: var(--brand-primary-10);
-  border-color: var(--brand-primary-16);
+  background: transparent;
+  border: 0;
   box-shadow: none;
 }
 

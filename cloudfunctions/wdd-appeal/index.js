@@ -770,7 +770,7 @@ async function sendAppealNotice(need, initiatorId, appealId) {
     const bj = new Date(now.getTime() + 8 * 60 * 60 * 1000)
     const timeStr = `${bj.getUTCFullYear()}-${String(bj.getUTCMonth() + 1).padStart(2, '0')}-${String(bj.getUTCDate()).padStart(2, '0')} ${String(bj.getUTCHours()).padStart(2, '0')}:${String(bj.getUTCMinutes()).padStart(2, '0')}`
 
-    const taskNumber = need._id.toUpperCase()
+    const taskNumber = need.task_no
 
     await db.collection('wdd-notifications').add({
       data: {

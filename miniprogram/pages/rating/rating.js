@@ -41,6 +41,7 @@ Page({
     ratingTags: [],
     selectedTags: [],
     comment: '',
+    loadFailed: false,
     submitting: false
   },
 
@@ -89,6 +90,7 @@ Page({
         }
 
         this.setData({
+          loadFailed: false,
           targetUser,
           task: {
             typeName: typeInfo.name,
@@ -102,15 +104,16 @@ Page({
     } catch (err) {
       wx.hideLoading()
       console.error('加载任务信息失败:', err)
-
-      // 使用模拟数据
       this.setData({
-        targetUser: { nickname: '测试用户', avatar: '' },
-        task: {
-          typeName: '店铺营业',
-          description: '春熙路的星巴克今天开门吗？',
-          price: 1.5
-        }
+        loadFailed: true,
+        targetUser: { nickname: '', avatar: '' },
+        task: { typeName: '', description: '', price: 0 }
+      })
+      wx.showModal({
+        title: '无法评价',
+        content: '任务信息加载失败，请从任务详情页重新进入。',
+        showCancel: false,
+        success: () => wx.navigateBack()
       })
     }
   },
@@ -161,7 +164,15 @@ Page({
 
   // 提交评价
   async submitRating() {
-    const { rating, comment, selectedTags, needId, ratingType, submitting } = this.data
+    const { rating, comment, selectedTags, needId, ratingType, submitting, loadFailed } = this.data
+
+    if (loadFailed) {
+      wx.showToast({
+        title: '任务信息未加载，无法提交评价',
+        icon: 'none'
+      })
+      return
+    }
 
     if (rating === 0) {
       wx.showToast({

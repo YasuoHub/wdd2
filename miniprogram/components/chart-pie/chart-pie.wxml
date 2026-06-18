@@ -7,5 +7,5 @@
       <text class="legend-pct">{{item.percent}}%</text>
     </view>
   </view>
-  <view wx:if="{{data.length === 0}}" class="empty-tip">暂无数据</view>
+  <view wx:if="{{!hasData}}" class="empty-tip">暂无数据</view>
 </view>
