@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "工单详情",
-  "usingComponents": {}
+  "usingComponents": {
+    "bottom-sheet": "/components/bottom-sheet/bottom-sheet"
+  }
 }

@@ -4,16 +4,17 @@
   <view class="wdd-page-bg"></view>
   <!-- 余额展示 -->
   <view class="balance-section">
-    <text class="balance-label">可提现余额</text>
+    <text class="balance-label">{{balanceLabel}}</text>
     <view class="balance-amount">
       <wdd-icon name="coins" color="var(--money-gold)" size="42"></wdd-icon>
-      <text class="amount-number">{{money.format(balance)}}</text>
+      <text class="amount-number">{{money.format(balanceDisplayAmount)}}</text>
     </view>
+    <text wx:if="{{balanceTip}}" class="balance-tip">{{balanceTip}}</text>
   </view>
 
   <!-- 关联申请提示 -->
   <view wx:if="{{application}}" class="application-notice">
-    <text class="notice-text">审批通过的提现申请</text>
+    <text class="notice-text">审批通过金额</text>
     <view class="notice-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(application.amount)}}</text></view>
   </view>
 
@@ -21,8 +22,6 @@
   <view class="withdraw-section">
     <view class="section-title">
       <text>提现金额</text>
-      <text wx:if="{{!application}}" class="all-btn" bindtap="withdrawAll">全部提现</text>
-      <text wx:else class="all-btn locked">已锁定</text>
     </view>
 
     <view class="amount-input-wrapper">
@@ -37,6 +36,10 @@
         focus="{{!application}}"
         disabled="{{!!application}}"
       />
+    </view>
+
+    <view wx:if="{{limitTip}}" class="limit-tip">
+      <text>{{limitTip}}</text>
     </view>
 
     <view wx:if="{{errorTip}}" class="error-tip">

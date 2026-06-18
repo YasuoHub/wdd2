@@ -111,18 +111,4 @@
     </view>
   </block>
 
-  <!-- 确认弹窗 -->
-  <view class="modal {{showConfirmModal ? 'show' : ''}}" wx:if="{{showConfirmModal}}">
-    <view class="modal-mask" bindtap="hideConfirm"></view>
-    <view class="modal-content">
-      <view class="modal-title">确认提交申诉</view>
-      <view class="modal-body">
-        提交申诉后，任务将进入客服评审状态，平台将依据证据进行仲裁处理。请如实填写理由并上传证据，您可在客服处理前随时撤销本次申诉，撤销后任务将恢复正常流程。
-      </view>
-      <view class="modal-footer">
-        <button class="modal-btn cancel" bindtap="hideConfirm">取消</button>
-        <button class="modal-btn confirm" bindtap="submitAppeal">确认提交</button>
-      </view>
-    </view>
-  </view>
 </view>

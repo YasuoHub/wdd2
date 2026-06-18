@@ -615,27 +615,74 @@ async function getMyAppealList(event, OPENID) {
   const needMap = {}
   needRes.data.forEach(n => {
     needMap[n._id] = {
+      _id: n._id,
       type: n.type,
       description: n.description || '',
       locationName: n.location_name || n.locationName || '',
-      rewardAmount: n.reward_amount || n.rewardAmount || 0
+      rewardAmount: n.reward_amount || n.rewardAmount || 0,
+      seekerId: n.user_id
     }
   })
 
+  const takerRes = await db.collection('wdd-need-takers').where({
+    need_id: _.in(needIds)
+  }).orderBy('create_time', 'desc').get()
+  const takerMap = {}
+  takerRes.data.forEach(t => {
+    if (!takerMap[t.need_id]) {
+      takerMap[t.need_id] = t.taker_id
+    }
+  })
+
+  const targetIds = [...new Set(list.map(a => {
+    const need = needMap[a.need_id]
+    if (!need) return null
+    return a.initiator_id === need.seekerId ? takerMap[a.need_id] : need.seekerId
+  }).filter(Boolean))]
+  const userMap = {}
+  if (targetIds.length > 0) {
+    const userRes = await db.collection('wdd-users').where({
+      _id: _.in(targetIds)
+    }).get()
+    userRes.data.forEach(u => {
+      userMap[u._id] = u
+    })
+  }
+
   // 组装返回数据
-  const enrichedList = list.map(a => ({
-    _id: a._id,
-    needId: a.need_id,
-    appealType: a.initiator_type,
-    appealTypeLabel: a.initiator_type_label || a.initiator_type,
-    reason: a.initiator_reason,
-    images: a.initiator_images || [],
-    status: a.status,
-    createTime: a.create_time,
-    cancelTime: a.cancel_time || null,
-    updateTime: a.update_time,
-    taskInfo: needMap[a.need_id] || null
-  }))
+  const enrichedList = list.map(a => {
+    const need = needMap[a.need_id]
+    const targetUserId = need
+      ? (a.initiator_id === need.seekerId ? takerMap[a.need_id] : need.seekerId)
+      : null
+    const targetUser = targetUserId ? userMap[targetUserId] : null
+    const targetRoleLabel = targetUserId && need
+      ? (targetUserId === takerMap[a.need_id] ? '帮助者' : '求助者')
+      : ''
+
+    return {
+      _id: a._id,
+      needId: a.need_id,
+      appealType: a.initiator_type,
+      appealTypeLabel: a.initiator_type_label || a.initiator_type,
+      reason: a.initiator_reason,
+      images: a.initiator_images || [],
+      status: a.status,
+      createTime: a.create_time,
+      cancelTime: a.cancel_time || null,
+      updateTime: a.update_time,
+      respondentNickname: targetUser ? (targetUser.nickname || '未知用户') : '',
+      respondentAvatar: targetUser ? (targetUser.avatar || '') : '',
+      targetRoleLabel,
+      targetUser: targetUserId ? {
+        id: targetUserId,
+        nickname: targetUser ? (targetUser.nickname || '未知用户') : '未知用户',
+        avatar: targetUser ? (targetUser.avatar || '') : '',
+        roleLabel: targetRoleLabel
+      } : null,
+      taskInfo: need || null
+    }
+  })
 
   return {
     code: 0,

@@ -1,4 +1,4 @@
-<view wx:if="{{show}}" class="sheet-overlay" bindtap="onMaskTap">
+<view wx:if="{{show}}" class="sheet-overlay" bindtap="onMaskTap" catchtouchmove="preventTouchMove">
   <view
     class="sheet-panel"
     style="max-height: {{maxHeight}}; transform: translateY({{dragOffset}}rpx);"

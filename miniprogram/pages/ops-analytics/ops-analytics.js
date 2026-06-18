@@ -6,6 +6,7 @@ const { getByType } = require('../../utils/needTypes')
 // 余额流水类型映射
 const FLOW_TYPE_MAP = {
   task_income: '任务收入',
+  system_gift: '系统赠送',
   task_pay: '任务支付',
   refund: '退款',
   withdraw: '提现',

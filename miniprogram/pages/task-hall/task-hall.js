@@ -2,7 +2,6 @@
 const app = getApp()
 
 const { callCloudFunction } = require('../../utils/cloud')
-const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 
 // 筛选标签
@@ -169,13 +168,19 @@ Page({
 
     try {
       console.log('开始加载任务列表...')
+      const sortValue = typeof this.data.currentSort === 'string'
+        ? this.data.currentSort
+        : this.data.currentSort.value
+      const distanceValue = typeof this.data.currentDistance === 'number'
+        ? this.data.currentDistance
+        : this.data.currentDistance.value
       // 准备请求参数
       const requestData = {
         filter: this.data.activeFilter,
-        sort: this.data.currentSort.value,
-        distance: this.data.currentDistance.value === 0 && !this.data.canUseUnlimitedDistance
+        sort: sortValue,
+        distance: distanceValue === 0 && !this.data.canUseUnlimitedDistance
           ? DEFAULT_DISTANCE_OPTION.value
-          : this.data.currentDistance.value,
+          : distanceValue,
         page: this.data.page,
         pageSize: this.data.pageSize
       }
@@ -201,12 +206,8 @@ Page({
 
         console.log('获取到任务数量:', list.length, '总数:', total)
 
-        const currentUser = app.globalData.userInfo || wx.getStorageSync('userInfo') || {}
-        const currentUserId = currentUser._id
-
         const processedList = list.map(item => {
           const typeMeta = withTypeMeta(item)
-          const isOwnTask = !!(currentUserId && item.user_id === currentUserId)
           // 只有有效距离（小于 999km）才显示距离文本
           let distanceText = ''
           if (item.distance && item.distance < 999000) {
@@ -220,8 +221,7 @@ Page({
             typeName: typeMeta.typeName,
             distanceText,
             typeIcon: typeMeta.typeIcon,
-            iconColor: typeMeta.iconColor,
-            isOwnTask
+            iconColor: typeMeta.iconColor
           }
         })
 
@@ -306,8 +306,11 @@ Page({
   // 选择排序
   selectSort(e) {
     const sort = e.currentTarget.dataset.sort
+    const nextSort = typeof sort === 'string'
+      ? (SORT_OPTIONS.find(item => item.value === sort) || SORT_OPTIONS[0])
+      : sort
     this.setData({
-      currentSort: sort,
+      currentSort: nextSort,
       showSortPopup: false,
       page: 1
     })
@@ -317,8 +320,12 @@ Page({
   // 选择距离
   selectDistance(e) {
     const distance = e.currentTarget.dataset.distance
+    const distanceValue = typeof distance === 'number' ? distance : Number(distance && distance.value)
+    const nextDistance = typeof distance === 'object'
+      ? distance
+      : (DISTANCE_OPTIONS.find(item => item.value === distanceValue) || DEFAULT_DISTANCE_OPTION)
     this.setData({
-      currentDistance: distance,
+      currentDistance: nextDistance,
       showDistancePopup: false,
       page: 1
     })
@@ -374,12 +381,7 @@ Page({
   // 接单
   async takeTask(e) {
     const id = e.currentTarget.dataset.id
-    const rewardAmount = parseFloat(e.currentTarget.dataset.amount) || 0
-    const isOwnTask = e.currentTarget.dataset.isOwnTask === true || e.currentTarget.dataset.isOwnTask === 'true'
-
-    if (isOwnTask) {
-      return
-    }
+    const incomeAmount = parseFloat(e.currentTarget.dataset.amount) || 0
 
     // 检查登录
     if (!app.globalData.isLoggedIn) {
@@ -414,12 +416,9 @@ Page({
       return
     }
 
-    const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
-    const feeRate = Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
-
     wx.showModal({
       title: '确认去帮助',
-      content: `完成此任务可获得 ${takerIncome} 元（已扣除${feeRate}%平台服务费），确定要去帮助吗？`,
+      content: `完成此任务可获得 ${incomeAmount} 元，确定要去帮助吗？`,
       confirmColor: '#A8E6CF',
       success: (res) => {
         if (res.confirm) {

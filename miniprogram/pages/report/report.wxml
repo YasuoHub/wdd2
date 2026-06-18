@@ -154,24 +154,7 @@
     <view class="success-title">举报提交成功</view>
     <view class="success-desc">平台将依据您提交的证据进行仲裁处理，请耐心等待</view>
     <button wx:if="{{canCancel}}" class="cancel-btn" bindtap="cancelReport">撤销举报</button>
-    <button class="back-btn" bindtap="goBack">返回</button>
+    <button class="back-btn" bindtap="goBack" style="background: var(--sky-primary);">返回</button>
   </view>
 
-  <!-- 确认弹窗 -->
-  <view class="modal {{showConfirmModal ? 'show' : ''}}" wx:if="{{showConfirmModal}}">
-    <view class="modal-mask" bindtap="hideConfirm"></view>
-    <view class="modal-content">
-      <view class="modal-icon">
-        <wdd-icon name="triangle-alert" color="var(--vitality-orange)" size="48"></wdd-icon>
-      </view>
-      <view class="modal-title">确认提交举报</view>
-      <view class="modal-body">
-        提交举报后，任务将进入客服评审状态，将关闭双方聊天通道，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在客服处理前随时撤销本次举报，撤销后恢复正常任务流程。
-      </view>
-      <view class="modal-footer">
-        <view class="modal-btn cancel" bindtap="hideConfirm">取消</view>
-        <view class="modal-btn confirm" bindtap="submitReport">确认提交</view>
-      </view>
-    </view>
-  </view>
 </view>

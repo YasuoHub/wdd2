@@ -1,3 +1,4 @@
+<page-meta page-style="{{showSortPopup || showDistancePopup ? 'overflow: hidden;' : ''}}" />
 <!-- 任务大厅 - 城市绿洲风格 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
@@ -58,8 +59,8 @@
   <!-- 任务列表内容区 -->
   <scroll-view
     class="content"
-    scroll-y
-    refresher-enabled
+    scroll-y="{{!(showSortPopup || showDistancePopup)}}"
+    refresher-enabled="{{!(showSortPopup || showDistancePopup)}}"
     refresher-triggered="{{isRefreshing}}"
     bindrefresherrefresh="onRefresh"
     bindscrolltolower="onLoadMore"
@@ -88,7 +89,7 @@
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.rewardAmount || item.points / 10)}}</text></view>
+              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount || item.takerIncome || item.rewardAmount || item.points / 10)}}</text></view>
             </view>
           </view>
 
@@ -116,7 +117,7 @@
         </view>
 
         <!-- 帮助按钮 -->
-        <view class="take-btn {{item.isOwnTask ? 'disabled' : ''}}" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.rewardAmount || 0}}" data-is-own-task="{{item.isOwnTask}}">
+        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.displayRewardAmount || item.takerIncome || item.rewardAmount || 0}}">
           <text class="take-text">去帮助</text>
         </view>
       </view>

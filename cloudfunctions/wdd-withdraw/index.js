@@ -81,6 +81,93 @@ exports.main = async (event, context) => {
 // 业务函数：用户侧
 // ========================================
 
+function getBeijingDateKey(date = new Date()) {
+  const bj = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  const year = bj.getUTCFullYear()
+  const month = String(bj.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(bj.getUTCDate()).padStart(2, '0')
+  return `${year}${month}${day}`
+}
+
+function getWithdrawQuotaDocId(openid, dateKey = getBeijingDateKey()) {
+  return `${openid}_${dateKey}`
+}
+
+function moneyToCents(amount) {
+  return Math.round(Number(amount || 0) * 100)
+}
+
+async function reserveWithdrawQuota(transaction, openid, amount, rules) {
+  const dateKey = getBeijingDateKey()
+  const quotaId = getWithdrawQuotaDocId(openid, dateKey)
+  const amountCents = moneyToCents(amount)
+  const dailyLimitCents = moneyToCents(rules.WITHDRAW_DAILY_LIMIT)
+  const dailyTimes = Number(rules.WITHDRAW_DAILY_TIMES || 0)
+
+  const quotaRef = transaction.collection('wdd-withdraw-daily-quotas').doc(quotaId)
+  const quotaRes = await quotaRef.get().catch(() => null)
+  const quota = quotaRes && quotaRes.data ? quotaRes.data : null
+  const usedCents = Number(quota?.amount_cents || 0)
+  const usedCount = Number(quota?.count || 0)
+
+  if (dailyLimitCents > 0 && usedCents + amountCents > dailyLimitCents) {
+    return {
+      allowed: false,
+      quotaId,
+      message: `超过单日提现限额 ¥${rules.WITHDRAW_DAILY_LIMIT}（今日已提现 ¥${(usedCents / 100).toFixed(2)}）`
+    }
+  }
+
+  if (dailyTimes > 0 && usedCount >= dailyTimes) {
+    return {
+      allowed: false,
+      quotaId,
+      message: `今日提现次数已达上限（${dailyTimes}次），请明天再试`
+    }
+  }
+
+  const now = new Date()
+  if (quota) {
+    await quotaRef.update({
+      data: {
+        amount_cents: _.inc(amountCents),
+        amount: _.inc(amount),
+        count: _.inc(1),
+        update_time: now
+      }
+    })
+  } else {
+    await quotaRef.set({
+      data: {
+        _id: quotaId,
+        openid,
+        date_key: dateKey,
+        amount_cents: amountCents,
+        amount,
+        count: 1,
+        create_time: now,
+        update_time: now
+      }
+    })
+  }
+
+  return { allowed: true, quotaId, amountCents }
+}
+
+async function releaseWithdrawQuota(transaction, withdraw) {
+  if (!withdraw.quota_doc_id) return
+  const quotaId = withdraw.quota_doc_id
+  const amountCents = moneyToCents(withdraw.quota_amount || withdraw.amount)
+  await transaction.collection('wdd-withdraw-daily-quotas').doc(quotaId).update({
+    data: {
+      amount_cents: _.inc(-amountCents),
+      amount: _.inc(-(withdraw.quota_amount || withdraw.amount || 0)),
+      count: _.inc(-1),
+      update_time: new Date()
+    }
+  })
+}
+
 // 申请提现 → 即时打款（无人工审批环节）
 async function applyWithdraw(event, OPENID) {
   const { amount, applicationId } = event
@@ -125,8 +212,8 @@ async function applyWithdraw(event, OPENID) {
     if (approvedApplication.expire_time && new Date(approvedApplication.expire_time) < new Date()) {
       return { code: -1, message: '该提现申请已过期，请重新申请' }
     }
-    if (Math.abs(amount - approvedApplication.amount) > 0.01) {
-      return { code: -1, message: `提现金额需与申请金额一致（¥${approvedApplication.amount}）` }
+    if (amount - approvedApplication.amount > 0.01) {
+      return { code: -1, message: `提现金额不能超过审批通过金额（¥${approvedApplication.amount}）` }
     }
   }
 
@@ -144,24 +231,6 @@ async function applyWithdraw(event, OPENID) {
     return { code: -1, message: withdrawCheck.reason }
   }
 
-  // 单日累计限额校验
-  const dailyTotal = await sumTodayWithdrawAmount(OPENID)
-  if (dailyTotal + amount > rules.WITHDRAW_DAILY_LIMIT) {
-    return {
-      code: -1,
-      message: `超过单日提现限额 ¥${rules.WITHDRAW_DAILY_LIMIT}（今日已提现 ¥${dailyTotal}）`
-    }
-  }
-
-  // 单日提现次数校验
-  const dailyCount = await sumTodayWithdrawCount(OPENID)
-  if (dailyCount >= rules.WITHDRAW_DAILY_TIMES) {
-    return {
-      code: -1,
-      message: `今日提现次数已达上限（${rules.WITHDRAW_DAILY_TIMES}次），请明天再试`
-    }
-  }
-
   const fee = MoneyUtils.calcWithdrawFee(amount)
   const actualAmount = MoneyUtils.calcWithdrawActual(amount)
   const withdrawId = generateWithdrawNo()
@@ -175,9 +244,23 @@ async function applyWithdraw(event, OPENID) {
     const latestUserRes = await transaction.collection('wdd-users').doc(user._id).get()
     const latestBalance = latestUserRes.data.balance || 0
     const latestFrozen = latestUserRes.data.frozen_balance || 0
+    const quotaResult = await reserveWithdrawQuota(transaction, OPENID, amount, rules)
+    if (!quotaResult.allowed) {
+      await transaction.rollback()
+      return { code: -1, message: quotaResult.message }
+    }
 
     if (approvedApplication) {
-      // 审批路径：同时扣减 balance 和 frozen_balance
+      // 审批路径：扣减实际提现金额，并释放本审批单占用的冻结金额
+      const approvedAmount = Number(approvedApplication.amount || 0)
+      const expectedAmount = Math.round(Math.min(approvedAmount, latestBalance) * 100) / 100
+      if (Math.abs(amount - expectedAmount) > 0.01) {
+        await transaction.rollback()
+        return {
+          code: -1,
+          message: `提现金额需按当前余额计算（本次可提现 ¥${MoneyUtils.formatAmount(expectedAmount)}）`
+        }
+      }
       if (amount > latestBalance) {
         await transaction.rollback()
         return { code: -1, message: '余额不足' }
@@ -186,11 +269,12 @@ async function applyWithdraw(event, OPENID) {
         await transaction.rollback()
         return { code: -1, message: '冻结金额异常，请联系客服' }
       }
+      const frozenDeductAmount = Math.min(approvedAmount, latestFrozen)
 
       await transaction.collection('wdd-users').doc(user._id).update({
         data: {
           balance: _.inc(-amount),
-          frozen_balance: _.inc(-amount),
+          frozen_balance: _.inc(-frozenDeductAmount),
           total_withdrawn: _.inc(amount),
           update_time: new Date()
         }
@@ -222,6 +306,9 @@ async function applyWithdraw(event, OPENID) {
       actual_amount: actualAmount,
       status: 'processing',
       application_id: approvedApplication ? approvedApplication._id : null,
+      quota_doc_id: quotaResult.quotaId,
+      quota_amount: amount,
+      quota_amount_cents: quotaResult.amountCents,
       out_bill_no: withdrawId,
       bill_id: null,
       state: null,
@@ -748,6 +835,8 @@ async function rollbackWithdrawBalance(withdraw, reason) {
     await transaction.collection('wdd-users').doc(withdraw.user_id).update({
       data: userUpdateData
     })
+
+    await releaseWithdrawQuota(transaction, latestRecord.data)
 
     // 更新 wdd-withdraws 状态为 rejected
     await transaction.collection('wdd-withdraws').doc(withdraw._id).update({

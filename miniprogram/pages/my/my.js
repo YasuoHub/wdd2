@@ -341,6 +341,13 @@ Page({
     })
   },
 
+  // 跳转系统配置
+  goToSystemConfig() {
+    wx.navigateTo({
+      url: '/pages/system-config/system-config'
+    })
+  },
+
   // 跳转到我的举报
   goToMyReports() {
     if (!this.checkLoginAndShowTip()) return

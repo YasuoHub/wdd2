@@ -13,7 +13,6 @@ Page({
     images: [],
     wordCount: 0,
     isSubmitting: false,
-    showConfirmModal: false,
     // 提交成功状态
     isSubmitted: false,
     reportId: '',
@@ -197,21 +196,23 @@ Page({
     }
 
     if (mode === 'initiate') {
-      this.setData({ showConfirmModal: true })
+      wx.showModal({
+        title: '确认提交举报',
+        content: '提交举报后，任务将进入客服评审状态，将关闭双方聊天通道，平台将依据证据进行仲裁处理，请如实填写理由并上传证据。您可在客服处理前随时撤销本次举报，撤销后恢复正常任务流程。',
+        confirmText: '确认提交',
+        success: (res) => {
+          if (res.confirm) {
+            this.submitReport()
+          }
+        }
+      })
     } else {
       this.submitReport()
     }
   },
 
-  // 隐藏确认弹窗
-  hideConfirm() {
-    this.setData({ showConfirmModal: false })
-  },
-
   // 提交举报
   async submitReport() {
-    this.hideConfirm()
-
     const { needId, selectedTypeValue, selectedTypeLabel, reason, images, mode } = this.data
 
     this.setData({ isSubmitting: true })

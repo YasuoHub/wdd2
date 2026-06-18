@@ -100,7 +100,9 @@ exports.main = async (event, context) => {
       // 1. 原子更新任务状态（仅在 status === 'pending' 时成功）
       const updateRes = await transaction.collection('wdd-needs').where({
         _id: needId,
-        status: 'pending'
+        status: 'pending',
+        user_id: _.neq(takerId),
+        expire_time: _.gt(new Date())
       }).update({
         data: {
           status: 'ongoing',

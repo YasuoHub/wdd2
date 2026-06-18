@@ -143,6 +143,13 @@ function formatBalanceRecord(item) {
       iconBg: 'rgba(7, 193, 96, 0.1)',
       amountType: 'income'
     },
+    'system_gift': {
+      title: item.description || '系统赠送',
+      icon: 'gift',
+      iconColor: '#1F8F7A',
+      iconBg: 'rgba(7, 193, 96, 0.1)',
+      amountType: 'income'
+    },
     'task_pay': {
       title: item.description || '任务支付',
       icon: 'credit-card',

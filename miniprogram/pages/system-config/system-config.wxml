@@ -1,0 +1,239 @@
+<view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
+
+  <view wx:if="{{pageLoading}}" class="page-loading">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载配置中...</text>
+  </view>
+
+  <view wx:elif="{{!hasPermission}}" class="permission-empty">
+    <wdd-icon name="shield-alert" color="#D64545" size="72"></wdd-icon>
+    <text class="empty-title">没有访问权限</text>
+    <text class="empty-desc">系统配置仅超级管理员可操作。</text>
+  </view>
+
+  <view wx:else class="content">
+    <view class="notice-card">
+      <wdd-icon name="circle-alert" color="var(--vitality-orange)" size="34"></wdd-icon>
+      <text>这些配置会影响线上发布、提现、积分和客服权限，保存前请确认数值准确。</text>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <wdd-icon name="coins" color="var(--brand-primary)" size="32"></wdd-icon>
+        <text>交易配置</text>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">平台服务费率</text>
+          <text class="form-tip">例如 0.15 表示 15%</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.platform_fee_rate}}" data-key="platform_fee_rate" bindinput="onInput" />
+          <text class="unit">比例</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">最小悬赏金额</text>
+          <text class="form-tip">用户发布任务的最低金额</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.min_reward_amount}}" data-key="min_reward_amount" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">最大悬赏金额</text>
+          <text class="form-tip">用户发布任务的最高金额</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.max_reward_amount}}" data-key="max_reward_amount" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <wdd-icon name="wallet" color="var(--vitality-orange)" size="32"></wdd-icon>
+        <text>提现配置</text>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">提现手续费率</text>
+          <text class="form-tip">例如 0.01 表示 1%</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.withdraw_fee_rate}}" data-key="withdraw_fee_rate" bindinput="onInput" />
+          <text class="unit">比例</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">最低提现门槛</text>
+          <text class="form-tip">余额达到该金额后才可提现</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.withdraw_min_amount}}" data-key="withdraw_min_amount" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">单次提现最低</text>
+          <text class="form-tip">每笔提现申请的最低金额</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.withdraw_min_per_request}}" data-key="withdraw_min_per_request" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">单次提现最高</text>
+          <text class="form-tip">每笔提现申请的最高金额</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.withdraw_max_per_request}}" data-key="withdraw_max_per_request" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">审批阈值</text>
+          <text class="form-tip">超过该金额需要资金审批</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.withdraw_approval_threshold}}" data-key="withdraw_approval_threshold" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">单日提现金额上限</text>
+          <text class="form-tip">用户每天累计提现上限</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.withdraw_daily_limit}}" data-key="withdraw_daily_limit" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">单日提现次数上限</text>
+          <text class="form-tip">用户每天最多提现次数</text>
+        </view>
+        <view class="input-box">
+          <input type="number" value="{{form.withdraw_daily_times}}" data-key="withdraw_daily_times" bindinput="onInput" />
+          <text class="unit">次</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <wdd-icon name="gift" color="#7B61D1" size="32"></wdd-icon>
+        <text>用户与积分配置</text>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">注册赠送余额</text>
+          <text class="form-tip">新用户注册后可获得的初始余额</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" value="{{form.register_gift_balance}}" data-key="register_gift_balance" bindinput="onInput" />
+          <text class="unit">元</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">注册奖励积分</text>
+          <text class="form-tip">新用户首次注册获得</text>
+        </view>
+        <view class="input-box">
+          <input type="number" value="{{form.points_register}}" data-key="points_register" bindinput="onInput" />
+          <text class="unit">积分</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">邀请奖励积分</text>
+          <text class="form-tip">邀请双方各自获得</text>
+        </view>
+        <view class="input-box">
+          <input type="number" value="{{form.points_invite}}" data-key="points_invite" bindinput="onInput" />
+          <text class="unit">积分</text>
+        </view>
+      </view>
+      <view class="single-line-row">
+        <view class="label-block">
+          <text class="form-label">连续签到积分</text>
+          <text class="form-tip">用英文逗号分隔，例如 5,10,15,20,25,30,30</text>
+        </view>
+        <view class="input-box full">
+          <input type="text" value="{{form.points_signIn_daily}}" data-key="points_signIn_daily" bindinput="onInput" />
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <wdd-icon name="headphones" color="#FF6B6B" size="32"></wdd-icon>
+        <text>客服配置</text>
+      </view>
+      <view class="textarea-row">
+        <view class="label-block">
+          <text class="form-label">客服 OpenID 白名单</text>
+          <text class="form-tip">每行一个 OpenID。超级管理员账号不在这里配置。</text>
+        </view>
+        <textarea class="openid-textarea" value="{{form.customer_service_openids}}" data-key="customer_service_openids" bindinput="onInput" auto-height maxlength="2000" />
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">
+        <wdd-icon name="refresh-cw" color="#119B72" size="32"></wdd-icon>
+        <text>转账策略配置</text>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">最大转账重试次数</text>
+          <text class="form-tip">提现转账失败后的最大重试次数</text>
+        </view>
+        <view class="input-box">
+          <input type="number" value="{{form.max_transfer_retry}}" data-key="max_transfer_retry" bindinput="onInput" />
+          <text class="unit">次</text>
+        </view>
+      </view>
+      <view class="single-line-row">
+        <view class="label-block">
+          <text class="form-label">转账重试间隔</text>
+          <text class="form-tip">单位分钟，用英文逗号分隔，例如 5,10,20,40,80</text>
+        </view>
+        <view class="input-box full">
+          <input type="text" value="{{form.transfer_backoff_minutes}}" data-key="transfer_backoff_minutes" bindinput="onInput" />
+        </view>
+      </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">转账查询超时</text>
+          <text class="form-tip">超过该时间仍无结果时进入后续处理</text>
+        </view>
+        <view class="input-box">
+          <input type="number" value="{{form.transfer_query_timeout_minutes}}" data-key="transfer_query_timeout_minutes" bindinput="onInput" />
+          <text class="unit">分钟</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-spacer"></view>
+  </view>
+
+  <view wx:if="{{hasPermission}}" class="footer">
+    <button class="save-btn {{saving ? 'disabled' : ''}}" disabled="{{saving || pageLoading}}" bindtap="confirmSave">
+      {{saving ? '保存中...' : '保存配置'}}
+    </button>
+  </view>
+</view>

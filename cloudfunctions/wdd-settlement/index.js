@@ -5,6 +5,24 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const ERROR_CODES = {
+  TASK_ALREADY_ACCEPTED: 'TASK_ALREADY_ACCEPTED'
+}
+
+function calcRecoveredCreditScore(score) {
+  const currentScore = typeof score === 'number' ? score : 100
+  return Math.min(Math.max(currentScore, 0) + 5, 100)
+}
+
+function taskAlreadyAcceptedResponse(needId) {
+  return {
+    code: -1,
+    errorCode: ERROR_CODES.TASK_ALREADY_ACCEPTED,
+    message: '该任务已被接受，无法取消',
+    data: { needId }
+  }
+}
+
 // 主入口
 exports.main = async (event, context) => {
   const { action } = event
@@ -123,19 +141,19 @@ async function completeTask(event, OPENID) {
       }
     })
 
-    // 4. 获取求助者用户信息
-    const seekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
-    const seeker = seekerRes.data
+    // 4. 余额支付后续会更新求助者钱包，事务内需要先读取用户记录
+    await transaction.collection('wdd-users').doc(need.user_id).get()
 
     // 5. 获取帮助者用户信息
     const takerUserRes = await transaction.collection('wdd-users').doc(taker.taker_id).get()
     const takerUser = takerUserRes.data
 
-    // 6. 帮助者余额增加（扣除平台抽成后）
+    // 6. 帮助者余额增加（扣除平台抽成后），正常完成任务恢复信誉分
     await transaction.collection('wdd-users').doc(takerUser._id).update({
       data: {
         balance: _.inc(takerIncome),
         total_earned: _.inc(takerIncome),
+        credit_score: calcRecoveredCreditScore(takerUser.credit_score),
         update_time: new Date()
       }
     })
@@ -237,7 +255,7 @@ async function cancelTask(event, OPENID) {
   // 检查任务状态
   if (need.status !== 'pending') {
     if (need.status === 'ongoing') {
-      return { code: -1, message: '该任务已被接受，无法取消' }
+      return taskAlreadyAcceptedResponse(needId)
     }
     return { code: -1, message: '任务状态异常，无法取消' }
   }
@@ -254,6 +272,9 @@ async function cancelTask(event, OPENID) {
     const needInTx = needResTx.data
     if (!needInTx || needInTx.status !== 'pending') {
       await transaction.rollback()
+      if (needInTx && needInTx.status === 'ongoing') {
+        return taskAlreadyAcceptedResponse(needId)
+      }
       return { code: -1, message: '任务状态异常，无法取消' }
     }
 

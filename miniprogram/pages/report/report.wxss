@@ -421,7 +421,7 @@ page {
   margin-top: 36rpx;
   margin-bottom: 40rpx;
   height: 100rpx;
-  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
+  background: var(--sky-primary);
   color: #fff;
   font-size: 32rpx;
   font-weight: 400;
@@ -526,101 +526,6 @@ page {
 
 .back-btn::after {
   border: none;
-}
-
-/* ============================================
-   确认弹窗
-   ============================================ */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.25s, visibility 0.25s;
-}
-
-.modal.show {
-  opacity: 1;
-  visibility: visible;
-}
-
-.modal-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.modal-content {
-  position: relative;
-  background: #fff;
-  border-radius: var(--radius-md);
-  width: 82%;
-  max-width: 600rpx;
-  padding: 44rpx 36rpx 32rpx;
-  z-index: 1;
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-}
-
-.modal-icon {
-  font-size: 52rpx;
-  margin-bottom: 16rpx;
-}
-
-.modal-title {
-  font-size: 34rpx;
-  font-weight: 400;
-  color: var(--text-primary);
-  margin-bottom: 20rpx;
-}
-
-.modal-body {
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  line-height: 1.7;
-  margin-bottom: 32rpx;
-  text-align: left;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 20rpx;
-}
-
-.modal-btn {
-  flex: 1;
-  height: 80rpx;
-  border-radius: 40rpx;
-  font-size: 28rpx;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.modal-btn:active {
-  transform: scale(0.96);
-}
-
-.modal-btn.cancel {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-}
-
-.modal-btn.confirm {
-  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 50%, var(--sky-soft) 100%);
-  color: #fff;
 }
 
 /* ============================================

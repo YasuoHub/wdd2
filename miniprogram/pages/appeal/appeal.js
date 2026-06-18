@@ -28,7 +28,6 @@ Page({
     images: [],
     wordCount: 0,
     isSubmitting: false,
-    showConfirmModal: false,
     isSubmitted: false,
     appealId: '',
     canCancel: true,
@@ -152,16 +151,22 @@ Page({
     if (reason.length < 5) { wx.showToast({ title: '申诉理由至少5个字', icon: 'none' }); return }
     if (images.length === 0) { wx.showToast({ title: '请上传至少1张证据图片', icon: 'none' }); return }
     if (mode === 'initiate') {
-      this.setData({ showConfirmModal: true })
+      wx.showModal({
+        title: '确认提交申诉',
+        content: '提交申诉后，任务将进入客服评审状态，平台将依据证据进行仲裁处理。请如实填写理由并上传证据，您可在客服处理前随时撤销本次申诉，撤销后任务将恢复正常流程。',
+        confirmText: '确认提交',
+        success: (res) => {
+          if (res.confirm) {
+            this.submitAppeal()
+          }
+        }
+      })
     } else {
       this.submitAppeal()
     }
   },
 
-  hideConfirm() { this.setData({ showConfirmModal: false }) },
-
   async submitAppeal() {
-    this.hideConfirm()
     const { needId, selectedTypeValue, selectedTypeLabel, reason, images, mode } = this.data
     this.setData({ isSubmitting: true })
     wx.showLoading({ title: '提交中...' })

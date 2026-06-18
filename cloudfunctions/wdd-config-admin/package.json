@@ -1,0 +1,9 @@
+{
+  "name": "wdd-config-admin",
+  "version": "1.0.0",
+  "description": "超级管理员管理平台配置",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

@@ -11,9 +11,9 @@
 
   <scroll-view class="task-scroll" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMore">
     <empty
-      wx:if="{{needs.length === 0}}"
+      wx:if="{{needs.length === 0 && !loading && loaded}}"
       type="normal"
-      icon="notebook-pen"
+      icon="send"
       title="暂无{{filterText}}任务"
       desc="去发布页发布你的第一个求助吧"
       showBtn="true"
@@ -22,7 +22,9 @@
       bind:btnTap="goToPublish"
     ></empty>
 
-    <view wx:else class="card-list">
+    <view wx:elif="{{loading && needs.length === 0}}" class="load-more">加载中...</view>
+
+    <view wx:elif="{{needs.length > 0}}" class="card-list">
       <view
         wx:for="{{needs}}"
         wx:key="_id"
@@ -33,41 +35,26 @@
         <view class="amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayAmount)}}</text></view>
 
         <view class="card-main">
-          <view class="status-row">
+          <view class="tag-row">
             <view class="status-badge {{item.status}}">{{item.statusText}}</view>
+            <view class="type-tag">{{item.typeName}}</view>
           </view>
 
           <view class="title">{{item.description}}</view>
 
-          <view class="type-row">
-            <view class="type-tag">{{item.typeName}}</view>
-            <text class="publish-time">发布时间</text>
-            <text class="publish-time">{{item.publishTime}}</text>
+          <view class="info-row">
+            <wdd-icon name="calendar-days" color="#5F6975" size="24"></wdd-icon>
+            <text class="info-text">发布时间：{{item.publishTime}}</text>
           </view>
 
           <view class="info-row">
             <wdd-icon name="map-pin" color="#5F6975" size="24"></wdd-icon>
-            <text class="info-text">{{item.locationName}}</text>
+            <text class="info-text">地点：{{item.locationName}}</text>
           </view>
 
-          <view wx:if="{{item.status === 'ongoing'}}" class="info-row">
-            <wdd-icon name="user-round" color="#5F6975" size="24"></wdd-icon>
-            <text class="info-text">帮助者：{{item.takerNickname || '当地帮助者'}} · 接单 {{item.takerTimeText}}</text>
-          </view>
-
-          <view wx:elif="{{item.status === 'pending'}}" class="info-row">
+          <view class="info-row">
             <wdd-icon name="clock-3" color="#5F6975" size="24"></wdd-icon>
-            <text class="info-text">剩余 {{item.remainTime || '等待匹配'}}</text>
-          </view>
-
-          <view wx:elif="{{item.status === 'completed'}}" class="info-row success-row">
-            <wdd-icon name="circle-check" color="#25A94F" size="24"></wdd-icon>
-            <text class="info-text">已完成 · 完成时间 {{item.endTimeText}}</text>
-          </view>
-
-          <view wx:elif="{{item.status === 'cancelled'}}" class="info-row">
-            <wdd-icon name="clock-3" color="#5F6975" size="24"></wdd-icon>
-            <text class="info-text">已取消 · 取消时间 {{item.endTimeText}}</text>
+            <text class="info-text">{{item.timeLabel}}：{{item.timeValue}}</text>
           </view>
 
           <view wx:if="{{item.status === 'breaking'}}" class="notice warning">
@@ -96,7 +83,9 @@
         </view>
       </view>
 
-      <view wx:if="{{hasMore}}" class="load-more">加载更多...</view>
+      <view wx:if="{{loading}}" class="load-more">加载中...</view>
+      <view wx:elif="{{hasMore}}" class="load-more">上拉加载更多</view>
+      <view wx:else class="no-more">没有更多了</view>
     </view>
   </scroll-view>
 </view>

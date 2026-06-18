@@ -1,3 +1,4 @@
+<page-meta page-style="{{showArbitrateModal ? 'overflow: hidden;' : ''}}" />
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page {{ticket && ticket.status === 'pending' ? 'has-action-bar' : ''}}">
   <view class="wdd-page-bg"></view>
@@ -144,11 +145,8 @@
   </block>
 
   <!-- 裁决弹窗 -->
-  <view class="modal {{showArbitrateModal ? 'show' : ''}}" wx:if="{{showArbitrateModal}}">
-    <view class="modal-mask" bindtap="hideArbitrate"></view>
-    <view class="modal-content">
-      <view class="modal-title">处理工单</view>
-
+  <bottom-sheet show="{{showArbitrateModal}}" title="处理工单" maxHeight="82vh" bind:close="hideArbitrate">
+    <view class="arbitrate-sheet">
       <!-- 任务流转结果 -->
       <view class="form-row">
         <text class="form-label">处理结果</text>
@@ -204,5 +202,5 @@
         <button class="modal-btn confirm" bindtap="submitArbitrate">确认</button>
       </view>
     </view>
-  </view>
+  </bottom-sheet>
 </view>

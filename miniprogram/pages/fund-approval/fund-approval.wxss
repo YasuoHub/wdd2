@@ -131,3 +131,27 @@ page { background: var(--bg-secondary); }
 .modal-btn.cancel { background: var(--bg-secondary); color: var(--text-primary); }
 .modal-btn.confirm { background: var(--brand-primary); color: #fff; }
 @import "../../styles/wdd-polish.wxss";
+
+/* 资金审批页顶部 tab 对齐工单列表的胶囊式样式 */
+.tab-bar {
+  margin: 18rpx 24rpx 6rpx;
+  height: 76rpx;
+  padding: 6rpx;
+  border-radius: 22rpx;
+  border: 1rpx solid var(--border-light);
+  box-shadow: var(--shadow-card-ios);
+}
+
+.tab-item {
+  border-radius: 16rpx;
+  font-size: 28rpx;
+}
+
+.tab-item.active {
+  background: var(--brand-primary-08);
+  color: var(--sky-deep);
+}
+
+.tab-indicator {
+  display: none;
+}

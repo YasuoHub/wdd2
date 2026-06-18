@@ -15,12 +15,106 @@ const MOCK_PAYMENT = false
 // 微信支付商户号（10位数字），通过环境变量注入
 const SUB_MCH_ID = process.env.WECHATPAY_MCH_ID || ''
 
+const ALLOWED_NEED_TYPES = new Set(['weather', 'traffic', 'shop', 'parking', 'queue', 'other'])
+const ALLOWED_EXPIRE_MINUTES = new Set([30, 60, 120, 240, 720, 1440])
+const MIN_DESCRIPTION_LENGTH = 5
+const MAX_DESCRIPTION_LENGTH = 500
+const MAX_IMAGE_COUNT = 3
+const MAX_IMAGE_URL_LENGTH = 500
+const MAX_LOCATION_NAME_LENGTH = 120
+
 // 金额格式化（最多2位小数，尾随零省略）
 function formatAmount(n) {
   const num = Math.round(Number(n) * 100) / 100
   if (num % 1 === 0) return String(num)
   if (num * 10 % 1 === 0) return num.toFixed(1)
   return num.toFixed(2)
+}
+
+function normalizeMoneyAmount(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num) || num <= 0) {
+    return { valid: false, message: '金额必须大于0' }
+  }
+
+  const cents = Math.round(num * 100)
+  if (Math.abs(num * 100 - cents) > 1e-8) {
+    return { valid: false, message: '金额最多支持两位小数' }
+  }
+
+  return { valid: true, amount: cents / 100 }
+}
+
+function normalizeOrderDescription(description, fallback = '发布求助') {
+  return String(description || fallback).trim().slice(0, 80) || fallback
+}
+
+function validatePublishMetadata(metadata, rules) {
+  const data = metadata && typeof metadata === 'object' ? metadata : {}
+  const type = String(data.type || '').trim()
+  if (!ALLOWED_NEED_TYPES.has(type)) {
+    return { valid: false, message: '任务类型不合法' }
+  }
+
+  const description = String(data.description || '').trim()
+  if (description.length < MIN_DESCRIPTION_LENGTH) {
+    return { valid: false, message: `描述至少${MIN_DESCRIPTION_LENGTH}个字` }
+  }
+  if (description.length > MAX_DESCRIPTION_LENGTH) {
+    return { valid: false, message: `描述最多${MAX_DESCRIPTION_LENGTH}个字` }
+  }
+
+  const expireMinutes = Number(data.expireMinutes || rules.DEFAULT_EXPIRE_MINUTES)
+  if (!Number.isInteger(expireMinutes) || !ALLOWED_EXPIRE_MINUTES.has(expireMinutes)) {
+    return { valid: false, message: '过期时间不合法' }
+  }
+
+  const loc = data.location || {}
+  const coordinates = Array.isArray(loc.coordinates) ? loc.coordinates.map(Number) : []
+  const longitude = coordinates[0]
+  const latitude = coordinates[1]
+  if (
+    coordinates.length !== 2 ||
+    !Number.isFinite(longitude) ||
+    !Number.isFinite(latitude) ||
+    longitude < -180 ||
+    longitude > 180 ||
+    latitude < -90 ||
+    latitude > 90
+  ) {
+    return { valid: false, message: '经纬度范围不合法' }
+  }
+
+  const locationName = String(loc.name || '').trim()
+  if (!locationName || locationName.length > MAX_LOCATION_NAME_LENGTH) {
+    return { valid: false, message: '位置信息不完整或过长' }
+  }
+
+  const images = Array.isArray(data.images) ? data.images : []
+  if (images.length > MAX_IMAGE_COUNT) {
+    return { valid: false, message: `图片最多上传${MAX_IMAGE_COUNT}张` }
+  }
+  const safeImages = []
+  for (const image of images) {
+    if (typeof image !== 'string' || image.length > MAX_IMAGE_URL_LENGTH || !image.startsWith('cloud://')) {
+      return { valid: false, message: '图片来源不合法' }
+    }
+    safeImages.push(image)
+  }
+
+  return {
+    valid: true,
+    metadata: {
+      type,
+      description,
+      expireMinutes,
+      location: {
+        name: locationName,
+        coordinates: [longitude, latitude]
+      },
+      images: safeImages
+    }
+  }
 }
 
 // 主入口
@@ -98,17 +192,23 @@ async function handlePayCallback(event) {
 
 // 创建支付订单
 async function createOrder(event, OPENID) {
-  const { amount, description, metadata } = event
+  const { amount: rawAmount, description, metadata } = event
 
   const rules = await loadFromDb()
 
-  // 参数校验
-  if (!amount || amount <= 0) {
-    return { code: -1, message: '支付金额必须大于0' }
+  const amountCheck = normalizeMoneyAmount(rawAmount)
+  if (!amountCheck.valid) {
+    return { code: -1, message: amountCheck.message }
   }
+  const amount = amountCheck.amount
   if (amount < rules.MIN_REWARD_AMOUNT || amount > rules.MAX_REWARD_AMOUNT) {
     return { code: -1, message: `支付金额必须在${rules.MIN_REWARD_AMOUNT}-${rules.MAX_REWARD_AMOUNT}元之间` }
   }
+  const metadataCheck = validatePublishMetadata(metadata, rules)
+  if (!metadataCheck.valid) {
+    return { code: -1, message: metadataCheck.message }
+  }
+  const orderDescription = normalizeOrderDescription(description, metadataCheck.metadata.description)
 
   // 获取用户信息
   const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
@@ -133,9 +233,9 @@ async function createOrder(event, OPENID) {
       user_id: user._id,
       openid: OPENID,
       amount: amount,
-      description: description || '发布求助',
+      description: orderDescription,
       status: 'pending', // pending: 待支付, paid: 已支付, cancelled: 已取消, refunded: 已退款
-      metadata: metadata || {},
+      metadata: metadataCheck.metadata,
       create_time: now,
       expire_time: expireTime,
       update_time: now,
@@ -153,7 +253,7 @@ async function createOrder(event, OPENID) {
     paymentData = generateMockPayment(orderId)
   } else {
     // 真实支付：调用微信支付统一下单API
-    const realPayRes = await createRealPayment(orderId, amount, description, OPENID)
+    const realPayRes = await createRealPayment(orderId, amount, orderDescription, OPENID)
     paymentData = realPayRes.payment
     // 记录微信支付交易号（createOrder 不在事务中，直接更新即可）
     if (realPayRes.transactionId) {
@@ -222,7 +322,7 @@ async function confirmPayment(event, OPENID) {
       await transaction.rollback()
       return { code: -1, message: '订单不存在' }
     }
-    const metadata = orderInTx.metadata || {}
+    const rawMetadata = orderInTx.metadata || {}
     if (orderInTx.openid !== OPENID) {
       await transaction.rollback()
       return { code: -1, message: '订单归属错误' }
@@ -251,16 +351,15 @@ async function confirmPayment(event, OPENID) {
 
     // 2. 计算过期时间
     const rules = await loadFromDb()
-    const expireMinutes = metadata.expireMinutes || rules.DEFAULT_EXPIRE_MINUTES
+    const metadataCheck = validatePublishMetadata(rawMetadata, rules)
+    if (!metadataCheck.valid) {
+      throw new Error(metadataCheck.message)
+    }
+    const metadata = metadataCheck.metadata
+    const expireMinutes = metadata.expireMinutes
     const expireTime = new Date(Date.now() + expireMinutes * 60 * 1000)
 
-    // location 强校验：缺少经纬度或名称直接拒绝
     const loc = metadata.location
-    if (!loc || !Array.isArray(loc.coordinates) || loc.coordinates.length !== 2 ||
-        typeof loc.coordinates[0] !== 'number' || typeof loc.coordinates[1] !== 'number' ||
-        !loc.name || typeof loc.name !== 'string') {
-      throw new Error('LOCATION_REQUIRED')
-    }
 
     // 3. 创建任务
     const taskNo = generateTaskNo()
@@ -345,11 +444,13 @@ async function confirmPayment(event, OPENID) {
 
 // 余额支付：一步完成冻结余额 + 创建订单 + 创建任务
 async function payByBalance(event, OPENID) {
-  const { amount, description, metadata } = event
+  const { amount: rawAmount, description, metadata } = event
 
-  if (!amount || amount <= 0) {
-    return { code: -1, message: '金额必须大于0' }
+  const amountCheck = normalizeMoneyAmount(rawAmount)
+  if (!amountCheck.valid) {
+    return { code: -1, message: amountCheck.message }
   }
+  const amount = amountCheck.amount
 
   const rules = await loadFromDb()
   const minAmount = rules.MIN_REWARD_AMOUNT ?? 1
@@ -361,6 +462,12 @@ async function payByBalance(event, OPENID) {
   if (amount > maxAmount) {
     return { code: -1, message: `悬赏金额最高¥${maxAmount}` }
   }
+  const metadataCheck = validatePublishMetadata(metadata, rules)
+  if (!metadataCheck.valid) {
+    return { code: -1, message: metadataCheck.message }
+  }
+  const safeMetadata = metadataCheck.metadata
+  const orderDescription = normalizeOrderDescription(description, safeMetadata.description)
 
   // 查询用户
   const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
@@ -378,16 +485,10 @@ async function payByBalance(event, OPENID) {
     return { code: -1, message: `可用余额不足（当前可用 ¥${formatAmount(availableBalance)}）` }
   }
 
-  // location 强校验
-  const loc = (metadata && metadata.location) || {}
-  if (!loc || !Array.isArray(loc.coordinates) || loc.coordinates.length !== 2 ||
-      typeof loc.coordinates[0] !== 'number' || typeof loc.coordinates[1] !== 'number' ||
-      !loc.name || typeof loc.name !== 'string') {
-    return { code: -1, message: '位置信息不完整' }
-  }
+  const loc = safeMetadata.location
 
   const orderId = generateOrderNo()
-  const expireMinutes = (metadata && metadata.expireMinutes) || rules.DEFAULT_EXPIRE_MINUTES
+  const expireMinutes = safeMetadata.expireMinutes
   const expireTime = new Date(Date.now() + expireMinutes * 60 * 1000)
 
   const transaction = await db.startTransaction()
@@ -420,7 +521,7 @@ async function payByBalance(event, OPENID) {
         amount: 0,
         balance: currentBalance,
         frozen_balance: currentFrozen + amount,
-        description: `余额支付冻结 ¥${formatAmount(amount)}：${description || '求助'}`,
+        description: `余额支付冻结 ¥${formatAmount(amount)}：${orderDescription}`,
         create_time: new Date()
       }
     })
@@ -432,11 +533,11 @@ async function payByBalance(event, OPENID) {
         user_id: user._id,
         openid: OPENID,
         amount: amount,
-        description: description || '发布求助',
+        description: orderDescription,
         status: 'paid',
         payment_method: 'balance',
         metadata: {
-          ...(metadata || {}),
+          ...safeMetadata,
           need_id: null
         },
         out_trade_no: orderId,
@@ -466,9 +567,9 @@ async function payByBalance(event, OPENID) {
           coordinates: loc.coordinates
         },
         location_name: loc.name,
-        type: (metadata && metadata.type) || '',
-        description: (metadata && metadata.description) || '',
-        images: (metadata && metadata.images) || [],
+        type: safeMetadata.type,
+        description: safeMetadata.description,
+        images: safeMetadata.images,
         points: 0,
         reward_amount: amount,
         platform_fee: 0,
@@ -1017,8 +1118,13 @@ async function verifyRealPayment(order) {
 
     const tradeState = res.tradeState || res.trade_state
     const totalFee = typeof res.totalFee === 'number' ? res.totalFee : res.total_fee
-    const payerOpenid = res.openid
+    const payerOpenids = [
+      res.subOpenid,
+      res.sub_openid,
+      res.openid
+    ].filter(Boolean)
     const transactionId = res.transactionId || res.transaction_id
+    const payerMatchesOrder = payerOpenids.includes(order.openid)
 
     if (tradeState && tradeState !== 'SUCCESS') {
       return { success: false, message: `微信支付状态为 ${tradeState}` }
@@ -1028,7 +1134,14 @@ async function verifyRealPayment(order) {
       return { success: false, message: '微信支付金额与订单金额不一致' }
     }
 
-    if (payerOpenid && payerOpenid !== order.openid) {
+    if (payerOpenids.length > 0 && !payerMatchesOrder) {
+      console.warn('微信支付用户与订单用户不一致:', {
+        orderId: order._id,
+        outTradeNo: order.out_trade_no,
+        orderOpenid: order.openid,
+        payOpenid: res.openid || null,
+        paySubOpenid: res.subOpenid || res.sub_openid || null
+      })
       return { success: false, message: '微信支付用户与订单用户不一致' }
     }
 

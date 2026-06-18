@@ -582,9 +582,8 @@
   font-size: 34rpx;
   line-height: 1.35;
   font-weight: 700;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .need-card-foot {

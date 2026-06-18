@@ -2,14 +2,30 @@
 const app = getApp()
 const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 
+function toAmount(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
+function minPositive(values) {
+  return toAmount(Math.max(0, Math.min(...values.map(value => Number(value) || 0))))
+}
+
 Page({
   data: {
     // 用户余额
     balance: 0,
+    frozenBalance: 0,
     availableBalance: 0,
+    balanceLoaded: false,
 
     // 提现金额
     withdrawAmount: '',
+    presetAmount: 0,
+    withdrawLimit: 0,
+    balanceDisplayAmount: 0,
+    balanceLabel: '本次可提现上限',
+    balanceTip: '',
+    limitTip: '',
 
     // 计算值
     withdrawFee: '0.00',
@@ -33,18 +49,28 @@ Page({
 
     // 关联的提现申请
     applicationId: '',
-    application: null
+    application: null,
+    entryType: 'instant'
   },
 
-  onLoad(options) {
+  async onLoad(options) {
+    await this.applyPlatformConfig()
+
     if (options && options.applicationId) {
-      this.setData({ applicationId: options.applicationId })
+      this.setData({
+        applicationId: options.applicationId,
+        entryType: 'approval'
+      })
       this.loadApplication(options.applicationId)
     } else if (options && options.amount) {
       // 即时提现：预设金额，不锁定
       const amount = parseFloat(options.amount)
       if (amount > 0) {
-        this.setData({ withdrawAmount: String(amount) })
+        this.setData({
+          presetAmount: amount,
+          withdrawAmount: String(amount)
+        })
+        this.syncWithdrawContext()
         this.calculateFee()
         this.checkCanSubmit()
       }
@@ -52,8 +78,25 @@ Page({
     this.loadBalance()
   },
 
-  onShow() {
+  async onShow() {
+    await this.applyPlatformConfig()
     this.loadBalance()
+  },
+
+  async applyPlatformConfig() {
+    if (app && typeof app.loadPlatformConfig === 'function') {
+      await app.loadPlatformConfig()
+    }
+    this.setData({
+      withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
+      withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
+      withdrawMinPerRequest: PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST,
+      withdrawMaxPerRequest: PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST,
+      withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
+      withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+      withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES
+    })
+    this.syncWithdrawContext()
   },
 
   // 加载关联的提现申请
@@ -85,6 +128,7 @@ Page({
             application: app,
             withdrawAmount: String(app.amount)
           })
+          this.syncWithdrawContext()
           this.calculateFee()
           this.checkCanSubmit()
         }
@@ -107,12 +151,73 @@ Page({
         const balance = userInfo.balance || 0
         const frozenBalance = userInfo.frozen_balance || 0
         const availableBalance = balance - frozenBalance
-        this.setData({ balance, availableBalance })
+        this.setData({
+          balance,
+          frozenBalance,
+          availableBalance,
+          balanceLoaded: true
+        })
+        this.syncWithdrawContext()
         this.checkCanSubmit()
       }
     } catch (err) {
       console.error('加载余额失败:', err)
     }
+  },
+
+  syncWithdrawContext() {
+    const application = this.data.application
+    const balance = toAmount(this.data.balance)
+    const availableBalance = toAmount(this.data.availableBalance)
+    const threshold = toAmount(this.data.withdrawApprovalThreshold)
+    const maxPerRequest = toAmount(this.data.withdrawMaxPerRequest)
+    const currentAmount = parseFloat(this.data.withdrawAmount) || 0
+
+    if (application) {
+      const approvedAmount = toAmount(application.amount)
+      const withdrawLimit = this.data.balanceLoaded
+        ? minPositive([approvedAmount, balance])
+        : approvedAmount
+      const limitText = MoneyUtils.formatAmount(withdrawLimit)
+      const approvedText = MoneyUtils.formatAmount(approvedAmount)
+      const balanceText = MoneyUtils.formatAmount(balance)
+      const amountText = withdrawLimit > 0 ? String(limitText) : ''
+      const isBalanceLower = this.data.balanceLoaded && balance + 0.001 < approvedAmount
+      const balanceTip = isBalanceLower
+        ? `审批通过金额 ¥${approvedText}，当前账户余额 ¥${balanceText}，本次按当前余额提现`
+        : `审批通过金额 ¥${approvedText}，本次提现金额已按申请单锁定`
+
+      this.setData({
+        withdrawLimit,
+        balanceDisplayAmount: withdrawLimit,
+        balanceLabel: '本次可提现金额',
+        balanceTip,
+        limitTip: isBalanceLower ? `当前余额低于审批金额，最多可提现 ¥${limitText}` : '',
+        withdrawAmount: amountText
+      })
+      this.calculateFee()
+      return
+    }
+
+    const withdrawLimit = minPositive([availableBalance, maxPerRequest, threshold])
+    let nextAmount = currentAmount
+    if (nextAmount > withdrawLimit) {
+      nextAmount = withdrawLimit
+    }
+    const amountText = nextAmount > 0 ? MoneyUtils.formatAmount(nextAmount) : this.data.withdrawAmount
+    const thresholdText = MoneyUtils.formatAmount(threshold)
+    const availableText = MoneyUtils.formatAmount(availableBalance)
+    const maxText = MoneyUtils.formatAmount(withdrawLimit)
+
+    this.setData({
+      withdrawLimit,
+      balanceDisplayAmount: withdrawLimit,
+      balanceLabel: '本次可提现上限',
+      balanceTip: `账户可用余额 ¥${availableText}，即时提现单笔不超过审批阈值 ¥${thresholdText}`,
+      limitTip: `本次最多可提现 ¥${maxText}，超过需先提交审批`,
+      withdrawAmount: amountText
+    })
+    this.calculateFee()
   },
 
   // 输入提现金额
@@ -133,26 +238,14 @@ Page({
       value = parts[0] + '.' + parts[1].slice(0, 2)
     }
 
-    // 限制最大金额（基于可用余额和平台限额）
+    // 限制最大金额（基于当前入口的提现上限）
     const numValue = parseFloat(value) || 0
-    const maxAvailable = Math.min(this.data.availableBalance, PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    const maxAvailable = this.data.withdrawLimit
     if (numValue > maxAvailable) {
-      value = String(maxAvailable)
+      value = MoneyUtils.formatAmount(maxAvailable)
     }
 
     this.setData({ withdrawAmount: value })
-    this.calculateFee()
-    this.checkCanSubmit()
-  },
-
-  // 全部提现
-  withdrawAll() {
-    const maxAmount = Math.min(
-      this.data.availableBalance,
-      PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST
-    )
-    const amount = MoneyUtils.formatAmount(maxAmount)
-    this.setData({ withdrawAmount: amount })
     this.calculateFee()
     this.checkCanSubmit()
   },
@@ -172,11 +265,20 @@ Page({
   // 检查是否可以提交
   checkCanSubmit() {
     const amount = parseFloat(this.data.withdrawAmount) || 0
-    const check = MoneyUtils.checkWithdrawAmount(amount, this.data.availableBalance)
+    const balanceForCheck = this.data.application ? this.data.balance : this.data.availableBalance
+    const check = MoneyUtils.checkWithdrawAmount(amount, balanceForCheck)
+    const limit = toAmount(this.data.withdrawLimit)
+    let valid = check.valid
+    let reason = check.reason
+
+    if (valid && limit > 0 && amount > limit) {
+      valid = false
+      reason = `提现金额不能超过本次可提现上限 ¥${MoneyUtils.formatAmount(limit)}`
+    }
 
     this.setData({
-      canSubmit: check.valid,
-      errorTip: check.valid ? '' : check.reason
+      canSubmit: valid,
+      errorTip: valid ? '' : reason
     })
   },
 

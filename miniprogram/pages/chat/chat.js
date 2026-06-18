@@ -41,9 +41,6 @@ Page({
     scrollTop: 0,          // 记录滚动位置
     scrollViewHeight: 0,   // scroll-view 高度
 
-    // 弹窗
-    showCompleteModal: false,
-
     // 任务卡片更多菜单
     showTaskMenu: false,
 
@@ -191,10 +188,12 @@ Page({
   },
 
   onShow() {
+    this.updateNavigationTitle(this.data.otherUser, this.data.isCustomerServiceMode)
+
     // 页面显示时确保监听或轮询已启动
     const hasActiveListener = this.data.watchListener || this.data.messagePollingInterval
     // 使用 currentNeedId 而不是 task._id，确保状态一致性
-    if (this.currentNeedId && !hasActiveListener) {
+    if (this.currentNeedId && this._messagesLoaded && !hasActiveListener) {
       this.startMessageWatch().catch(err => {
         console.error('启动消息监听失败:', err)
         this.startMessagePolling()
@@ -240,6 +239,9 @@ Page({
   },
 
   updateNavigationTitle(otherUser, isCustomerServiceMode = this.data.isCustomerServiceMode) {
+    const pages = getCurrentPages()
+    if (pages[pages.length - 1] !== this) return
+
     const title = isCustomerServiceMode
       ? '查看聊天记录'
       : (this.getUserDisplayName(otherUser) || '聊天')
@@ -543,6 +545,7 @@ Page({
         const otherUser = this.buildOtherUser(taskData, isSeeker)
         const task = {
           _id: taskData._id,
+          taskNo: taskData.task_no,
           type: typeInfo.type,
           typeName: typeInfo.name,
           typeIcon: typeInfo.icon,
@@ -1228,13 +1231,13 @@ Page({
 
   buildTrustedPhotoContext(preparedContext) {
     const capturedAt = new Date()
-    const needId = this.currentNeedId || ''
+    const taskNo = this.data.task.taskNo || ''
 
     return {
       ...preparedContext,
       capturedAt: capturedAt.toISOString(),
       displayTime: this.formatWatermarkDateTime(capturedAt),
-      needShortId: needId ? String(needId).slice(-6).toUpperCase() : '',
+      needShortId: taskNo ? String(taskNo).toUpperCase() : '',
       nonce: Math.random().toString(36).slice(2, 10)
     }
   },
@@ -1314,7 +1317,9 @@ Page({
     ctx.setFillStyle('rgba(255, 255, 255, 0.78)')
     ctx.setFontSize(Math.max(18, Math.round(width * 0.024)))
     const codeText = trustedContext.needShortId ? `任务 ${trustedContext.needShortId}` : '可信现场照'
-    ctx.fillText(codeText, width - padding - Math.min(220, width * 0.32), bottom + padding + titleSize)
+    ctx.setTextAlign('right')
+    ctx.fillText(codeText, width - padding, bottom + padding + titleSize)
+    ctx.setTextAlign('left')
 
     const watermarkedPath = await new Promise((resolve, reject) => {
       ctx.draw(false, () => {
@@ -1543,20 +1548,23 @@ Page({
 
   // 显示完成任务确认
   showCompleteConfirm() {
-    this.setData({ showCompleteModal: true })
+    wx.showModal({
+      title: '确认完成任务',
+      content: '确认已获得所需信息？确认后任务将完成，悬赏金额将结算给帮助者。',
+      confirmText: '确认',
+      success: (res) => {
+        if (res.confirm) {
+          this.completeTask()
+        }
+      }
+    })
   },
 
   // 从任务菜单点击完成：先关菜单，再开确认弹窗
   onCompleteMenuTap() {
-    this.setData({
-      showTaskMenu: false,
-      showCompleteModal: true
+    this.setData({ showTaskMenu: false }, () => {
+      this.showCompleteConfirm()
     })
-  },
-
-  // 隐藏完成任务确认
-  hideCompleteModal() {
-    this.setData({ showCompleteModal: false })
   },
 
   // 切换任务卡片更多菜单
@@ -1601,8 +1609,6 @@ Page({
 
   // 完成任务
   async completeTask() {
-    this.hideCompleteModal()
-
     // 关键：使用 currentNeedId 确保完成正确的任务
     const currentNeedId = this.currentNeedId
     if (!currentNeedId) {

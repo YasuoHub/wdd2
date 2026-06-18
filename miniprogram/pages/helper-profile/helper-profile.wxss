@@ -17,6 +17,21 @@
   z-index: 100;
 }
 
+.page-loading-card {
+  width: calc(100% - 64rpx);
+  margin: 24rpx 32rpx;
+  padding: 64rpx 32rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 2rpx solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
 .loading-spinner {
   width: 64rpx;
   height: 64rpx;

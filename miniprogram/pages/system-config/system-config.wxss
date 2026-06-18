@@ -1,0 +1,236 @@
+page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f5f7fa 0%, #fafbfc 46%, #f3f8fc 100%);
+}
+
+.container {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
+}
+
+.content {
+  padding: 24rpx 32rpx 0;
+}
+
+.page-loading,
+.permission-empty {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18rpx;
+  padding: 60rpx;
+  box-sizing: border-box;
+}
+
+.loading-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border: 4rpx solid var(--border-light);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text,
+.empty-desc {
+  font-size: 26rpx;
+  line-height: 38rpx;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.empty-title {
+  font-size: 34rpx;
+  line-height: 44rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.notice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 22rpx 24rpx;
+  margin-bottom: 24rpx;
+  background: rgba(255, 248, 235, 0.96);
+  border: 1rpx solid rgba(217, 106, 34, 0.18);
+  border-radius: var(--radius-md);
+  color: #8a5a20;
+  font-size: 25rpx;
+  line-height: 38rpx;
+}
+
+.notice-card text {
+  flex: 1;
+}
+
+.section {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: var(--radius-lg);
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--shadow-card);
+  border: 1rpx solid var(--brand-primary-10);
+  box-sizing: border-box;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 22rpx;
+  padding-bottom: 18rpx;
+  border-bottom: 1rpx solid var(--border-light);
+  font-size: 31rpx;
+  line-height: 42rpx;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid rgba(216, 226, 235, 0.58);
+}
+
+.form-row:last-child,
+.single-line-row:last-child,
+.textarea-row:last-child {
+  border-bottom: none;
+}
+
+.single-line-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid rgba(216, 226, 235, 0.58);
+}
+
+.label-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6rpx;
+  font-size: 28rpx;
+  line-height: 36rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-tip {
+  display: block;
+  font-size: 23rpx;
+  line-height: 32rpx;
+  color: var(--text-tertiary);
+}
+
+.input-box {
+  width: 220rpx;
+  min-height: 72rpx;
+  padding: 0 18rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: var(--bg-secondary);
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+
+.input-box.wide {
+  width: 300rpx;
+}
+
+.input-box.full {
+  width: 100%;
+  margin-top: 18rpx;
+}
+
+.input-box input {
+  flex: 1;
+  min-width: 0;
+  height: 72rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.unit {
+  flex-shrink: 0;
+  font-size: 23rpx;
+  color: var(--text-tertiary);
+}
+
+.textarea-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid rgba(216, 226, 235, 0.58);
+}
+
+.textarea-row textarea {
+  width: 100%;
+  height: 72rpx;
+  min-height: 72rpx;
+  max-height: 200rpx;
+  margin-top: 18rpx;
+  padding: 22rpx;
+  box-sizing: border-box;
+  background: var(--bg-secondary);
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 27rpx;
+  line-height: 40rpx;
+  color: var(--text-primary);
+  overflow-y: auto;
+}
+
+.textarea-row textarea.openid-textarea {
+  height: 72rpx;
+  max-height: 200rpx;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: 22rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -4rpx 24rpx var(--brand-primary-10);
+  border-top: 1rpx solid var(--border-light);
+  box-sizing: border-box;
+}
+
+.save-btn {
+  width: 100%;
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--sky-primary) 0%, var(--sky-light) 100%);
+  color: #fff;
+  font-size: 31rpx;
+  font-weight: 500;
+  box-shadow: var(--shadow-sky);
+}
+
+.save-btn.disabled {
+  opacity: 0.65;
+  box-shadow: none;
+}
+
+.bottom-spacer {
+  height: 30rpx;
+}
+
+@import "../../styles/wdd-polish.wxss";

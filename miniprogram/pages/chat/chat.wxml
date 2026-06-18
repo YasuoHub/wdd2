@@ -242,18 +242,4 @@
     style="width: {{watermarkCanvasWidth}}px; height: {{watermarkCanvasHeight}}px;"
   ></canvas>
 
-  <!-- 完成任务确认弹窗 -->
-  <view class="modal {{showCompleteModal ? 'show' : ''}}" wx:if="{{showCompleteModal}}">
-    <view class="modal-mask" bindtap="hideCompleteModal"></view>
-    <view class="modal-content">
-      <view class="modal-title">确认完成任务</view>
-      <view class="modal-body">
-        <text>确认已获得所需信息？确认后任务将完成，悬赏金额将结算给帮助者。</text>
-      </view>
-      <view class="modal-footer">
-        <button class="modal-btn cancel" bindtap="hideCompleteModal">取消</button>
-        <button class="modal-btn confirm" bindtap="completeTask">确认</button>
-      </view>
-    </view>
-  </view>
 </view>

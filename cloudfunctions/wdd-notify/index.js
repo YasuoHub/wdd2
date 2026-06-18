@@ -11,6 +11,9 @@ const $ = db.command.aggregate
 
 // 消息列表会话可见周期：已完成 / 已取消任务在终态时间 + N 天内可见
 const MESSAGE_LIST_VISIBLE_DAYS = 30
+// 系统通知可见周期：超过 N 天自动折叠，不再进入常规通知列表
+const SYSTEM_NOTIFICATION_VISIBLE_DAYS = 30
+const SYSTEM_NOTIFICATION_PAGE_SIZE = 20
 
 // 判断会话是否应该出现在消息列表里
 // 规则：
@@ -51,6 +54,8 @@ exports.main = async (event, context) => {
     switch (action) {
       case 'getMessageList':
         return await getMessageList(OPENID)
+      case 'getSystemNotifications':
+        return await getSystemNotifications(event, OPENID)
       case 'markAsRead':
         return await markAsRead(event, OPENID)
       case 'markAllAsRead':
@@ -83,18 +88,24 @@ async function getMessageList(OPENID) {
   const chatData = await getChatSessions(userId)
   const chatSessions = chatData.sessions
 
-  // 2. 获取系统通知列表
-  const systemList = await getSystemNotifications(userId)
+  // 2. 获取系统通知首屏列表
+  const systemData = await querySystemNotifications(userId, {
+    skip: 0,
+    limit: SYSTEM_NOTIFICATION_PAGE_SIZE
+  })
 
   // 3. 计算未读数
   const chatUnread = chatSessions.reduce((sum, item) => sum + (item.unread || 0), 0)
-  const systemUnread = systemList.filter(item => !item.is_read).length
+  const systemUnread = systemData.unread
 
   return {
     code: 0,
     data: {
       chatList: chatSessions,
-      systemList: systemList,
+      systemList: systemData.list,
+      systemHasMore: systemData.hasMore,
+      systemHiddenCount: systemData.hiddenCount,
+      systemTotal: systemData.total,
       chatUnread,
       systemUnread,
       unreadCount: chatUnread + systemUnread,
@@ -263,16 +274,59 @@ async function getChatSessions(userId) {
 }
 
 // 获取系统通知列表
-async function getSystemNotifications(userId) {
-  const notifyRes = await db.collection('wdd-notifications')
-    .where({
-      user_id: userId
-    })
-    .orderBy('create_time', 'desc')
-    .limit(50)
-    .get()
+async function getSystemNotifications(event, OPENID) {
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
+  if (userRes.data.length === 0) {
+    return { code: -1, message: '用户不存在' }
+  }
 
-  return notifyRes.data
+  const userId = userRes.data[0]._id
+  const data = await querySystemNotifications(userId, {
+    skip: event.skip,
+    limit: event.limit
+  })
+
+  return {
+    code: 0,
+    data
+  }
+}
+
+// 查询 30 天内的系统通知，并返回分页和折叠状态
+async function querySystemNotifications(userId, options = {}) {
+  const skip = Math.max(0, Number(options.skip) || 0)
+  const limit = Math.min(Math.max(Number(options.limit) || SYSTEM_NOTIFICATION_PAGE_SIZE, 1), 50)
+  const visibleAfter = new Date(Date.now() - SYSTEM_NOTIFICATION_VISIBLE_DAYS * 86400000)
+  const visibleQuery = {
+    user_id: userId,
+    create_time: _.gte(visibleAfter)
+  }
+
+  const [notifyRes, countRes, hiddenCountRes, unreadRes] = await Promise.all([
+    db.collection('wdd-notifications')
+      .where(visibleQuery)
+      .orderBy('create_time', 'desc')
+      .skip(skip)
+      .limit(limit)
+      .get(),
+    db.collection('wdd-notifications').where(visibleQuery).count(),
+    db.collection('wdd-notifications').where({
+      user_id: userId,
+      create_time: _.lt(visibleAfter)
+    }).count(),
+    db.collection('wdd-notifications').where({
+      ...visibleQuery,
+      is_read: false
+    }).count()
+  ])
+
+  return {
+    list: notifyRes.data,
+    hasMore: skip + notifyRes.data.length < countRes.total,
+    hiddenCount: hiddenCountRes.total,
+    total: countRes.total,
+    unread: unreadRes.total
+  }
 }
 
 // 标记通知为已读
@@ -374,9 +428,11 @@ async function getUnreadCount(OPENID) {
     chatUnread = chatUnreadRes.total
   }
 
-  // 获取系统通知未读数
+  // 获取 30 天内系统通知未读数，超过 30 天的系统消息会自动折叠
+  const visibleAfter = new Date(Date.now() - SYSTEM_NOTIFICATION_VISIBLE_DAYS * 86400000)
   const systemUnreadRes = await db.collection('wdd-notifications').where({
     user_id: userId,
+    create_time: _.gte(visibleAfter),
     is_read: false
   }).count()
 

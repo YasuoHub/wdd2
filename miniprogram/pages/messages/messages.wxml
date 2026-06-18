@@ -1,3 +1,4 @@
+<page-meta page-style="{{showSystemModal ? 'overflow: hidden;' : ''}}" />
 <!-- 消息中心页面 -->
 <view class="container wdd-page">
   <view class="wdd-page-bg"></view>
@@ -34,7 +35,7 @@
   </view>
 
   <!-- 消息列表 -->
-  <scroll-view class="message-list" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh">
+  <scroll-view class="message-list" scroll-y="{{!showSystemModal}}" enhanced show-scrollbar="{{false}}" refresher-enabled="{{!showSystemModal}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh">
     <!-- 求助聊天 -->
     <block wx:if="{{currentChatTab === 'seeker'}}">
       <block wx:if="{{seekerChatList.length === 0}}">
@@ -139,11 +140,8 @@
   </scroll-view>
 
   <bottom-sheet show="{{showSystemModal}}" title="系统通知" maxHeight="82vh" bind:close="closeSystemNotifications">
-    <scroll-view class="system-sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
+    <scroll-view class="system-sheet-body" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMoreSystemNotifications" lower-threshold="120">
       <view wx:if="{{systemList.length === 0}}" class="system-sheet-empty">
-        <view class="system-sheet-empty-icon">
-          <wdd-icon name="bell" color="#9AA5B1" size="70"></wdd-icon>
-        </view>
         <view class="system-sheet-empty-text">暂无系统通知</view>
       </view>
 
@@ -168,6 +166,13 @@
             <view class="system-content">{{item.content}}</view>
           </view>
         </view>
+      </view>
+
+      <view wx:if="{{systemList.length > 0 || hiddenSystemCount > 0}}" class="system-footer">
+        <view wx:if="{{systemLoadingMore}}" class="system-footer-text">正在加载更多...</view>
+        <view wx:elif="{{systemHasMore && systemList.length > 0}}" class="system-footer-text">上拉加载更多</view>
+        <view wx:elif="{{!systemHasMore && systemList.length > 0}}" class="system-footer-text">没有更多系统通知了</view>
+        <view wx:if="{{hiddenSystemCount > 0}}" class="system-hidden-tip">已折叠超过30天的系统消息</view>
       </view>
     </scroll-view>
   </bottom-sheet>

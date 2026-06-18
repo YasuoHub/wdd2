@@ -95,7 +95,7 @@
               <wdd-icon name="clock-3" color="#9AA5B1" size="22"></wdd-icon>
               <text>{{item.applyTime}}</text>
             </view>
-            <text wx:if="{{item.approveTime}}" class="footer-approve-time">{{item.approveTime}} 处理</text>
+            <text wx:if="{{item.approveTime}}" class="footer-approve-time">处理时间： {{item.approveTime}}</text>
           </view>
         </view>
       </view>

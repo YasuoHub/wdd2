@@ -20,8 +20,14 @@ Page({
 
     try {
       // 获取用户信息
-      const userRes = await wx.cloud.database().collection('wdd-users').doc(userId).get()
-      const user = userRes.data
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-get-needs',
+        data: {
+          action: 'getPublicProfile',
+          userId
+        }
+      })
+      const user = result && result.data ? result.data.user : null
 
       if (!user) {
         wx.showToast({ title: '用户不存在', icon: 'none' })
@@ -30,14 +36,7 @@ Page({
       }
 
       // 查询最近三条五星好评
-      const ratingRes = await wx.cloud.database().collection('wdd-ratings')
-        .where({
-          target_id: userId,
-          rating: 5
-        })
-        .orderBy('create_time', 'desc')
-        .limit(3)
-        .get()
+      const publicRatings = result && result.data ? (result.data.ratings || []) : []
 
       const rating = user.rating || 5.0
       const helpTypes = (user.help_types || []).map(id => getByType(id))
@@ -61,7 +60,7 @@ Page({
           helpTypes: helpTypes,
           frequentLocations: frequentLocations
         },
-        ratings: ratingRes.data || [],
+        ratings: publicRatings,
         loading: false
       })
     } catch (err) {

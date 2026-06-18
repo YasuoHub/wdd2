@@ -16,10 +16,7 @@ function getBaseAmount(item = {}) {
 }
 
 function parseDate(value) {
-  if (!value) return null
-  const normalized = typeof value === 'string' ? value.replace(/-/g, '/') : value
-  const date = new Date(normalized)
-  return Number.isNaN(date.getTime()) ? null : date
+  return DateUtil.parseDate(value)
 }
 
 function padTime(num) {
@@ -56,6 +53,41 @@ function formatElapsed(value, fallback = '') {
   return formatClock(value, fallback)
 }
 
+function getNeedTimeMeta(item, remainTime, cancelTimeText) {
+  if (item.status === 'cancelled') {
+    return {
+      label: '取消时间',
+      value: cancelTimeText
+    }
+  }
+
+  if (item.status === 'pending') {
+    return {
+      label: '剩余时间',
+      value: remainTime || '等待匹配'
+    }
+  }
+
+  if (item.status === 'ongoing') {
+    return {
+      label: '剩余时间',
+      value: remainTime || '进行中'
+    }
+  }
+
+  if (item.status === 'breaking') {
+    return {
+      label: '剩余时间',
+      value: remainTime || '审核中'
+    }
+  }
+
+  return {
+    label: '剩余时间',
+    value: remainTime || '已结束'
+  }
+}
+
 Page({
   data: {
     currentFilter: 'all',
@@ -64,7 +96,8 @@ Page({
     page: 1,
     pageSize: 10,
     hasMore: false,
-    loading: false
+    loading: false,
+    loaded: false
   },
 
   onLoad() {
@@ -99,7 +132,9 @@ Page({
   refreshData() {
     this.setData({
       page: 1,
-      needs: []
+      needs: [],
+      hasMore: false,
+      loaded: false
     }, () => {
       this.loadNeeds()
     })
@@ -119,7 +154,9 @@ Page({
       currentFilter: filter,
       filterText: FILTER_MAP[filter].text,
       page: 1,
-      needs: []
+      needs: [],
+      hasMore: false,
+      loaded: false
     }, () => {
       this.loadNeeds()
     })
@@ -155,7 +192,8 @@ Page({
         this.setData({
           needs: page === 1 ? formattedNeeds : [...this.data.needs, ...formattedNeeds],
           hasMore: result.data.hasMore,
-          loading: false
+          loading: false,
+          loaded: true
         })
       } else {
         throw new Error(result.message)
@@ -166,6 +204,7 @@ Page({
       this.setData({
         loading: false,
         hasMore: false,
+        loaded: true,
         ...(this.data.page === 1 ? { needs: [] } : {})
       })
       wx.showToast({
@@ -205,6 +244,8 @@ Page({
     const endSource = item.status === 'completed'
       ? (item.completeTime || item.complete_time)
       : (item.cancelTime || item.cancel_time)
+    const endTimeText = formatClock(endSource, '待同步')
+    const timeMeta = getNeedTimeMeta(item, remainTime, endTimeText)
 
     // 申诉按钮显示条件：仅客服裁决取消
     const now = new Date()
@@ -229,7 +270,9 @@ Page({
       displayAmount: getBaseAmount(item),
       publishTime: formatClock(publishSource, createTime),
       takerTimeText: formatElapsed(matchSource, createTime || '刚刚'),
-      endTimeText: formatClock(endSource, '待同步'),
+      endTimeText,
+      timeLabel: timeMeta.label,
+      timeValue: timeMeta.value,
       remainTime,
       createTime,
       showAppealBtn
@@ -263,6 +306,26 @@ Page({
     })
   },
 
+  isTaskAlreadyAcceptedError(result) {
+    return result && result.errorCode === 'TASK_ALREADY_ACCEPTED'
+  },
+
+  openChatAfterCancelRejected(id) {
+    if (!id) return
+    app.globalData.refreshMyNeeds = true
+    this.refreshData()
+    wx.showToast({
+      title: '已接单，打开聊天',
+      icon: 'none',
+      duration: 900
+    })
+    setTimeout(() => {
+      wx.navigateTo({
+        url: `/pages/chat/chat?needId=${id}`
+      })
+    }, 900)
+  },
+
   // 跳转申诉页面
   goToAppeal(e) {
     const id = e.currentTarget.dataset.id
@@ -277,11 +340,7 @@ Page({
 
     // 如果任务已被接单（ongoing状态），提示不能取消
     if (status === 'ongoing') {
-      wx.showToast({
-        title: '该任务已被接受，无法取消',
-        icon: 'none',
-        duration: 2000
-      })
+      this.openChatAfterCancelRejected(id)
       return
     }
 
@@ -329,6 +388,8 @@ Page({
         // 设置刷新标记
         app.globalData.refreshMyNeeds = true
         this.refreshData()
+      } else if (this.isTaskAlreadyAcceptedError(result)) {
+        this.openChatAfterCancelRejected(id)
       } else {
         throw new Error(result.message)
       }

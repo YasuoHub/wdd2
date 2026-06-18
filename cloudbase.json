@@ -30,6 +30,24 @@
         ]
       },
       {
+        "collectionName": "wdd-needs",
+        "name": "location_2dsphere",
+        "unique": false,
+        "keys": [
+          { "name": "location", "direction": "2dsphere" }
+        ]
+      },
+      {
+        "collectionName": "wdd-needs",
+        "name": "status_type_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "type", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
         "collectionName": "wdd-messages",
         "name": "need_id_create_time",
         "unique": false,

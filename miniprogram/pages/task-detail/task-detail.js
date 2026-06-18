@@ -14,11 +14,7 @@ Page({
     canChat: false,
     canComplete: false,
     canCancel: false,
-    canReport: false,
-    canAppeal: false,
-    showMoreMenu: false,
     showActionBar: false,
-    pagePaddingBottom: 0,
     loading: true,
     feeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
   },
@@ -65,7 +61,6 @@ Page({
         // 判断身份
         const isSeeker = userInfo && task.user_id === userInfo._id
         const isTaker = userInfo && task.taker_id === userInfo._id
-        const isParticipant = !!(isSeeker || isTaker)
 
         // 判断可操作权限
         const canTake = userInfo &&
@@ -106,19 +101,9 @@ Page({
         task._distanceText = this.formatDistance(task.distance)
         task._orderNo = task.task_no
         task._locationSubText = this.getLocationSubText(task)
+        task._takerPlaceholderText = task.status === 'cancelled' ? '--' : '等待帮助者响应'
 
-        const canReport = isParticipant &&
-          ['ongoing', 'completed'].includes(task.status) &&
-          !task.hasMyReport
-
-        const canAppeal = isParticipant &&
-          (task.status === 'completed' || this.canAppealCancelledTask(task)) &&
-          !task.hasMyAppeal
-
-        const hasStatusTip = ['breaking', 'completed', 'cancelled'].includes(task.status)
-        const showActionBar = canTake || canChat || canComplete || canCancel || hasStatusTip
-        const hasTwoActions = (canChat && canComplete)
-        const pagePaddingBottom = showActionBar ? (hasTwoActions ? 188 : 164) : 0
+        const showActionBar = canTake || canChat || canComplete || canCancel
 
         this.setData({
           task,
@@ -128,11 +113,7 @@ Page({
           canChat,
           canComplete,
           canCancel,
-          canReport,
-          canAppeal,
           showActionBar,
-          pagePaddingBottom,
-          showMoreMenu: false,
           loading: false
         })
       } else {
@@ -160,42 +141,6 @@ Page({
     if (task.address) parts.push(task.address)
     if (task._distanceText) parts.push(`距你 ${task._distanceText}`)
     return parts.join(' · ')
-  },
-
-  canAppealCancelledTask(task) {
-    if (task.status !== 'cancelled' || task.cancelReason !== 'arbitration_cancelled') {
-      return false
-    }
-    const endTime = task.cancelTime || task.cancel_time
-    if (!endTime) return false
-    const deadline = new Date(new Date(endTime).getTime() + 2 * 60 * 60 * 1000)
-    return new Date() <= deadline
-  },
-
-  toggleMoreMenu() {
-    this.setData({ showMoreMenu: !this.data.showMoreMenu })
-  },
-
-  hideMoreMenu() {
-    this.setData({ showMoreMenu: false })
-  },
-
-  noop() {},
-
-  goToReport() {
-    if (!this.data.canReport) return
-    this.hideMoreMenu()
-    wx.navigateTo({
-      url: `/pages/report/report?mode=initiate&needId=${this.data.needId}`
-    })
-  },
-
-  goToAppeal() {
-    if (!this.data.canAppeal) return
-    this.hideMoreMenu()
-    wx.navigateTo({
-      url: `/pages/appeal/appeal?mode=initiate&needId=${this.data.needId}`
-    })
   },
 
   // 接单
@@ -257,6 +202,26 @@ Page({
     wx.navigateTo({
       url: `/pages/chat/chat?needId=${this.data.needId}`
     })
+  },
+
+  isTaskAlreadyAcceptedError(result) {
+    return result && result.errorCode === 'TASK_ALREADY_ACCEPTED'
+  },
+
+  openChatAfterCancelRejected(needId) {
+    if (!needId) return
+    app.globalData.refreshMyNeeds = true
+    this.loadTaskDetail()
+    wx.showToast({
+      title: '已接单，打开聊天',
+      icon: 'none',
+      duration: 900
+    })
+    setTimeout(() => {
+      wx.navigateTo({
+        url: `/pages/chat/chat?needId=${needId}`
+      })
+    }, 900)
   },
 
   // 跳转公开资料页
@@ -364,6 +329,8 @@ Page({
         // 设置刷新标记
         app.globalData.refreshMyNeeds = true
         this.loadTaskDetail()
+      } else if (this.isTaskAlreadyAcceptedError(result)) {
+        this.openChatAfterCancelRejected(this.data.needId)
       } else {
         throw new Error(result.message)
       }

@@ -145,7 +145,15 @@
       <view class="card-title">资金流水明细</view>
       <view class="card-body">
         <view wx:if="{{loading.fundFlowDetails && fundFlowDetails.length === 0}}" class="skeleton" style="height: 300rpx;"></view>
-        <view wx:else class="flow-list">
+        <scroll-view
+          wx:else
+          class="flow-list {{fundFlowDetails.length > 3 ? 'scrollable' : ''}}"
+          scroll-y="{{fundFlowDetails.length > 3}}"
+          enhanced
+          show-scrollbar="{{false}}"
+          bindscrolltolower="loadMoreFlow"
+          lower-threshold="60"
+        >
           <view class="flow-row" wx:for="{{fundFlowDetails}}" wx:key="_id">
             <view class="flow-info">
               <text class="flow-type">{{item._typeName}}</text>
@@ -155,8 +163,9 @@
           </view>
           <view wx:if="{{fundFlowDetails.length === 0 && fundFlowLoaded}}" class="empty-tip">暂无流水记录</view>
           <view wx:if="{{fundFlowLoadingMore}}" class="flow-footer">加载中...</view>
+          <view wx:elif="{{fundFlowHasMore && fundFlowLoaded && fundFlowDetails.length > 0}}" class="flow-footer">上拉加载更多</view>
           <view wx:elif="{{!fundFlowHasMore && fundFlowLoaded}}" class="flow-footer">{{fundFlowDetails.length === 0 ? '没有更多流水' : '已加载全部流水'}}</view>
-        </view>
+        </scroll-view>
       </view>
     </view>
 

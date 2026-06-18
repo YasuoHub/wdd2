@@ -1,6 +1,6 @@
 <!-- 任务详情页 -->
 <wxs src="../../utils/money.wxs" module="money" />
-<view class="container wdd-page" style="padding-bottom: {{pagePaddingBottom}}rpx;">
+<view class="container wdd-page {{showActionBar ? 'has-action-bar' : ''}}">
   <view class="wdd-page-bg"></view>
 
   <view wx:if="{{loading}}" class="page-loading-card">
@@ -8,25 +8,6 @@
   </view>
 
   <block wx:elif="{{task}}">
-    <view wx:if="{{canReport || canAppeal}}" class="top-tools">
-      <view class="page-more" bindtap="toggleMoreMenu">
-        <wdd-icon name="ellipsis" color="#111827" size="34"></wdd-icon>
-      </view>
-    </view>
-
-    <view wx:if="{{showMoreMenu}}" class="menu-mask" catchtap="hideMoreMenu">
-      <view class="more-popover" catchtap="noop">
-        <view wx:if="{{canReport}}" class="menu-item" bindtap="goToReport">
-          <wdd-icon name="flag" color="var(--vitality-orange)" size="26"></wdd-icon>
-          <text>举报</text>
-        </view>
-        <view wx:if="{{canAppeal}}" class="menu-item" bindtap="goToAppeal">
-          <wdd-icon name="shield-alert" color="var(--vitality-orange)" size="26"></wdd-icon>
-          <text>申诉</text>
-        </view>
-      </view>
-    </view>
-
     <view class="detail-card hero-card status-{{task.status}}">
       <view class="hero-topline">
         <view class="status-pill status-pill-{{task.status}}">
@@ -119,7 +100,7 @@
           <wdd-icon name="users-round" color="#7B8794" size="28"></wdd-icon>
           <text>帮助者</text>
         </view>
-        <text class="info-value muted">等待帮助者响应</text>
+        <text class="info-value muted">{{task._takerPlaceholderText}}</text>
       </view>
 
       <view class="info-row">
@@ -185,20 +166,5 @@
     >
       进入聊天
     </button>
-
-    <view wx:if="{{task.status === 'breaking'}}" class="status-tip warning">
-      <wdd-icon name="clock-3" color="var(--vitality-orange)" size="24"></wdd-icon>
-      <text>审核中，等待客服裁定</text>
-    </view>
-
-    <view wx:if="{{task.status === 'completed'}}" class="status-tip success">
-      <wdd-icon name="circle-check-big" color="var(--fresh-mint)" size="24"></wdd-icon>
-      <text>任务已完成</text>
-    </view>
-
-    <view wx:if="{{task.status === 'cancelled'}}" class="status-tip danger">
-      <wdd-icon name="circle-x" color="var(--vitality-orange)" size="24"></wdd-icon>
-      <text>任务已取消</text>
-    </view>
   </view>
 </view>

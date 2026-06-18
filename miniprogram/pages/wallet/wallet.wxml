@@ -1,3 +1,4 @@
+<page-meta page-style="{{showRulesModal ? 'overflow: hidden;' : ''}}" />
 <!-- 钱包/余额页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
@@ -63,7 +64,7 @@
     <scroll-view
       wx:else
       class="applications-list"
-      scroll-y
+      scroll-y="{{!showRulesModal}}"
       enhanced
       show-scrollbar="{{false}}"
       lower-threshold="80"
@@ -128,7 +129,7 @@
     <scroll-view
       wx:else
       class="records-list"
-      scroll-y
+      scroll-y="{{!showRulesModal}}"
       enhanced
       show-scrollbar="{{false}}"
       lower-threshold="80"

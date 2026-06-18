@@ -146,8 +146,9 @@ Page({
         }
       })
       if (result.code === 0) {
+        const resultData = result.data || {}
         const now = new Date()
-        const newApplications = (result.data.records || []).map(item => {
+        const newApplications = (resultData.records || []).map(item => {
           const expireTime = item.expireTime ? new Date(item.expireTime.replace(/-/g, '/')) : null
           const isExpired = item.status === 'approved' && item.withdrawStatus === 'not_withdrawn' && expireTime && expireTime < now
           let expireCountdown = ''
@@ -169,7 +170,9 @@ Page({
         this.setData({
           applications: reset ? newApplications : [...this.data.applications, ...newApplications],
           appPage: page + 1,
-          appHasMore: newApplications.length >= this.data.appPageSize,
+          appHasMore: typeof resultData.hasMore === 'boolean'
+            ? resultData.hasMore
+            : newApplications.length >= this.data.appPageSize,
           appLoading: false
         })
       } else {
@@ -200,12 +203,15 @@ Page({
       })
 
       if (result.code === 0) {
-        const newRecords = (result.data.records || []).map(item => this.normalizeBalanceRecord(item))
+        const resultData = result.data || {}
+        const newRecords = (resultData.records || []).map(item => this.normalizeBalanceRecord(item))
 
         this.setData({
           records: reset ? newRecords : [...this.data.records, ...newRecords],
           page: page + 1,
-          hasMore: newRecords.length >= this.data.pageSize,
+          hasMore: typeof resultData.hasMore === 'boolean'
+            ? resultData.hasMore
+            : newRecords.length >= this.data.pageSize,
           loading: false
         })
       } else {

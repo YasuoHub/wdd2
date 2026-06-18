@@ -7,6 +7,13 @@ cloud.init({
 
 const db = cloud.database()
 const _ = db.command
+const DEFAULT_REGISTER_GIFT_BALANCE = 0
+
+function normalizeMoneyAmount(value, fallback = 0) {
+  const amount = Number(value)
+  if (!Number.isFinite(amount) || amount <= 0) return fallback
+  return Math.round(amount * 100) / 100
+}
 
 // 从 wdd-config 读取积分配置，未配置时使用默认值
 async function getPointsConfig() {
@@ -26,6 +33,16 @@ async function getPointsConfig() {
     invite: 50,
     signInMap: [5, 10, 15, 20, 25, 30, 30]
   }
+}
+
+// 从 wdd-config 读取新用户注册现金余额奖励，未配置时默认不发放
+async function getRegisterGiftBalance() {
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get()
+    const cfg = configRes.data
+    return normalizeMoneyAmount(cfg ? cfg.register_gift_balance : DEFAULT_REGISTER_GIFT_BALANCE, DEFAULT_REGISTER_GIFT_BALANCE)
+  } catch (e) {}
+  return DEFAULT_REGISTER_GIFT_BALANCE
 }
 
 exports.main = async (event, context) => {
@@ -63,6 +80,7 @@ exports.main = async (event, context) => {
       isNewUser = true
 
       const pointsCfg = await getPointsConfig()
+      const registerGiftBalance = await getRegisterGiftBalance()
 
       // 检查是否有邀请人（事务外查询，确保信息可用）
       let inviter = null
@@ -82,6 +100,11 @@ exports.main = async (event, context) => {
         nickname: event.nickname || '微信用户',
         avatar: event.avatar || '',
         total_points: registerPoints + inviteBonus,
+        balance: registerGiftBalance,
+        frozen_balance: 0,
+        total_earned: registerGiftBalance,
+        total_withdrawn: 0,
+        total_paid: 0,
         role: 'both',
         inviter_id: inviter ? inviter._id : null,
         invite_count: 0,
@@ -116,7 +139,35 @@ exports.main = async (event, context) => {
           }
         })
 
-        // 3. 邀请奖励（同一事务内）
+        // 3. 注册现金余额奖励
+        if (registerGiftBalance > 0) {
+          await transaction.collection('wdd-balance-records').add({
+            data: {
+              user_id: addRes._id,
+              type: 'system_gift',
+              amount: registerGiftBalance,
+              balance: registerGiftBalance,
+              frozen_balance: 0,
+              description: '新用户注册奖励',
+              create_time: db.serverDate()
+            }
+          })
+
+          await transaction.collection('wdd-notifications').add({
+            data: {
+              user_id: addRes._id,
+              type: 'system_gift',
+              system_type: 'register_gift_balance',
+              title: '注册奖励已到账',
+              content: `欢迎加入问当地，平台已赠送您 ¥${registerGiftBalance.toFixed(2)} 余额，可用于发布求助或提现。`,
+              amount: registerGiftBalance,
+              is_read: false,
+              create_time: db.serverDate()
+            }
+          })
+        }
+
+        // 4. 邀请奖励（同一事务内）
         if (inviter) {
           await transaction.collection('wdd-point-records').add({
             data: {
@@ -222,9 +273,15 @@ exports.main = async (event, context) => {
           nickname: userInfo.nickname,
           avatar: userInfo.avatar,
           total_points: userInfo.total_points,
+          balance: userInfo.balance || 0,
+          frozen_balance: userInfo.frozen_balance || 0,
+          available_balance: (userInfo.balance || 0) - (userInfo.frozen_balance || 0),
+          total_earned: userInfo.total_earned || 0,
+          total_withdrawn: userInfo.total_withdrawn || 0,
+          total_paid: userInfo.total_paid || 0,
           role: userInfo.role,
           consecutive_sign_days: userInfo.consecutive_sign_days,
-          credit_score: userInfo.credit_score || 100,
+          credit_score: userInfo.credit_score || 0,
           ban_status: userInfo.ban_status || null,
           rating: userInfo.rating || 5.0,
           rating_count: userInfo.rating_count || 0,

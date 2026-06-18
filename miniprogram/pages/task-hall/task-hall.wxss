@@ -532,7 +532,7 @@
   color: #111418;
   font-size: 34rpx;
   line-height: 44rpx;
-  font-weight: 600;
+  font-weight: 500;
   margin: 0;
   max-width: 100%;
   max-height: 44rpx;

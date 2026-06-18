@@ -14,6 +14,23 @@ const MSG_TYPE = {
   TEXT: 'text',
   IMAGE: 'image'
 }
+const MESSAGE_RULES = {
+  [MSG_TYPE.TEXT]: { maxLength: 500 },
+  [MSG_TYPE.IMAGE]: { maxUrlLength: 500 }
+}
+const DEFAULT_MESSAGE_LIMIT = 20
+const MAX_MESSAGE_LIMIT = 50
+
+function normalizeMessageLimit(limit) {
+  const num = Number(limit)
+  if (!Number.isInteger(num) || num <= 0) return DEFAULT_MESSAGE_LIMIT
+  return Math.min(num, MAX_MESSAGE_LIMIT)
+}
+
+function normalizeMessageType(type) {
+  const normalized = String(type || '').trim()
+  return MESSAGE_RULES[normalized] ? normalized : ''
+}
 
 // 计算图片显示尺寸
 function calculateDisplaySize(width, height) {
@@ -50,7 +67,7 @@ function normalizeTrustedWatermarkInfo(info) {
     locationName: String(info.locationName || '').slice(0, 80),
     latitude,
     longitude,
-    needShortId: String(info.needShortId || '').slice(0, 12),
+    needShortId: String(info.needShortId || '').slice(0, 20),
     nonce: String(info.nonce || '').slice(0, 32),
     hiddenCode: String(info.hiddenCode || '').slice(0, 300)
   }
@@ -246,6 +263,7 @@ async function getTaskInfo(event, OPENID) {
 // 获取历史消息
 async function getMessages(event, OPENID) {
   const { needId, limit = 20, beforeTime, afterTime } = event
+  const safeLimit = normalizeMessageLimit(limit)
 
   // 构建消息查询条件 - 必须同时满足 need_id 和 create_time（分页用）
   let msgQuery
@@ -280,7 +298,7 @@ async function getMessages(event, OPENID) {
     db.collection('wdd-needs').doc(needId).get().catch(() => null),
     db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get(),
     isCustomerService(OPENID),
-    msgQuery.orderBy('create_time', 'desc').limit(limit).get()
+    msgQuery.orderBy('create_time', 'desc').limit(safeLimit).get()
   ])
 
   if (userRes.data.length === 0) {
@@ -336,17 +354,29 @@ async function sendMessage(event, OPENID) {
     clientMsgId
   } = event
 
+  const safeType = normalizeMessageType(type)
+  const textContent = String(content || '').trim()
+  const safeImageUrl = String(imageUrl || '').trim()
+
   // 验证参数
-  if (!needId || !type) {
+  if (!needId || !safeType) {
     return { code: -1, message: '参数错误' }
   }
 
-  if (type === MSG_TYPE.TEXT && !content) {
+  if (safeType === MSG_TYPE.TEXT && !textContent) {
     return { code: -1, message: '消息内容不能为空' }
   }
 
-  if (type === MSG_TYPE.IMAGE && !imageUrl) {
+  if (safeType === MSG_TYPE.TEXT && textContent.length > MESSAGE_RULES[MSG_TYPE.TEXT].maxLength) {
+    return { code: -1, message: `消息最多${MESSAGE_RULES[MSG_TYPE.TEXT].maxLength}个字` }
+  }
+
+  if (safeType === MSG_TYPE.IMAGE && !safeImageUrl) {
     return { code: -1, message: '图片不能为空' }
+  }
+
+  if (safeType === MSG_TYPE.IMAGE && (!safeImageUrl.startsWith('cloud://') || safeImageUrl.length > MESSAGE_RULES[MSG_TYPE.IMAGE].maxUrlLength)) {
+    return { code: -1, message: '图片来源不合法' }
   }
 
   // 获取当前用户
@@ -387,10 +417,10 @@ async function sendMessage(event, OPENID) {
   const receiverId = isSeeker ? taker.taker_id : need.user_id
 
   // 文字消息内容安全检测（v2）
-  if (type === MSG_TYPE.TEXT) {
+  if (safeType === MSG_TYPE.TEXT) {
     try {
       const checkRes = await cloud.openapi.security.msgSecCheck({
-        content: content,
+        content: textContent,
         version: 2,
         scene: 2,
         openid: OPENID,
@@ -410,7 +440,7 @@ async function sendMessage(event, OPENID) {
   let imageDisplayHeight = 0
   let checkTraceId = ''
 
-  if (type === MSG_TYPE.IMAGE && imageUrl) {
+  if (safeType === MSG_TYPE.IMAGE && safeImageUrl) {
     // 优先使用前端传来的图片尺寸
     const originalWidth = clientWidth || 0
     const originalHeight = clientHeight || 0
@@ -424,7 +454,7 @@ async function sendMessage(event, OPENID) {
     try {
       const checkRes = await cloud.openapi.security.mediaCheckAsync({
         media_type: 2,
-        media_url: imageUrl,
+        media_url: safeImageUrl,
         version: 2,
         openid: OPENID,
         scene: 2
@@ -436,14 +466,14 @@ async function sendMessage(event, OPENID) {
   }
 
   const normalizedImageSource = imageSource === 'camera' ? 'camera' : 'album'
-  const trustedWatermarkInfo = type === MSG_TYPE.IMAGE && normalizedImageSource === 'camera' && isTrustedPhoto
+  const trustedWatermarkInfo = safeType === MSG_TYPE.IMAGE && normalizedImageSource === 'camera' && isTrustedPhoto
     ? normalizeTrustedWatermarkInfo(watermarkInfo)
     : null
   const trustedPhotoProof = trustedWatermarkInfo
     ? createTrustedPhotoProof({
       needId: String(needId),
       senderId: currentUserId,
-      imageUrl,
+      imageUrl: safeImageUrl,
       watermarkInfo: trustedWatermarkInfo
     })
     : ''
@@ -455,13 +485,13 @@ async function sendMessage(event, OPENID) {
     client_msg_id: clientMsgId || '',
     sender_id: currentUserId,
     receiver_id: receiverId,
-    type: type,
-    content: type === MSG_TYPE.TEXT ? content : '',
-    image_url: type === MSG_TYPE.IMAGE ? imageUrl : '',
+    type: safeType,
+    content: safeType === MSG_TYPE.TEXT ? textContent : '',
+    image_url: safeType === MSG_TYPE.IMAGE ? safeImageUrl : '',
     // 图片显示尺寸（后端预计算）
     image_width: imageDisplayWidth,
     image_height: imageDisplayHeight,
-    image_source: type === MSG_TYPE.IMAGE ? normalizedImageSource : '',
+    image_source: safeType === MSG_TYPE.IMAGE ? normalizedImageSource : '',
     is_trusted_photo: !!trustedWatermarkInfo,
     watermark_info: trustedWatermarkInfo,
     trusted_photo_proof: trustedPhotoProof,

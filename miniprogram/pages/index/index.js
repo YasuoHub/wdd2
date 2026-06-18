@@ -42,7 +42,14 @@ Page({
     this.checkSignInStatus()
 
     // 确保位置获取后再加载任务
-    this.loadNearbyNeedsWithLocation()
+    const initialLoad = this.loadNearbyNeedsWithLocation()
+    this._initialNearbyLoadPromise = initialLoad
+    const clearInitialLoad = () => {
+      if (this._initialNearbyLoadPromise === initialLoad) {
+        this._initialNearbyLoadPromise = null
+      }
+    }
+    initialLoad.then(clearInitialLoad, clearInitialLoad)
   },
 
   normalizeCityName(city) {
@@ -134,7 +141,7 @@ Page({
 
     if (app.globalData.isLoggedIn) {
       // 加载任务
-      this.loadNearbyNeeds()
+      return this.loadNearbyNeeds()
     }
   },
 
@@ -145,6 +152,8 @@ Page({
     this.checkLoginStatus()
 
     if (this.data.isLoggedIn) {
+      const isInitialNearbyLoading = !!this._initialNearbyLoadPromise
+
       // 检查是否需要强制刷新（从发布页返回等情况）
       const forceRefresh = wx.getStorageSync('forceRefreshIndex')
       if (forceRefresh) {
@@ -159,7 +168,7 @@ Page({
       const now = Date.now()
       const shouldRefresh = now - this.data.lastRefreshTime > this.data.refreshInterval
 
-      if (shouldRefresh) {
+      if (shouldRefresh && !isInitialNearbyLoading) {
         // 刷新位置并重新加载任务
         this.refreshLocationAndLoad()
       }
@@ -184,7 +193,7 @@ Page({
     await this.resolveCurrentCity(userLocation)
 
     // 重新加载任务
-    this.loadNearbyNeeds()
+    return this.loadNearbyNeeds()
   },
 
   // 检查登录状态
@@ -434,12 +443,12 @@ Page({
         throw new Error(result.message)
       }
     } catch (err) {
-      console.error('加载附近任务失败:', err)
       // 检查是否是最新请求的错误
       if (this.data.currentRequestId !== requestId) {
         console.log('请求已过期，忽略错误')
         return
       }
+      console.error('加载附近任务失败:', err)
       this.setData({
         nearbyLoading: false,
         nearbyError: true

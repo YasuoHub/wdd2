@@ -45,6 +45,11 @@ function showShareMenu() {
   })
 }
 
+function isLocationTimeoutError(err) {
+  const msg = String((err && (err.errMsg || err.message)) || err || '').toLowerCase()
+  return msg.includes('timeout')
+}
+
 const originalPage = Page
 Page = function(pageOptions) {
   const options = pageOptions || {}
@@ -69,6 +74,8 @@ Page = function(pageOptions) {
 }
 
 App({
+  _locationRequestPromise: null,
+
   globalData: {
     userInfo: null,
     isLoggedIn: false,
@@ -141,6 +148,19 @@ App({
 
   // 获取/更新用户当前位置
   async updateUserLocation() {
+    if (this._locationRequestPromise) {
+      return this._locationRequestPromise
+    }
+
+    this._locationRequestPromise = this._doUpdateUserLocation()
+    try {
+      return await this._locationRequestPromise
+    } finally {
+      this._locationRequestPromise = null
+    }
+  },
+
+  async _doUpdateUserLocation() {
     try {
       // 1. 先检查隐私授权设置（微信 3.0.0+）
       if (wx.getPrivacySetting) {
@@ -181,6 +201,8 @@ App({
       // errno 112 = 后台未配置隐私保护指引
       if (err.errno === 112) {
         console.error('获取位置失败：小程序后台《隐私保护指引》未配置"位置信息"权限')
+      } else if (isLocationTimeoutError(err)) {
+        console.warn('获取用户位置超时，已继续使用默认位置兜底:', err.errMsg || err.message || err)
       } else {
         console.error('获取用户位置失败:', err.errMsg || err.message || err)
       }

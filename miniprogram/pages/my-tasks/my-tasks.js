@@ -17,10 +17,7 @@ function getBaseAmount(item = {}) {
 }
 
 function parseDate(value) {
-  if (!value) return null
-  const normalized = typeof value === 'string' ? value.replace(/-/g, '/') : value
-  const date = new Date(normalized)
-  return Number.isNaN(date.getTime()) ? null : date
+  return DateUtil.parseDate(value)
 }
 
 function padTime(num) {
@@ -91,7 +88,8 @@ Page({
     page: 1,
     pageSize: 10,
     hasMore: false,
-    loading: false
+    loading: false,
+    loaded: false
   },
 
   onLoad() {
@@ -126,7 +124,9 @@ Page({
   refreshData() {
     this.setData({
       page: 1,
-      tasks: []
+      tasks: [],
+      hasMore: false,
+      loaded: false
     }, () => {
       this.loadTasks()
     })
@@ -146,7 +146,9 @@ Page({
       currentFilter: filter,
       filterText: FILTER_MAP[filter].text,
       page: 1,
-      tasks: []
+      tasks: [],
+      hasMore: false,
+      loaded: false
     }, () => {
       this.loadTasks()
     })
@@ -183,7 +185,8 @@ Page({
           tasks: page === 1 ? formattedTasks : [...this.data.tasks, ...formattedTasks],
           stats: result.data.stats || this.data.stats,
           hasMore: result.data.hasMore,
-          loading: false
+          loading: false,
+          loaded: true
         })
       } else {
         throw new Error(result.message)
@@ -194,6 +197,7 @@ Page({
       this.setData({
         loading: false,
         hasMore: false,
+        loaded: true,
         ...(this.data.page === 1 ? { tasks: [] } : {})
       })
       wx.showToast({

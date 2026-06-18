@@ -6,6 +6,17 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+// 运营资金流水只统计真实收支；freeze/unfreeze 只是可用余额状态变化，不进入运营流水。
+const REAL_FUND_FLOW_TYPES = [
+  'task_income',
+  'system_gift',
+  'task_pay',
+  'refund',
+  'withdraw',
+  'withdraw_fee',
+  'arbitration_refund'
+]
+
 // 等待时间分桶定义
 const WAIT_BUCKETS = [
   { key: '<1min', label: '1分钟内', min: 0, max: 1 },
@@ -523,16 +534,20 @@ async function getFundFlow(startDate, endDate) {
 async function getFundFlowDetails(startDate, endDate, page, pageSize) {
   const { start, end } = parseDateRange(startDate, endDate)
   const skip = (Math.max(1, page) - 1) * pageSize
+  const realFlowWhere = {
+    type: _.in(REAL_FUND_FLOW_TYPES),
+    create_time: _.gte(start).and(_.lte(end))
+  }
 
   const [listRes, countRes] = await Promise.all([
     db.collection('wdd-balance-records')
-      .where({ create_time: _.gte(start).and(_.lte(end)) })
+      .where(realFlowWhere)
       .orderBy('create_time', 'desc')
       .skip(skip)
       .limit(pageSize)
       .get(),
     db.collection('wdd-balance-records')
-      .where({ create_time: _.gte(start).and(_.lte(end)) })
+      .where(realFlowWhere)
       .count()
   ])
 

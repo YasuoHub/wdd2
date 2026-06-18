@@ -271,7 +271,6 @@
 
 .trusted-photo-badge {
   position: absolute;
-  left: 12rpx;
   top: 12rpx;
   padding: 7rpx 14rpx;
   border-radius: 999rpx;
@@ -280,6 +279,14 @@
   box-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.18);
   line-height: 1;
   z-index: 2;
+}
+
+.message-item.other .trusted-photo-badge {
+  right: 12rpx;
+}
+
+.message-item.self .trusted-photo-badge {
+  left: 12rpx;
 }
 
 .trusted-photo-badge text {
@@ -510,114 +517,6 @@
   font-size: 22rpx;
   color: var(--text-tertiary);
   font-weight: 400;
-}
-
-/* 完成任务确认弹窗 */
-.chat-container.wdd-page > view.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s;
-}
-
-.chat-container.wdd-page > view.modal.show {
-  opacity: 1;
-  visibility: visible;
-}
-
-.chat-container.wdd-page > view.modal .modal-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(44, 62, 80, 0.5);
-  backdrop-filter: blur(8rpx);
-}
-
-.chat-container.wdd-page > view.modal .modal-content {
-  position: relative;
-  z-index: 1;
-  width: 600rpx;
-  max-width: calc(100vw - 96rpx);
-  background: var(--bg-card);
-  backdrop-filter: blur(40rpx);
-  border-radius: var(--radius-xl);
-  border: 2rpx solid var(--border-light);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  padding: 52rpx;
-  transform: translateY(20rpx) scale(0.95);
-  transition: all 0.3s;
-}
-
-.chat-container.wdd-page > view.modal.show .modal-content {
-  transform: translateY(0) scale(1);
-}
-
-.modal-title {
-  font-size: 40rpx;
-  font-weight: 400;
-  text-align: center;
-  margin-bottom: 36rpx;
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 24rpx 0 44rpx;
-  text-align: center;
-}
-
-.modal-body text {
-  font-size: 28rpx;
-  color: var(--text-tertiary);
-  line-height: 1.6;
-}
-
-.modal-footer {
-  display: flex;
-  border-top: 2rpx solid var(--brand-primary-08);
-}
-
-.modal-btn {
-  flex: 1;
-  height: 100rpx;
-  line-height: 100rpx;
-  font-size: 30rpx;
-  font-weight: 400;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  transition: all 0.3s;
-}
-
-.modal-btn::after {
-  border: none;
-}
-
-.modal-btn.cancel {
-  color: var(--text-tertiary);
-  border-right: 2rpx solid var(--brand-primary-08);
-}
-
-.modal-btn.cancel:active {
-  background: var(--brand-primary-05);
-}
-
-.modal-btn.confirm {
-  color: var(--sky-primary);
-}
-
-.modal-btn.confirm:active {
-  background: var(--bg-glass);
 }
 
 /* 消息状态指示器 */

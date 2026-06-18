@@ -30,6 +30,10 @@ Component({
 
     preventBubble() {},
 
+    preventTouchMove() {
+      return false
+    },
+
     onTouchStart(e) {
       const touch = e.touches && e.touches[0]
       if (!touch) return

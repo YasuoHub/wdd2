@@ -63,14 +63,11 @@
     </view>
 
     <view wx:else class="card-list">
-      <view wx:for="{{pendingList}}" wx:key="_id" class="card">
+      <view wx:for="{{pendingList}}" wx:key="_id" class="record-card">
         <view class="card-main">
-          <view class="card-header">
-            <text class="status-tag status-pending">处理中</text>
-            <view class="task-tag">
-              <wdd-icon name="{{item.taskIcon}}" color="{{item.taskColor || 'var(--brand-primary)'}}" size="22"></wdd-icon>
-              <text>{{item.displayTaskName}}</text>
-            </view>
+          <view class="tag-row">
+            <view class="status-badge breaking">处理中</view>
+            <view class="type-tag">{{item.displayTaskName}}</view>
           </view>
 
           <text class="card-title">{{item.displayTitle}}</text>
@@ -78,7 +75,12 @@
           <view class="info-list">
             <view class="info-row">
               <text class="info-label">被举报对象</text>
-              <text class="info-value">{{item.displayTarget}}</text>
+              <view class="info-value user-value">
+                <image wx:if="{{item.displayTargetAvatar}}" class="target-avatar" src="{{item.displayTargetAvatar}}" mode="aspectFill"></image>
+                <view wx:else class="target-avatar placeholder"><wdd-icon name="user-round" color="#7B8794" size="22"></wdd-icon></view>
+                <text class="target-name">{{item.displayTarget}}</text>
+                <text wx:if="{{item.displayTargetRole}}" class="target-role">{{item.displayTargetRole}}</text>
+              </view>
             </view>
             <view class="info-row">
               <text class="info-label">举报原因</text>
@@ -96,10 +98,10 @@
 
           <view class="card-footer">
             <view class="card-actions">
-              <view class="btn btn-cancel" data-id="{{item._id}}" bindtap="cancelReport" hover-class="btn-cancel-hover">
+              <view class="action-btn outline" data-id="{{item._id}}" bindtap="cancelReport">
                 <text>撤销</text>
               </view>
-              <view class="btn btn-detail" data-id="{{item._id}}" bindtap="goDetail" hover-class="btn-detail-hover">
+              <view class="action-btn outline" data-id="{{item._id}}" bindtap="goDetail">
                 <text>详情</text>
               </view>
             </view>
@@ -147,14 +149,11 @@
     </view>
 
     <view wx:else class="card-list">
-      <view wx:for="{{processedList}}" wx:key="_id" class="card processed">
+      <view wx:for="{{processedList}}" wx:key="_id" class="record-card processed">
         <view class="card-main">
-          <view class="card-header">
-            <text class="status-tag status-{{item.status}}">{{item.status === 'cancelled' ? '已撤销' : '已处理'}}</text>
-            <view class="task-tag {{item.status === 'cancelled' ? 'cancelled' : ''}}">
-              <wdd-icon name="{{item.taskIcon}}" color="{{item.status === 'cancelled' ? '#98A2AE' : (item.taskColor || 'var(--brand-primary)')}}" size="22"></wdd-icon>
-              <text>{{item.displayTaskName}}</text>
-            </view>
+          <view class="tag-row">
+            <view class="status-badge {{item.status === 'cancelled' ? 'cancelled' : 'completed'}}">{{item.status === 'cancelled' ? '已撤销' : '已处理'}}</view>
+            <view class="type-tag {{item.status === 'cancelled' ? 'cancelled' : ''}}">{{item.displayTaskName}}</view>
           </view>
 
           <text class="card-title">{{item.displayTitle}}</text>
@@ -162,7 +161,12 @@
           <view class="info-list">
             <view class="info-row">
               <text class="info-label">被举报对象</text>
-              <text class="info-value">{{item.displayTarget}}</text>
+              <view class="info-value user-value">
+                <image wx:if="{{item.displayTargetAvatar}}" class="target-avatar" src="{{item.displayTargetAvatar}}" mode="aspectFill"></image>
+                <view wx:else class="target-avatar placeholder"><wdd-icon name="user-round" color="#7B8794" size="22"></wdd-icon></view>
+                <text class="target-name">{{item.displayTarget}}</text>
+                <text wx:if="{{item.displayTargetRole}}" class="target-role">{{item.displayTargetRole}}</text>
+              </view>
             </view>
             <view class="info-row">
               <text class="info-label">举报原因</text>
@@ -180,7 +184,7 @@
 
           <view class="card-footer">
             <view class="card-actions">
-              <view class="btn btn-detail" data-id="{{item._id}}" bindtap="goDetail" hover-class="btn-detail-hover">
+              <view class="action-btn outline" data-id="{{item._id}}" bindtap="goDetail">
                 <text>详情</text>
               </view>
             </view>

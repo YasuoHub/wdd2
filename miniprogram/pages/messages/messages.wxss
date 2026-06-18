@@ -696,8 +696,38 @@
   padding: 4rpx 0 8rpx;
 }
 
+.system-sheet-empty {
+  min-height: 360rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.system-sheet-empty-text {
+  font-size: 28rpx;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
 .sheet-system-list {
   padding-bottom: 8rpx;
+}
+
+.system-footer {
+  padding: 20rpx 0 44rpx;
+  text-align: center;
+}
+
+.system-footer-text,
+.system-hidden-tip {
+  font-size: 24rpx;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.system-hidden-tip {
+  margin-top: 10rpx;
 }
 
 .modal-empty {

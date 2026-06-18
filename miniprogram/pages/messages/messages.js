@@ -3,6 +3,8 @@ const app = getApp()
 const DateUtil = require('../../utils/dateUtil')
 const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needTypes')
 
+const SYSTEM_NOTIFICATION_PAGE_SIZE = 20
+
 Page({
   data: {
     // 当前聊天tab
@@ -20,6 +22,10 @@ Page({
 
     // 系统通知列表
     systemList: [],
+    systemSkip: 0,
+    systemHasMore: false,
+    systemLoadingMore: false,
+    hiddenSystemCount: 0,
 
     // 被 30 天规则隐藏的会话数（分求助/帮助两侧，>0 才显示底部提示）
     hiddenSeekerCount: 0,
@@ -46,7 +52,11 @@ Page({
         helperChatUnread: 0,
         systemUnread: 0,
         hiddenSeekerCount: 0,
-        hiddenHelperCount: 0
+        hiddenHelperCount: 0,
+        hiddenSystemCount: 0,
+        systemSkip: 0,
+        systemHasMore: false,
+        systemLoadingMore: false
       })
     } else {
       this.loadMessages(true)
@@ -78,7 +88,11 @@ Page({
         helperChatUnread: 0,
         systemUnread: 0,
         hiddenSeekerCount: 0,
-        hiddenHelperCount: 0
+        hiddenHelperCount: 0,
+        hiddenSystemCount: 0,
+        systemSkip: 0,
+        systemHasMore: false,
+        systemLoadingMore: false
       }, () => {
         // 清除 TabBar 角标
         wx.removeTabBarBadge({ index: 2 })
@@ -122,6 +136,24 @@ Page({
 
   // 打开系统通知弹窗
   async openSystemNotifications() {
+    app.checkLoginStatus()
+    if (!app.globalData.isLoggedIn) {
+      wx.showModal({
+        title: '请先登录',
+        content: '登录后即可查看系统通知',
+        confirmText: '去登录',
+        cancelText: '稍后',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/pages/user-info/user-info'
+            })
+          }
+        }
+      })
+      return
+    }
+
     this.setData({ showSystemModal: true })
 
     // 如果有未读系统通知，全部标记为已读
@@ -138,8 +170,7 @@ Page({
   // 标记所有系统通知为已读
   async markAllSystemNotificationsRead() {
     try {
-      const unreadNotifications = this.data.systemList.filter(item => !item.is_read)
-      if (unreadNotifications.length === 0) return
+      if (this.data.systemUnread <= 0) return
 
       // 调用云函数批量标记已读
       await wx.cloud.callFunction({
@@ -237,15 +268,8 @@ Page({
         const helperChatUnread = helperChatList.reduce((sum, item) => sum + (item.unread || 0), 0)
 
         // 处理系统通知列表
-        const systemList = result.data.systemList.map(item => {
-          const iconMeta = this.getNotificationIcon(item.type)
-          return {
-            ...item,
-            icon: iconMeta.name,
-            iconColor: iconMeta.color,
-            timeText: DateUtil.formatRelativeTime(item.create_time)
-          }
-        })
+        const rawSystemList = result.data.systemList || []
+        const systemList = this.formatSystemNotifications(rawSystemList)
 
         const systemUnread = result.data.systemUnread || 0
 
@@ -258,7 +282,11 @@ Page({
           systemUnread,
           unreadCount: seekerChatUnread + helperChatUnread + systemUnread,
           hiddenSeekerCount: result.data.hiddenSeekerCount || 0,
-          hiddenHelperCount: result.data.hiddenHelperCount || 0
+          hiddenHelperCount: result.data.hiddenHelperCount || 0,
+          hiddenSystemCount: result.data.systemHiddenCount || 0,
+          systemSkip: rawSystemList.length,
+          systemHasMore: !!result.data.systemHasMore,
+          systemLoadingMore: false
         }, () => {
           // 更新 TabBar 徽章
           this.updateTabBarBadge()
@@ -285,8 +313,63 @@ Page({
         helperChatUnread: 0,
         systemUnread: 0,
         hiddenSeekerCount: 0,
-        hiddenHelperCount: 0
+        hiddenHelperCount: 0,
+        hiddenSystemCount: 0,
+        systemSkip: 0,
+        systemHasMore: false,
+        systemLoadingMore: false
       })
+    }
+  },
+
+  // 格式化系统通知展示字段
+  formatSystemNotifications(list) {
+    return (list || []).map(item => {
+      const iconMeta = this.getNotificationIcon(item.type)
+      return {
+        ...item,
+        icon: iconMeta.name,
+        iconColor: iconMeta.color,
+        timeText: DateUtil.formatRelativeTime(item.create_time)
+      }
+    })
+  },
+
+  // 系统通知滚动加载
+  async loadMoreSystemNotifications() {
+    if (this.data.systemLoadingMore || !this.data.systemHasMore) return
+
+    this.setData({ systemLoadingMore: true })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-notify',
+        data: {
+          action: 'getSystemNotifications',
+          skip: this.data.systemSkip,
+          limit: SYSTEM_NOTIFICATION_PAGE_SIZE
+        }
+      })
+
+      if (result.code !== 0) {
+        wx.showToast({ title: result.message || '加载失败', icon: 'none' })
+        return
+      }
+
+      const rawList = result.data.list || []
+      const moreList = this.formatSystemNotifications(rawList)
+
+      this.setData({
+        systemList: this.data.systemList.concat(moreList),
+        systemSkip: this.data.systemSkip + rawList.length,
+        systemHasMore: !!result.data.hasMore,
+        hiddenSystemCount: result.data.hiddenCount || 0
+      })
+    } catch (err) {
+      console.error('加载系统通知失败:', err)
+      wx.showToast({ title: '加载失败', icon: 'none' })
+    } finally {
+      this.setData({ systemLoadingMore: false })
     }
   },
 
@@ -351,6 +434,7 @@ Page({
       'task_cancelled': { name: 'circle-x', color: '#FF6B6B' },
       'task_matched': { name: 'target', color: 'var(--brand-primary)' },
       'points_received': { name: 'coins', color: 'var(--vitality-orange)' },
+      'system_gift': { name: 'gift', color: 'var(--fresh-mint)' },
       'system': { name: 'megaphone', color: 'var(--brand-primary)' },
       'appeal_notice': { name: 'scale', color: 'var(--vitality-orange)' },
       'report_notice': { name: 'siren', color: '#FF6B6B' },
@@ -379,7 +463,7 @@ Page({
       }
       return s
     })
-    const newSystemUnread = Math.max(0, this.data.systemUnread - 1)
+    const newSystemUnread = item.is_read ? this.data.systemUnread : Math.max(0, this.data.systemUnread - 1)
     this.setData({
       systemList,
       systemUnread: newSystemUnread,

@@ -9,6 +9,99 @@ const db = cloud.database()
 const _ = db.command
 const $ = db.command.aggregate
 const DEFAULT_PUBLIC_DISTANCE = 5000
+const DEFAULT_PLATFORM_FEE_RATE = 0.15
+const MAX_PAGE_SIZE = 30
+const DEFAULT_PAGE_SIZE = 10
+
+async function getPlatformFeeRate() {
+  try {
+    const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
+    const config = configRes && configRes.data ? configRes.data : {}
+    return typeof config.platform_fee_rate === 'number'
+      ? config.platform_fee_rate
+      : DEFAULT_PLATFORM_FEE_RATE
+  } catch (err) {
+    console.error('获取平台服务费率失败:', err)
+    return DEFAULT_PLATFORM_FEE_RATE
+  }
+}
+
+function calcTakerIncome(amount, feeRate = DEFAULT_PLATFORM_FEE_RATE) {
+  const rewardAmount = Number(amount) || 0
+  const platformFee = Math.round(rewardAmount * feeRate * 100) / 100
+  return Math.round((rewardAmount - platformFee) * 100) / 100
+}
+
+function normalizePageParams(page, pageSize, fallbackPageSize = DEFAULT_PAGE_SIZE) {
+  const normalizedPage = Math.max(1, parseInt(page, 10) || 1)
+  const normalizedPageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(pageSize, 10) || fallbackPageSize))
+  return {
+    page: normalizedPage,
+    pageSize: normalizedPageSize,
+    skip: (normalizedPage - 1) * normalizedPageSize
+  }
+}
+
+function normalizeCoordinate(value) {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
+function isValidLatitude(value) {
+  return typeof value === 'number' && value >= -90 && value <= 90
+}
+
+function isValidLongitude(value) {
+  return typeof value === 'number' && value >= -180 && value <= 180
+}
+
+function getGeoPointFromLatLon(latitude, longitude) {
+  const lat = normalizeCoordinate(latitude)
+  const lon = normalizeCoordinate(longitude)
+  if (!isValidLatitude(lat) || !isValidLongitude(lon)) return null
+  return { latitude: lat, longitude: lon }
+}
+
+function getGeoPointFromFrequentLocations(userProfile) {
+  const locations = userProfile && Array.isArray(userProfile.frequent_locations)
+    ? userProfile.frequent_locations
+    : []
+  for (const loc of locations) {
+    const coords = Array.isArray(loc && loc.coordinates) ? loc.coordinates : null
+    const point = coords
+      ? getGeoPointFromLatLon(coords[1], coords[0])
+      : getGeoPointFromLatLon(loc && loc.latitude, loc && loc.longitude)
+    if (point) return point
+  }
+  return null
+}
+
+function pickPublicProfileUser(user) {
+  if (!user) return null
+  const frequentLocations = Array.isArray(user.frequent_locations)
+    ? user.frequent_locations.map(loc => {
+      if (typeof loc === 'string') return { name: loc }
+      const coords = Array.isArray(loc && loc.coordinates) ? loc.coordinates : []
+      const latitude = normalizeCoordinate(loc && loc.latitude) ?? normalizeCoordinate(coords[1])
+      const longitude = normalizeCoordinate(loc && loc.longitude) ?? normalizeCoordinate(coords[0])
+      return {
+        name: String((loc && loc.name) || ''),
+        latitude,
+        longitude
+      }
+    })
+    : []
+
+  return {
+    _id: user._id,
+    avatar: user.avatar || '',
+    nickname: user.nickname || '未知用户',
+    rating: typeof user.rating === 'number' ? user.rating : 5.0,
+    rating_count: user.rating_count || 0,
+    help_types: Array.isArray(user.help_types) ? user.help_types : [],
+    frequent_locations: frequentLocations
+  }
+}
 
 async function canUseUnlimitedDistance(OPENID) {
   if (!OPENID) return false
@@ -56,6 +149,8 @@ exports.main = async (event, context) => {
         return await getNeedDetail(event, OPENID)
       case 'getRatingDetail':
         return await getRatingDetail(event, OPENID)
+      case 'getPublicProfile':
+        return await getPublicProfile(event)
       default:
         return await getPublicNeeds(event, OPENID)
     }
@@ -69,7 +164,191 @@ exports.main = async (event, context) => {
 }
 
 // 获取公共任务列表（任务大厅）
+async function getPublicProfile(event) {
+  const { userId } = event || {}
+  if (!userId || typeof userId !== 'string') {
+    return { code: -1, message: '用户ID不能为空' }
+  }
+
+  const userRes = await db.collection('wdd-users').doc(userId).get().catch(() => null)
+  const user = userRes && userRes.data
+  if (!user) {
+    return { code: -1, message: '用户不存在' }
+  }
+
+  const ratingRes = await db.collection('wdd-ratings')
+    .where({
+      target_id: userId,
+      rating: 5
+    })
+    .orderBy('create_time', 'desc')
+    .limit(3)
+    .get()
+
+  const ratings = (ratingRes.data || []).map(item => ({
+    _id: item._id,
+    rating: item.rating,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    comment: item.comment || item.content || '',
+    create_time: item.create_time
+  }))
+
+  return {
+    code: 0,
+    message: '获取成功',
+    data: {
+      user: pickPublicProfileUser(user),
+      ratings
+    }
+  }
+}
+
+function buildPublicNeedWhere({ filter, now, userProfile }) {
+  const where = {
+    status: 'pending',
+    expire_time: _.gt(now)
+  }
+
+  if (userProfile && userProfile._id) {
+    where.user_id = _.neq(userProfile._id)
+  }
+  if (filter && filter !== 'all') {
+    where.type = filter
+  }
+
+  return where
+}
+
+async function loadCurrentUserProfile(OPENID) {
+  if (!OPENID) return null
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get().catch(() => ({ data: [] }))
+  return userRes.data.length > 0 ? userRes.data[0] : null
+}
+
+async function getPublicNeedsOptimized(event, OPENID) {
+  const {
+    filter,
+    sort = 'time',
+    distance,
+    page: rawPage = 1,
+    pageSize: rawPageSize = DEFAULT_PAGE_SIZE,
+    latitude,
+    longitude
+  } = event || {}
+  const { page, pageSize, skip } = normalizePageParams(rawPage, rawPageSize)
+  const now = new Date()
+  const userProfile = await loadCurrentUserProfile(OPENID)
+  const platformFeeRate = await getPlatformFeeRate()
+  const where = buildPublicNeedWhere({ filter, now, userProfile })
+
+  const hasDistanceParam = distance !== undefined && distance !== null && distance !== ''
+  let effectiveDistance = hasDistanceParam ? Number(distance) : null
+  if (hasDistanceParam && (!Number.isFinite(effectiveDistance) || effectiveDistance < 0)) {
+    effectiveDistance = DEFAULT_PUBLIC_DISTANCE
+  }
+  if (hasDistanceParam && effectiveDistance === 0 && !(await canUseUnlimitedDistance(OPENID))) {
+    effectiveDistance = DEFAULT_PUBLIC_DISTANCE
+  }
+
+  const currentPoint = getGeoPointFromLatLon(latitude, longitude)
+  const fallbackPoint = currentPoint || getGeoPointFromFrequentLocations(userProfile)
+  const needsDistanceQuery = sort === 'distance' || (hasDistanceParam && Number.isFinite(effectiveDistance) && effectiveDistance > 0)
+
+  let list = []
+  let total = 0
+
+  if (needsDistanceQuery) {
+    if (!fallbackPoint) {
+      return {
+        code: 0,
+        message: '缺少定位，无法按距离筛选',
+        data: {
+          list: [],
+          total: 0,
+          page,
+          pageSize,
+          hasMore: false,
+          requireLocation: true,
+          userProfile: buildUserProfileSummary(userProfile)
+        }
+      }
+    }
+
+    const geoNearOptions = {
+      distanceField: 'distance',
+      spherical: true,
+      near: db.Geo.Point(fallbackPoint.longitude, fallbackPoint.latitude),
+      query: where
+    }
+    if (Number.isFinite(effectiveDistance) && effectiveDistance > 0) {
+      geoNearOptions.maxDistance = effectiveDistance
+    }
+
+    const baseAggregate = () => {
+      const aggregate = db.collection('wdd-needs').aggregate().geoNear(geoNearOptions)
+      if (sort === 'reward' || sort === 'points') {
+        aggregate.sort({ reward_amount: -1, create_time: -1 })
+      } else if (sort === 'time') {
+        aggregate.sort({ create_time: -1 })
+      }
+      return aggregate
+    }
+
+    const [countRes, listRes] = await Promise.all([
+      baseAggregate().count('total').end(),
+      baseAggregate().skip(skip).limit(pageSize).end()
+    ])
+    total = countRes.list && countRes.list[0] ? countRes.list[0].total : 0
+    list = listRes.list || []
+  } else {
+    let query = db.collection('wdd-needs').where(where)
+    if (sort === 'reward' || sort === 'points') {
+      query = query.orderBy('reward_amount', 'desc').orderBy('create_time', 'desc')
+    } else {
+      query = query.orderBy('create_time', 'desc')
+    }
+
+    const [countRes, listRes] = await Promise.all([
+      db.collection('wdd-needs').where(where).count(),
+      query.skip(skip).limit(pageSize).get()
+    ])
+    total = countRes.total
+    list = listRes.data || []
+  }
+
+  const userIds = [...new Set(list.map(item => item.user_id).filter(Boolean))]
+  const userMap = await batchGetUserMap(userIds)
+  const formattedList = list.map(item => formatNeedItem(item, userProfile, null, null, userMap, {
+    includeTakerIncome: true,
+    platformFeeRate
+  }))
+
+  return {
+    code: 0,
+    message: '获取成功',
+    data: {
+      list: formattedList,
+      total,
+      page,
+      pageSize,
+      hasMore: skip + list.length < total,
+      userProfile: buildUserProfileSummary(userProfile)
+    }
+  }
+}
+
+function buildUserProfileSummary(userProfile) {
+  return userProfile ? {
+    hasHelperProfile: !!userProfile.help_willingness,
+    helpWillingness: userProfile.help_willingness,
+    frequentLocations: userProfile.frequent_locations || [],
+    helpTypes: userProfile.help_types || []
+  } : null
+}
+
 async function getPublicNeeds(event, OPENID) {
+  return await getPublicNeedsOptimized(event, OPENID)
+
   const { filter, sort, distance, page = 1, pageSize = 10, limit, userId, latitude, longitude } = event
 
   // 记录接收到的参数（调试用）
@@ -90,11 +369,14 @@ async function getPublicNeeds(event, OPENID) {
       const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
       if (userRes.data.length > 0) {
         userProfile = userRes.data[0]
+        where.user_id = _.neq(userProfile._id)
       }
     } catch (err) {
       console.error('获取用户资料失败:', err)
     }
   }
+
+  const platformFeeRate = await getPlatformFeeRate()
 
   const hasDistanceParam = distance !== undefined && distance !== null && distance !== ''
   let effectiveDistance = hasDistanceParam ? Number(distance) : distance
@@ -238,7 +520,10 @@ async function getPublicNeeds(event, OPENID) {
   const userMap = await batchGetUserMap(userIds)
 
   // 格式化数据
-  const formattedList = pagedList.map(item => formatNeedItem(item, userProfile, null, null, userMap))
+  const formattedList = pagedList.map(item => formatNeedItem(item, userProfile, null, null, userMap, {
+    includeTakerIncome: true,
+    platformFeeRate
+  }))
 
   return {
     code: 0,
@@ -661,7 +946,7 @@ function sortByNearestLocation(needs, frequentLocations) {
 }
 
 // 格式化任务项
-function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, userMap) {
+function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, userMap, options = {}) {
   // 计算剩余时间
   let remainTime = ''
   if (item.expire_time && (item.status === 'pending' || item.status === 'ongoing')) {
@@ -697,6 +982,9 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
     distanceText = (distance / 1000).toFixed(1) + 'km'
   }
 
+  const rewardAmount = item.reward_amount || 0
+  const takerIncome = calcTakerIncome(rewardAmount, options.platformFeeRate)
+
   return {
     _id: item._id,
     need_id: item.need_id || item._id,
@@ -711,7 +999,9 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
       : item.location,
     locationName: item.location_name || '未知位置',
     points: item.points,
-    rewardAmount: item.reward_amount || 0,
+    rewardAmount,
+    takerIncome,
+    displayRewardAmount: options.includeTakerIncome ? takerIncome : rewardAmount,
     status: item.status,
     distance: distance,
     remainTime: remainTime,

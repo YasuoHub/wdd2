@@ -1,7 +1,6 @@
 {
   "requiredBackgroundModes": [],
   "lazyCodeLoading": "requiredComponents",
-  "libVersion": "2.32.3",
   "__usePrivacyCheck__": true,
   "pages": [
     "pages/index/index",
@@ -32,7 +31,8 @@
     "pages/report-detail/report-detail",
     "pages/appeal-detail/appeal-detail",
     "pages/fund-approval/fund-approval",
-    "pages/ops-analytics/ops-analytics"
+    "pages/ops-analytics/ops-analytics",
+    "pages/system-config/system-config"
   ],
   "window": {
     "backgroundTextStyle": "dark",

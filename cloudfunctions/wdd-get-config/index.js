@@ -18,7 +18,8 @@ const DEFAULT_CONFIG = {
   min_reward_amount: 1,
   max_reward_amount: 500,
   withdraw_daily_limit: 5000,
-  withdraw_daily_times: 3
+  withdraw_daily_times: 3,
+  register_gift_balance: 3
 }
 
 const PUBLIC_CONFIG_KEYS = [
@@ -31,7 +32,8 @@ const PUBLIC_CONFIG_KEYS = [
   'min_reward_amount',
   'max_reward_amount',
   'withdraw_daily_limit',
-  'withdraw_daily_times'
+  'withdraw_daily_times',
+  'register_gift_balance'
 ]
 
 function pickPublicConfig(config) {

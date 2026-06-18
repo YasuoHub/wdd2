@@ -3,8 +3,10 @@
   <view class="wdd-page-bg"></view>
   <!-- 页面加载中 -->
   <view class="page-loading" wx:if="{{pageLoading}}">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">加载中...</text>
+    <view class="page-loading-card">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
   </view>
 
   <!-- 主内容区 -->

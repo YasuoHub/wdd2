@@ -68,6 +68,11 @@
   position: relative;
 }
 
+.avatar-wrapper.has-avatar {
+  background: transparent;
+  border-radius: 50%;
+}
+
 .avatar-wrapper::before {
   content: '';
   position: absolute;
@@ -82,9 +87,17 @@
   filter: blur(16rpx);
 }
 
+.avatar-wrapper.has-avatar::before {
+  display: none;
+}
+
 .avatar {
   width: 100%;
   height: 100%;
+  display: block;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
 }
 
 .avatar-default {
@@ -119,7 +132,7 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 32rpx 0;
+  padding: 0;
   background: rgba(240, 248, 255, 0.7);
   border-radius: var(--radius-md);
   border: 2rpx solid var(--brand-primary-12);
@@ -138,12 +151,20 @@
 }
 
 .balance-item {
+  flex: 1;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 10rpx;
+  padding: 32rpx 0;
   position: relative;
   z-index: 1;
+}
+
+.balance-item-active {
+  background: var(--brand-primary-08);
 }
 
 .balance-value {
@@ -364,7 +385,7 @@
 .logout-section {
   margin: 20rpx 32rpx;
   padding: 28rpx 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--danger-color);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -372,10 +393,11 @@
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
+  box-shadow: 0 4rpx 14rpx rgba(214, 69, 69, 0.18);
 }
 
 .logout-section:active {
-  background: rgba(255, 77, 79, 0.08);
+  background: #c63d3d;
   transform: scale(0.98);
 }
 
@@ -392,7 +414,7 @@
 
 .logout-text {
   font-size: 30rpx;
-  color: var(--danger-color);
+  color: var(--text-white);
   font-weight: 400;
 }
 
@@ -555,7 +577,7 @@
 }
 
 .about-sheet-body {
-  padding: 8rpx 0 30rpx;
+  padding: 8rpx 0 16rpx;
 }
 
 .about-hero {
@@ -663,19 +685,19 @@
   color: var(--text-tertiary);
 }
 
-.about-brand-line {
+.about-trust-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10rpx;
-  margin: 28rpx 78rpx 0;
-  padding: 14rpx 24rpx;
-  border-radius: var(--radius-full);
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-top: 20rpx;
+  padding: 22rpx 24rpx;
+  border-radius: var(--radius-md);
   background: var(--brand-primary-08);
-  color: var(--sky-deep);
+  border: 1rpx solid var(--brand-primary-12);
+  color: var(--text-secondary);
   font-size: 25rpx;
-  line-height: 32rpx;
-  font-weight: 500;
+  line-height: 38rpx;
+  font-weight: 400;
 }
 
 .invite-btn::before {

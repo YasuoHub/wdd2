@@ -713,27 +713,74 @@ async function getMyReportList(event, OPENID) {
   const needMap = {}
   needRes.data.forEach(n => {
     needMap[n._id] = {
+      _id: n._id,
       type: n.type,
       description: n.description || '',
       locationName: n.location_name || n.locationName || '',
-      rewardAmount: n.reward_amount || n.rewardAmount || 0
+      rewardAmount: n.reward_amount || n.rewardAmount || 0,
+      seekerId: n.user_id
     }
   })
 
+  const takerRes = await db.collection('wdd-need-takers').where({
+    need_id: _.in(needIds)
+  }).orderBy('create_time', 'desc').get()
+  const takerMap = {}
+  takerRes.data.forEach(t => {
+    if (!takerMap[t.need_id]) {
+      takerMap[t.need_id] = t.taker_id
+    }
+  })
+
+  const targetIds = [...new Set(list.map(r => {
+    const need = needMap[r.need_id]
+    if (!need) return null
+    return r.reporter_id === need.seekerId ? takerMap[r.need_id] : need.seekerId
+  }).filter(Boolean))]
+  const userMap = {}
+  if (targetIds.length > 0) {
+    const userRes = await db.collection('wdd-users').where({
+      _id: _.in(targetIds)
+    }).get()
+    userRes.data.forEach(u => {
+      userMap[u._id] = u
+    })
+  }
+
   // 组装返回数据
-  const enrichedList = list.map(r => ({
-    _id: r._id,
-    needId: r.need_id,
-    reportType: r.report_type,
-    reportTypeLabel: r.report_type_label || r.report_type,
-    reason: r.reason,
-    images: r.images || [],
-    status: r.status,
-    createTime: r.create_time,
-    cancelTime: r.cancel_time || null,
-    updateTime: r.update_time,
-    taskInfo: needMap[r.need_id] || null
-  }))
+  const enrichedList = list.map(r => {
+    const need = needMap[r.need_id]
+    const targetUserId = need
+      ? (r.reporter_id === need.seekerId ? takerMap[r.need_id] : need.seekerId)
+      : null
+    const targetUser = targetUserId ? userMap[targetUserId] : null
+    const targetRoleLabel = targetUserId && need
+      ? (targetUserId === takerMap[r.need_id] ? '帮助者' : '求助者')
+      : ''
+
+    return {
+      _id: r._id,
+      needId: r.need_id,
+      reportType: r.report_type,
+      reportTypeLabel: r.report_type_label || r.report_type,
+      reason: r.reason,
+      images: r.images || [],
+      status: r.status,
+      createTime: r.create_time,
+      cancelTime: r.cancel_time || null,
+      updateTime: r.update_time,
+      reportedNickname: targetUser ? (targetUser.nickname || '未知用户') : '',
+      reportedAvatar: targetUser ? (targetUser.avatar || '') : '',
+      targetRoleLabel,
+      targetUser: targetUserId ? {
+        id: targetUserId,
+        nickname: targetUser ? (targetUser.nickname || '未知用户') : '未知用户',
+        avatar: targetUser ? (targetUser.avatar || '') : '',
+        roleLabel: targetRoleLabel
+      } : null,
+      taskInfo: need || null
+    }
+  })
 
   return {
     code: 0,

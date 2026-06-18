@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "系统配置",
+  "usingComponents": {
+    "wdd-icon": "/components/icon/icon"
+  }
+}

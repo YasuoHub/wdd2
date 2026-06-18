@@ -94,7 +94,6 @@ page {
 }
 
 .card-main {
-  padding-right: 124rpx;
   box-sizing: border-box;
 }
 
@@ -154,9 +153,11 @@ page {
   margin-bottom: 18rpx;
   color: #05070a;
   font-size: 32rpx;
-  line-height: 1.35;
+  line-height: 44rpx;
   font-weight: 600;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .info-row {
@@ -211,20 +212,16 @@ page {
   align-items: center;
   gap: 12rpx;
   margin-top: 18rpx;
-  padding: 14rpx 16rpx;
-  border-radius: 8rpx;
   font-size: 26rpx;
   line-height: 1.35;
   box-sizing: border-box;
 }
 
 .notice.warning {
-  background: #fff5eb;
   color: #d95c00;
 }
 
 .notice.muted {
-  background: #f2f4f7;
   color: #5f6975;
 }
 
@@ -270,9 +267,14 @@ page {
   opacity: 0.82;
 }
 
-.load-more {
+.load-more,
+.no-more {
   padding: 24rpx 0 8rpx;
   color: #8a96a3;
   font-size: 25rpx;
   text-align: center;
+}
+
+.no-more {
+  color: #a6b0ba;
 }
