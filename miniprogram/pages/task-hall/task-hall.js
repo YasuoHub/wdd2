@@ -1,6 +1,7 @@
 // 任务大厅
 const app = getApp()
 
+const { callCloudFunction } = require('../../utils/cloud')
 const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 
@@ -119,27 +120,15 @@ Page({
     }
 
     try {
-      const [customerServiceRes, superAdminRes] = await Promise.all([
-        wx.cloud.callFunction({
-          name: 'wdd-get-config',
-          data: { action: 'isCustomerService' }
-        }),
-        wx.cloud.callFunction({
-          name: 'wdd-get-config',
-          data: { action: 'isSuperAdmin' }
-        })
-      ])
+      const { result } = await callCloudFunction({
+        name: 'wdd-get-config',
+        data: { action: 'getRoleFlags' },
+        dedupe: true,
+        dedupeKey: 'wdd-get-config:role-flags'
+      })
 
-      const isCustomerService = customerServiceRes.result &&
-        customerServiceRes.result.code === 0 &&
-        customerServiceRes.result.data &&
-        customerServiceRes.result.data.isCustomerService
-      const isSuperAdmin = superAdminRes.result &&
-        superAdminRes.result.code === 0 &&
-        superAdminRes.result.data &&
-        superAdminRes.result.data.isSuperAdmin
-
-      this.applyDistancePermission(!!(isCustomerService || isSuperAdmin))
+      const flags = result && result.code === 0 && result.data ? result.data : {}
+      this.applyDistancePermission(!!(flags.isCustomerService || flags.isSuperAdmin))
     } catch (err) {
       console.error('刷新距离筛选权限失败:', err)
       this.applyDistancePermission(false)

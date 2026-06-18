@@ -1,5 +1,6 @@
 // 运营分析页面
 const CLOUD_FUNC = 'wdd-ops-analytics'
+const { callCloudFunction } = require('../../utils/cloud')
 const { getByType } = require('../../utils/needTypes')
 
 // 余额流水类型映射
@@ -75,9 +76,11 @@ Page({
 
   async _checkAuth() {
     try {
-      const { result } = await wx.cloud.callFunction({
+      const { result } = await callCloudFunction({
         name: 'wdd-get-config',
-        data: { action: 'isSuperAdmin' }
+        data: { action: 'getRoleFlags' },
+        dedupe: true,
+        dedupeKey: 'wdd-get-config:role-flags'
       })
       if (result.code !== 0 || !result.data.isSuperAdmin) {
         wx.showModal({

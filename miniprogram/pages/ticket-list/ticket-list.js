@@ -1,4 +1,5 @@
 const DateUtil = require('../../utils/dateUtil')
+const { callCloudFunction } = require('../../utils/cloud')
 const { getByType, normalizeType } = require('../../utils/needTypes')
 
 Page({
@@ -44,9 +45,11 @@ Page({
 
   async checkAuth() {
     try {
-      const { result } = await wx.cloud.callFunction({
+      const { result } = await callCloudFunction({
         name: 'wdd-get-config',
-        data: { action: 'isCustomerService' }
+        data: { action: 'getRoleFlags' },
+        dedupe: true,
+        dedupeKey: 'wdd-get-config:role-flags'
       })
       if (result.code === 0 && result.data.isCustomerService) {
         this.setData({ isCustomerService: true, pendingLoading: true })

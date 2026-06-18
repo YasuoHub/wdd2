@@ -27,6 +27,7 @@ exports.main = async (event, context) => {
     refundedAmount: 0,
     retriedRefunds: 0,
     retriedPending: 0,
+    refundFallbackQueued: 0,
     retriedTransfers: 0,
     queriedTransfers: 0,
     expiredApps: 0,
@@ -51,6 +52,16 @@ exports.main = async (event, context) => {
         results.cancelledNeeds++
         if (cancelResult.refundAmount) {
           results.refundedAmount += cancelResult.refundAmount
+        }
+        if (cancelResult.refundFallbackQueued) {
+          results.refundFallbackQueued++
+        }
+        if (cancelResult.refundStatus === 'failed') {
+          results.errors.push({
+            needId: need._id,
+            orderId: need.payment_order_id,
+            error: cancelResult.refundMessage || '退款处理失败'
+          })
         }
         console.log(`已取消任务: ${need._id}`)
       } catch (err) {
@@ -86,6 +97,7 @@ exports.main = async (event, context) => {
           }
         } else {
           console.error(`重试退款业务失败 ${order._id}:`, result.message)
+          results.errors.push({ orderId: order._id, error: result.message || '重试退款业务失败' })
         }
       } catch (err) {
         console.error(`重试退款调用失败 ${order._id}:`, err)
@@ -98,6 +110,12 @@ exports.main = async (event, context) => {
     results.ongoingUrged = ongoingResults.urged
     results.ongoingAutoCompleted = ongoingResults.autoCompleted
     results.ongoingErrors = ongoingResults.errors
+    if (ongoingResults.errors.length > 0) {
+      results.errors.push(...ongoingResults.errors.map(item => ({
+        ...item,
+        stage: 'ongoingTimeout'
+      })))
+    }
 
     // 4. 扫描待重试的提现（新版商家转账失败重试中）
     const pendingTransferRes = await db.collection('wdd-withdraws')
@@ -123,6 +141,7 @@ exports.main = async (event, context) => {
           results.retriedTransfers++
         } else {
           console.error(`重试提现业务失败 ${record._id}:`, result.message)
+          results.errors.push({ withdrawId: record._id, error: result.message || '重试提现业务失败' })
         }
       } catch (err) {
         console.error(`重试提现调用失败 ${record._id}:`, err)
@@ -162,6 +181,7 @@ exports.main = async (event, context) => {
           results.queriedTransfers++
         } else {
           console.error(`查询提现业务失败 ${record._id}:`, result.message)
+          results.errors.push({ withdrawId: record._id, error: result.message || '查询提现业务失败' })
         }
       } catch (err) {
         console.error(`查询提现调用失败 ${record._id}:`, err)
@@ -196,6 +216,7 @@ exports.main = async (event, context) => {
           results.expiredApps = (results.expiredApps || 0) + 1
         } else {
           console.error(`过期处理业务失败 ${app._id}:`, result.message)
+          results.errors.push({ appId: app._id, error: result.message || '过期处理业务失败' })
         }
       } catch (err) {
         console.error(`过期处理调用失败 ${app._id}:`, err)
@@ -205,9 +226,11 @@ exports.main = async (event, context) => {
 
     console.log('自动取消任务检查完成:', results)
 
+    const hasErrors = results.errors.length > 0
+
     return {
-      code: 0,
-      message: '执行成功',
+      code: hasErrors ? 1 : 0,
+      message: hasErrors ? '部分任务执行失败，请查看 data.errors' : '执行成功',
       data: results
     }
   } catch (err) {
@@ -271,7 +294,8 @@ async function cancelPendingNeed(need) {
     try {
       // 查询订单获取 openid（定时触发器无 wxContext.OPENID）
       const orderRes = await db.collection('wdd-payment-orders').doc(need.payment_order_id).get()
-      const orderOpenid = orderRes.data ? orderRes.data.openid : null
+      const order = orderRes.data
+      const orderOpenid = order ? order.openid : null
 
       const { result: refundRes } = await cloud.callFunction({
         name: 'wdd-payment',
@@ -283,15 +307,57 @@ async function cancelPendingNeed(need) {
       })
       if (refundRes.code === 0) {
         result.refundAmount = refundRes.data ? refundRes.data.refundAmount || 0 : 0
+        result.refundStatus = refundRes.status || 'unknown'
       } else {
         console.error('自动退款业务失败:', refundRes.message)
+        result.refundStatus = 'failed'
+        result.refundMessage = refundRes.message || '自动退款业务失败'
       }
     } catch (err) {
       console.error('自动退款调用失败:', err)
+      const fallbackResult = await queueRefundRetryAfterCallFailure(need, err)
+      result.refundFallbackQueued = fallbackResult.queued
+      result.refundStatus = fallbackResult.queued ? 'pending' : 'failed'
+      result.refundMessage = fallbackResult.message
     }
   }
 
   return result
+}
+
+async function queueRefundRetryAfterCallFailure(need, err) {
+  const orderId = need.payment_order_id
+  if (!orderId) {
+    return { queued: false, message: err.message || '缺少支付订单，无法加入退款重试队列' }
+  }
+
+  try {
+    const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get()
+    const order = orderRes.data
+    if (!order) {
+      return { queued: false, message: '支付订单不存在，无法加入退款重试队列' }
+    }
+    if (order.status !== 'paid' && order.status !== 'refund_pending') {
+      return { queued: false, message: `订单状态不允许退款重试: ${order.status}` }
+    }
+
+    await db.collection('wdd-payment-orders').doc(orderId).update({
+      data: {
+        status: 'refund_pending',
+        refund_amount: order.refund_amount || order.amount || 0,
+        refund_reason: order.refund_reason || '任务超时取消',
+        refund_attempts: order.refund_attempts || 0,
+        last_refund_error: (err.message || '自动退款调用失败').slice(0, 200),
+        next_retry_time: new Date(),
+        update_time: new Date()
+      }
+    })
+
+    return { queued: true, message: '退款调用失败，已加入自动重试队列' }
+  } catch (queueErr) {
+    console.error('加入退款重试队列失败:', queueErr)
+    return { queued: false, message: queueErr.message || err.message || '加入退款重试队列失败' }
+  }
 }
 
 // ongoing 任务超时处理

@@ -1,5 +1,6 @@
 // 个人中心页面逻辑
 const app = getApp()
+const { callCloudFunction } = require('../../utils/cloud')
 
 Page({
   data: {
@@ -101,10 +102,7 @@ Page({
         // 更新全局数据
         app.updateUserInfo(freshUserInfo)
 
-        // 检查是否为客服
-        this.checkCustomerService()
-        // 检查是否为超级管理员
-        this.checkSuperAdmin()
+        this.checkRoleFlags()
       }
     } catch (err) {
       console.error('获取最新用户信息失败:', err)
@@ -302,33 +300,23 @@ Page({
     })
   },
 
-  // 检查是否为客服
-  async checkCustomerService() {
+  // 检查客服/超管身份
+  async checkRoleFlags() {
     try {
-      const { result } = await wx.cloud.callFunction({
+      const { result } = await callCloudFunction({
         name: 'wdd-get-config',
-        data: { action: 'isCustomerService' }
+        data: { action: 'getRoleFlags' },
+        dedupe: true,
+        dedupeKey: 'wdd-get-config:role-flags'
       })
       if (result.code === 0) {
-        this.setData({ isCustomerService: result.data.isCustomerService })
+        this.setData({
+          isCustomerService: !!result.data.isCustomerService,
+          isSuperAdmin: !!result.data.isSuperAdmin
+        })
       }
     } catch (err) {
-      console.error('检查客服身份失败:', err)
-    }
-  },
-
-  // 检查是否为超级管理员
-  async checkSuperAdmin() {
-    try {
-      const { result } = await wx.cloud.callFunction({
-        name: 'wdd-get-config',
-        data: { action: 'isSuperAdmin' }
-      })
-      if (result.code === 0) {
-        this.setData({ isSuperAdmin: result.data.isSuperAdmin })
-      }
-    } catch (err) {
-      console.error('检查超管身份失败:', err)
+      console.error('检查角色身份失败:', err)
     }
   },
 

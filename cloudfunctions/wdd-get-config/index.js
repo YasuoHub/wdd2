@@ -45,32 +45,33 @@ function pickPublicConfig(config) {
   }, {})
 }
 
+function getRoleFlags(config, openid) {
+  const csOpenids = config ? (config.customer_service_openids || []) : []
+  const saOpenids = config ? (config.super_admin_openids || []) : []
+  return {
+    isCustomerService: openid ? csOpenids.includes(openid) : false,
+    isSuperAdmin: openid ? saOpenids.includes(openid) : false
+  }
+}
+
 exports.main = async (event, context) => {
   const { action } = event
   const wxContext = cloud.getWXContext()
   const OPENID = wxContext.OPENID
 
   try {
-    // isCustomerService  action
-    if (action === 'isCustomerService') {
+    if (action === 'getRoleFlags') {
       const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
-      const csOpenids = configRes && configRes.data ? (configRes.data.customer_service_openids || []) : []
+      const config = configRes && configRes.data ? configRes.data : null
       return {
         code: 0,
-        data: { isCustomerService: OPENID ? csOpenids.includes(OPENID) : false },
+        data: getRoleFlags(config, OPENID),
         message: 'success'
       }
     }
 
-    // isSuperAdmin action
-    if (action === 'isSuperAdmin') {
-      const configRes = await db.collection('wdd-config').doc('platform').get().catch(() => null)
-      const saOpenids = configRes && configRes.data ? (configRes.data.super_admin_openids || []) : []
-      return {
-        code: 0,
-        data: { isSuperAdmin: OPENID ? saOpenids.includes(OPENID) : false },
-        message: 'success'
-      }
+    if (action) {
+      return { code: -1, message: '未知操作' }
     }
 
     // 默认：返回平台配置

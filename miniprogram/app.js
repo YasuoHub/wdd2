@@ -1,4 +1,5 @@
 // 小程序入口
+const { callCloudFunction } = require('./utils/cloud')
 
 const DEFAULT_SHARE_TITLE = '问当地 - 找当地人确认现场情况'
 const DEFAULT_SHARE_PATH = '/pages/index/index'
@@ -460,8 +461,10 @@ App({
   // 加载平台全局配置（费率等）
   async loadPlatformConfig() {
     try {
-      const { result } = await wx.cloud.callFunction({
-        name: 'wdd-get-config'
+      const { result } = await callCloudFunction({
+        name: 'wdd-get-config',
+        dedupe: true,
+        dedupeKey: 'wdd-get-config:platform'
       })
       if (result.code === 0 && result.data) {
         const { setPlatformConfig } = require('./utils/platformRules')

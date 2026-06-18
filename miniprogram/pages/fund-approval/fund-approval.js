@@ -1,5 +1,6 @@
 // 资金审批页面 - 超级管理员审批用户提现申请
 const app = getApp()
+const { callCloudFunction } = require('../../utils/cloud')
 
 Page({
   data: {
@@ -49,9 +50,11 @@ Page({
 
   async checkAuth() {
     try {
-      const { result } = await wx.cloud.callFunction({
+      const { result } = await callCloudFunction({
         name: 'wdd-get-config',
-        data: { action: 'isSuperAdmin' }
+        data: { action: 'getRoleFlags' },
+        dedupe: true,
+        dedupeKey: 'wdd-get-config:role-flags'
       })
       if (result.code === 0 && result.data.isSuperAdmin) {
         this.setData({ isSuperAdmin: true, pendingLoading: true })
