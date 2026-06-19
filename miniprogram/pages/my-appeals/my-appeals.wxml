@@ -62,6 +62,7 @@
 
     <view wx:else class="card-list">
       <view wx:for="{{pendingList}}" wx:key="_id" class="record-card">
+        <view class="amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount)}}</text></view>
         <view class="card-main">
           <view class="tag-row">
             <view class="status-badge breaking">处理中</view>
@@ -87,10 +88,6 @@
             <view class="info-row">
               <text class="info-label">生成时间</text>
               <text class="info-value">{{item.createTimeText || ''}}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-label">悬赏金额</text>
-              <view class="info-value amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount)}}</text></view>
             </view>
           </view>
 
@@ -148,6 +145,7 @@
 
     <view wx:else class="card-list">
       <view wx:for="{{processedList}}" wx:key="_id" class="record-card processed">
+        <view class="amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount)}}</text></view>
         <view class="card-main">
           <view class="tag-row">
             <view class="status-badge {{item.status === 'cancelled' ? 'cancelled' : 'completed'}}">{{item.status === 'cancelled' ? '已撤销' : '已处理'}}</view>
@@ -173,10 +171,6 @@
             <view class="info-row">
               <text class="info-label">生成时间</text>
               <text class="info-value">{{item.createTimeText || ''}}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-label">悬赏金额</text>
-              <view class="info-value amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount)}}</text></view>
             </view>
           </view>
 
