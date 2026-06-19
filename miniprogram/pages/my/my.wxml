@@ -233,7 +233,7 @@
       <view class="invite-icon">
         <wdd-icon name="gift" color="#FFFFFF" size="60"></wdd-icon>
       </view>
-      <view class="invite-text">邀请好友注册，双方各得50积分！</view>
+      <view class="invite-text">邀请好友注册，双方各得{{invitePoints}}积分！</view>
       <view class="invite-tip">好友通过你的分享注册后，积分自动到账</view>
     </view>
     <button class="invite-btn" open-type="share">分享给好友</button>
@@ -249,43 +249,8 @@
       </view>
       <view class="about-hero-content">
         <text class="about-name">问当地</text>
-        <text class="about-summary">用地理位置匹配附近的人，帮你确认此刻最需要的现场信息。</text>
+        <text class="about-summary">问当地是一个基于地理位置的即时互助平台，连接需要了解异地现场情况的人和身处附近、熟悉当地的人，帮助用户快速获取天气体感、道路通行、店铺营业、排队情况等实时信息，为出行、探店和临时决策提供更可靠的参考。</text>
       </view>
-    </view>
-
-    <view class="about-scenarios">
-      <view class="about-scenario">
-        <view class="scenario-icon weather">
-          <wdd-icon name="cloud-sun" color="var(--brand-primary)" size="32"></wdd-icon>
-        </view>
-        <view class="scenario-copy">
-          <text class="scenario-title">目的地现在怎么样？</text>
-          <text class="scenario-desc">出发前确认真实体感、下雨程度、排队情况等现场细节。</text>
-        </view>
-      </view>
-      <view class="about-scenario">
-        <view class="scenario-icon traffic">
-          <wdd-icon name="car-front" color="var(--vitality-orange)" size="32"></wdd-icon>
-        </view>
-        <view class="scenario-copy">
-          <text class="scenario-title">前方还能不能走？</text>
-          <text class="scenario-desc">自驾途中询问附近帮助者，判断拥堵、封路和停车情况。</text>
-        </view>
-      </view>
-      <view class="about-scenario">
-        <view class="scenario-icon shop">
-          <wdd-icon name="store" color="var(--fresh-mint)" size="32"></wdd-icon>
-        </view>
-        <view class="scenario-copy">
-          <text class="scenario-title">店铺真的开着吗？</text>
-          <text class="scenario-desc">探店前确认营业、座位、排队和临时变动，少跑冤枉路。</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="about-trust-card">
-      <wdd-icon name="shield-check" color="var(--brand-primary)" size="34"></wdd-icon>
-      <text>你可以用积分悬赏提问，帮助者按位置接单并反馈；答案越具体，越能帮你做当下决策。</text>
     </view>
   </view>
 </bottom-sheet>

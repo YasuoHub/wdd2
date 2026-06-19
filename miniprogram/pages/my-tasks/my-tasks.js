@@ -299,22 +299,6 @@ Page({
     })
   },
 
-  // 去评价
-  goToRate(e) {
-    const id = e.currentTarget.dataset.id
-    wx.navigateTo({
-      url: `/pages/rating/rating?needId=${id}&type=taker`
-    })
-  },
-
-  // 查看评价
-  viewRating(e) {
-    const id = e.currentTarget.dataset.id
-    wx.navigateTo({
-      url: `/pages/rating-detail/rating-detail?needId=${id}&type=taker`
-    })
-  },
-
   // 去大厅
   goToHall() {
     wx.switchTab({

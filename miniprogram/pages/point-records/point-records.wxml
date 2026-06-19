@@ -7,7 +7,7 @@
     <view class="points-header">
       <text class="points-title">积分总额</text>
       <view class="rules-btn" bindtap="showRules">
-        <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="26"></wdd-icon>
+        <wdd-icon name="info" color="#FFFFFF" size="24"></wdd-icon>
         <text class="rules-text">规则</text>
       </view>
     </view>

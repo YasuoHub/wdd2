@@ -1,4 +1,4 @@
-const { getByType } = require('../../utils/needTypes')
+const { getByType, resolveTaskType } = require('../../utils/needTypes')
 
 Page({
   data: {
@@ -35,8 +35,18 @@ Page({
         return
       }
 
-      // 查询最近三条五星好评
+      // 查询最近三条好评
       const publicRatings = result && result.data ? (result.data.ratings || []) : []
+      const ratings = publicRatings.map(item => {
+        const typeInfo = getByType(resolveTaskType(item))
+        return {
+          ...item,
+          typeName: typeInfo.name,
+          typeIcon: typeInfo.icon,
+          typeColor: typeInfo.color,
+          typeBgColor: typeInfo.bgColor
+        }
+      })
 
       const rating = user.rating || 5.0
       const helpTypes = (user.help_types || []).map(id => getByType(id))
@@ -60,7 +70,7 @@ Page({
           helpTypes: helpTypes,
           frequentLocations: frequentLocations
         },
-        ratings: publicRatings,
+        ratings,
         loading: false
       })
     } catch (err) {

@@ -2,12 +2,21 @@
 const app = getApp()
 const { callCloudFunction } = require('../../utils/cloud')
 
+const DEFAULT_INVITE_POINTS = 50
+
+function getInvitePointsFromConfig(config) {
+  const points = config && config.points ? config.points : {}
+  const invitePoints = Number(points.invite)
+  return Number.isFinite(invitePoints) ? invitePoints : DEFAULT_INVITE_POINTS
+}
+
 Page({
   data: {
     userInfo: {},
     isLoggedIn: false,
     hasSignedToday: false,
     signPoints: 5,
+    invitePoints: DEFAULT_INVITE_POINTS,
     myNeedsCount: 0,
     myTasksCount: 0,
     showInviteModal: false,
@@ -17,6 +26,7 @@ Page({
   },
 
   onLoad() {
+    this.loadInvitePoints()
     this.loadUserInfo()
   },
 
@@ -43,6 +53,7 @@ Page({
     }
 
     this.loadUserInfo()
+    this.loadInvitePoints()
     this.checkSignInStatus()
     this.loadTaskCounts()
     // 更新消息角标
@@ -320,6 +331,27 @@ Page({
     }
   },
 
+  async loadInvitePoints() {
+    const localConfig = app.globalData.platformConfig
+    if (localConfig) {
+      this.setData({
+        invitePoints: getInvitePointsFromConfig(localConfig)
+      })
+      return
+    }
+
+    if (typeof app.loadPlatformConfig !== 'function') return
+
+    try {
+      await app.loadPlatformConfig()
+      this.setData({
+        invitePoints: getInvitePointsFromConfig(app.globalData.platformConfig)
+      })
+    } catch (err) {
+      console.error('加载邀请积分配置失败:', err)
+    }
+  },
+
   // 跳转客服工单列表
   goToTicketList() {
     wx.navigateTo({
@@ -378,8 +410,9 @@ Page({
   // 分享功能
   onShareAppMessage() {
     const userInfo = this.data.userInfo
+    const invitePoints = this.data.invitePoints
     return {
-      title: `${userInfo.nickname || '有人'}邀请你加入问当地，双方各得50积分！`,
+      title: `${userInfo.nickname || '有人'}邀请你加入问当地，双方各得${invitePoints}积分！`,
       path: `/pages/index/index?inviter=${userInfo._id}`
     }
   },

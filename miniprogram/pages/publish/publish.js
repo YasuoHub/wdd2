@@ -9,11 +9,16 @@ const TIME_OPTIONS = PLATFORM_RULES.EXPIRE_OPTIONS
 
 // 详细描述最少字数
 const MIN_DESCRIPTION_LENGTH = 5
+const DESCRIPTION_LINE_BREAK_RE = /[\r\n\u2028\u2029]+/g
 
 // 快捷金额选项（元）
 const QUICK_AMOUNTS = [1, 5, 10, 20, 50]
 const USED_LOCATION_LIMIT = 6
 const USED_LOCATION_STORAGE_PREFIX = 'publishUsedLocations'
+
+function normalizeDescriptionText(value) {
+  return String(value || '').replace(DESCRIPTION_LINE_BREAK_RE, ' ')
+}
 
 Page({
   data: {
@@ -365,8 +370,10 @@ Page({
 
   // 描述输入
   onDescriptionInput(e) {
-    this.setData({ description: e.detail.value })
+    const description = normalizeDescriptionText(e.detail.value)
+    this.setData({ description })
     this.checkCanPublish()
+    return description
   },
 
   // 选择有效期
@@ -405,7 +412,7 @@ Page({
   // 检查是否可以发布
   checkCanPublish() {
     const { locationName, selectedType, rewardAmount, description } = this.data
-    const descriptionText = description.trim()
+    const descriptionText = normalizeDescriptionText(description).trim()
     const canPublish = !!(locationName && selectedType && descriptionText.length >= MIN_DESCRIPTION_LENGTH
       && rewardAmount >= PLATFORM_RULES.MIN_REWARD_AMOUNT
       && rewardAmount <= PLATFORM_RULES.MAX_REWARD_AMOUNT)
@@ -535,7 +542,11 @@ Page({
       wx.showToast({ title: '请先选择求助类型', icon: 'none', duration: 2000 })
       return
     }
-    const descriptionText = description.trim()
+    const normalizedDescription = normalizeDescriptionText(description)
+    const descriptionText = normalizedDescription.trim()
+    if (normalizedDescription !== description) {
+      this.setData({ description: normalizedDescription })
+    }
     if (descriptionText.length < MIN_DESCRIPTION_LENGTH) {
       wx.showToast({ title: `详细描述不少于${MIN_DESCRIPTION_LENGTH}个字`, icon: 'none', duration: 2000 })
       return

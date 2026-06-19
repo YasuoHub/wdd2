@@ -53,7 +53,9 @@ function formatElapsed(value, fallback = '') {
   return formatClock(value, fallback)
 }
 
-function getNeedTimeMeta(item, remainTime, cancelTimeText) {
+function getNeedTimeMeta(item, options = {}) {
+  const { remainTime, startTimeText, completeTimeText, cancelTimeText } = options
+
   if (item.status === 'cancelled') {
     return {
       label: '取消时间',
@@ -70,21 +72,28 @@ function getNeedTimeMeta(item, remainTime, cancelTimeText) {
 
   if (item.status === 'ongoing') {
     return {
-      label: '剩余时间',
-      value: remainTime || '进行中'
+      label: '开始时间',
+      value: startTimeText
     }
   }
 
   if (item.status === 'breaking') {
     return {
-      label: '剩余时间',
-      value: remainTime || '审核中'
+      label: '开始时间',
+      value: startTimeText
+    }
+  }
+
+  if (item.status === 'completed') {
+    return {
+      label: '完成时间',
+      value: completeTimeText
     }
   }
 
   return {
-    label: '剩余时间',
-    value: remainTime || '已结束'
+    label: '发布时间',
+    value: formatClock(item.create_time || item.createTime, '待同步')
   }
 }
 
@@ -241,11 +250,17 @@ Page({
 
     const publishSource = item.create_time || item.createTime
     const matchSource = item.matchTime || item.match_time || item.takeTime || item.take_time
-    const endSource = item.status === 'completed'
-      ? (item.completeTime || item.complete_time)
-      : (item.cancelTime || item.cancel_time)
-    const endTimeText = formatClock(endSource, '待同步')
-    const timeMeta = getNeedTimeMeta(item, remainTime, endTimeText)
+    const completeSource = item.completeTime || item.complete_time
+    const cancelSource = item.cancelTime || item.cancel_time
+    const startTimeText = formatClock(matchSource, '待同步')
+    const completeTimeText = formatClock(completeSource, '待同步')
+    const cancelTimeText = formatClock(cancelSource, '待同步')
+    const timeMeta = getNeedTimeMeta(item, {
+      remainTime,
+      startTimeText,
+      completeTimeText,
+      cancelTimeText
+    })
 
     // 申诉按钮显示条件：仅客服裁决取消
     const now = new Date()
@@ -270,7 +285,7 @@ Page({
       displayAmount: getBaseAmount(item),
       publishTime: formatClock(publishSource, createTime),
       takerTimeText: formatElapsed(matchSource, createTime || '刚刚'),
-      endTimeText,
+      endTimeText: item.status === 'completed' ? completeTimeText : cancelTimeText,
       timeLabel: timeMeta.label,
       timeValue: timeMeta.value,
       remainTime,

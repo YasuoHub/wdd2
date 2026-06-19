@@ -351,10 +351,14 @@ async function cancelTask(event, OPENID) {
 // 提交评价
 async function submitRating(event, OPENID) {
   const { needId, ratingType, rating, tags, comment } = event
+  const normalizedRatingType = ratingType || 'seeker'
   const ratingValue = Number(rating)
 
   if (!needId || !rating) {
     return { code: -1, message: '参数错误' }
+  }
+  if (normalizedRatingType !== 'seeker') {
+    return { code: -1, message: '只有求助者可以评价帮助者' }
   }
   if (!Number.isFinite(ratingValue) || ratingValue < 1 || ratingValue > 5) {
     return { code: -1, message: '评分必须在1~5分之间' }
@@ -386,27 +390,23 @@ async function submitRating(event, OPENID) {
     const isSeeker = need.user_id === currentUserId
     const takerRes = await db.collection('wdd-need-takers').where({ need_id: needId }).orderBy('create_time', 'desc').limit(1).get()
     const taker = takerRes.data[0]
-    const isTaker = taker && taker.taker_id === currentUserId
     if (!taker) {
       return { code: -1, message: '未找到接单记录，无法评价' }
     }
 
-    if (ratingType === 'seeker' && !isSeeker) {
+    if (normalizedRatingType === 'seeker' && !isSeeker) {
       return { code: -1, message: '只有求助者可以评价帮助者' }
-    }
-    if (ratingType === 'taker' && !isTaker) {
-      return { code: -1, message: '只有帮助者可以评价求助者' }
     }
 
     // 确定评价对象
-    const targetUserId = ratingType === 'seeker' ? taker.taker_id : need.user_id
+    const targetUserId = taker.taker_id
     const raterUserId = currentUserId
 
     // 检查是否已评价
     const existingRating = await db.collection('wdd-ratings').where({
       need_id: needId,
       rater_id: raterUserId,
-      rating_type: ratingType
+      rating_type: normalizedRatingType
     }).count()
 
     if (existingRating.total > 0) {
@@ -438,7 +438,7 @@ async function submitRating(event, OPENID) {
         need_id: needId,
         rater_id: raterUserId,
         target_id: targetUserId,
-        rating_type: ratingType,
+        rating_type: normalizedRatingType,
         rating: ratingValue,
         tags: tags || [],
         comment: cleanComment,
@@ -447,21 +447,12 @@ async function submitRating(event, OPENID) {
     })
 
     // 更新任务评价状态
-    if (ratingType === 'seeker') {
-      await db.collection('wdd-needs').doc(needId).update({
-        data: {
-          seeker_rated: true,
-          update_time: new Date()
-        }
-      })
-    } else {
-      await db.collection('wdd-need-takers').doc(taker._id).update({
-        data: {
-          taker_rated: true,
-          update_time: new Date()
-        }
-      })
-    }
+    await db.collection('wdd-needs').doc(needId).update({
+      data: {
+        seeker_rated: true,
+        update_time: new Date()
+      }
+    })
 
     // 更新用户评分统计
     await updateUserRating(targetUserId)

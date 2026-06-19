@@ -12,7 +12,7 @@
       <view class="nickname">{{userInfo.nickname}}</view>
       <view class="rating-wrap">
         <view class="stars">
-          <wdd-icon wx:for="{{[1,2,3,4,5]}}" wx:key="*this" name="star" color="{{userInfo.ratingRounded >= item ? '#FFD166' : '#C4D8E5'}}" size="28"></wdd-icon>
+          <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="star-glyph" style="color: {{userInfo.ratingRounded >= item ? '#FFD166' : '#C4D8E5'}};">★</text>
         </view>
         <text class="rating-num">{{userInfo.ratingFormatted}}</text>
         <text class="rating-count">({{userInfo.ratingCount}}条评价)</text>
@@ -46,13 +46,19 @@
       </view>
     </view>
 
-    <!-- 最近五星好评 -->
+    <!-- 最近好评 -->
     <view class="section" wx:if="{{ratings.length > 0}}">
-      <view class="section-title">最近五星好评</view>
+      <view class="section-title">最近好评</view>
       <view class="rating-list">
         <view wx:for="{{ratings}}" wx:key="_id" class="rating-item">
-          <view class="rating-stars">
-            <wdd-icon wx:for="{{[1,2,3,4,5]}}" wx:key="*this" name="star" color="#FFD166" size="24"></wdd-icon>
+          <view class="rating-head">
+            <view class="rating-stars">
+              <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="rating-star-glyph">★</text>
+            </view>
+            <view class="rating-type" style="background: {{item.typeBgColor}}; color: {{item.typeColor}};">
+              <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.typeColor || 'var(--brand-primary)'}}" size="22"></wdd-icon>
+              <text>{{item.typeName}}</text>
+            </view>
           </view>
           <text wx:if="{{item.comment}}" class="rating-comment">{{item.comment}}</text>
           <text wx:else class="rating-comment empty">用户未留下文字评价</text>

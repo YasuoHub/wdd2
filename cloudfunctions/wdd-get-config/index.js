@@ -19,7 +19,14 @@ const DEFAULT_CONFIG = {
   max_reward_amount: 500,
   withdraw_daily_limit: 5000,
   withdraw_daily_times: 3,
-  register_gift_balance: 3
+  register_gift_balance: 3,
+  points: {
+    register: 100,
+    invite: 50,
+    signIn: {
+      daily: [5, 10, 15, 20, 25, 30, 30]
+    }
+  }
 }
 
 const PUBLIC_CONFIG_KEYS = [
@@ -33,13 +40,23 @@ const PUBLIC_CONFIG_KEYS = [
   'max_reward_amount',
   'withdraw_daily_limit',
   'withdraw_daily_times',
-  'register_gift_balance'
+  'register_gift_balance',
+  'points'
 ]
 
 function pickPublicConfig(config) {
+  const points = config && config.points ? config.points : {}
+  const signIn = points.signIn || {}
   const merged = {
     ...DEFAULT_CONFIG,
-    ...(config || {})
+    ...(config || {}),
+    points: {
+      register: points.register ?? DEFAULT_CONFIG.points.register,
+      invite: points.invite ?? DEFAULT_CONFIG.points.invite,
+      signIn: {
+        daily: Array.isArray(signIn.daily) ? signIn.daily : DEFAULT_CONFIG.points.signIn.daily
+      }
+    }
   }
   return PUBLIC_CONFIG_KEYS.reduce((result, key) => {
     result[key] = merged[key]

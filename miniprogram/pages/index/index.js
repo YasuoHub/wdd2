@@ -1,6 +1,7 @@
 // 首页逻辑 - 城市绿洲风格
 const app = getApp()
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
+const { formatDistanceText } = require('../../utils/distance')
 
 Page({
   data: {
@@ -391,13 +392,7 @@ Page({
       if (result.code === 0) {
         const list = (result.data.list || []).map(item => {
           const typeMeta = withTypeMeta(item)
-          // 只有有效距离（小于 999km）才显示距离文本
-          let distanceText = ''
-          if (item.distance && item.distance < 999000) {
-            distanceText = item.distance < 1000 ? item.distance + 'm' : Math.round(item.distance / 100) / 10 + 'km'
-          } else if (item.distance >= 999000) {
-            distanceText = '--'
-          }
+          const distanceText = formatDistanceText(item.distance, { invalidText: item.distanceText || '--' })
           return {
             _id: item._id,
             need_id: item.need_id || item._id,

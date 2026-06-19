@@ -43,19 +43,18 @@
           <view class="title">{{item.description}}</view>
 
           <view class="info-row">
-            <wdd-icon name="map-pin" color="#5F6975" size="24"></wdd-icon>
-            <text class="info-text">{{item.locationName}}</text>
+            <wdd-icon name="user-round" color="#5F6975" size="24"></wdd-icon>
+            <text class="info-text">求助者：{{item.seekerNickname}}</text>
           </view>
 
-          <view class="meta-grid">
-            <view class="info-row">
-              <wdd-icon name="user-round" color="#5F6975" size="24"></wdd-icon>
-              <text class="info-text">求助者：{{item.seekerNickname}}</text>
-            </view>
-            <view class="info-row time-cell">
-              <wdd-icon name="clock-3" color="#5F6975" size="24"></wdd-icon>
-              <text class="info-text">{{item.timeLabel}} {{item.timeValue}}</text>
-            </view>
+          <view class="info-row">
+            <wdd-icon name="map-pin" color="#5F6975" size="24"></wdd-icon>
+            <text class="info-text">地点：{{item.locationName}}</text>
+          </view>
+
+          <view class="info-row">
+            <wdd-icon name="clock-3" color="#5F6975" size="24"></wdd-icon>
+            <text class="info-text">{{item.timeLabel}}：{{item.timeValue}}</text>
           </view>
 
           <view wx:if="{{item.status === 'breaking'}}" class="notice warning">
@@ -74,10 +73,8 @@
           <view class="action-btn primary" catchtap="goToChat" data-id="{{item.need_id}}">进入聊天</view>
         </view>
 
-        <view wx:elif="{{item.status === 'completed'}}" class="card-actions right">
-          <view wx:if="{{item.showAppealBtn}}" class="action-btn outline" catchtap="goToAppeal" data-id="{{item.need_id}}">申诉</view>
-          <view wx:if="{{!item.hasRated}}" class="action-btn outline" catchtap="goToRate" data-id="{{item.need_id}}">去评价</view>
-          <view wx:else class="action-btn outline" catchtap="viewRating" data-id="{{item.need_id}}">查看评价</view>
+        <view wx:elif="{{item.status === 'completed' && item.showAppealBtn}}" class="card-actions right">
+          <view class="action-btn outline" catchtap="goToAppeal" data-id="{{item.need_id}}">申诉</view>
         </view>
 
         <view wx:elif="{{item.status === 'cancelled' && item.showAppealBtn}}" class="card-actions right">

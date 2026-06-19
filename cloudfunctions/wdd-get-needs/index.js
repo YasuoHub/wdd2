@@ -62,6 +62,19 @@ function getGeoPointFromLatLon(latitude, longitude) {
   return { latitude: lat, longitude: lon }
 }
 
+function getDisplayDistanceValue(distance) {
+  if (distance === undefined || distance === null || distance === '') return null
+  const value = Number(distance)
+  if (!Number.isFinite(value) || value < 0 || value >= 999000) return null
+  return value
+}
+
+function formatDistanceText(distance) {
+  const value = getDisplayDistanceValue(distance)
+  if (value === null) return ''
+  return value < 1000 ? `${Math.ceil(value)}m` : `${(value / 1000).toFixed(1)}km`
+}
+
 function getGeoPointFromFrequentLocations(userProfile) {
   const locations = userProfile && Array.isArray(userProfile.frequent_locations)
     ? userProfile.frequent_locations
@@ -185,13 +198,28 @@ async function getPublicProfile(event) {
     .limit(3)
     .get()
 
-  const ratings = (ratingRes.data || []).map(item => ({
-    _id: item._id,
-    rating: item.rating,
-    tags: Array.isArray(item.tags) ? item.tags : [],
-    comment: item.comment || item.content || '',
-    create_time: item.create_time
-  }))
+  const rawRatings = ratingRes.data || []
+  const ratingNeedIds = [...new Set(rawRatings.map(item => item.need_id).filter(Boolean))]
+  let ratingNeedMap = new Map()
+  if (ratingNeedIds.length > 0) {
+    const needRes = await db.collection('wdd-needs')
+      .where({ _id: _.in(ratingNeedIds) })
+      .get()
+    ratingNeedMap = new Map((needRes.data || []).map(item => [item._id, item]))
+  }
+
+  const ratings = rawRatings.map(item => {
+    const need = ratingNeedMap.get(item.need_id) || {}
+    return {
+      _id: item._id,
+      need_id: item.need_id || '',
+      rating: item.rating,
+      type: need.type || item.type || item.task_type || 'other',
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      comment: item.comment || item.content || '',
+      create_time: item.create_time
+    }
+  })
 
   return {
     code: 0,
@@ -721,16 +749,6 @@ async function getMyTasks(event, OPENID) {
 
     const formatted = formatNeedItem(item, null, myReportNeedIds, myAppealNeedIds, tasksUserMap)
 
-    // 如果任务已完成，查询是否已评价
-    if (taker.status === 'completed') {
-      const ratingRes = await db.collection('wdd-ratings').where({
-        need_id: taker.need_id,
-        rater_id: userId,
-        rating_type: 'taker'
-      }).count()
-      formatted.hasRated = ratingRes.total > 0
-    }
-
     return formatted
   }))
 
@@ -837,9 +855,13 @@ async function getNeedDetail(event, OPENID) {
 // 获取评价详情
 async function getRatingDetail(event, OPENID) {
   const { needId, ratingType } = event
+  const normalizedRatingType = ratingType || 'seeker'
 
   if (!needId) {
     return { code: -1, message: '任务ID不能为空' }
+  }
+  if (normalizedRatingType !== 'seeker') {
+    return { code: -1, message: '仅支持查看求助者对帮助者的评价' }
   }
 
   try {
@@ -862,7 +884,7 @@ async function getRatingDetail(event, OPENID) {
     const ratingRes = await db.collection('wdd-ratings').where({
       need_id: needId,
       rater_id: currentUserId,
-      rating_type: ratingType || 'seeker'
+      rating_type: normalizedRatingType
     }).get()
 
     if (ratingRes.data.length === 0) {
@@ -991,13 +1013,7 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
     distance = 99999999
   }
 
-  // 如果小于1公里，显示米，否则显示公里
-  let distanceText = ''
-  if (distance < 1000) {
-    distanceText = distance + 'm'
-  } else {
-    distanceText = (distance / 1000).toFixed(1) + 'km'
-  }
+  const distanceText = formatDistanceText(distance)
 
   const rewardAmount = item.reward_amount || 0
   const takerIncome = calcTakerIncome(rewardAmount, options.platformFeeRate)
@@ -1021,6 +1037,7 @@ function formatNeedItem(item, userProfile, myReportNeedIds, myAppealNeedIds, use
     displayRewardAmount: options.includeTakerIncome ? takerIncome : rewardAmount,
     status: item.status,
     distance: distance,
+    distanceText,
     remainTime: remainTime,
     userNickname: (userMap && userMap.get(item.user_id))?.nickname || item.user_nickname || item.seeker_nickname,
     user_avatar: (userMap && userMap.get(item.user_id))?.avatar || item.user_avatar || item.seeker_avatar,

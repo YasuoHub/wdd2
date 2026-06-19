@@ -379,9 +379,10 @@ page {
     var(--sky-primary) 0%,
     var(--sky-light) 100%
   );
+  border-color: var(--brand-primary-50);
   color: white;
-  font-weight: 400;
-  box-shadow: 0 4rpx 16rpx var(--brand-primary-30);
+  font-weight: 500;
+  box-shadow: 0 6rpx 20rpx var(--brand-primary-34);
 }
 
 .time-recommend {

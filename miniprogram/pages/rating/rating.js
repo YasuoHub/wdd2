@@ -13,20 +13,13 @@ const RATING_TAGS = {
     3: ['响应正常', '信息基本可用', '态度一般', '中规中矩', '完成任务', '还算靠谱'],
     4: ['响应迅速', '信息准确', '态度友好', '很有耐心', '比较专业', '乐于助人'],
     5: ['秒回消息', '信息精准详尽', '热情用心', '超有耐心', '非常专业', '超出预期']
-  },
-  taker: {
-    1: ['描述不清', '沟通困难', '态度恶劣', '故意刁难', '毫无诚信', '体验极差'],
-    2: ['描述模糊', '沟通不畅', '配合度低', '态度敷衍', '信息不全', '体验不佳'],
-    3: ['描述基本清楚', '沟通正常', '态度尚可', '及时确认', '中规中矩', '还算靠谱'],
-    4: ['描述清晰', '沟通顺畅', '很有礼貌', '及时确认', '诚信用户', '推荐合作'],
-    5: ['描述精准详尽', '沟通超顺畅', '非常礼貌', '秒确认完成', '模范用户', '极力推荐']
   }
 }
 
 Page({
   data: {
     needId: '',
-    ratingType: 'seeker', // 'seeker': 求助者评价帮助者, 'taker': 帮助者评价求助者
+    ratingType: 'seeker', // 求助者评价帮助者
     targetUser: {
       nickname: '',
       avatar: ''
@@ -46,14 +39,13 @@ Page({
   },
 
   onLoad(options) {
-    const { needId, type } = options
-    const ratingType = type || 'seeker'
-    const tagStrings = RATING_TAGS[ratingType][5]
+    const { needId } = options
+    const tagStrings = RATING_TAGS.seeker[5]
     const ratingTags = tagStrings.map(text => ({ text, selected: false }))
 
     this.setData({
       needId,
-      ratingType,
+      ratingType: 'seeker',
       ratingTags
     })
 

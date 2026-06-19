@@ -22,6 +22,7 @@ const MAX_DESCRIPTION_LENGTH = 500
 const MAX_IMAGE_COUNT = 3
 const MAX_IMAGE_URL_LENGTH = 500
 const MAX_LOCATION_NAME_LENGTH = 120
+const DESCRIPTION_LINE_BREAK_RE = /[\r\n\u2028\u2029]+/g
 
 // 金额格式化（最多2位小数，尾随零省略）
 function formatAmount(n) {
@@ -49,6 +50,10 @@ function normalizeOrderDescription(description, fallback = '发布求助') {
   return String(description || fallback).trim().slice(0, 80) || fallback
 }
 
+function normalizeNeedDescription(description) {
+  return String(description || '').replace(DESCRIPTION_LINE_BREAK_RE, ' ').trim()
+}
+
 function validatePublishMetadata(metadata, rules) {
   const data = metadata && typeof metadata === 'object' ? metadata : {}
   const type = String(data.type || '').trim()
@@ -56,7 +61,7 @@ function validatePublishMetadata(metadata, rules) {
     return { valid: false, message: '任务类型不合法' }
   }
 
-  const description = String(data.description || '').trim()
+  const description = normalizeNeedDescription(data.description)
   if (description.length < MIN_DESCRIPTION_LENGTH) {
     return { valid: false, message: `描述至少${MIN_DESCRIPTION_LENGTH}个字` }
   }

@@ -2,6 +2,7 @@
 const app = getApp()
 const { MoneyUtils, PLATFORM_RULES } = require('../../utils/platformRules')
 const { getByType, getByStatus } = require('../../utils/needTypes')
+const { formatDistanceText } = require('../../utils/distance')
 
 Page({
   data: {
@@ -130,10 +131,7 @@ Page({
   },
 
   formatDistance(distance) {
-    if (distance === undefined || distance === null) return ''
-    const value = Number(distance)
-    if (!isFinite(value) || value >= 999000) return ''
-    return value < 1000 ? `${Math.round(value)}m` : `${(value / 1000).toFixed(1)}km`
+    return formatDistanceText(distance)
   },
 
   getLocationSubText(task) {

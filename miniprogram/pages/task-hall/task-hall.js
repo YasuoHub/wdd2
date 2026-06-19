@@ -3,6 +3,7 @@ const app = getApp()
 
 const { callCloudFunction } = require('../../utils/cloud')
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
+const { formatDistanceText } = require('../../utils/distance')
 
 // 筛选标签
 const FILTERS = [
@@ -208,13 +209,7 @@ Page({
 
         const processedList = list.map(item => {
           const typeMeta = withTypeMeta(item)
-          // 只有有效距离（小于 999km）才显示距离文本
-          let distanceText = ''
-          if (item.distance && item.distance < 999000) {
-            distanceText = item.distance < 1000
-              ? item.distance + 'm'
-              : (item.distance / 1000).toFixed(1) + 'km'
-          }
+          const distanceText = formatDistanceText(item.distance, { invalidText: item.distanceText || '' })
           return {
             ...item,
             type: typeMeta.type,
