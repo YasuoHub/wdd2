@@ -35,7 +35,7 @@
     <loading wx:if="{{isLoading && records.length === 0}}" type="normal" text="加载中..." mode="spinner" size="56"></loading>
 
     <!-- 空状态 -->
-    <empty wx:if="{{isEmpty}}" type="normal" icon="chart-column" title="暂无积分记录" desc="快去签到或完成任务赚取积分吧~"></empty>
+    <empty wx:if="{{isEmpty}}" type="normal" icon="chart-column" title="暂无积分记录" desc="可通过每日签到或邀请好友获得积分"></empty>
 
     <!-- 记录列表 -->
     <scroll-view

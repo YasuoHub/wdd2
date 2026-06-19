@@ -184,6 +184,14 @@ page {
   background: rgba(231, 76, 60, 0.08);
   border-radius: 12rpx;
 }
+.credit-hint text {
+  display: block;
+}
+.credit-recover {
+  margin-top: 8rpx;
+  color: var(--text-secondary);
+  line-height: 36rpx;
+}
 .modal-footer {
   display: flex;
   gap: 20rpx;

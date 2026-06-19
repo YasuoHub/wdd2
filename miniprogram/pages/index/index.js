@@ -2,6 +2,7 @@
 const app = getApp()
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 const { formatDistanceText } = require('../../utils/distance')
+const HOME_NEARBY_PAGE_SIZE = 5
 
 Page({
   data: {
@@ -222,9 +223,16 @@ Page({
     })
   },
 
-  // 处理登录
-  handleLogin() {
-    // 跳转到用户信息填写页面获取头像昵称
+  // 处理登录：老用户直接登录，新用户再填写头像昵称
+  async handleLogin() {
+    const result = await app.loginExistingUser()
+    if (result && result.success) {
+      this.onLoginSuccess(result)
+      return
+    }
+
+    if (!result || !result.needsProfile) return
+
     wx.navigateTo({
       url: '/pages/user-info/user-info'
     })
@@ -374,7 +382,8 @@ Page({
       const requestData = {
         filter: 'all',
         sort: 'time',
-        limit: 5,
+        page: 1,
+        pageSize: HOME_NEARBY_PAGE_SIZE,
         distance: 5000 // 只显示5公里内的任务
       }
 
@@ -390,7 +399,7 @@ Page({
       })
 
       if (result.code === 0) {
-        const list = (result.data.list || []).map(item => {
+        const list = (result.data.list || []).slice(0, HOME_NEARBY_PAGE_SIZE).map(item => {
           const typeMeta = withTypeMeta(item)
           const distanceText = formatDistanceText(item.distance, { invalidText: item.distanceText || '--' })
           return {
@@ -406,7 +415,6 @@ Page({
             description: item.description,
             location: item.location,
             locationName: item.locationName || '未知位置',
-            points: item.points,
             rewardAmount: item.rewardAmount || 0,
             status: item.status,
             distance: item.distance,

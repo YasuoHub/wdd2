@@ -1,6 +1,5 @@
 // 用户信息填写页面
 const app = getApp()
-const { requirePrivacyAuthorize } = require('../../utils/privacy')
 
 Page({
   data: {
@@ -52,6 +51,8 @@ Page({
 
   // 处理登录
   async handleLogin() {
+    if (this.data.isLoading) return
+
     const { nickname, avatarUrl } = this.data
 
     if (!nickname.trim()) {

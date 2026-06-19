@@ -28,7 +28,20 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "file",
+        "value": "miniprogram/package.json"
+      },
+      {
+        "type": "file",
+        "value": "miniprogram/project.private.config.json"
+      },
+      {
+        "type": "file",
+        "value": "miniprogram/scripts/check-text-encoding.js"
+      }
+    ],
     "include": []
   },
   "appid": "wx37902a802fff342d",

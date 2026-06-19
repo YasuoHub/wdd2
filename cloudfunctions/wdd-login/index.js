@@ -15,6 +15,38 @@ function normalizeMoneyAmount(value, fallback = 0) {
   return Math.round(amount * 100) / 100
 }
 
+function formatLoginUserInfo(userInfo) {
+  return {
+    _id: userInfo._id,
+    nickname: userInfo.nickname,
+    avatar: userInfo.avatar,
+    total_points: userInfo.total_points,
+    balance: userInfo.balance || 0,
+    frozen_balance: userInfo.frozen_balance || 0,
+    available_balance: (userInfo.balance || 0) - (userInfo.frozen_balance || 0),
+    total_earned: userInfo.total_earned || 0,
+    total_withdrawn: userInfo.total_withdrawn || 0,
+    total_paid: userInfo.total_paid || 0,
+    role: userInfo.role,
+    consecutive_sign_days: userInfo.consecutive_sign_days,
+    credit_score: userInfo.credit_score || 0,
+    ban_status: userInfo.ban_status || null,
+    rating: userInfo.rating || 5.0,
+    rating_count: userInfo.rating_count || 0,
+    // 帮助者资料（直接字段）
+    help_willingness: userInfo.help_willingness || '',
+    frequent_locations: userInfo.frequent_locations || [],
+    help_types: userInfo.help_types || [],
+    // 帮助者资料（对象形式）
+    helperProfile: userInfo.help_willingness ? {
+      help_willingness: userInfo.help_willingness,
+      frequent_locations: userInfo.frequent_locations || [],
+      help_types: userInfo.help_types || []
+    } : null,
+    hasHelperProfile: !!userInfo.help_willingness
+  }
+}
+
 // 从 wdd-config 读取积分配置，未配置时使用默认值
 async function getPointsConfig() {
   try {
@@ -59,6 +91,12 @@ exports.main = async (event, context) => {
   // 处理帮助者资料相关操作
   if (action === 'getHelperProfile') {
     return await getHelperProfile(OPENID)
+  }
+  if (action === 'getLoginProfile') {
+    return await getLoginProfile(OPENID)
+  }
+  if (action === 'loginExisting') {
+    return await loginExisting(OPENID)
   }
   if (action === 'updateHelperProfile') {
     return await updateHelperProfile(event, OPENID)
@@ -268,40 +306,90 @@ exports.main = async (event, context) => {
       code: 0,
       message: '登录成功',
       data: {
-        userInfo: {
-          _id: userInfo._id,
-          nickname: userInfo.nickname,
-          avatar: userInfo.avatar,
-          total_points: userInfo.total_points,
-          balance: userInfo.balance || 0,
-          frozen_balance: userInfo.frozen_balance || 0,
-          available_balance: (userInfo.balance || 0) - (userInfo.frozen_balance || 0),
-          total_earned: userInfo.total_earned || 0,
-          total_withdrawn: userInfo.total_withdrawn || 0,
-          total_paid: userInfo.total_paid || 0,
-          role: userInfo.role,
-          consecutive_sign_days: userInfo.consecutive_sign_days,
-          credit_score: userInfo.credit_score || 0,
-          ban_status: userInfo.ban_status || null,
-          rating: userInfo.rating || 5.0,
-          rating_count: userInfo.rating_count || 0,
-          // 帮助者资料（直接字段）
-          help_willingness: userInfo.help_willingness || '',
-          frequent_locations: userInfo.frequent_locations || [],
-          help_types: userInfo.help_types || [],
-          // 帮助者资料（对象形式）
-          helperProfile: userInfo.help_willingness ? {
-            help_willingness: userInfo.help_willingness,
-            frequent_locations: userInfo.frequent_locations || [],
-            help_types: userInfo.help_types || []
-          } : null,
-          hasHelperProfile: !!userInfo.help_willingness
-        },
+        userInfo: formatLoginUserInfo(userInfo),
         isNewUser
       }
     }
   } catch (err) {
     console.error('登录失败:', err)
+    return {
+      code: -1,
+      message: '登录失败: ' + err.message
+    }
+  }
+}
+
+// 查询当前微信身份是否已有用户记录，仅用于登录态校验，不创建用户。
+async function getLoginProfile(OPENID) {
+  try {
+    const userRes = await db.collection('wdd-users')
+      .where({ openid: OPENID })
+      .limit(1)
+      .get()
+
+    if (userRes.data.length === 0) {
+      return {
+        code: 0,
+        message: '用户不存在',
+        data: {
+          exists: false
+        }
+      }
+    }
+
+    return {
+      code: 0,
+      message: '获取成功',
+      data: {
+        exists: true,
+        userInfo: formatLoginUserInfo(userRes.data[0])
+      }
+    }
+  } catch (err) {
+    console.error('获取登录资料失败:', err)
+    return {
+      code: -1,
+      message: '获取失败: ' + err.message
+    }
+  }
+}
+
+// 老用户快速登录：存在则登录，不存在则让前端进入资料填写页。
+async function loginExisting(OPENID) {
+  try {
+    const userRes = await db.collection('wdd-users')
+      .where({ openid: OPENID })
+      .limit(1)
+      .get()
+
+    if (userRes.data.length === 0) {
+      return {
+        code: 0,
+        message: '用户不存在',
+        data: {
+          exists: false
+        }
+      }
+    }
+
+    const userInfo = userRes.data[0]
+    await db.collection('wdd-users').doc(userInfo._id).update({
+      data: {
+        update_time: db.serverDate()
+      }
+    })
+
+    return {
+      code: 0,
+      message: '登录成功',
+      data: {
+        exists: true,
+        userInfo: formatLoginUserInfo(userInfo),
+        isNewUser: false
+      }
+    }
+  } catch (err) {
+    console.error('老用户登录失败:', err)
     return {
       code: -1,
       message: '登录失败: ' + err.message

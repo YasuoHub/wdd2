@@ -272,11 +272,15 @@ async function getPublicNeedsOptimized(event, OPENID) {
     sort = 'time',
     distance,
     page: rawPage = 1,
-    pageSize: rawPageSize = DEFAULT_PAGE_SIZE,
+    pageSize: rawPageSize,
+    limit: rawLimit,
     latitude,
     longitude
   } = event || {}
-  const { page, pageSize, skip } = normalizePageParams(rawPage, rawPageSize)
+  const requestedPageSize = rawPageSize !== undefined && rawPageSize !== null && rawPageSize !== ''
+    ? rawPageSize
+    : rawLimit
+  const { page, pageSize, skip } = normalizePageParams(rawPage, requestedPageSize)
   const now = new Date()
   const userProfile = await loadCurrentUserProfile(OPENID)
   const platformFeeRate = await getPlatformFeeRate()

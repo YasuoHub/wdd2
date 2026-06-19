@@ -82,14 +82,14 @@
 
         <!-- 卡片内容 -->
         <view class="card-content">
-          <!-- 头部：类型和积分 -->
+          <!-- 头部：类型和金额 -->
           <view class="card-header">
             <view class="type-badge" style="background: {{item.bgColor}}">
               <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="{{item.iconColor || 'var(--brand-primary)'}}" size="28"></wdd-icon>
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount || item.takerIncome || item.rewardAmount || item.points / 10)}}</text></view>
+              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount || item.takerIncome || item.rewardAmount || 0)}}</text></view>
             </view>
           </view>
 

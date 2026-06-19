@@ -1,0 +1,9 @@
+{
+  "name": "wdd-temp-clear-all",
+  "version": "1.0.0",
+  "description": "问当地临时清库与云存储清理云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

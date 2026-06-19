@@ -9,6 +9,8 @@
 .header {
   text-align: center;
   margin-bottom: 60rpx;
+  border-radius: var(--radius-md);
+  padding: 10rpx 0;
 }
 
 .privacy-tip {
@@ -36,7 +38,7 @@
 
 .form {
   background: var(--bg-card);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-md);
   padding: 40rpx;
   margin-bottom: 40rpx;
   box-shadow: var(--shadow-md);
@@ -116,7 +118,7 @@
 
 .btn {
   height: 92rpx;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   font-size: 32rpx;
   font-weight: 400;
   display: flex;

@@ -143,8 +143,17 @@ Page({
         content: '登录后即可查看系统通知',
         confirmText: '去登录',
         cancelText: '稍后',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
+            const result = await app.loginExistingUser()
+            if (result && result.success) {
+              await this.loadMessages(true)
+              this.openSystemNotifications()
+              return
+            }
+
+            if (!result || !result.needsProfile) return
+
             wx.navigateTo({
               url: '/pages/user-info/user-info'
             })

@@ -174,6 +174,7 @@
         <text wx:if="{{taskResult === 'cancelled'}}">帮助者信誉分 -10</text>
         <text wx:elif="{{taskResult === 'completed'}}">求助者信誉分 -10</text>
         <text wx:elif="{{taskResult === 'partial'}}">双方均不扣信誉分</text>
+        <text class="credit-recover">恢复规则：帮助者正常完成任务后，每次恢复5分，最高100分。</text>
       </view>
 
       <!-- 封禁 -->

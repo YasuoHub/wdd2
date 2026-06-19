@@ -3,6 +3,7 @@ const { callCloudFunction } = require('./utils/cloud')
 
 const DEFAULT_SHARE_TITLE = '问当地 - 找当地人确认现场情况'
 const DEFAULT_SHARE_PATH = '/pages/index/index'
+const LOGIN_SESSION_CHECK_INTERVAL = 30000
 
 function getCurrentPagePath(page) {
   if (page && page.route) {
@@ -63,8 +64,19 @@ Page = function(pageOptions) {
     options.onShareTimeline = getDefaultShareTimeline
   }
 
-  options.onShow = function(...args) {
+  options.onShow = async function(...args) {
     showShareMenu()
+
+    const app = getApp()
+    const storedUserInfo = wx.getStorageSync('userInfo')
+    const hadLoginSession = !!(app && (app.globalData.isLoggedIn || (storedUserInfo && storedUserInfo._id)))
+    if (app && typeof app.validateLoginSession === 'function') {
+      const isSessionValid = await app.validateLoginSession()
+      if (hadLoginSession && !isSessionValid) {
+        return
+      }
+    }
+
     if (typeof originalOnShow === 'function') {
       return originalOnShow.apply(this, args)
     }
@@ -75,6 +87,8 @@ Page = function(pageOptions) {
 
 App({
   _locationRequestPromise: null,
+  _loginSessionCheckPromise: null,
+  _lastLoginSessionCheckTime: 0,
 
   globalData: {
     userInfo: null,
@@ -116,6 +130,9 @@ App({
 
     // 检查登录状态
     this.checkLoginStatus()
+    this.validateLoginSession({ force: true }).catch(err => {
+      console.warn('启动时校验登录态失败:', err.errMsg || err.message || err)
+    })
 
     // 启动全局消息监听（仅已登录用户）
     if (this.globalData.isLoggedIn) {
@@ -132,10 +149,14 @@ App({
   },
 
   onShow() {
-    // 小程序显示时刷新角标（仅已登录用户）
-    if (this.globalData.isLoggedIn) {
-      this.updateTabBarBadge()
-    }
+    this.validateLoginSession().then((isValid) => {
+      // 小程序显示时刷新角标（仅已登录用户）
+      if (isValid && this.globalData.isLoggedIn) {
+        this.updateTabBarBadge()
+      }
+    }).catch(err => {
+      console.warn('显示时校验登录态失败:', err.errMsg || err.message || err)
+    })
 
     // 每次显示小程序时更新用户位置（静默忽略失败）
     this.updateUserLocation().catch(err => {
@@ -253,6 +274,137 @@ App({
     }
   },
 
+  // 校验本地登录态是否仍对应数据库中的真实用户。
+  async validateLoginSession(options = {}) {
+    const userInfo = wx.getStorageSync('userInfo')
+    if (!userInfo || !userInfo._id) {
+      this.globalData.userInfo = null
+      this.globalData.isLoggedIn = false
+      return false
+    }
+
+    if (this._loginSessionCheckPromise) {
+      return this._loginSessionCheckPromise
+    }
+
+    const now = Date.now()
+    if (!options.force && now - this._lastLoginSessionCheckTime < LOGIN_SESSION_CHECK_INTERVAL) {
+      this.globalData.userInfo = this.globalData.userInfo || userInfo
+      this.globalData.isLoggedIn = true
+      return true
+    }
+
+    this._lastLoginSessionCheckTime = now
+    this._loginSessionCheckPromise = this._doValidateLoginSession(options).finally(() => {
+      this._loginSessionCheckPromise = null
+    })
+
+    return this._loginSessionCheckPromise
+  },
+
+  async _doValidateLoginSession(options = {}) {
+    try {
+      const { result } = await callCloudFunction({
+        name: 'wdd-login',
+        data: { action: 'getLoginProfile' },
+        dedupe: true,
+        dedupeKey: 'wdd-login:getLoginProfile'
+      })
+
+      if (result && result.code === 0 && result.data && result.data.exists) {
+        const userInfo = wx.getStorageSync('userInfo')
+        this.globalData.userInfo = this.globalData.userInfo || userInfo
+        this.globalData.isLoggedIn = true
+        return true
+      }
+
+      if (result && result.code === 0 && result.data && result.data.exists === false) {
+        this.handleInvalidLoginSession(options)
+        return false
+      }
+
+      console.warn('登录态校验返回异常，保留本地登录态:', result)
+      return true
+    } catch (err) {
+      console.warn('登录态校验失败，保留本地登录态:', err.errMsg || err.message || err)
+      return true
+    }
+  },
+
+  handleInvalidLoginSession(options = {}) {
+    this.logout()
+
+    const shouldShowToast = options.showToast !== false
+    wx.reLaunch({
+      url: DEFAULT_SHARE_PATH,
+      success() {
+        if (shouldShowToast) {
+          wx.showToast({
+            title: '登录状态已失效，请重新登录',
+            icon: 'none',
+            duration: 2000
+          })
+        }
+      }
+    })
+  },
+
+  applyLoginState(userInfo) {
+    this.globalData.userInfo = userInfo
+    this.globalData.isLoggedIn = true
+    wx.setStorageSync('userInfo', userInfo)
+    this.onLoginSuccess()
+  },
+
+  // 老用户快速登录：先查 wdd-users，存在则直接登录；不存在再去完善资料页。
+  async loginExistingUser() {
+    try {
+      wx.showLoading({ title: '登录中...' })
+
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-login',
+        data: { action: 'loginExisting' }
+      })
+
+      wx.hideLoading()
+
+      if (result && result.code === 0 && result.data && result.data.exists) {
+        const inviterId = wx.getStorageSync('pendingInviterId')
+        if (inviterId) {
+          wx.removeStorageSync('pendingInviterId')
+        }
+
+        this.applyLoginState(result.data.userInfo)
+        return {
+          success: true,
+          data: {
+            userInfo: result.data.userInfo,
+            isNewUser: false
+          }
+        }
+      }
+
+      if (result && result.code === 0 && result.data && result.data.exists === false) {
+        return {
+          success: false,
+          needsProfile: true
+        }
+      }
+
+      throw new Error((result && result.message) || '登录失败')
+    } catch (err) {
+      wx.hideLoading()
+      wx.showToast({
+        title: err.message || '登录失败',
+        icon: 'none'
+      })
+      return {
+        success: false,
+        error: err.message || '登录失败'
+      }
+    }
+  },
+
   // 用户登录
   login(userProfile) {
     const that = this
@@ -277,12 +429,7 @@ App({
         wx.hideLoading()
         if (result.code === 0) {
           // 保存用户信息
-          that.globalData.userInfo = result.data.userInfo
-          that.globalData.isLoggedIn = true
-          wx.setStorageSync('userInfo', result.data.userInfo)
-
-          // 登录成功后启动全局消息监听
-          that.onLoginSuccess()
+          that.applyLoginState(result.data.userInfo)
 
           // 提示新用户
           if (result.data.isNewUser) {

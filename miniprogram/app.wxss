@@ -566,7 +566,7 @@ button::after {
   align-items: center;
   justify-content: center;
   padding: 24rpx 48rpx;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   font-size: 28rpx;
   font-weight: 400;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

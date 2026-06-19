@@ -186,6 +186,18 @@
   -webkit-text-fill-color: transparent;
 }
 
+.balance-value.credit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.credit-score-text {
+  color: #119B72;
+  font-weight: 500;
+}
+
 .balance-value.available {
   background: linear-gradient(135deg, var(--fresh-mint) 0%, var(--fresh-green) 100%);
   -webkit-background-clip: text;
@@ -698,6 +710,106 @@
   font-size: 25rpx;
   line-height: 38rpx;
   font-weight: 400;
+}
+
+.credit-rules-body {
+  padding: 8rpx 0 18rpx;
+}
+
+.credit-rule-card {
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  background: linear-gradient(135deg, var(--fresh-mint-10) 0%, rgba(255, 255, 255, 0.96) 54%, var(--brand-primary-08) 100%);
+  border: 1rpx solid var(--fresh-mint-10);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.credit-rule-main {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12rpx;
+}
+
+.credit-rule-score {
+  font-size: 58rpx;
+  line-height: 68rpx;
+  font-weight: 500;
+  color: #119B72;
+}
+
+.credit-rule-unit {
+  margin-left: 6rpx;
+  font-size: 26rpx;
+  color: var(--text-tertiary);
+}
+
+.credit-rule-summary {
+  display: block;
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: var(--text-secondary);
+}
+
+.credit-rule-list {
+  overflow: hidden;
+  border: 1rpx solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.credit-rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 24rpx 26rpx;
+  border-bottom: 1rpx solid var(--border-light);
+}
+
+.credit-rule-row:last-child {
+  border-bottom: none;
+}
+
+.credit-rule-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 27rpx;
+  line-height: 38rpx;
+  color: var(--text-primary);
+}
+
+.credit-rule-value {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  line-height: 34rpx;
+  font-weight: 500;
+}
+
+.credit-rule-value.positive {
+  color: #119B72;
+}
+
+.credit-rule-value.negative {
+  color: var(--danger-color);
+}
+
+.credit-rule-value.neutral {
+  color: var(--text-tertiary);
+}
+
+.credit-rule-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  margin-top: 20rpx;
+  padding: 22rpx 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary-08);
+  border: 1rpx solid var(--brand-primary-12);
+  color: var(--text-secondary);
+  font-size: 25rpx;
+  line-height: 38rpx;
 }
 
 .invite-btn::before {

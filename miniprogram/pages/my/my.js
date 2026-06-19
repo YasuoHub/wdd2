@@ -22,7 +22,8 @@ Page({
     showInviteModal: false,
     isCustomerService: false,
     isSuperAdmin: false,
-    showAboutModal: false
+    showAboutModal: false,
+    showCreditRulesModal: false
   },
 
   onLoad() {
@@ -263,9 +264,29 @@ Page({
     return true
   },
 
-  // 处理登录（一键登录）
-  handleLogin() {
-    // 跳转到用户信息填写页面获取头像昵称
+  // 处理登录：老用户直接登录，新用户再填写头像昵称
+  async handleLogin() {
+    const result = await app.loginExistingUser()
+    if (result && result.success) {
+      this.setData({
+        isLoggedIn: true,
+        userInfo: result.data.userInfo
+      })
+      this.loadUserInfo()
+      this.loadInvitePoints()
+      this.checkSignInStatus()
+      this.loadTaskCounts()
+      app.updateTabBarBadge()
+      wx.showToast({
+        title: '登录成功',
+        icon: 'none',
+        duration: 1500
+      })
+      return
+    }
+
+    if (!result || !result.needsProfile) return
+
     wx.navigateTo({
       url: '/pages/user-info/user-info'
     })
@@ -424,6 +445,14 @@ Page({
 
   hideAboutModal() {
     this.setData({ showAboutModal: false })
+  },
+
+  showCreditRules() {
+    this.setData({ showCreditRulesModal: true })
+  },
+
+  hideCreditRules() {
+    this.setData({ showCreditRulesModal: false })
   },
 
   // 退出登录

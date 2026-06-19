@@ -13,6 +13,25 @@
         ]
       },
       {
+        "collectionName": "wdd-need-takers",
+        "name": "taker_id_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "taker_id", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-need-takers",
+        "name": "taker_id_status_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "taker_id", "direction": "asc" },
+          { "name": "status", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
         "collectionName": "wdd-needs",
         "name": "task_no_unique",
         "unique": true,
@@ -48,12 +67,135 @@
         ]
       },
       {
+        "collectionName": "wdd-needs",
+        "name": "user_id_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "user_id", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-needs",
+        "name": "payment_order_id",
+        "unique": false,
+        "keys": [
+          { "name": "payment_order_id", "direction": "asc" }
+        ]
+      },
+      {
         "collectionName": "wdd-messages",
         "name": "need_id_create_time",
         "unique": false,
         "keys": [
           { "name": "need_id", "direction": "asc" },
           { "name": "create_time", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-messages",
+        "name": "receiver_id_is_read",
+        "unique": false,
+        "keys": [
+          { "name": "receiver_id", "direction": "asc" },
+          { "name": "is_read", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-messages",
+        "name": "need_id_receiver_id_is_read",
+        "unique": false,
+        "keys": [
+          { "name": "need_id", "direction": "asc" },
+          { "name": "receiver_id", "direction": "asc" },
+          { "name": "is_read", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-appeals",
+        "name": "idx_need_id",
+        "unique": false,
+        "keys": [
+          { "name": "need_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-appeals",
+        "name": "idx_status_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-appeals",
+        "name": "idx_supplement_deadline",
+        "unique": false,
+        "keys": [
+          { "name": "supplement_deadline", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-appeals",
+        "name": "initiator_openid_status_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "initiator_openid", "direction": "asc" },
+          { "name": "status", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-appeals",
+        "name": "need_id_initiator_openid_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "need_id", "direction": "asc" },
+          { "name": "initiator_openid", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-balance-records",
+        "name": "user_id_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "user_id", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-balance-records",
+        "name": "withdraw_id",
+        "unique": false,
+        "keys": [
+          { "name": "withdraw_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-balance-records",
+        "name": "create_time",
+        "unique": false,
+        "keys": [
+          { "name": "create_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-invite-records",
+        "name": "invitee_id_unique",
+        "unique": true,
+        "keys": [
+          { "name": "invitee_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-invite-records",
+        "name": "inviter_id_create_time",
+        "unique": false,
+        "keys": [
+          { "name": "inviter_id", "direction": "asc" },
+          { "name": "create_time", "direction": "desc" }
         ]
       },
       {

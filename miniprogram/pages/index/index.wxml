@@ -130,9 +130,8 @@
               <wdd-icon name="{{item.typeIcon || 'circle-help'}}" color="var(--brand-primary)" size="34"></wdd-icon>
               <text>{{item.typeName}}</text>
             </view>
-            <view class="need-reward">
-              <view class="need-amount" wx:if="{{item.rewardAmount > 0}}"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.rewardAmount)}}</text></view>
-              <text class="need-amount points" wx:elif="{{item.points > 0}}">+{{item.points}}积分</text>
+            <view class="need-reward" wx:if="{{item.rewardAmount > 0}}">
+              <view class="need-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.rewardAmount)}}</text></view>
             </view>
           </view>
 

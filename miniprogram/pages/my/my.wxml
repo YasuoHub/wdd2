@@ -1,4 +1,4 @@
-<page-meta page-style="{{showAboutModal ? 'overflow: hidden;' : ''}}" />
+<page-meta page-style="{{showAboutModal || showCreditRulesModal ? 'overflow: hidden;' : ''}}" />
 <!-- 个人中心页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
@@ -32,6 +32,14 @@
           <text class="points-text">{{userInfo.total_points || 0}}</text>
         </view>
         <text class="balance-label">积分</text>
+      </view>
+      <view class="balance-divider"></view>
+      <view class="balance-item" bindtap="showCreditRules" hover-class="balance-item-active">
+        <view class="balance-value credit">
+          <wdd-icon name="shield-check" color="#119B72" size="30"></wdd-icon>
+          <text class="credit-score-text">{{isLoggedIn ? (userInfo.credit_score >= 0 ? userInfo.credit_score : 100) : '--'}}</text>
+        </view>
+        <text class="balance-label">信誉分</text>
       </view>
     </view>
 
@@ -249,8 +257,67 @@
       </view>
       <view class="about-hero-content">
         <text class="about-name">问当地</text>
-        <text class="about-summary">问当地是一个基于地理位置的即时互助平台，连接需要了解异地现场情况的人和身处附近、熟悉当地的人，帮助用户快速获取天气体感、道路通行、店铺营业、排队情况等实时信息，为出行、探店和临时决策提供更可靠的参考。</text>
+        <text class="about-summary">问当地是一个基于地理位置的即时互助平台，连接需要了解异地现场情况的人和身处附近、熟悉当地的人。用户可通过现金或钱包余额设置悬赏，帮助者完成任务后收入结算到钱包余额，为出行、探店和临时决策提供更可靠的现场参考。</text>
       </view>
+    </view>
+    <view class="about-scenarios">
+      <view class="about-scenario">
+        <view class="scenario-icon weather">
+          <wdd-icon name="cloud-sun" color="var(--brand-primary)" size="34"></wdd-icon>
+        </view>
+        <view class="scenario-copy">
+          <text class="scenario-title">现场信息</text>
+          <text class="scenario-desc">确认天气体感、道路通行、店铺营业、排队情况等实时问题。</text>
+        </view>
+      </view>
+      <view class="about-scenario">
+        <view class="scenario-icon traffic">
+          <wdd-icon name="wallet" color="var(--vitality-orange)" size="34"></wdd-icon>
+        </view>
+        <view class="scenario-copy">
+          <text class="scenario-title">钱包结算</text>
+          <text class="scenario-desc">悬赏通过微信支付或余额支付完成，任务收入进入帮助者钱包余额。</text>
+        </view>
+      </view>
+    </view>
+    <view class="about-trust-card">
+      <wdd-icon name="shield-check" color="var(--brand-primary)" size="30"></wdd-icon>
+      <text>积分仅用于平台权益，不参与任务悬赏、支付、退款或结算。</text>
+    </view>
+  </view>
+</bottom-sheet>
+
+<!-- 信誉分规则 -->
+<bottom-sheet show="{{showCreditRulesModal}}" title="信誉分规则" bind:close="hideCreditRules">
+  <view class="credit-rules-body">
+    <view class="credit-rule-card">
+      <view class="credit-rule-main">
+        <text class="credit-rule-score">{{isLoggedIn ? (userInfo.credit_score >= 0 ? userInfo.credit_score : 100) : '--'}}</text>
+        <text class="credit-rule-unit">/100</text>
+      </view>
+      <text class="credit-rule-summary">信誉分用于判断账号是否可正常发布求助和接单。低于满分也可以通过正常完成任务逐步恢复。</text>
+    </view>
+    <view class="credit-rule-list">
+      <view class="credit-rule-row">
+        <text class="credit-rule-title">帮助者正常完成任务</text>
+        <text class="credit-rule-value positive">+5分</text>
+      </view>
+      <view class="credit-rule-row">
+        <text class="credit-rule-title">客服裁定取消任务</text>
+        <text class="credit-rule-value negative">帮助者 -10分</text>
+      </view>
+      <view class="credit-rule-row">
+        <text class="credit-rule-title">客服裁定完成任务</text>
+        <text class="credit-rule-value negative">求助者 -10分</text>
+      </view>
+      <view class="credit-rule-row">
+        <text class="credit-rule-title">客服裁定部分完成或超时自动取消</text>
+        <text class="credit-rule-value neutral">双方不扣分</text>
+      </view>
+    </view>
+    <view class="credit-rule-tip">
+      <wdd-icon name="info" color="var(--brand-primary)" size="28"></wdd-icon>
+      <text>每日签到只增加积分，不恢复信誉分。信誉分恢复最高到100分；扣至0分后将限制发布求助和接单。</text>
     </view>
   </view>
 </bottom-sheet>
