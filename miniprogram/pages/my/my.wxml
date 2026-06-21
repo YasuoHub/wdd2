@@ -181,6 +181,10 @@
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
+      <!--
+        资金审批入口当前停用。
+        停用原因：提现审核整改要求用户可提现余额在额度内直接提现，不再通过人工审批阻断。
+        后续如恢复大额人工复核，可取消本段注释，并同步恢复钱包页审批申请入口和云函数阈值拦截。
       <view class="menu-item no-desc" bindtap="goToFundApproval">
         <view class="menu-icon-wrapper">
           <wdd-icon name="banknote" color="var(--brand-primary)" size="38"></wdd-icon>
@@ -190,6 +194,7 @@
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
+      -->
       <view class="menu-item no-desc" bindtap="goToSystemConfig">
         <view class="menu-icon-wrapper">
           <wdd-icon name="settings" color="#7B61D1" size="38"></wdd-icon>

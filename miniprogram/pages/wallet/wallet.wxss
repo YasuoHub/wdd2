@@ -98,6 +98,15 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.withdraw-tip {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: center;
+}
+
 /* 统计区域 */
 .stats-section {
   display: flex;
@@ -436,6 +445,13 @@
   text-align: center;
 }
 .apply-balance { font-size: 28rpx; color: var(--text-secondary); }
+.apply-quota {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+}
 
 .amount-input-wrapper {
   display: flex; align-items: center; gap: 12rpx;

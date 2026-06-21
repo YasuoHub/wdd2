@@ -30,9 +30,10 @@
     <view class="balance-actions">
       <button class="withdraw-btn {{canWithdraw ? '' : 'disabled'}}" bindtap="showApplyModal">
         <text wx:if="{{canWithdraw}}">申请提现</text>
-        <text wx:else>{{withdrawTip}}</text>
+        <text wx:else>暂不能提现</text>
       </button>
     </view>
+    <text wx:if="{{!canWithdraw && withdrawTip}}" class="withdraw-tip">{{withdrawTip}}</text>
   </view>
 
   <!-- 统计卡片 -->
@@ -51,8 +52,12 @@
     </view>
   </view>
 
-  <!-- 申请记录 -->
-  <view class="records-section applications-section">
+  <!--
+    旧资金审批申请记录保留但隐藏。
+    隐藏原因：当前审核版本停用人工资金审批，避免被认定为“可提现余额需审批后才能提现”。
+    如后续恢复大额人工复核，可将 wx:if 改回正常展示，并同步恢复 wallet.js 中 loadApplications 调用。
+  -->
+  <view wx:if="{{false}}" class="records-section applications-section">
     <view class="records-header">
       <text class="records-title">申请记录</text>
     </view>
@@ -172,6 +177,8 @@
       <view class="modal-title">申请提现</view>
       <view class="apply-info">
         <view class="apply-balance apply-balance-money"><text>可提现余额：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
+        <view wx:if="{{dailyAmountLimitEnabled}}" class="apply-quota apply-quota-money"><text>今日剩余额度：</text><wdd-icon name="coins" color="var(--money-gold)" size="24"></wdd-icon><text class="money-text">{{money.format(remainingDailyAmount)}}</text></view>
+        <text wx:if="{{dailyTimesLimitEnabled}}" class="apply-quota">今日剩余提现次数：{{remainingDailyTimes}} 次</text>
       </view>
       <view class="amount-input-wrapper">
         <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon>
@@ -194,12 +201,14 @@
           <view class="detail-value actual"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(applyActual)}}</text></view>
         </view>
       </view>
-      <!-- 审批提示 -->
-      <view wx:if="{{applyAmount > 0}}" class="approval-hint {{needApproval ? 'need-approval' : 'instant'}}">
-        <wdd-icon wx:if="{{needApproval}}" name="hourglass" color="#E67E22" size="24"></wdd-icon>
-        <wdd-icon wx:else name="circle-check-big" color="#07C160" size="24"></wdd-icon>
-        <view wx:if="{{needApproval}}" class="approval-copy"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>，需管理员审批</text></view>
-        <view wx:else class="approval-copy"><text>未超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>，即时到账</text></view>
+      <!--
+        旧审批提示已停用。
+        停用原因：提现不再按金额阈值提交人工审批，统一进入微信提现确认收款流程。
+        如后续恢复大额人工复核，可恢复原 needApproval 分支文案。
+      -->
+      <view wx:if="{{applyAmount > 0}}" class="approval-hint instant">
+        <wdd-icon name="circle-check-big" color="#07C160" size="24"></wdd-icon>
+        <view class="approval-copy"><text>确认后将进入微信提现确认收款流程；未确认前会占用本次额度</text></view>
       </view>
       <view wx:if="{{applyErrorTip}}" class="error-tip">
         <text>{{applyErrorTip}}</text>
@@ -208,7 +217,6 @@
         <button class="modal-btn cancel" bindtap="hideApplyModal">取消</button>
         <button class="modal-btn confirm {{canSubmitApply ? '' : 'disabled'}}" bindtap="submitApply" disabled="{{!canSubmitApply || isSubmitting}}">
           <text wx:if="{{isSubmitting}}">提交中...</text>
-          <text wx:elif="{{needApproval}}">提交审批</text>
           <text wx:else>立即提现</text>
         </button>
       </view>
@@ -221,43 +229,48 @@
       <view class="rule-item">
         <wdd-icon name="landmark" color="var(--brand-primary)" size="40"></wdd-icon>
         <view class="rule-content">
-          <text class="rule-title">提现门槛</text>
-          <view class="rule-desc rule-desc-money"><text>余额满</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinAmount)}}</text><text>后可申请提现。</text></view>
+          <text class="rule-title">提现条件</text>
+          <text class="rule-desc">可提现余额大于 0 元即可发起申请，冻结金额暂不可提现；实际转账金额需符合微信单笔转账限制。</text>
         </view>
       </view>
       <view class="rule-item">
         <wdd-icon name="receipt-text" color="var(--vitality-orange)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">手续费</text>
-          <text class="rule-desc">每笔提现收取 {{withdrawFeeRate}}% 手续费，提交前会展示预计到账金额。</text>
+          <text class="rule-desc">提现手续费率按平台配置执行，提交前会展示手续费和预计到账金额。</text>
         </view>
       </view>
       <view class="rule-item">
         <wdd-icon name="wallet-cards" color="var(--brand-primary)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">单次限额</text>
-          <view class="rule-desc rule-desc-money"><text>单次最低</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text><text>。</text></view>
+          <view class="rule-desc rule-desc-money"><text>受微信转账通道限制，单笔最低</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text><text>。</text></view>
         </view>
       </view>
-      <view class="rule-item">
-        <wdd-icon name="hourglass" color="#E67E22" size="40"></wdd-icon>
-        <view class="rule-content">
-          <text class="rule-title">审批规则</text>
-          <view class="rule-desc rule-desc-money"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>需提交审批，审批通过后方可提现。</text></view>
+      <!--
+        旧审批规则展示已停用。
+        停用原因：当前审核版本不再展示“超过阈值需审批”，避免被认定为提现门槛。
+        恢复大额人工复核时，可重新启用下方旧规则项：
+        <view class="rule-item">
+          <wdd-icon name="hourglass" color="#E67E22" size="40"></wdd-icon>
+          <view class="rule-content">
+            <text class="rule-title">审批规则</text>
+            <view class="rule-desc rule-desc-money"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>需提交审批，审批通过后方可提现。</text></view>
+          </view>
         </view>
-      </view>
+      -->
       <view class="rule-item">
         <wdd-icon name="circle-check-big" color="var(--fresh-mint)" size="40"></wdd-icon>
         <view class="rule-content">
-          <text class="rule-title">即时到账</text>
-          <view class="rule-desc rule-desc-money"><text>不超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>的提现将按即时到账流程处理。</text></view>
+          <text class="rule-title">到账方式</text>
+          <text class="rule-desc">提现默认转入当前微信账号零钱，用户确认收款后由微信支付处理。</text>
         </view>
       </view>
       <view class="rule-item">
         <wdd-icon name="calendar-days" color="#7B8794" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">每日限制</text>
-          <view class="rule-desc rule-desc-money"><text>单日提现上限</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多 {{withdrawDailyTimes}} 次。</text></view>
+          <view class="rule-desc rule-desc-money"><text>单日提现上限</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多 {{withdrawDailyTimes}} 次；达到上限后请明天再试。</text></view>
         </view>
       </view>
     </view>

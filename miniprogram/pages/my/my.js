@@ -387,12 +387,17 @@ Page({
     })
   },
 
-  // 跳转资金审批
-  goToFundApproval() {
-    wx.navigateTo({
-      url: '/pages/fund-approval/fund-approval'
-    })
-  },
+  /*
+   * 跳转资金审批（当前审核版本停用）。
+   * 停用原因：微信审核反馈提现存在门槛/无法即时提现风险，当前版本不再展示人工资金审批入口。
+   * 后续如恢复大额人工复核，可恢复本方法，并取消 my.wxml 中资金审批菜单项的注释。
+   *
+   * goToFundApproval() {
+   *   wx.navigateTo({
+   *     url: '/pages/fund-approval/fund-approval'
+   *   })
+   * },
+   */
 
   // 跳转系统配置
   goToSystemConfig() {

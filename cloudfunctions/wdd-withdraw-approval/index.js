@@ -1,5 +1,10 @@
 // 提现申请审批云函数
 // 处理用户提现申请提交、超级管理员审批（通过/驳回）
+//
+// 当前审核版本说明：
+// 为整改“提现存在门槛/用户无法即时提现”的审核反馈，人工资金审批流程已停用。
+// 旧代码保留是为了兼容历史审批记录，并便于后续如需恢复“大额人工复核”时快速恢复。
+// 新用户提现应直接调用 wdd-withdraw 的 apply 流程，由每日限额、次数限制和微信转账结果做风控。
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -131,6 +136,17 @@ exports.main = async (event, context) => {
 // ========================================
 async function apply(event, OPENID) {
   const { amount } = event
+
+  return {
+    code: -1,
+    message: '当前版本已停用人工提现审批，请返回钱包直接发起提现'
+  }
+
+  /*
+   * 以下为旧资金审批申请逻辑，当前版本保留但不执行。
+   * 停用原因：微信审核反馈提现服务存在提现门槛/无法即时提现风险。
+   * 后续如恢复大额人工复核，可移除上方 return，并重新启用钱包页审批入口、资金审批菜单和规则文案。
+   */
 
   if (!amount || amount <= 0) {
     return { code: -1, message: '提现金额必须大于0' }

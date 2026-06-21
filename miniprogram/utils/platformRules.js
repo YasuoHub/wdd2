@@ -7,12 +7,13 @@
 
 // 内部可变配置（可被数据库配置覆盖）
 let _PLATFORM_FEE_RATE = 0.15
-let _WITHDRAW_MIN_AMOUNT = 2
+let _WITHDRAW_FEE_RATE = 0.01
+let _WITHDRAW_MIN_AMOUNT = 0.01
 let _WITHDRAW_MIN_PER_REQUEST = 1
 let _WITHDRAW_MAX_PER_REQUEST = 5000
 let _WITHDRAW_APPROVAL_THRESHOLD = 100
-let _WITHDRAW_DAILY_LIMIT = 5000
-let _WITHDRAW_DAILY_TIMES = 3
+let _WITHDRAW_DAILY_LIMIT = 100
+let _WITHDRAW_DAILY_TIMES = 1
 let _MIN_REWARD_AMOUNT = 1
 let _MAX_REWARD_AMOUNT = 500
 
@@ -22,9 +23,12 @@ function setPlatformConfig(config) {
   if (typeof config.platform_fee_rate === 'number') {
     _PLATFORM_FEE_RATE = config.platform_fee_rate
   }
-  if (typeof config.withdraw_min_amount === 'number') {
-    _WITHDRAW_MIN_AMOUNT = config.withdraw_min_amount
+  if (typeof config.withdraw_fee_rate === 'number') {
+    _WITHDRAW_FEE_RATE = config.withdraw_fee_rate
   }
+  // 提现最低门槛在当前审核版本停用：可提现余额大于 0 即可发起提现。
+  // 旧配置字段保留给后续恢复/灰度，但不再覆盖前端提现入口，避免形成“余额满 X 元才可提现”的审核风险。
+  _WITHDRAW_MIN_AMOUNT = 0.01
   if (typeof config.withdraw_min_per_request === 'number') {
     _WITHDRAW_MIN_PER_REQUEST = config.withdraw_min_per_request
   }
@@ -55,17 +59,19 @@ const PLATFORM_RULES = {
     return _PLATFORM_FEE_RATE
   },
 
-  // 提现手续费率
-  // 例如：提现100元，手续费1元，实际到账99元
-  WITHDRAW_FEE_RATE: 0.01,
+  // 提现手续费率（从 wdd-config 动态加载）
+  // 例如：提现100元，手续费率 0.01，则手续费1元，实际到账99元。
+  get WITHDRAW_FEE_RATE() {
+    return _WITHDRAW_FEE_RATE
+  },
 
-  // 最低提现门槛（元）
-  // 余额满此金额才可申请提现
+  // 旧字段：最低提现门槛（元）
+  // 当前版本仅作为展示兼容值，不作为“余额满 X 元才可提现”的平台门槛。
   get WITHDRAW_MIN_AMOUNT() {
     return _WITHDRAW_MIN_AMOUNT
   },
 
-  // 单次提现最低金额（元）
+  // 单次提现最低金额（元）：按微信支付最小计价单位处理。
   get WITHDRAW_MIN_PER_REQUEST() {
     return _WITHDRAW_MIN_PER_REQUEST
   },
@@ -75,7 +81,8 @@ const PLATFORM_RULES = {
     return _WITHDRAW_MAX_PER_REQUEST
   },
 
-  // 审批阈值（元）—— 超过此金额需提交审批
+  // 旧字段：审批阈值（元）
+  // 当前版本停用人工审批，保留字段仅用于后续如需恢复大额风控时兼容旧配置。
   get WITHDRAW_APPROVAL_THRESHOLD() {
     return _WITHDRAW_APPROVAL_THRESHOLD
   },
@@ -171,10 +178,10 @@ const MoneyUtils = {
   // availableBalance: 可用余额（元）= balance - frozen_balance
   // return: { canWithdraw: boolean, reason: string }
   checkCanWithdraw(availableBalance) {
-    if (availableBalance < _WITHDRAW_MIN_AMOUNT) {
+    if (availableBalance <= 0) {
       return {
         canWithdraw: false,
-        reason: `可用余额满${_WITHDRAW_MIN_AMOUNT}元才可提现`
+        reason: '暂无可提现余额'
       }
     }
     return { canWithdraw: true, reason: '' }
@@ -189,7 +196,7 @@ const MoneyUtils = {
       return { valid: false, reason: '提现金额必须大于0' }
     }
     if (amount < _WITHDRAW_MIN_PER_REQUEST) {
-      return { valid: false, reason: `单次提现最低${_WITHDRAW_MIN_PER_REQUEST}元` }
+      return { valid: false, reason: `单次提现金额需至少${_WITHDRAW_MIN_PER_REQUEST}元` }
     }
     if (amount > _WITHDRAW_MAX_PER_REQUEST) {
       return { valid: false, reason: `单次提现最高${_WITHDRAW_MAX_PER_REQUEST}元` }

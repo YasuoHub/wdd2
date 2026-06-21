@@ -354,7 +354,7 @@
         <wdd-icon name="landmark" color="var(--brand-primary)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">提现规则</text>
-          <view class="rule-desc rule-desc-money"><text>余额满</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinAmount)}}</text><text>可申请提现，提现收取{{withdrawFeeRate}}%手续费。</text></view>
+          <text class="rule-desc">帮助者可提现余额大于 0 元即可发起申请，手续费按平台配置执行；实际转账金额需符合微信单笔转账限制，并受每日额度和次数限制。</text>
         </view>
       </view>
     </view>

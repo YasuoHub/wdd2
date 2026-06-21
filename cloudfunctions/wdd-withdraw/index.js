@@ -64,6 +64,8 @@ exports.main = async (event, context) => {
         return await queryWithdraws(event, OPENID)
       case 'getWithdrawStatus':
         return await getWithdrawStatus(event, OPENID)
+      case 'getQuotaStatus':
+        return await getWithdrawQuotaStatus(event, OPENID)
       case 'retryFailedTransfer':
         return await retryFailedTransfer(event)
       case 'queryTransferStatus':
@@ -139,7 +141,6 @@ async function reserveWithdrawQuota(transaction, openid, amount, rules) {
   } else {
     await quotaRef.set({
       data: {
-        _id: quotaId,
         openid,
         date_key: dateKey,
         amount_cents: amountCents,
@@ -166,6 +167,58 @@ async function releaseWithdrawQuota(transaction, withdraw) {
       update_time: new Date()
     }
   })
+}
+
+// 查询用户今日提现配额（前端用于点击前提示，最终校验仍以 reserveWithdrawQuota 为准）
+async function getWithdrawQuotaStatus(event, OPENID) {
+  const rules = await loadFromDb()
+  const MoneyUtils = createMoneyUtils(rules)
+  const dateKey = getBeijingDateKey()
+  const quotaId = getWithdrawQuotaDocId(OPENID, dateKey)
+  const quotaRes = await db.collection('wdd-withdraw-daily-quotas').doc(quotaId).get().catch(() => null)
+  const quota = quotaRes && quotaRes.data ? quotaRes.data : null
+
+  const usedCents = Number(quota?.amount_cents ?? moneyToCents(quota?.amount || 0))
+  const usedAmount = Math.round(usedCents) / 100
+  const usedCount = Number(quota?.count || 0)
+  const dailyLimit = Number(rules.WITHDRAW_DAILY_LIMIT || 0)
+  const dailyTimes = Number(rules.WITHDRAW_DAILY_TIMES || 0)
+  const dailyLimitCents = moneyToCents(dailyLimit)
+  const amountLimitEnabled = dailyLimitCents > 0
+  const timesLimitEnabled = dailyTimes > 0
+  const remainingAmount = amountLimitEnabled
+    ? Math.max(0, dailyLimitCents - usedCents) / 100
+    : null
+  const remainingTimes = timesLimitEnabled
+    ? Math.max(0, dailyTimes - usedCount)
+    : null
+
+  let canApply = true
+  let tip = ''
+  if (timesLimitEnabled && remainingTimes <= 0) {
+    canApply = false
+    tip = `今日提现次数已达上限（${dailyTimes}次），请明天再试`
+  } else if (amountLimitEnabled && remainingAmount <= 0) {
+    canApply = false
+    tip = `今日提现额度已用完（单日上限 ¥${MoneyUtils.formatAmount(dailyLimit)}），请明天再试`
+  }
+
+  return {
+    code: 0,
+    data: {
+      dateKey,
+      usedAmount,
+      usedCount,
+      dailyLimit,
+      dailyTimes,
+      amountLimitEnabled,
+      timesLimitEnabled,
+      remainingAmount,
+      remainingTimes,
+      canApply,
+      tip
+    }
+  }
 }
 
 // 申请提现 → 即时打款（无人工审批环节）
@@ -217,12 +270,18 @@ async function applyWithdraw(event, OPENID) {
     }
   }
 
-  if (!approvedApplication) {
-    const threshold = rules.WITHDRAW_APPROVAL_THRESHOLD
-    if (typeof threshold === 'number' && amount > threshold) {
-      return { code: -1, message: `单笔提现超过¥${threshold}需先提交审批申请` }
-    }
-  }
+  /*
+   * 旧资金审批阈值拦截已停用。
+   * 停用原因：微信审核反馈提现存在门槛/无法即时提现风险，当前版本要求用户可提现余额在每日限额内直接进入微信确认收款流程。
+   * 后续如恢复大额人工复核，可重新启用下方代码，并同步恢复钱包页审批申请入口、资金审批菜单和规则文案。
+   *
+   * if (!approvedApplication) {
+   *   const threshold = rules.WITHDRAW_APPROVAL_THRESHOLD
+   *   if (typeof threshold === 'number' && amount > threshold) {
+   *     return { code: -1, message: `单笔提现超过¥${threshold}需先提交审批申请` }
+   *   }
+   * }
+   */
 
   const withdrawCheck = MoneyUtils.checkCanWithdraw(
     approvedApplication ? user.balance : ((user.balance || 0) - (user.frozen_balance || 0))

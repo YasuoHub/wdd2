@@ -63,13 +63,17 @@
       <view class="form-row">
         <view class="label-block">
           <text class="form-label">提现手续费率</text>
-          <text class="form-tip">例如 0.01 表示 1%</text>
+          <text class="form-tip">按 wdd-config 配置，例如 0.01 表示 1%</text>
         </view>
         <view class="input-box">
           <input type="digit" value="{{form.withdraw_fee_rate}}" data-key="withdraw_fee_rate" bindinput="onInput" />
           <text class="unit">比例</text>
         </view>
       </view>
+      <!--
+        旧最低提现门槛配置当前隐藏保留。
+        隐藏原因：审核整改要求不再展示或执行“余额达到某金额才可提现”的平台门槛。
+        后续如恢复该能力，需确认不会影响用户已结算可提现余额的即时提现权益。
       <view class="form-row">
         <view class="label-block">
           <text class="form-label">最低提现门槛</text>
@@ -80,10 +84,11 @@
           <text class="unit">元</text>
         </view>
       </view>
+      -->
       <view class="form-row">
         <view class="label-block">
-          <text class="form-label">单次提现最低</text>
-          <text class="form-tip">每笔提现申请的最低金额</text>
+          <text class="form-label">微信单笔转账最低</text>
+          <text class="form-tip">需与微信商户平台商家转账产品设置一致</text>
         </view>
         <view class="input-box">
           <input type="digit" value="{{form.withdraw_min_per_request}}" data-key="withdraw_min_per_request" bindinput="onInput" />
@@ -100,6 +105,10 @@
           <text class="unit">元</text>
         </view>
       </view>
+      <!--
+        旧提现审批阈值配置当前隐藏保留。
+        隐藏原因：当前审核版本停用人工资金审批，避免“超过阈值需审批”被理解为提现门槛。
+        后续如恢复大额人工复核，可取消本段注释，并同步恢复钱包页、提现页和 wdd-withdraw 中的审批分流。
       <view class="form-row">
         <view class="label-block">
           <text class="form-label">审批阈值</text>
@@ -110,6 +119,7 @@
           <text class="unit">元</text>
         </view>
       </view>
+      -->
       <view class="form-row">
         <view class="label-block">
           <text class="form-label">单日提现金额上限</text>

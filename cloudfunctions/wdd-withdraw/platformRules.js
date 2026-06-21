@@ -5,12 +5,12 @@ const cloud = require('wx-server-sdk')
 const DEFAULT_RULES = {
   PLATFORM_FEE_RATE: 0.15,
   WITHDRAW_FEE_RATE: 0.01,
-  WITHDRAW_MIN_AMOUNT: 2,
+  WITHDRAW_MIN_AMOUNT: 0.01,
   WITHDRAW_MIN_PER_REQUEST: 1,
   WITHDRAW_MAX_PER_REQUEST: 5000,
   WITHDRAW_APPROVAL_THRESHOLD: 100,
-  WITHDRAW_DAILY_LIMIT: 5000,
-  WITHDRAW_DAILY_TIMES: 3,
+  WITHDRAW_DAILY_LIMIT: 100,
+  WITHDRAW_DAILY_TIMES: 1,
   MAX_TRANSFER_RETRY: 5,
   TRANSFER_BACKOFF_MINUTES: [5, 10, 20, 40, 80],
   TRANSFER_QUERY_TIMEOUT_MINUTES: 1,
@@ -37,8 +37,9 @@ async function loadFromDb() {
     const cfg = res.data || {}
     _cachedRules = {
       PLATFORM_FEE_RATE: cfg.platform_fee_rate ?? DEFAULT_RULES.PLATFORM_FEE_RATE,
+      // 提现手续费率继续从 wdd-config 读取；只停用最低门槛和人工审批阈值拦截。
       WITHDRAW_FEE_RATE: cfg.withdraw_fee_rate ?? DEFAULT_RULES.WITHDRAW_FEE_RATE,
-      WITHDRAW_MIN_AMOUNT: cfg.withdraw_min_amount ?? DEFAULT_RULES.WITHDRAW_MIN_AMOUNT,
+      WITHDRAW_MIN_AMOUNT: DEFAULT_RULES.WITHDRAW_MIN_AMOUNT,
       WITHDRAW_MIN_PER_REQUEST: cfg.withdraw_min_per_request ?? DEFAULT_RULES.WITHDRAW_MIN_PER_REQUEST,
       WITHDRAW_MAX_PER_REQUEST: cfg.withdraw_max_per_request ?? DEFAULT_RULES.WITHDRAW_MAX_PER_REQUEST,
       WITHDRAW_APPROVAL_THRESHOLD: cfg.withdraw_approval_threshold ?? DEFAULT_RULES.WITHDRAW_APPROVAL_THRESHOLD,
@@ -89,14 +90,14 @@ function createMoneyUtils(rules) {
       return num.toFixed(2)
     },
     checkCanWithdraw(availableBalance) {
-      if (availableBalance < rules.WITHDRAW_MIN_AMOUNT) {
-        return { canWithdraw: false, reason: `可用余额满${rules.WITHDRAW_MIN_AMOUNT}元才可提现` }
+      if (availableBalance <= 0) {
+        return { canWithdraw: false, reason: '暂无可提现余额' }
       }
       return { canWithdraw: true, reason: '' }
     },
     checkWithdrawAmount(amount, availableBalance) {
       if (amount <= 0) return { valid: false, reason: '提现金额必须大于0' }
-      if (amount < rules.WITHDRAW_MIN_PER_REQUEST) return { valid: false, reason: `单次提现最低${rules.WITHDRAW_MIN_PER_REQUEST}元` }
+      if (amount < rules.WITHDRAW_MIN_PER_REQUEST) return { valid: false, reason: `单次提现金额需至少${rules.WITHDRAW_MIN_PER_REQUEST}元` }
       if (amount > rules.WITHDRAW_MAX_PER_REQUEST) return { valid: false, reason: `单次提现最高${rules.WITHDRAW_MAX_PER_REQUEST}元` }
       if (amount > availableBalance) return { valid: false, reason: '可用余额不足（含已冻结金额）' }
       return { valid: true, reason: '' }

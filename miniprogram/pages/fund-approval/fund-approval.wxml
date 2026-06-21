@@ -1,4 +1,9 @@
 <wxs src="../../utils/money.wxs" module="money" />
+<!--
+  资金审批页面当前保留但不再从“我的”页展示入口。
+  停用原因：微信提现审核整改要求用户可提现余额在每日限额内直接提现，不再由人工审批阻断。
+  后续如恢复大额人工复核，可恢复“我的”页资金审批菜单、钱包页审批申请入口和 wdd-withdraw 阈值分流。
+-->
 <view class="container wdd-page">
   <view class="wdd-page-bg"></view>
   <view class="tab-bar">

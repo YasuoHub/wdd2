@@ -2,6 +2,10 @@
 const app = getApp()
 const { PLATFORM_RULES, MoneyUtils } = require('../../utils/platformRules')
 
+function toAmount(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
 Page({
   data: {
     // 余额信息
@@ -24,6 +28,16 @@ Page({
     // 提现条件
     canWithdraw: false,
     withdrawTip: '',
+    quotaLoaded: false,
+    quotaLoading: false,
+    quotaTip: '',
+    canApplyByQuota: true,
+    todayWithdrawAmount: 0,
+    todayWithdrawCount: 0,
+    remainingDailyAmount: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+    remainingDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
+    dailyAmountLimitEnabled: true,
+    dailyTimesLimitEnabled: true,
 
     // 账单列表
     records: [],
@@ -33,6 +47,8 @@ Page({
     pageSize: 20,
 
     // 申请记录
+    // 当前审核版本停用人工资金审批：用户可提现余额在每日限额内直接走微信确认收款。
+    // 以下数据字段保留，便于后续如果恢复“大额人工复核”时少改动。
     applications: [],
     appLoading: false,
     appHasMore: true,
@@ -47,6 +63,7 @@ Page({
     canSubmitApply: false,
     applyErrorTip: '',
     isSubmitting: false,
+    // 旧字段：提现审批提示状态。当前版本不再按审批阈值分流，保留字段兼容旧 WXML/样式。
     needApproval: false,
 
     // 提现规则弹窗
@@ -56,32 +73,45 @@ Page({
     userInfo: {}
   },
 
-  onLoad() {
+  async onLoad() {
     this.loadUserInfo()
-    this.loadBalance()
-    this.loadRecords()
-    this.loadApplications(true)
+    await this.applyPlatformConfig()
+    await Promise.all([
+      this.loadBalance(),
+      this.loadQuotaStatus(),
+      this.loadRecords()
+    ])
+    // 为避免审核认为“可提现余额需人工审批后才能提现”，当前版本不加载资金审批申请记录。
+    // 如后续恢复大额人工复核，可取消下一行注释。
+    // this.loadApplications(true)
   },
 
-  onShow() {
-    this.applyPlatformConfig()
-    this.loadBalance()
-    this.loadRecords(true)
-    this.loadApplications(true)
+  async onShow() {
+    await this.applyPlatformConfig()
+    await Promise.all([
+      this.loadBalance(),
+      this.loadQuotaStatus(),
+      this.loadRecords(true)
+    ])
+    // 为避免审核认为“可提现余额需人工审批后才能提现”，当前版本不加载资金审批申请记录。
+    // 如后续恢复大额人工复核，可取消下一行注释。
+    // this.loadApplications(true)
   },
 
   // 应用平台配置到页面数据（从数据库动态加载的费率/阈值）
-  applyPlatformConfig() {
-    const config = app.globalData.platformConfig
-    if (config) {
-      this.setData({
-        withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
-        withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
-        withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
-        withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
-        withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES
-      })
+  async applyPlatformConfig() {
+    if (app && typeof app.loadPlatformConfig === 'function') {
+      await app.loadPlatformConfig()
     }
+    this.setData({
+      withdrawMinAmount: PLATFORM_RULES.WITHDRAW_MIN_AMOUNT,
+      withdrawFeeRate: Math.round(PLATFORM_RULES.WITHDRAW_FEE_RATE * 100),
+      withdrawMinPerRequest: PLATFORM_RULES.WITHDRAW_MIN_PER_REQUEST,
+      withdrawMaxPerRequest: PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST,
+      withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
+      withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+      withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES
+    })
   },
 
   // 加载用户信息
@@ -106,9 +136,6 @@ Page({
         const frozenBalance = userInfo.frozen_balance || 0
         const availableBalance = balance - frozenBalance
 
-        // 检查提现条件（基于可用余额）
-        const withdrawCheck = MoneyUtils.checkCanWithdraw(availableBalance)
-
         this.setData({
           balance: balance,
           frozenBalance: frozenBalance,
@@ -116,10 +143,9 @@ Page({
           totalEarned: userInfo.total_earned || 0,
           totalWithdrawn: userInfo.total_withdrawn || 0,
           totalPaid: userInfo.total_paid || 0,
-          canWithdraw: withdrawCheck.canWithdraw,
-          withdrawTip: withdrawCheck.reason,
           userInfo: userInfo
         })
+        this.refreshWithdrawEligibility()
 
         // 更新全局数据
         app.updateUserInfo(userInfo)
@@ -129,7 +155,101 @@ Page({
     }
   },
 
+  async loadQuotaStatus() {
+    if (this.data.quotaLoading) return
+    this.setData({ quotaLoading: true })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-withdraw',
+        data: { action: 'getQuotaStatus' }
+      })
+
+      if (result.code === 0 && result.data) {
+        const quota = result.data
+        this.setData({
+          quotaLoaded: true,
+          quotaLoading: false,
+          quotaTip: quota.tip || '',
+          canApplyByQuota: quota.canApply !== false,
+          todayWithdrawAmount: quota.usedAmount || 0,
+          todayWithdrawCount: quota.usedCount || 0,
+          remainingDailyAmount: typeof quota.remainingAmount === 'number'
+            ? quota.remainingAmount
+            : PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+          remainingDailyTimes: typeof quota.remainingTimes === 'number'
+            ? quota.remainingTimes
+            : PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
+          dailyAmountLimitEnabled: quota.amountLimitEnabled !== false,
+          dailyTimesLimitEnabled: quota.timesLimitEnabled !== false
+        })
+      } else {
+        this.setData({
+          quotaLoaded: false,
+          quotaLoading: false,
+          canApplyByQuota: true,
+          quotaTip: ''
+        })
+      }
+    } catch (err) {
+      console.error('加载提现配额失败:', err)
+      this.setData({
+        quotaLoaded: false,
+        quotaLoading: false,
+        canApplyByQuota: true,
+        quotaTip: ''
+      })
+    }
+
+    this.refreshWithdrawEligibility()
+  },
+
+  refreshWithdrawEligibility() {
+    const withdrawCheck = MoneyUtils.checkCanWithdraw(this.data.availableBalance)
+    if (!withdrawCheck.canWithdraw) {
+      this.setData({
+        canWithdraw: false,
+        withdrawTip: withdrawCheck.reason
+      })
+      return
+    }
+
+    if (this.data.quotaLoaded && !this.data.canApplyByQuota) {
+      this.setData({
+        canWithdraw: false,
+        withdrawTip: this.data.quotaTip || '今日提现额度已用完，请明天再试'
+      })
+      return
+    }
+
+    this.setData({
+      canWithdraw: true,
+      withdrawTip: ''
+    })
+  },
+
+  getMaxApplyAmount() {
+    const limits = [
+      toAmount(this.data.availableBalance),
+      toAmount(PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    ]
+    if (this.data.dailyAmountLimitEnabled) {
+      limits.push(toAmount(this.data.remainingDailyAmount))
+    }
+    return toAmount(Math.max(0, Math.min(...limits)))
+  },
+
+  getAmountLimitReason(maxAmount) {
+    const maxText = MoneyUtils.formatAmount(maxAmount)
+    if (this.data.dailyAmountLimitEnabled && maxAmount === toAmount(this.data.remainingDailyAmount)) {
+      return `提现金额不能超过今日剩余额度 ¥${maxText}`
+    }
+    return `本次最多可提现 ¥${maxText}`
+  },
+
   // 加载申请记录
+  // 当前审核版本停用人工资金审批，函数保留但入口不再调用。
+  // 保留原因：后续如果恢复“大额提现人工复核”，可直接恢复调用并沿用旧申请记录展示。
   async loadApplications(reset = false) {
     if (this.data.appLoading) return
 
@@ -226,12 +346,15 @@ Page({
   // 下拉刷新
   async onPullDownRefresh() {
     await this.loadBalance()
+    await this.loadQuotaStatus()
     await this.loadRecords(true)
-    await this.loadApplications(true)
+    // 当前审核版本停用人工资金审批，不刷新旧审批申请记录。
+    // await this.loadApplications(true)
     wx.stopPullDownRefresh()
   },
 
   // 加载更多申请记录
+  // 当前审核版本停用人工资金审批，函数保留供后续恢复旧审批列表时使用。
   loadMoreApplications() {
     if (this.data.appHasMore && !this.data.appLoading) {
       this.loadApplications()
@@ -246,7 +369,8 @@ Page({
   },
 
   // 显示申请提现弹窗
-  showApplyModal() {
+  async showApplyModal() {
+    await this.loadQuotaStatus()
     if (!this.data.canWithdraw) {
       wx.showToast({
         title: this.data.withdrawTip,
@@ -284,10 +408,9 @@ Page({
     }
 
     const numValue = parseFloat(value) || 0
-    const maxPerRequest = PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST
-    const maxAvailable = Math.min(this.data.availableBalance, maxPerRequest)
+    const maxAvailable = this.getMaxApplyAmount()
     if (numValue > maxAvailable) {
-      value = String(maxAvailable)
+      value = MoneyUtils.formatAmount(maxAvailable)
     }
 
     this.setData({ applyAmount: value })
@@ -297,7 +420,7 @@ Page({
 
   // 全部提现
   withdrawAll() {
-    const maxAmount = Math.min(this.data.availableBalance, PLATFORM_RULES.WITHDRAW_MAX_PER_REQUEST)
+    const maxAmount = this.getMaxApplyAmount()
     const amount = MoneyUtils.formatAmount(maxAmount)
     this.setData({ applyAmount: amount })
     this.calcApplyFee()
@@ -316,47 +439,257 @@ Page({
 
   checkCanSubmitApply() {
     const amount = parseFloat(this.data.applyAmount) || 0
+    const maxAmount = this.getMaxApplyAmount()
     const check = MoneyUtils.checkWithdrawAmount(amount, this.data.availableBalance)
-    const threshold = this.data.withdrawApprovalThreshold
-    const needApproval = amount > threshold
+    let valid = check.valid
+    let reason = check.reason
+
+    if (valid && this.data.quotaLoaded && !this.data.canApplyByQuota) {
+      valid = false
+      reason = this.data.quotaTip || '今日提现额度已用完，请明天再试'
+    }
+
+    if (valid && amount > maxAmount) {
+      valid = false
+      reason = this.getAmountLimitReason(maxAmount)
+    }
+
     this.setData({
-      canSubmitApply: check.valid,
-      applyErrorTip: check.valid ? '' : check.reason,
-      needApproval: needApproval
+      canSubmitApply: valid,
+      applyErrorTip: valid ? '' : reason,
+      needApproval: false
     })
   },
 
   // 提交提现申请
+  // 当前审核版本不再区分“即时提现/审批提现”，所有提现在每日限额内直接进入微信提现确认流程。
   async submitApply() {
     if (!this.data.canSubmitApply || this.data.isSubmitting) return
 
     const amount = parseFloat(this.data.applyAmount)
-    const threshold = this.data.withdrawApprovalThreshold
 
-    // 低于或等于阈值 → 直接跳转提现页即时到账
-    if (amount <= threshold) {
-      this.setData({ showApplyModal: false })
-      wx.navigateTo({
-        url: `/pages/withdraw/withdraw?amount=${amount}`
+    await this.doWithdraw(amount)
+
+    /*
+     * 旧资金审批分流逻辑已停用。
+     * 停用原因：微信审核反馈提现服务存在提现门槛/无法即时提现风险。
+     * 当前版本要求“可提现余额大于 0 且未超过每日限额即可直接提现”，不再因金额超过阈值提交人工审批。
+     * 后续如恢复大额人工复核，可重新启用下方代码，并同步更新审核材料和页面规则文案。
+     *
+     * const threshold = this.data.withdrawApprovalThreshold
+     * if (amount <= threshold) {
+     *   this.setData({ showApplyModal: false })
+     *   wx.navigateTo({
+     *     url: `/pages/withdraw/withdraw?amount=${amount}`
+     *   })
+     *   return
+     * }
+     *
+     * wx.showModal({
+     *   title: '确认申请',
+     *   content: `提现金额 ${amount} 元（手续费 ${this.data.applyFee} 元，到账 ${this.data.applyActual} 元），单笔超过 ${threshold} 元需管理员审批，确认提交？`,
+     *   confirmText: '确认申请',
+     *   confirmColor: '#1677D2',
+     *   success: async (res) => {
+     *     if (res.confirm) {
+     *       await this.doApply(amount)
+     *     }
+     *   }
+     * })
+   */
+  },
+
+  // 在钱包提现弹窗内直接执行提现，不再跳转独立提现页。
+  async doWithdraw(amount) {
+    this.setData({ isSubmitting: true })
+    wx.showLoading({ title: '提交中...', mask: true })
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-withdraw',
+        data: {
+          action: 'apply',
+          amount: amount
+        },
+        timeout: 20000
       })
-      return
-    }
 
-    // 高于阈值 → 走审批流程
-    wx.showModal({
-      title: '确认申请',
-      content: `提现金额 ${amount} 元（手续费 ${this.data.applyFee} 元，到账 ${this.data.applyActual} 元），单笔超过 ${threshold} 元需管理员审批，确认提交？`,
-      confirmText: '确认申请',
-      confirmColor: '#1677D2',
-      success: async (res) => {
-        if (res.confirm) {
-          await this.doApply(amount)
-        }
+      wx.hideLoading()
+
+      if (result.code !== 0) {
+        this.setData({ isSubmitting: false })
+        this.loadBalance()
+        this.loadQuotaStatus()
+        wx.showToast({
+          title: result.message || '提现失败',
+          icon: 'none',
+          duration: 3000
+        })
+        return
       }
+
+      const withdrawId = result.data.withdrawId
+      const packageInfo = result.data.packageInfo
+      const mchId = result.data.mchId
+      const appId = result.data.appId
+
+      if (!packageInfo || !mchId || !appId) {
+        this.setData({ isSubmitting: false })
+        this.loadBalance()
+        this.loadQuotaStatus()
+        wx.showToast({
+          title: '获取转账信息失败',
+          icon: 'none',
+          duration: 3000
+        })
+        return
+      }
+
+      await this.requestMerchantTransfer(mchId, appId, packageInfo, withdrawId)
+    } catch (err) {
+      wx.hideLoading()
+      this.setData({ isSubmitting: false })
+      wx.showToast({
+        title: err.message || '提现失败',
+        icon: 'none',
+        duration: 3000
+      })
+    }
+  },
+
+  // 调起微信提现确认收款页面。
+  requestMerchantTransfer(mchId, appId, packageInfo, withdrawId) {
+    return new Promise((resolve) => {
+      if (typeof wx.requestMerchantTransfer !== 'function') {
+        this.setData({ isSubmitting: false })
+        wx.showModal({
+          title: '提示',
+          content: '当前微信版本不支持此功能，请升级微信后重试',
+          showCancel: false
+        })
+        resolve()
+        return
+      }
+
+      wx.requestMerchantTransfer({
+        mchId,
+        appId,
+        package: packageInfo,
+        success: () => {
+          wx.showLoading({ title: '打款中...', mask: true })
+          this._pollStopped = false
+          this.pollWithdrawStatus(withdrawId)
+          resolve()
+        },
+        fail: () => {
+          this.setData({ isSubmitting: false })
+          this.loadBalance()
+          this.loadQuotaStatus()
+          this.loadRecords(true)
+          wx.showModal({
+            title: '未确认收款',
+            content: '您尚未确认收款，本次提现已进入处理中。系统会继续查询微信结果；如长时间未到账或未退回，请联系客服处理。',
+            showCancel: false
+          })
+          resolve()
+        }
+      })
     })
   },
 
+  // 轮询提现状态：成功或失败后刷新钱包余额和流水。
+  async pollWithdrawStatus(withdrawId) {
+    const MAX_ATTEMPTS = 30
+    const INTERVAL_MS = 4000
+    const MAX_CONSECUTIVE_FAILS = 3
+    let attempts = 0
+    let consecutiveFails = 0
+
+    const finish = (title, content, shouldCloseModal = false) => {
+      this._pollStopped = true
+      wx.hideLoading()
+      this.setData({
+        isSubmitting: false,
+        showApplyModal: shouldCloseModal ? false : this.data.showApplyModal,
+        applyAmount: shouldCloseModal ? '' : this.data.applyAmount
+      })
+      this.loadBalance()
+      this.loadQuotaStatus()
+      this.loadRecords(true)
+      wx.showModal({
+        title,
+        content,
+        showCancel: false
+      })
+    }
+
+    const tick = async () => {
+      if (this._pollStopped) return
+      if (attempts >= MAX_ATTEMPTS) {
+        finish('处理中', '打款仍在处理，可稍后在钱包收支明细中查看进度。', true)
+        return
+      }
+      attempts++
+
+      try {
+        const { result } = await wx.cloud.callFunction({
+          name: 'wdd-withdraw',
+          data: { action: 'getWithdrawStatus', withdrawId }
+        })
+
+        if (this._pollStopped) return
+
+        if (result && result.code === 0) {
+          consecutiveFails = 0
+          const { status, rejectReason } = result.data
+          if (status === 'completed') {
+            finish('已到账', '提现已到账，请在微信「服务通知」中查看到账信息。', true)
+            return
+          }
+          if (status === 'rejected') {
+            finish('打款失败', (rejectReason || '打款失败') + '，金额已退回到余额。')
+            return
+          }
+          if (status === 'transfer_failed') {
+            finish('打款异常', '打款多次失败，请联系客服处理。')
+            return
+          }
+        } else {
+          consecutiveFails++
+          if (consecutiveFails >= MAX_CONSECUTIVE_FAILS) {
+            finish('查询失败', '无法查询提现状态，请稍后在钱包中查看进度。', true)
+            return
+          }
+        }
+      } catch (err) {
+        console.warn('查询提现状态失败:', err)
+        consecutiveFails++
+        if (consecutiveFails >= MAX_CONSECUTIVE_FAILS) {
+          finish('网络异常', '无法查询提现状态，请稍后在钱包中查看进度。', true)
+          return
+        }
+      }
+
+      setTimeout(tick, INTERVAL_MS)
+    }
+
+    tick()
+  },
+
+  // 旧资金审批申请提交逻辑已停用。
+  // 保留原因：后续如果恢复“大额提现人工复核”，可重新启用该函数和 wdd-withdraw-approval 云函数。
+  // 当前版本不调用该函数，避免用户可提现余额被人工审批流程阻断。
   async doApply(amount) {
+    wx.showToast({
+      title: '当前版本已停用人工审批，请直接提现',
+      icon: 'none'
+    })
+
+    /*
+     * 旧资金审批申请提交实现。
+     * 停用原因：微信审核整改要求可提现余额在额度内直接进入微信提现确认收款流程。
+     * 后续恢复大额人工复核时，可移除上方停用提示并恢复下方代码。
+     *
     this.setData({ isSubmitting: true })
 
     try {
@@ -380,9 +713,11 @@ Page({
     }
 
     this.setData({ isSubmitting: false })
+     */
   },
 
-  // 跳转到提现页面（审批通过后发起真实提现）
+  // 跳转到提现页面（旧审批通过后发起真实提现）
+  // 当前审核版本不展示审批申请记录，此函数保留供后续恢复旧审批流程。
   goToWithdraw(e) {
     const { id } = e.currentTarget.dataset
     if (!id) return
@@ -398,6 +733,10 @@ Page({
 
   hideRulesModal() {
     this.setData({ showRulesModal: false })
+  },
+
+  onUnload() {
+    this._pollStopped = true
   },
 
   normalizeBalanceRecord(item) {

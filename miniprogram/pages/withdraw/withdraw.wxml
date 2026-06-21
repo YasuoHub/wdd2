@@ -10,9 +10,14 @@
       <text class="amount-number">{{money.format(balanceDisplayAmount)}}</text>
     </view>
     <text wx:if="{{balanceTip}}" class="balance-tip">{{balanceTip}}</text>
+    <text wx:if="{{dailyAmountLimitEnabled}}" class="balance-tip">今日剩余额度：¥{{money.format(remainingDailyAmount)}}</text>
+    <text wx:if="{{dailyTimesLimitEnabled}}" class="balance-tip">今日剩余提现次数：{{remainingDailyTimes}} 次</text>
   </view>
 
-  <!-- 关联申请提示 -->
+  <!--
+    旧资金审批申请提示保留。
+    当前审核版本停用人工资金审批，新的提现不会进入 application 分支；保留仅用于兼容历史已审批申请和后续恢复。
+  -->
   <view wx:if="{{application}}" class="application-notice">
     <text class="notice-text">审批通过金额</text>
     <view class="notice-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(application.amount)}}</text></view>
@@ -31,7 +36,7 @@
         type="digit"
         value="{{withdrawAmount}}"
         bindinput="onAmountInput"
-        placeholder="{{withdrawMinAmount}}"
+        placeholder="请输入提现金额"
         placeholder-class="input-placeholder"
         focus="{{!application}}"
         disabled="{{!!application}}"
@@ -69,23 +74,32 @@
     <view class="rules-title">提现规则</view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <view class="rule-text rule-text-money"><text>最低提现金额：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinAmount)}}</text></view>
+      <text class="rule-text">可提现余额大于 0 元即可发起申请，冻结金额暂不可提现；实际转账金额需符合微信单笔转账限制</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <view class="rule-text rule-text-money"><text>单次最低：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text></view>
+      <view class="rule-text rule-text-money"><text>受微信转账通道限制，单笔最低：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text></view>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <text class="rule-text">手续费率：{{withdrawFeeRate}}%</text>
+      <text class="rule-text">手续费率：{{withdrawFeeRate}}%，提交前会展示实际到账金额</text>
+    </view>
+    <!--
+      旧审批规则已停用。
+      停用原因：微信审核反馈提现服务存在提现门槛/无法即时提现风险，当前版本不再展示或执行“超过阈值需审批”。
+      如后续恢复大额人工复核，可重新启用下方旧规则项：
+      <view class="rule-item">
+        <text class="rule-dot"></text>
+        <view class="rule-text rule-text-money"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>需审批，不超过即时到账</text></view>
+      </view>
+    -->
+    <view class="rule-item">
+      <text class="rule-dot"></text>
+      <text class="rule-text">提现默认转入当前微信账号零钱，用户确认收款后由微信支付处理</text>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>
-      <view class="rule-text rule-text-money"><text>单笔超过</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawApprovalThreshold)}}</text><text>需审批，不超过即时到账</text></view>
-    </view>
-    <view class="rule-item">
-      <text class="rule-dot"></text>
-      <view class="rule-text rule-text-money"><text>单日提现上限：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多{{withdrawDailyTimes}}次</text></view>
+      <view class="rule-text rule-text-money"><text>单日提现上限：</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多{{withdrawDailyTimes}}次；达到上限后请明天再试</text></view>
     </view>
     <view class="rule-item">
       <text class="rule-dot"></text>

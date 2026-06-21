@@ -87,8 +87,9 @@ Page({
         this.setData({
           form: {
             platform_fee_rate: String(cfg.platform_fee_rate ?? ''),
+            // 提现手续费率继续按 wdd-config 配置；当前仅停用提现最低门槛和人工审批。
             withdraw_fee_rate: String(cfg.withdraw_fee_rate ?? ''),
-            withdraw_min_amount: String(cfg.withdraw_min_amount ?? ''),
+            withdraw_min_amount: '0.01',
             withdraw_min_per_request: String(cfg.withdraw_min_per_request ?? ''),
             withdraw_max_per_request: String(cfg.withdraw_max_per_request ?? ''),
             withdraw_approval_threshold: String(cfg.withdraw_approval_threshold ?? ''),
@@ -138,9 +139,11 @@ Page({
     const form = this.data.form
     const payload = {
       platform_fee_rate: numberValue(form, 'platform_fee_rate', '平台服务费率'),
+      // 提现手续费率继续按 wdd-config 配置；当前仅停用“余额满 X 元才可提现”的平台门槛。
+      // 旧字段保留在 payload 中是为了兼容现有 wdd-config 结构，后续恢复时减少迁移成本。
       withdraw_fee_rate: numberValue(form, 'withdraw_fee_rate', '提现手续费率'),
-      withdraw_min_amount: numberValue(form, 'withdraw_min_amount', '最低提现门槛'),
-      withdraw_min_per_request: numberValue(form, 'withdraw_min_per_request', '单次提现最低金额'),
+      withdraw_min_amount: 0.01,
+      withdraw_min_per_request: numberValue(form, 'withdraw_min_per_request', '微信单笔转账最低金额'),
       withdraw_max_per_request: numberValue(form, 'withdraw_max_per_request', '单次提现最高金额'),
       withdraw_approval_threshold: numberValue(form, 'withdraw_approval_threshold', '提现审批阈值'),
       withdraw_daily_limit: numberValue(form, 'withdraw_daily_limit', '单日提现金额上限'),

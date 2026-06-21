@@ -39,6 +39,13 @@ Page({
     withdrawApprovalThreshold: PLATFORM_RULES.WITHDRAW_APPROVAL_THRESHOLD,
     withdrawDailyLimit: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
     withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
+    quotaLoaded: false,
+    quotaTip: '',
+    canApplyByQuota: true,
+    remainingDailyAmount: PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+    remainingDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
+    dailyAmountLimitEnabled: true,
+    dailyTimesLimitEnabled: true,
 
     // 状态
     canSubmit: false,
@@ -48,6 +55,8 @@ Page({
     errorTip: '',
 
     // 关联的提现申请
+    // 旧资金审批入口已停用：当前审核版本不再通过 applicationId 发起新提现。
+    // 字段保留用于兼容历史已审批申请，后续恢复大额人工复核时也可复用。
     applicationId: '',
     application: null,
     entryType: 'instant'
@@ -55,6 +64,7 @@ Page({
 
   async onLoad(options) {
     await this.applyPlatformConfig()
+    await this.loadQuotaStatus()
 
     if (options && options.applicationId) {
       this.setData({
@@ -80,6 +90,7 @@ Page({
 
   async onShow() {
     await this.applyPlatformConfig()
+    await this.loadQuotaStatus()
     this.loadBalance()
   },
 
@@ -97,6 +108,35 @@ Page({
       withdrawDailyTimes: PLATFORM_RULES.WITHDRAW_DAILY_TIMES
     })
     this.syncWithdrawContext()
+  },
+
+  async loadQuotaStatus() {
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-withdraw',
+        data: { action: 'getQuotaStatus' }
+      })
+      if (result.code === 0 && result.data) {
+        const quota = result.data
+        this.setData({
+          quotaLoaded: true,
+          quotaTip: quota.tip || '',
+          canApplyByQuota: quota.canApply !== false,
+          remainingDailyAmount: typeof quota.remainingAmount === 'number'
+            ? quota.remainingAmount
+            : PLATFORM_RULES.WITHDRAW_DAILY_LIMIT,
+          remainingDailyTimes: typeof quota.remainingTimes === 'number'
+            ? quota.remainingTimes
+            : PLATFORM_RULES.WITHDRAW_DAILY_TIMES,
+          dailyAmountLimitEnabled: quota.amountLimitEnabled !== false,
+          dailyTimesLimitEnabled: quota.timesLimitEnabled !== false
+        })
+        this.syncWithdrawContext()
+        this.checkCanSubmit()
+      }
+    } catch (err) {
+      console.error('加载提现配额失败:', err)
+    }
   },
 
   // 加载关联的提现申请
@@ -169,11 +209,15 @@ Page({
     const application = this.data.application
     const balance = toAmount(this.data.balance)
     const availableBalance = toAmount(this.data.availableBalance)
-    const threshold = toAmount(this.data.withdrawApprovalThreshold)
     const maxPerRequest = toAmount(this.data.withdrawMaxPerRequest)
+    const dailyLimit = this.data.dailyAmountLimitEnabled
+      ? toAmount(this.data.remainingDailyAmount)
+      : Number.POSITIVE_INFINITY
     const currentAmount = parseFloat(this.data.withdrawAmount) || 0
 
     if (application) {
+      // 历史审批单兼容逻辑。
+      // 当前版本已停用人工审批，新的用户提现不会进入该分支；保留是为了避免历史已通过申请无法收尾。
       const approvedAmount = toAmount(application.amount)
       const withdrawLimit = this.data.balanceLoaded
         ? minPositive([approvedAmount, balance])
@@ -199,13 +243,12 @@ Page({
       return
     }
 
-    const withdrawLimit = minPositive([availableBalance, maxPerRequest, threshold])
+    const withdrawLimit = minPositive([availableBalance, maxPerRequest, dailyLimit])
     let nextAmount = currentAmount
     if (nextAmount > withdrawLimit) {
       nextAmount = withdrawLimit
     }
     const amountText = nextAmount > 0 ? MoneyUtils.formatAmount(nextAmount) : this.data.withdrawAmount
-    const thresholdText = MoneyUtils.formatAmount(threshold)
     const availableText = MoneyUtils.formatAmount(availableBalance)
     const maxText = MoneyUtils.formatAmount(withdrawLimit)
 
@@ -213,8 +256,8 @@ Page({
       withdrawLimit,
       balanceDisplayAmount: withdrawLimit,
       balanceLabel: '本次可提现上限',
-      balanceTip: `账户可用余额 ¥${availableText}，即时提现单笔不超过审批阈值 ¥${thresholdText}`,
-      limitTip: `本次最多可提现 ¥${maxText}，超过需先提交审批`,
+      balanceTip: `账户可用余额 ¥${availableText}，每日剩余额度内直接进入微信提现确认收款流程`,
+      limitTip: `本次最多可提现 ¥${maxText}`,
       withdrawAmount: amountText
     })
     this.calculateFee()
@@ -270,6 +313,11 @@ Page({
     const limit = toAmount(this.data.withdrawLimit)
     let valid = check.valid
     let reason = check.reason
+
+    if (valid && this.data.quotaLoaded && !this.data.canApplyByQuota) {
+      valid = false
+      reason = this.data.quotaTip || '今日提现额度已用完，请明天再试'
+    }
 
     if (valid && limit > 0 && amount > limit) {
       valid = false
