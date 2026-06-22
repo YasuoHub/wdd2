@@ -253,6 +253,9 @@ page {
 }
 
 .flow-amount {
+  display: flex;
+  align-items: center;
+  gap: 2rpx;
   font-size: 28rpx;
   font-weight: 400;
 }

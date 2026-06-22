@@ -1,6 +1,6 @@
 // 任务详情页
 const app = getApp()
-const { MoneyUtils, PLATFORM_RULES } = require('../../utils/platformRules')
+const { MoneyUtils } = require('../../utils/platformRules')
 const { getByType, getByStatus } = require('../../utils/needTypes')
 const { formatDistanceText } = require('../../utils/distance')
 
@@ -16,8 +16,7 @@ Page({
     canComplete: false,
     canCancel: false,
     showActionBar: false,
-    loading: true,
-    feeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
+    loading: true
   },
 
   onLoad(options) {
@@ -95,10 +94,11 @@ Page({
         task.statusIcon = statusInfo.icon
 
         // 计算金额显示值（避免WXML中写死比例）
-        const rewardAmount = task.rewardAmount || 0
-        task._displayAmount = rewardAmount
-        task._platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
-        task._takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+        const rewardAmount = Number(task.rewardAmount || task.reward_amount || 0)
+        const takerIncome = Number(task.takerIncome || MoneyUtils.calcTakerIncome(rewardAmount))
+        task.rewardAmount = rewardAmount
+        task._takerIncome = takerIncome
+        task._displayAmount = isSeeker ? rewardAmount : takerIncome
         task._distanceText = this.formatDistance(task.distance)
         task._orderNo = task.task_no
         task._locationSubText = this.getLocationSubText(task)
@@ -145,13 +145,11 @@ Page({
   async takeTask() {
     if (!this.data.canTake) return
 
-    const rewardAmount = this.data.task.rewardAmount || 0
-    const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
-    const feeRate = Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100)
+    const takerIncome = this.data.task._takerIncome || 0
 
     wx.showModal({
       title: '确认去帮助',
-      content: `完成此任务可获得 ${takerIncome} 元（已扣除${feeRate}%平台服务费），确定要去帮助吗？`,
+      content: `完成此任务可获得 ${takerIncome} 元，确定要去帮助吗？`,
       success: async (res) => {
         if (res.confirm) {
           wx.showLoading({ title: '处理中...' })

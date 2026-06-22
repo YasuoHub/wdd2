@@ -20,6 +20,23 @@ function normalizeDescriptionText(value) {
   return String(value || '').replace(DESCRIPTION_LINE_BREAK_RE, ' ')
 }
 
+function normalizeRewardAmountInput(value) {
+  let text = String(value || '').replace(/[^\d.]/g, '')
+  const dotIndex = text.indexOf('.')
+
+  if (dotIndex !== -1) {
+    const integerPart = text.slice(0, dotIndex)
+    const decimalPart = text.slice(dotIndex + 1).replace(/\./g, '').slice(0, 1)
+    text = `${integerPart}.${decimalPart}`
+  }
+
+  if (text.startsWith('.')) {
+    text = `0${text}`
+  }
+
+  return text
+}
+
 Page({
   data: {
     // 地图位置
@@ -46,12 +63,16 @@ Page({
     rewardAmount: 1,
     quickAmounts: QUICK_AMOUNTS,
 
-    // 支付方式
-    paymentMethod: 'wechat',    // 'balance' | 'wechat'
+    // 支付方式（可独立选择，按抵扣金 -> 余额 -> 微信的顺序分摊）
+    useDeduction: false,
+    useBalance: false,
+    useWechat: true,
     availableBalance: 0,
     frozenBalance: 0,
+    deductionBalance: 0,
+    frozenDeductionBalance: 0,
+    availableDeductionBalance: 0,
     balanceLoaded: false,
-    canBalancePay: false,
 
     // 平台规则
     platformFeeRate: Math.round(PLATFORM_RULES.PLATFORM_FEE_RATE * 100),
@@ -65,6 +86,11 @@ Page({
     // 计算值
     platformFee: 0,
     takerIncome: 0,
+    deductionAmount: 0,
+    balanceAmount: 0,
+    wechatAmount: 0,
+    uncoveredAmount: 0,
+    paymentCovered: true,
 
     // 发布/支付状态
     isPublishing: false,
@@ -118,50 +144,38 @@ Page({
       })
       if (result.code === 0 && result.data.userInfo) {
         const ui = result.data.userInfo
-        const availableBalance = (ui.balance || 0) - (ui.frozen_balance || 0)
+        const availableBalance = Math.max(0, Math.round(((ui.balance || 0) - (ui.frozen_balance || 0)) * 100) / 100)
+        const availableDeductionBalance = Math.max(0, Math.round(((ui.deduction_balance || 0) - (ui.frozen_deduction_balance || 0)) * 100) / 100)
         this.setData({
           availableBalance,
           frozenBalance: ui.frozen_balance || 0,
+          deductionBalance: ui.deduction_balance || 0,
+          frozenDeductionBalance: ui.frozen_deduction_balance || 0,
+          availableDeductionBalance,
           balanceLoaded: true
+        }, () => {
+          this.updateAmountCalculation()
         })
-        this.updateDefaultPaymentMethod()
       }
     } catch (err) {
       console.error('加载余额失败:', err)
     }
   },
 
-  // 根据悬赏金额自动选择默认支付方式
-  updateDefaultPaymentMethod() {
-    const amount = parseFloat(this.data.rewardAmount) || 0
-    const canBalancePay = amount > 0 && amount <= this.data.availableBalance
-    this.setData({ canBalancePay })
-
-    if (amount > 0 && amount <= this.data.availableBalance) {
-      // 金额在可用范围内，自动选余额支付
-      if (!this._lastRewardAmount || this._lastRewardAmount !== amount) {
-        this.setData({ paymentMethod: 'balance' })
-      }
-    } else {
-      this.setData({ paymentMethod: 'wechat' })
-    }
-    this._lastRewardAmount = amount
-  },
-
-  // 切换支付方式
-  onSwitchPaymentMethod(e) {
+  // 切换支付方式，用户选择什么，后端就只使用什么
+  onTogglePaymentMethod(e) {
     const method = e.currentTarget.dataset.method
-    if (method === 'balance' && !this.data.canBalancePay) {
-      wx.showToast({ title: '可用余额不足，请选择微信支付', icon: 'none', duration: 2000 })
-      return
+    const keyMap = {
+      deduction: 'useDeduction',
+      balance: 'useBalance',
+      wechat: 'useWechat'
     }
-    this.setData({ paymentMethod: method })
-  },
+    const key = keyMap[method]
+    if (!key) return
 
-  // 检查是否可用余额支付
-  canPayByBalance() {
-    const amount = parseFloat(this.data.rewardAmount) || 0
-    return amount > 0 && amount <= this.data.availableBalance
+    this.setData({ [key]: !this.data[key] }, () => {
+      this.updateAmountCalculation()
+    })
   },
 
   // 初始化地图中心点
@@ -186,7 +200,9 @@ Page({
   autoSelectType(type) {
     const typeItem = NEED_TYPES.find(item => item.id === type)
     if (typeItem) {
-      this.setData({ selectedType: type })
+      this.setData({ selectedType: type }, () => {
+        this.checkCanPublish()
+      })
     }
   },
 
@@ -259,11 +275,31 @@ Page({
   // 更新金额计算（平台抽成、帮助者收入）
   updateAmountCalculation() {
     const { rewardAmount } = this.data
+    const totalAmount = parseFloat(rewardAmount) || 0
     const platformFee = MoneyUtils.calcPlatformFee(rewardAmount)
     const takerIncome = MoneyUtils.calcTakerIncome(rewardAmount)
+    const deductionAmount = this.data.useDeduction
+      ? Math.min(totalAmount, this.data.availableDeductionBalance || 0)
+      : 0
+    const afterDeduction = Math.max(0, Math.round((totalAmount - deductionAmount) * 100) / 100)
+    const balanceAmount = this.data.useBalance
+      ? Math.min(afterDeduction, this.data.availableBalance || 0)
+      : 0
+    const afterBalance = Math.max(0, Math.round((afterDeduction - balanceAmount) * 100) / 100)
+    const wechatAmount = this.data.useWechat ? afterBalance : 0
+    const uncoveredAmount = Math.max(0, Math.round((afterBalance - wechatAmount) * 100) / 100)
+    const paymentCovered = totalAmount > 0 && uncoveredAmount === 0
+
     this.setData({
       platformFee: MoneyUtils.formatAmount(platformFee),
-      takerIncome: MoneyUtils.formatAmount(takerIncome)
+      takerIncome: MoneyUtils.formatAmount(takerIncome),
+      deductionAmount: MoneyUtils.formatAmount(deductionAmount),
+      balanceAmount: MoneyUtils.formatAmount(balanceAmount),
+      wechatAmount: MoneyUtils.formatAmount(wechatAmount),
+      uncoveredAmount: MoneyUtils.formatAmount(uncoveredAmount),
+      paymentCovered
+    }, () => {
+      this.checkCanPublish()
     })
   },
 
@@ -286,8 +322,9 @@ Page({
           locationName: res.name || res.address || '选定位置',
           addressDetail: res.address,
           selectedLocation: ''
+        }, () => {
+          this.checkCanPublish()
         })
-        this.checkCanPublish()
       },
       fail: (err) => {
         if (err.errMsg && !err.errMsg.includes('cancel')) {
@@ -327,8 +364,9 @@ Page({
         }
       })
       if (result.code === 0 && result.data) {
-        this.setData({ locationName: result.data.address })
-        this.checkCanPublish()
+        this.setData({ locationName: result.data.address }, () => {
+          this.checkCanPublish()
+        })
       }
     } catch (err) {
       console.error('逆编码失败:', err)
@@ -344,8 +382,9 @@ Page({
 
   // 地址输入
   onLocationInput(e) {
-    this.setData({ locationName: e.detail.value })
-    this.checkCanPublish()
+    this.setData({ locationName: e.detail.value }, () => {
+      this.checkCanPublish()
+    })
   },
 
   // 选择曾用地点
@@ -357,22 +396,25 @@ Page({
       longitude: location.longitude,
       latitude: location.latitude,
       addressDetail: location.address || ''
+    }, () => {
+      this.saveUsedLocation(location)
+      this.checkCanPublish()
     })
-    this.saveUsedLocation(location)
-    this.checkCanPublish()
   },
 
   // 选择类型
   selectType(e) {
-    this.setData({ selectedType: e.currentTarget.dataset.type })
-    this.checkCanPublish()
+    this.setData({ selectedType: e.currentTarget.dataset.type }, () => {
+      this.checkCanPublish()
+    })
   },
 
   // 描述输入
   onDescriptionInput(e) {
     const description = normalizeDescriptionText(e.detail.value)
-    this.setData({ description })
-    this.checkCanPublish()
+    this.setData({ description }, () => {
+      this.checkCanPublish()
+    })
     return description
   },
 
@@ -384,38 +426,37 @@ Page({
   // 金额滑块变化
   onAmountChange(e) {
     const rewardAmount = e.detail.value
-    this.setData({ rewardAmount })
-    this.updateAmountCalculation()
-    this.updateDefaultPaymentMethod()
-    this.checkCanPublish()
+    this.setData({ rewardAmount }, () => {
+      this.updateAmountCalculation()
+    })
   },
 
   // 选择快捷金额
   selectQuickAmount(e) {
     const amount = e.currentTarget.dataset.amount
-    this.setData({ rewardAmount: amount })
-    this.updateAmountCalculation()
-    this.updateDefaultPaymentMethod()
-    this.checkCanPublish()
+    this.setData({ rewardAmount: amount }, () => {
+      this.updateAmountCalculation()
+    })
   },
 
   // 手动输入金额
   onAmountInput(e) {
-    let value = parseFloat(e.detail.value)
-    if (isNaN(value) || value < 0) value = 0
-    this.setData({ rewardAmount: value })
-    this.updateAmountCalculation()
-    this.updateDefaultPaymentMethod()
-    this.checkCanPublish()
+    const value = normalizeRewardAmountInput(e.detail.value)
+    this.setData({ rewardAmount: value }, () => {
+      this.updateAmountCalculation()
+    })
+    return value
   },
 
   // 检查是否可以发布
   checkCanPublish() {
-    const { locationName, selectedType, rewardAmount, description } = this.data
+    const { locationName, selectedType, rewardAmount, description, paymentCovered } = this.data
+    const amount = parseFloat(rewardAmount) || 0
     const descriptionText = normalizeDescriptionText(description).trim()
     const canPublish = !!(locationName && selectedType && descriptionText.length >= MIN_DESCRIPTION_LENGTH
-      && rewardAmount >= PLATFORM_RULES.MIN_REWARD_AMOUNT
-      && rewardAmount <= PLATFORM_RULES.MAX_REWARD_AMOUNT)
+      && amount >= PLATFORM_RULES.MIN_REWARD_AMOUNT
+      && amount <= PLATFORM_RULES.MAX_REWARD_AMOUNT
+      && paymentCovered)
     this.setData({ canPublish })
   },
 
@@ -503,6 +544,22 @@ Page({
 
   preventHide() {},
 
+  finishPublishSuccess(resultData, rewardAmountValue, selectedType, locationName) {
+    this.saveUsedLocation({
+      name: locationName,
+      longitude: this.data.longitude,
+      latitude: this.data.latitude,
+      address: this.data.addressDetail || ''
+    })
+
+    app.globalData.refreshMyNeeds = true
+    wx.setStorageSync('forceRefreshIndex', true)
+    wx.setStorageSync('forceRefreshTaskHall', true)
+
+    const targetUrl = `/pages/publish-success/publish-success?needId=${resultData.needId}&amount=${rewardAmountValue}&type=${selectedType}&locationName=${encodeURIComponent(locationName)}`
+    wx.redirectTo({ url: targetUrl })
+  },
+
   // 发布求助（金额支付版）
   async handlePublish() {
     if (this.data.isPublishing) return
@@ -532,6 +589,7 @@ Page({
     }
 
     const { locationName, selectedType, rewardAmount, description, selectedTime } = this.data
+    const rewardAmountValue = parseFloat(rewardAmount) || 0
 
     // 前置校验
     if (!locationName) {
@@ -551,12 +609,16 @@ Page({
       wx.showToast({ title: `详细描述不少于${MIN_DESCRIPTION_LENGTH}个字`, icon: 'none', duration: 2000 })
       return
     }
-    if (rewardAmount < PLATFORM_RULES.MIN_REWARD_AMOUNT) {
+    if (rewardAmountValue < PLATFORM_RULES.MIN_REWARD_AMOUNT) {
       wx.showToast({ title: `悬赏金额最少${PLATFORM_RULES.MIN_REWARD_AMOUNT}元`, icon: 'none', duration: 2000 })
       return
     }
-    if (rewardAmount > PLATFORM_RULES.MAX_REWARD_AMOUNT) {
+    if (rewardAmountValue > PLATFORM_RULES.MAX_REWARD_AMOUNT) {
       wx.showToast({ title: `悬赏金额最多${PLATFORM_RULES.MAX_REWARD_AMOUNT}元`, icon: 'none', duration: 2000 })
+      return
+    }
+    if (!this.data.paymentCovered) {
+      wx.showToast({ title: `支付方式还差${this.data.uncoveredAmount}元`, icon: 'none', duration: 2000 })
       return
     }
     if (!this.data.canPublish) return
@@ -564,6 +626,8 @@ Page({
     const typeInfo = getByType(selectedType)
 
     this.setData({ isPublishing: true })
+    let pendingOrderId = ''
+    let wechatPaymentCompleted = false
 
     try {
       wx.showLoading({ title: '发布中...' })
@@ -585,13 +649,20 @@ Page({
         images: imageUrls
       }
 
-      // 余额支付：一步完成
-      if (this.data.paymentMethod === 'balance') {
+      const paymentSelection = {
+        useDeduction: this.data.useDeduction,
+        useBalance: this.data.useBalance,
+        useWechat: this.data.useWechat
+      }
+
+      // 无微信补差：钱包资金冻结后直接发布
+      if (Number(this.data.wechatAmount) <= 0) {
         const { result } = await wx.cloud.callFunction({
           name: 'wdd-payment',
           data: {
-            action: 'payByBalance',
-            amount: rewardAmount,
+            action: 'payByWallet',
+            amount: rewardAmountValue,
+            paymentSelection,
             description: `发布求助：${typeInfo.name}`,
             metadata: metadata
           }
@@ -600,26 +671,14 @@ Page({
         wx.hideLoading()
 
         if (result.code === 0) {
-          this.saveUsedLocation({
-            name: locationName,
-            longitude: this.data.longitude,
-            latitude: this.data.latitude,
-            address: this.data.addressDetail || ''
-          })
-
-          app.globalData.refreshMyNeeds = true
-          wx.setStorageSync('forceRefreshIndex', true)
-          wx.setStorageSync('forceRefreshTaskHall', true)
-
-          const targetUrl = `/pages/publish-success/publish-success?needId=${result.data.needId}&amount=${rewardAmount}&type=${selectedType}&locationName=${encodeURIComponent(locationName)}`
-          wx.redirectTo({ url: targetUrl })
+          this.finishPublishSuccess(result.data, rewardAmountValue, selectedType, locationName)
         } else {
           throw new Error(result.message || '发布失败')
         }
         return
       }
 
-      // 微信支付：现有流程
+      // 含微信支付：先冻结已选择的钱包资金，再支付微信补差
       wx.showLoading({ title: '创建订单中...' })
 
       // 2. 创建支付订单
@@ -627,7 +686,8 @@ Page({
         name: 'wdd-payment',
         data: {
           action: 'createOrder',
-          amount: rewardAmount,
+          amount: rewardAmountValue,
+          paymentSelection,
           description: `发布求助：${typeInfo.name}`,
           metadata: metadata
         }
@@ -636,6 +696,7 @@ Page({
       if (orderResult.code !== 0) {
         throw new Error(orderResult.message || '创建订单失败')
       }
+      pendingOrderId = orderResult.data.orderId
 
       wx.hideLoading()
 
@@ -649,6 +710,7 @@ Page({
         signType: paymentData.signType,
         paySign: paymentData.paySign
       })
+      wechatPaymentCompleted = true
       console.log('[发布] 微信支付完成，结果:', paymentRes)
 
       // 4. 支付成功，确认订单并创建任务
@@ -667,29 +729,7 @@ Page({
       wx.hideLoading()
 
       if (confirmResult.code === 0) {
-        this.saveUsedLocation({
-          name: locationName,
-          longitude: this.data.longitude,
-          latitude: this.data.latitude,
-          address: this.data.addressDetail || ''
-        })
-
-        // 设置刷新标记
-        app.globalData.refreshMyNeeds = true
-        wx.setStorageSync('forceRefreshIndex', true)
-        wx.setStorageSync('forceRefreshTaskHall', true)
-
-        const targetUrl = `/pages/publish-success/publish-success?needId=${confirmResult.data.needId}&amount=${rewardAmount}&type=${selectedType}&locationName=${encodeURIComponent(locationName)}`
-        console.log('[发布] 准备跳转:', targetUrl)
-        // 跳转到发布成功页
-        wx.redirectTo({
-          url: targetUrl,
-          success: () => console.log('[发布] 跳转成功'),
-          fail: (err) => {
-            console.error('[发布] 跳转失败:', err)
-            wx.showToast({ title: '跳转失败: ' + err.errMsg, icon: 'none', duration: 3000 })
-          }
-        })
+        this.finishPublishSuccess(confirmResult.data, rewardAmountValue, selectedType, locationName)
       } else {
         throw new Error(confirmResult.message || '发布失败')
       }
@@ -697,6 +737,39 @@ Page({
     } catch (err) {
       wx.hideLoading()
       this.setData({ isPublishing: false })
+
+      if (pendingOrderId && !wechatPaymentCompleted) {
+        wx.cloud.callFunction({
+          name: 'wdd-payment',
+          data: {
+            action: 'cancelPendingOrder',
+            orderId: pendingOrderId
+          }
+        }).catch(cancelErr => {
+          console.error('取消待支付订单失败:', cancelErr)
+        })
+      }
+
+      if (pendingOrderId && wechatPaymentCompleted) {
+        wx.showLoading({ title: '恢复订单中...' })
+        try {
+          const { result: recoverResult } = await wx.cloud.callFunction({
+            name: 'wdd-payment',
+            data: {
+              action: 'recoverPaidPendingOrder',
+              orderId: pendingOrderId
+            }
+          })
+          wx.hideLoading()
+          if (recoverResult && recoverResult.code === 0 && recoverResult.data && recoverResult.data.needId) {
+            this.finishPublishSuccess(recoverResult.data, rewardAmountValue, selectedType, locationName)
+            return
+          }
+        } catch (recoverErr) {
+          wx.hideLoading()
+          console.error('恢复已支付订单失败:', recoverErr)
+        }
+      }
 
       // 处理支付取消
       if (err.errMsg && err.errMsg.includes('cancel')) {

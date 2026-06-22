@@ -17,8 +17,11 @@
               <text class="task-status-pill status-{{task.status}}">{{task.statusText}}</text>
             </view>
             <view class="task-meta-line">
-              <text class="task-location-inline">{{task.locationName || '任务地点'}}</text>
-              <view wx:if="{{task.rewardAmount > 0}}" class="task-reward-inline"><view class="task-meta-dot"></view><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(task.rewardAmount || 0)}}</text></view>
+              <view class="task-location-inline">
+                <wdd-icon name="map-pin" color="var(--text-tertiary)" size="24"></wdd-icon>
+                <text class="task-location-text">{{task.locationName || '任务地点'}}</text>
+              </view>
+              <view wx:if="{{task.displayRewardAmount > 0}}" class="task-reward-inline"><view class="task-meta-dot"></view><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(task.displayRewardAmount || 0)}}</text></view>
             </view>
           </view>
         </view>
@@ -109,7 +112,7 @@
             <text wx:else>{{item.senderName ? item.senderName[0] : '?'}}</text>
           </view>
 
-          <!-- 文字消息 loading 指示器（自己发的临时消息显示在左侧） -->
+          <!-- 发送中指示器 -->
           <view class="message-loading" wx:if="{{item.isSelf && item.sendStatus === 'sending' && item.type === 'text'}}">
             <view class="loading-dot"></view>
           </view>
@@ -122,7 +125,7 @@
             </block>
 
             <!-- 图片消息 -->
-            <block wx:if="{{item.type === 'image' && item.status !== 'violated'}}">
+            <block wx:if="{{item.type === 'image' && (item.status !== 'violated' || item.isSelf)}}">
               <view class="image-wrapper">
                 <image
                   class="message-image {{item.imageWidth ? 'has-size' : ''}}"
@@ -131,6 +134,8 @@
                   style="{{item.imageWidth ? 'width: ' + item.imageWidth + 'rpx; height: ' + item.imageHeight + 'rpx;' : ''}}"
                   bindtap="previewImage"
                   data-url="{{item.imageUrl}}"
+                  data-status="{{item.status}}"
+                  data-is-self="{{item.isSelf}}"
                   lazy-load
                 />
                 <view wx:if="{{item.isTrustedPhoto}}" class="trusted-photo-badge">
@@ -143,8 +148,39 @@
               </view>
             </block>
             <block wx:elif="{{item.type === 'image' && item.status === 'violated'}}">
-              <text class="message-text">图片已被系统拦截</text>
+              <text class="message-text">图片未通过审核</text>
             </block>
+
+            <!-- 语音消息：审核通过后才可播放，再次点击可停止 -->
+            <block wx:if="{{item.type === 'voice'}}">
+              <view
+                class="voice-message {{playingVoiceId === item._id ? 'playing' : ''}} {{item.status !== 'normal' && !(item.isSelf && item.status === 'pending') ? 'disabled' : ''}} {{item.status === 'pending' ? 'pending' : ''}} {{item.status === 'violated' ? 'violated' : ''}}"
+                style="width: {{item.voiceWidth}}rpx;"
+                bindtap="toggleVoicePlayback"
+                data-id="{{item._id}}"
+              >
+                <view class="voice-waves">
+                  <view class="voice-wave wave-1"></view>
+                  <view class="voice-wave wave-2"></view>
+                  <view class="voice-wave wave-3"></view>
+                </view>
+                <text class="voice-duration">{{item.voiceDuration}}″</text>
+                <text wx:if="{{item.status === 'violated'}}" class="voice-blocked-text">未通过审核</text>
+              </view>
+            </block>
+          </view>
+
+          <!-- 待审核媒体仅发送者可见；失败后点击感叹号可重新提交 -->
+          <view wx:if="{{item.isSelf && (item.type === 'image' || item.type === 'voice') && item.status === 'pending' && item.reviewLoadingVisible}}" class="media-review-status">
+            <view class="voice-review-spinner"></view>
+          </view>
+          <view
+            wx:elif="{{item.isSelf && (item.type === 'image' || item.type === 'voice') && item.status === 'violated'}}"
+            class="voice-review-status voice-review-failed"
+            catchtap="retryMediaMessage"
+            data-id="{{item._id}}"
+          >
+            <text>!</text>
           </view>
 
           <!-- 自己头像 -->
@@ -193,29 +229,52 @@
           <wdd-icon name="{{isToolbarExpanded ? 'chevron-down' : 'plus'}}" color="#111827" size="34"></wdd-icon>
         </view>
 
-        <view class="input-wrapper">
+        <view class="input-wrapper {{isRecording ? 'recording' : ''}} {{voiceRecordCancelActive ? 'recording-cancel' : ''}}">
           <input
+            wx:if="{{isInputFocused}}"
             class="message-input"
             type="text"
             value="{{inputValue}}"
-            placeholder="输入消息..."
+            placeholder="发消息或按住说话..."
             confirm-type="confirm"
             bindinput="onInput"
             bindconfirm="sendTextMessage"
             bindfocus="onInputFocus"
+            bindblur="onInputBlur"
             focus="{{inputFocus}}"
             hold-keyboard
           />
+          <view
+            wx:else
+            class="message-input-touch-target {{inputValue ? 'has-value' : ''}}"
+            catchtouchstart="onMessageInputTouchStart"
+            catchtouchmove="onMessageInputTouchMove"
+            catchtouchend="onMessageInputTouchEnd"
+            catchtouchcancel="onMessageInputTouchCancel"
+          >
+            <text>{{isRecording ? (voiceRecordCancelActive ? '松开取消' : '松开发送 ' + recordingSeconds + 's') : (inputValue || '发消息或按住说话...')}}</text>
+          </view>
         </view>
 
         <!-- 发送按钮 -->
         <button
+          wx:if="{{inputValue}}"
           class="send-btn {{inputValue ? 'active' : ''}}"
           catchtap="sendTextMessage"
           disabled="{{!inputValue}}"
         >
           发送
         </button>
+      </view>
+
+      <view wx:if="{{isRecording}}" class="recording-panel {{voiceRecordCancelActive ? 'cancel' : ''}}">
+        <view class="recording-icon">
+          <wdd-icon name="{{voiceRecordCancelActive ? 'x' : 'radio'}}" color="#FFFFFF" size="44"></wdd-icon>
+        </view>
+        <text class="recording-title">{{voiceRecordCancelActive ? '松开取消录音' : '正在录音 ' + recordingSeconds + '″'}}</text>
+        <text wx:if="{{voiceRecordCancelActive}}" class="recording-tip">手指移回输入框可继续发送</text>
+        <text wx:elif="{{recordingCountdown > 0}}" class="recording-countdown">还剩 {{recordingCountdown}} 秒</text>
+        <text wx:else class="recording-tip">上滑或滑出输入框取消，松开发送</text>
       </view>
 
       <!-- 工具栏 -->

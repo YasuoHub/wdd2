@@ -14,6 +14,29 @@ function formatDate(date) {
   return `${bj.getUTCFullYear()}-${pad(bj.getUTCMonth() + 1)}-${pad(bj.getUTCDate())} ${pad(bj.getUTCHours())}:${pad(bj.getUTCMinutes())}`
 }
 
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
+function calcPayParts(need) {
+  return {
+    totalAmount: roundMoney(need.total_amount || need.reward_amount || 0),
+    deductionAmount: roundMoney(need.deduction_amount || 0),
+    balanceAmount: roundMoney(need.balance_amount || 0),
+    wechatAmount: roundMoney(need.wechat_amount || 0)
+  }
+}
+
+function getPaymentMode(need) {
+  const { deductionAmount, balanceAmount, wechatAmount } = calcPayParts(need)
+  const methodCount = [deductionAmount, balanceAmount, wechatAmount].filter(amount => amount > 0).length
+  if (methodCount > 1) return 'mixed'
+  if (wechatAmount > 0) return 'wechat'
+  if (balanceAmount > 0) return 'balance'
+  if (deductionAmount > 0) return 'deduction'
+  return 'none'
+}
+
 // 从 wdd-config 获取客服白名单
 async function getCustomerServiceOpenids() {
   try {
@@ -445,9 +468,10 @@ async function submitArbitration(event, OPENID) {
           task_result: taskResult,
           partial_percent: taskResult === 'partial' ? partialPercent : null,
           ban_info: banInfo || null,
-          refund: buildRefundStatus(need, seekerRefund, need.payment_method === 'balance'
-            ? { status: 'refunded', message: '余额退款已在裁定事务内处理' }
-            : { status: 'not_started', message: '等待裁定事务提交后发起退款' })
+          refund: buildRefundStatus(need, seekerRefund, {
+            status: seekerRefund > 0 ? 'not_started' : 'not_required',
+            message: seekerRefund > 0 ? '等待裁定事务提交后按支付明细退款' : ''
+          })
         }),
         resolve_time: new Date(),
         update_time: new Date()
@@ -455,32 +479,6 @@ async function submitArbitration(event, OPENID) {
     })
 
     if (taskResult === 'cancelled') {
-      if (need.payment_method === 'balance') {
-        // 余额支付：只解冻，balance 在支付时未扣无需恢复
-        await transaction.collection('wdd-users').doc(need.user_id).update({
-          data: {
-            frozen_balance: _.inc(-seekerRefund),
-            update_time: new Date()
-          }
-        })
-        // 写入解冻流水
-        const seekerUser = await transaction.collection('wdd-users').doc(need.user_id).get()
-        await transaction.collection('wdd-balance-records').add({
-          data: {
-            user_id: need.user_id,
-            type: 'arbitration_refund',
-            amount: seekerRefund,
-            balance: seekerUser.data.balance || 0,
-            frozen_balance: seekerUser.data.frozen_balance || 0,
-            description: '客服裁决：任务取消，解冻退回',
-            need_id: need._id,
-            create_time: new Date()
-          }
-        })
-      } else {
-        // 微信支付：事务外调用微信退款原路退回，不写入钱包余额
-      }
-
       // 扣减帮助者信誉分 10 分
       await transaction.collection('wdd-users').doc(takerRecord.taker_id).update({
         data: {
@@ -521,16 +519,22 @@ async function submitArbitration(event, OPENID) {
         }
       })
 
-      // 余额支付：解冻 + 实际扣款
-      if (need.payment_method === 'balance') {
-        await transaction.collection('wdd-users').doc(need.user_id).update({
-          data: {
-            balance: _.inc(-rewardAmount),
-            frozen_balance: _.inc(-rewardAmount),
-            total_paid: _.inc(rewardAmount),
-            update_time: new Date()
-          }
-        })
+      // 消费冻结的钱包资金；微信部分已在发布时支付
+      const { balanceAmount, deductionAmount } = calcPayParts(need)
+      if (balanceAmount > 0 || deductionAmount > 0) {
+        const userUpdateData = {
+          total_paid: _.inc(balanceAmount),
+          update_time: new Date()
+        }
+        if (balanceAmount > 0) {
+          userUpdateData.balance = _.inc(-balanceAmount)
+          userUpdateData.frozen_balance = _.inc(-balanceAmount)
+        }
+        if (deductionAmount > 0) {
+          userUpdateData.deduction_balance = _.inc(-deductionAmount)
+          userUpdateData.frozen_deduction_balance = _.inc(-deductionAmount)
+        }
+        await transaction.collection('wdd-users').doc(need.user_id).update({ data: userUpdateData })
       }
 
       // 更新接单记录
@@ -559,35 +563,6 @@ async function submitArbitration(event, OPENID) {
           update_time: new Date()
         }
       })
-
-      if (need.payment_method === 'balance') {
-        // 余额支付：解冻全部 + 实际扣款已消费部分（退款部分 balance 未动无需恢复）
-        const spentAmount = rewardAmount - seekerRefund
-        await transaction.collection('wdd-users').doc(need.user_id).update({
-          data: {
-            balance: _.inc(-spentAmount),
-            frozen_balance: _.inc(-rewardAmount),
-            total_paid: _.inc(spentAmount),
-            update_time: new Date()
-          }
-        })
-        // 写入支出流水
-        const seekerUser = await transaction.collection('wdd-users').doc(need.user_id).get()
-        await transaction.collection('wdd-balance-records').add({
-          data: {
-            user_id: need.user_id,
-            type: 'arbitration_refund',
-            amount: seekerRefund,
-            balance: seekerUser.data.balance || 0,
-            frozen_balance: seekerUser.data.frozen_balance || 0,
-            description: `客服裁决：部分完成(${partialPercent}%)，已消费部分扣除，剩余解冻`,
-            need_id: need._id,
-            create_time: new Date()
-          }
-        })
-      } else {
-        // 微信支付：事务外调用微信退款原路退回，不写入钱包余额
-      }
 
       // 更新接单记录
       await transaction.collection('wdd-need-takers').doc(takerRecord._id).update({
@@ -673,8 +648,8 @@ async function submitArbitration(event, OPENID) {
     await transaction.commit()
 
     // 7. 发送站内消息通知（事务外）
-    const refundResult = await refundWechatPaymentAfterArbitration(need, seekerRefund, taskResult, partialPercent)
-    if (refundResult.mode === 'wechat') {
+    const refundResult = await refundPaymentAfterArbitration(need, seekerRefund, taskResult, partialPercent)
+    if (seekerRefund > 0) {
       await updateTicketRefundStatus(ticketId, need, seekerRefund, refundResult)
     }
 
@@ -721,8 +696,8 @@ async function retryArbitrationRefund(event, OPENID) {
   }
 
   const refund = ticket.result && ticket.result.refund
-  if (!refund || refund.mode !== 'wechat') {
-    return { code: -1, message: '该工单没有需要重试的微信退款' }
+  if (!refund || refund.mode === 'none') {
+    return { code: -1, message: '该工单没有需要重试的退款' }
   }
   if (refund.status !== 'failed') {
     return { code: -1, message: `当前退款状态为 ${refund.status}，无需人工重试` }
@@ -739,7 +714,7 @@ async function retryArbitrationRefund(event, OPENID) {
 
   const taskResult = ticket.result.task_result || (need.status === 'cancelled' ? 'cancelled' : 'partial')
   const partialPercent = ticket.result.partial_percent || null
-  const refundResult = await refundWechatPaymentAfterArbitration(need, refund.amount, taskResult, partialPercent)
+  const refundResult = await refundPaymentAfterArbitration(need, refund.amount, taskResult, partialPercent)
   const savedRefund = await updateTicketRefundStatus(ticketId, need, refund.amount, refundResult)
 
   return {
@@ -770,10 +745,7 @@ function calculateBanEndTime(duration, baseTime) {
 
 function buildRefundStatus(need, amount, result = {}) {
   const refundAmount = Math.round((Number(amount) || 0) * 100) / 100
-  let mode = 'none'
-  if (refundAmount > 0) {
-    mode = need.payment_method === 'balance' ? 'balance' : 'wechat'
-  }
+  const mode = refundAmount > 0 ? getPaymentMode(need) : 'none'
 
   return {
     mode,
@@ -788,31 +760,45 @@ function buildRefundStatus(need, amount, result = {}) {
 async function updateTicketRefundStatus(ticketId, need, amount, refundResult) {
   const refund = buildRefundStatus(need, amount, refundResult)
   try {
-    await db.collection('wdd-tickets').doc(ticketId).update({
-      data: {
-        'result.refund': refund,
-        update_time: new Date()
-      }
-    })
+    const now = new Date()
+    await Promise.all([
+      db.collection('wdd-tickets').doc(ticketId).update({
+        data: {
+          'result.refund': refund,
+          update_time: now
+        }
+      }),
+      need && need._id
+        ? db.collection('wdd-needs').doc(need._id).update({
+            data: {
+              arbitration_refund_status: refund.status,
+              arbitration_refund_amount: refund.amount,
+              arbitration_refund_message: refund.message || '',
+              update_time: now
+            }
+          })
+        : Promise.resolve()
+    ])
   } catch (err) {
     console.error('更新工单退款状态失败:', err)
   }
   return refund
 }
 
-async function refundWechatPaymentAfterArbitration(need, seekerRefund, taskResult, partialPercent) {
-  if (need.payment_method === 'balance' || !seekerRefund || seekerRefund <= 0) {
-    return { mode: need.payment_method || 'unknown', status: 'not_required' }
+async function refundPaymentAfterArbitration(need, seekerRefund, taskResult, partialPercent) {
+  const mode = getPaymentMode(need)
+  if (!seekerRefund || seekerRefund <= 0) {
+    return { mode, status: 'not_required' }
   }
   if (!need.payment_order_id) {
-    return { mode: 'wechat', status: 'failed', message: '缺少支付订单，无法原路退款' }
+    return { mode, status: 'failed', message: '缺少支付订单，无法退款' }
   }
 
   try {
     const orderRes = await db.collection('wdd-payment-orders').doc(need.payment_order_id).get()
     const order = orderRes.data
     if (!order || !order.openid) {
-      return { mode: 'wechat', status: 'failed', message: '支付订单不存在或缺少openid' }
+      return { mode, status: 'failed', message: '支付订单不存在或缺少openid' }
     }
 
     const refundReason = taskResult === 'partial'
@@ -832,22 +818,25 @@ async function refundWechatPaymentAfterArbitration(need, seekerRefund, taskResul
           _id: order._id,
           openid: order.openid,
           out_trade_no: order.out_trade_no,
-          amount: order.amount,
-          payment_method: order.payment_method,
+          total_amount: order.total_amount,
+          deduction_amount: order.deduction_amount,
+          balance_amount: order.balance_amount,
+          wechat_amount: order.wechat_amount,
+          payment_methods: order.payment_methods,
           status: order.status
         }
       }
     })
 
     return {
-      mode: 'wechat',
+      mode,
       status: result && result.code === 0 ? (result.status || 'processing') : 'failed',
       message: result ? result.message : '退款调用无返回',
       refundAmount: seekerRefund
     }
   } catch (err) {
-    console.error('客服裁决微信原路退款调用失败:', err)
-    return { mode: 'wechat', status: 'failed', message: err.message, refundAmount: seekerRefund }
+    console.error('客服裁决退款调用失败:', err)
+    return { mode, status: 'failed', message: err.message, refundAmount: seekerRefund }
   }
 }
 
@@ -860,23 +849,19 @@ async function sendArbitrationNotifications(need, takerRecord, taskResult, parti
   let takerContent = ''
 
   if (taskResult === 'cancelled') {
-    const refundText = need.payment_method === 'balance'
-      ? `悬赏金额¥${seekerRefund}已解冻退回。`
-      : `悬赏金额¥${seekerRefund}将原路退回微信支付账户。`
+    const refundText = `悬赏金额¥${seekerRefund}将按原支付明细退回。`
     seekerContent = `客服已裁决：任务取消，${refundText}帮助者信誉分-10。`
     takerContent = `客服已裁决：任务取消，您未获得收入。您的信誉分-10。`
   } else if (taskResult === 'completed') {
     seekerContent = `客服已裁决：任务完成。帮助者获得¥${takerIncome}（已扣除平台服务费）。您的信誉分-10。`
     takerContent = `客服已裁决：任务完成，您获得¥${takerIncome}（已扣除平台服务费），已计入余额。求助者信誉分-10。`
   } else if (taskResult === 'partial') {
-    const refundText = need.payment_method === 'balance'
-      ? `剩余¥${seekerRefund}已解冻退回。`
-      : `剩余¥${seekerRefund}将原路退回微信支付账户。`
+    const refundText = `剩余¥${seekerRefund}将按原支付明细退回。`
     seekerContent = `客服已裁决：部分完成(${partialPercent}%)。帮助者获得¥${takerIncome}，${refundText}双方均不扣信誉分。`
     takerContent = `客服已裁决：部分完成(${partialPercent}%)，您获得¥${takerIncome}，已计入余额。双方均不扣信誉分。`
   }
 
-  if (refundResult && refundResult.mode === 'wechat' && refundResult.status === 'failed') {
+  if (refundResult && refundResult.status === 'failed') {
     seekerContent += ` 退款发起异常：${refundResult.message || '请联系客服处理'}。`
   }
 
@@ -968,9 +953,10 @@ async function autoCancelTimeout(event) {
             result: {
               task_result: 'cancelled',
               auto_cancelled: true,
-              refund: buildRefundStatus(need, rewardAmount, need.payment_method === 'balance'
-                ? { status: 'refunded', message: '余额退款已在自动裁定事务内处理' }
-                : { status: 'not_started', message: '等待自动裁定事务提交后发起退款' })
+              refund: buildRefundStatus(need, rewardAmount, {
+                status: 'not_started',
+                message: '等待自动裁定事务提交后按支付明细退款'
+              })
             },
             resolve_time: new Date(),
             update_time: new Date()
@@ -1004,45 +990,12 @@ async function autoCancelTimeout(event) {
           data: needUpdateData
         })
 
-        // 退款给求助者
-        if (rewardAmount > 0) {
-          if (need.payment_method === 'balance') {
-            // 余额支付：只解冻，balance 在支付时未扣无需恢复
-            await transaction.collection('wdd-users').doc(need.user_id).update({
-              data: {
-                frozen_balance: _.inc(-rewardAmount),
-                update_time: new Date()
-              }
-            })
-          }
-
-          if (need.payment_method === 'balance') {
-            const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
-            await transaction.collection('wdd-balance-records').add({
-              data: {
-                user_id: need.user_id,
-                type: 'arbitration_refund',
-                amount: rewardAmount,
-                balance: latestSeekerRes.data.balance || rewardAmount,
-                frozen_balance: latestSeekerRes.data.frozen_balance || 0,
-                description: '客服超时未处理，自动取消并全额解冻',
-                need_id: need._id,
-                create_time: new Date()
-              }
-            })
-          }
-        }
-
         await transaction.commit()
 
-        const refundResult = await refundWechatPaymentAfterArbitration(need, rewardAmount, 'cancelled')
-        if (refundResult.mode === 'wechat') {
-          await updateTicketRefundStatus(ticket._id, need, rewardAmount, refundResult)
-        }
-        const seekerRefundText = need.payment_method === 'balance'
-          ? `已自动取消并全额解冻¥${need.reward_amount || 0}。`
-          : `已自动取消，悬赏金额¥${need.reward_amount || 0}将原路退回微信支付账户。`
-        const refundFailedText = refundResult.mode === 'wechat' && refundResult.status === 'failed'
+        const refundResult = await refundPaymentAfterArbitration(need, rewardAmount, 'cancelled')
+        await updateTicketRefundStatus(ticket._id, need, rewardAmount, refundResult)
+        const seekerRefundText = `已自动取消，悬赏金额¥${need.reward_amount || 0}将按原支付明细退回。`
+        const refundFailedText = refundResult.status === 'failed'
           ? ` 退款发起异常：${refundResult.message || '请联系客服处理'}。`
           : ''
 

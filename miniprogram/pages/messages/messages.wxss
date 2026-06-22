@@ -402,11 +402,47 @@
 
 .message-last {
   font-size: 26rpx;
+  line-height: 34rpx;
   color: var(--text-light);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  min-height: 34rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.message-last text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 34rpx;
+}
+
+.message-last.reviewing text {
+  flex: 0 1 auto;
+}
+
+.message-review-spinner {
+  width: 24rpx;
+  height: 24rpx;
+  border: 4rpx solid rgba(31, 111, 91, 0.18);
+  border-top-color: var(--brand-primary);
+  border-right-color: rgba(31, 111, 91, 0.42);
+  border-radius: 50%;
+  animation: messageReviewSpin 0.8s linear infinite;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 2rpx;
+}
+
+@keyframes messageReviewSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .message-right {

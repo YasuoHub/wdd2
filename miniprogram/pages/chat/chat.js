@@ -3,7 +3,16 @@ const app = getApp()
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
 const DateUtil = require('../../utils/dateUtil')
 const chatCache = require('../../utils/chatCache')
+const avatarCache = require('../../utils/avatarCache')
 const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needTypes')
+const { MoneyUtils } = require('../../utils/platformRules')
+
+const VOICE_MIN_WIDTH = 220
+const VOICE_MAX_WIDTH = 430
+const VOICE_CANCEL_VERTICAL_THRESHOLD = 56
+const VOICE_CANCEL_HORIZONTAL_THRESHOLD = 120
+const MEDIA_STATUS_POLL_INTERVAL_MS = 2500
+const MEDIA_STATUS_MAX_POLL_MS = 2 * 60 * 1000
 
 Page({
   data: {
@@ -31,6 +40,7 @@ Page({
     messages: [],
     inputValue: '',
     inputFocus: false,  // 初始不自动聚焦，避免进入页面自动打开输入法
+    isInputFocused: false,
     lastMessageId: '',
     hasMoreMessages: true,  // 默认允许下拉刷新，首次加载后根据实际结果更新
     pageSize: 20,
@@ -46,6 +56,13 @@ Page({
 
     // 工具栏展开状态
     isToolbarExpanded: false,
+
+    // 语音录制与播放
+    isRecording: false,
+    voiceRecordCancelActive: false,
+    recordingSeconds: 0,
+    recordingCountdown: 0,
+    playingVoiceId: '',
 
     // 下拉刷新状态
     isRefreshing: false,
@@ -72,6 +89,7 @@ Page({
   },
 
   onLoad(options) {
+    this.initVoiceManagers()
     // 获取页面参数
     const { needId, from } = options
 
@@ -101,12 +119,15 @@ Page({
     if (cached && cached.taskMeta && cached.taskMeta.task) {
       // 缓存命中：先渲染缓存的任务信息和消息，骨架屏直接关闭
       // 强制 task._id = needId,防御缓存数据与路由参数不一致
-      initialData.task = { ...cached.taskMeta.task, _id: needId }
       initialData.isSeeker = !!cached.taskMeta.isSeeker
-      initialData.otherUser = cached.taskMeta.otherUser || null
+      initialData.task = this.normalizeTaskAmount({ ...cached.taskMeta.task, _id: needId }, initialData.isSeeker)
+      initialData.otherUser = this.withCachedAvatar(cached.taskMeta.otherUser || null)
       initialData.canCompleteTask = this.canCompleteTask(initialData.isSeeker, initialData.task)
       initialData.showReportBtn = !!cached.taskMeta.showReportBtn
-      initialData.messages = Array.isArray(cached.messages) ? cached.messages : []
+      initialData.messages = this.hydrateCachedMessageAvatars(
+        Array.isArray(cached.messages) ? cached.messages : [],
+        initialData.otherUser
+      )
       initialData.loading = false
       // 缓存数据进入后,首屏直接落到底部
       initialData.lastMessageId = 'bottom-anchor'
@@ -164,12 +185,7 @@ Page({
 
         // 网络数据返回后,写回本地缓存（仅非客服模式）
         if (!this.data.isCustomerServiceMode) {
-          chatCache.writeCache(needId, this.data.messages, {
-            task: this.data.task,
-            isSeeker: this.data.isSeeker,
-            otherUser: this.data.otherUser,
-            showReportBtn: this.data.showReportBtn
-          })
+          chatCache.writeCache(needId, this.data.messages, this.buildCacheTaskMeta())
         }
 
         // 历史消息加载完成后，开始监听新消息
@@ -198,6 +214,8 @@ Page({
         console.error('启动消息监听失败:', err)
         this.startMessagePolling()
       })
+    } else if (this.currentNeedId && this._messagesLoaded && this.data.watchListener) {
+      this.startMediaStatusPolling()
     }
     // 立即拉取一次消息，防止隐藏期间有遗漏
     if (this.currentNeedId && this._messagesLoaded) {
@@ -213,12 +231,20 @@ Page({
   onHide() {
     // 页面隐藏时停止轮询以节省资源，但保持watch监听（如果有的话）
     this.stopMessagePolling()
+    this.stopMediaStatusPolling()
+    this.stopVoicePlayback()
+    this.clearMessageInputLongPressTimer()
+    if (this.data.isRecording) this.cancelVoiceRecording()
   },
 
   onUnload() {
     // 页面卸载时清理所有监听和状态
     this.stopMessageWatch()
     this.stopMessagePolling()
+    this.stopMediaStatusPolling()
+    this.clearMessageInputLongPressTimer()
+    this.clearReviewLoadingTimers()
+    this.destroyVoiceManagers()
     // 清空当前任务ID标记
     this.currentNeedId = null
     // 清空消息数据，防止页面返回后显示错误数据
@@ -231,6 +257,8 @@ Page({
         typeIcon: '',
         description: '',
         rewardAmount: 0,
+        takerIncome: 0,
+        displayRewardAmount: 0,
         status: 'ongoing',
         statusText: '进行中',
         expireTime: null
@@ -253,15 +281,156 @@ Page({
     return user.nickname || user.nickName || user.name || ''
   },
 
-  buildOtherUser(taskData, isSeeker) {
-    if (taskData.otherUser) {
+  calculateVoiceWidth(duration) {
+    const seconds = Math.min(60, Math.max(1, Number(duration) || 1))
+    const ratio = (seconds - 1) / 59
+    return Math.round(VOICE_MIN_WIDTH + (VOICE_MAX_WIDTH - VOICE_MIN_WIDTH) * ratio)
+  },
+
+  normalizeTaskAmount(task = {}, isSeeker = false) {
+    const rewardAmount = Number(task.rewardAmount || task.reward_amount || 0)
+    const takerIncome = Number(task.takerIncome || task.taker_income || MoneyUtils.calcTakerIncome(rewardAmount))
+    return {
+      ...task,
+      rewardAmount,
+      takerIncome,
+      displayRewardAmount: isSeeker ? rewardAmount : takerIncome
+    }
+  },
+
+  withCachedAvatar(user) {
+    if (!user) return user
+    const userId = user._id || user.id || user.user_id || user.userId
+    const remoteAvatar = user.avatar || user.remoteAvatar || ''
+    const displayAvatar = avatarCache.getCachedAvatar(userId, remoteAvatar)
+    return {
+      ...user,
+      avatar: remoteAvatar,
+      displayAvatar
+    }
+  },
+
+  withCachedParticipants(participants = {}) {
+    const next = {}
+    Object.keys(participants || {}).forEach(userId => {
+      next[userId] = this.withCachedAvatar({
+        _id: userId,
+        ...participants[userId]
+      })
+    })
+    return next
+  },
+
+  hydrateCachedMessageAvatars(messages, otherUser = null, participants = {}) {
+    const userInfo = app.globalData.userInfo || this.data.userInfo || {}
+    const cachedOtherUser = this.withCachedAvatar(otherUser)
+    const cachedParticipants = this.withCachedParticipants(participants)
+
+    return messages.map(msg => {
+      if (!msg || msg.isSystem || msg.isSelf || msg.sender_id === userInfo._id) {
+        return msg
+      }
+
+      const senderInfo = cachedParticipants[msg.sender_id] || cachedOtherUser
+      if (!senderInfo) return msg
+
       return {
-        ...taskData.otherUser,
-        nickname: this.getUserDisplayName(taskData.otherUser)
+        ...msg,
+        senderAvatar: senderInfo.displayAvatar || senderInfo.avatar || msg.senderAvatar,
+        senderName: senderInfo.nickname || msg.senderName
+      }
+    })
+  },
+
+  buildCacheTaskMeta() {
+    return {
+      task: this.data.task,
+      isSeeker: this.data.isSeeker,
+      otherUser: this.data.otherUser,
+      showReportBtn: this.data.showReportBtn
+    }
+  },
+
+  async warmChatAvatarCache(otherUser, participants = {}) {
+    if (this.data.isCustomerServiceMode) return
+    const needId = this.currentNeedId
+
+    const users = []
+    if (otherUser && otherUser._id && otherUser.avatar) {
+      users.push(otherUser)
+    }
+    Object.keys(participants || {}).forEach(userId => {
+      const participant = participants[userId]
+      if (participant && participant.avatar) {
+        users.push({ _id: userId, ...participant })
+      }
+    })
+
+    for (const user of users) {
+      const userId = user._id || user.id || user.user_id || user.userId
+      const remoteAvatar = user.avatar || ''
+      try {
+        const localAvatar = await avatarCache.cacheAvatar(userId, remoteAvatar)
+        if (this.currentNeedId === needId && localAvatar && localAvatar !== remoteAvatar) {
+          this.applyCachedAvatarToMessages(userId, remoteAvatar, localAvatar)
+        }
+      } catch (err) {
+        console.warn('缓存聊天头像失败:', err.errMsg || err.message || err)
+      }
+    }
+  },
+
+  applyCachedAvatarToMessages(userId, remoteAvatar, localAvatar) {
+    const updates = {}
+    const otherUser = this.data.otherUser
+    if (otherUser && (otherUser._id === userId || otherUser.id === userId)) {
+      updates.otherUser = {
+        ...otherUser,
+        avatar: remoteAvatar,
+        displayAvatar: localAvatar
       }
     }
 
-    return isSeeker
+    const participants = this.data.participants || {}
+    if (participants[userId]) {
+      updates.participants = {
+        ...participants,
+        [userId]: {
+          ...participants[userId],
+          avatar: remoteAvatar,
+          displayAvatar: localAvatar
+        }
+      }
+    }
+
+    let changed = false
+    const messages = this.data.messages.map(msg => {
+      if (msg && !msg.isSelf && msg.sender_id === userId && msg.senderAvatar !== localAvatar) {
+        changed = true
+        return { ...msg, senderAvatar: localAvatar }
+      }
+      return msg
+    })
+
+    if (changed) updates.messages = messages
+    if (Object.keys(updates).length === 0) return
+
+    this.setData(updates, () => {
+      if (!this.data.isCustomerServiceMode) {
+        chatCache.scheduleWrite(this.currentNeedId, this.data.messages, this.buildCacheTaskMeta())
+      }
+    })
+  },
+
+  buildOtherUser(taskData, isSeeker) {
+    if (taskData.otherUser) {
+      return this.withCachedAvatar({
+        ...taskData.otherUser,
+        nickname: this.getUserDisplayName(taskData.otherUser)
+      })
+    }
+
+    const otherUser = isSeeker
       ? {
           _id: taskData.taker_id || '',
           nickname: taskData.takerNickname || taskData.taker_nickname || '',
@@ -272,6 +441,7 @@ Page({
           nickname: taskData.seekerNickname || taskData.user_nickname || '',
           avatar: taskData.seekerAvatar || taskData.user_avatar || ''
         }
+    return this.withCachedAvatar(otherUser)
   },
 
   canCompleteTask(isSeeker, task) {
@@ -300,6 +470,429 @@ Page({
     }
   },
 
+  startMediaStatusPolling() {
+    if (this.mediaStatusPollingInterval) return
+
+    const poll = () => this.refreshPendingMediaStatuses()
+    this.mediaStatusPollingStartedAt = Date.now()
+    poll()
+    this.mediaStatusPollingInterval = setInterval(() => {
+      if (Date.now() - this.mediaStatusPollingStartedAt > MEDIA_STATUS_MAX_POLL_MS) {
+        this.stopMediaStatusPolling()
+        return
+      }
+      poll()
+    }, MEDIA_STATUS_POLL_INTERVAL_MS)
+  },
+
+  stopMediaStatusPolling() {
+    if (!this.mediaStatusPollingInterval) return
+    clearInterval(this.mediaStatusPollingInterval)
+    this.mediaStatusPollingInterval = null
+    this.mediaStatusPollingStartedAt = 0
+  },
+
+  initVoiceManagers() {
+    this.recorderManager = wx.getRecorderManager()
+    this.innerAudioContext = wx.createInnerAudioContext()
+    this.innerAudioContext.obeyMuteSwitch = false
+
+    this.recorderManager.onStart(() => {
+      this._recordingStartedAt = Date.now()
+      this._voiceRecordingCancelled = !!this._voiceRecordingCancelled
+      this._voiceCountdownVibrated = false
+      this.setData({
+        isRecording: true,
+        voiceRecordCancelActive: !!this._voiceCancelActive,
+        recordingSeconds: 0,
+        recordingCountdown: 0
+      })
+      this.startVoiceRecordingTimer()
+      if (!this._voiceTouchHeld) this.recorderManager.stop()
+    })
+    this.recorderManager.onStop(result => {
+      this.clearVoiceRecordingTimer()
+      this.setData({ isRecording: false, voiceRecordCancelActive: false, recordingSeconds: 0, recordingCountdown: 0 })
+      if (this._voiceRecordingCancelled) return
+      const duration = Math.ceil(Number(result.duration || 0) / 1000)
+      if (!result.tempFilePath || duration < 1) {
+        wx.showToast({ title: '录音时间太短', icon: 'none' })
+        return
+      }
+      this.uploadVoice(result.tempFilePath, Math.min(60, duration))
+    })
+    this.recorderManager.onError(err => {
+      console.error('录音失败:', err)
+      this.clearVoiceRecordingTimer()
+      this.setData({ isRecording: false, voiceRecordCancelActive: false, recordingSeconds: 0, recordingCountdown: 0 })
+      wx.showToast({ title: '录音失败，请检查麦克风权限', icon: 'none' })
+    })
+
+    const clearPlayingState = () => this.setData({ playingVoiceId: '' })
+    this.innerAudioContext.onEnded(clearPlayingState)
+    this.innerAudioContext.onStop(clearPlayingState)
+    this.innerAudioContext.onError(err => {
+      console.error('语音播放失败:', err)
+      clearPlayingState()
+      wx.showToast({ title: '语音播放失败', icon: 'none' })
+    })
+  },
+
+  destroyVoiceManagers() {
+    this.clearVoiceRecordingTimer()
+    if (this.innerAudioContext) {
+      this.innerAudioContext.stop()
+      this.innerAudioContext.destroy()
+      this.innerAudioContext = null
+    }
+    this.recorderManager = null
+  },
+
+  startVoiceRecordingTimer() {
+    this.clearVoiceRecordingTimer()
+    this.voiceRecordingTimer = setInterval(() => {
+      if (!this.data.isRecording) return
+      const seconds = Math.min(60, Math.floor((Date.now() - this._recordingStartedAt) / 1000))
+      const countdown = seconds >= 50 ? Math.max(0, 60 - seconds) : 0
+      if (seconds >= 50 && !this._voiceCountdownVibrated) {
+        this._voiceCountdownVibrated = true
+        wx.vibrateLong({ fail: () => {} })
+      }
+      this.setData({ recordingSeconds: seconds, recordingCountdown: countdown })
+    }, 250)
+  },
+
+  clearVoiceRecordingTimer() {
+    if (this.voiceRecordingTimer) {
+      clearInterval(this.voiceRecordingTimer)
+      this.voiceRecordingTimer = null
+    }
+  },
+
+  async ensureRecordPermission() {
+    try {
+      await requirePrivacyAuthorize()
+      await new Promise((resolve, reject) => {
+        wx.authorize({ scope: 'scope.record', success: resolve, fail: reject })
+      })
+      return true
+    } catch (err) {
+      wx.showModal({
+        title: '需要麦克风权限',
+        content: '发送语音需要使用麦克风，请在设置中开启权限。',
+        confirmText: '去设置',
+        success: result => {
+          if (result.confirm) wx.openSetting()
+        }
+      })
+      return false
+    }
+  },
+
+  clearMessageInputLongPressTimer() {
+    if (this._messageInputLongPressTimer) {
+      clearTimeout(this._messageInputLongPressTimer)
+      this._messageInputLongPressTimer = null
+    }
+  },
+
+  scheduleReviewLoadingHide(messageKey, delay = 1000) {
+    if (!messageKey) return
+    if (!this._reviewLoadingTimers) this._reviewLoadingTimers = {}
+    if (this._reviewLoadingTimers[messageKey]) {
+      clearTimeout(this._reviewLoadingTimers[messageKey])
+    }
+
+    this._reviewLoadingTimers[messageKey] = setTimeout(() => {
+      delete this._reviewLoadingTimers[messageKey]
+      const messages = this.data.messages.map(item => {
+        if (item._id !== messageKey && item.clientMsgId !== messageKey) return item
+        if (item.status !== 'pending' || !item.reviewLoadingVisible) return item
+        return { ...item, reviewLoadingVisible: false }
+      })
+      this.setData({ messages })
+    }, delay)
+  },
+
+  clearReviewLoadingTimers() {
+    if (!this._reviewLoadingTimers) return
+    Object.keys(this._reviewLoadingTimers).forEach(key => {
+      clearTimeout(this._reviewLoadingTimers[key])
+    })
+    this._reviewLoadingTimers = {}
+  },
+
+  onMessageInputTouchStart(e) {
+    if (this.data.task.status !== 'ongoing') return
+    this.clearMessageInputLongPressTimer()
+    const touch = e.touches && e.touches[0]
+    this._voiceTouchStartPoint = touch ? { x: touch.clientX, y: touch.clientY } : null
+    this._voiceCancelActive = false
+    this._messageInputLongPressed = false
+    this._messageInputTouchEnded = false
+    this._messageInputLongPressTimer = setTimeout(async () => {
+      this._messageInputLongPressTimer = null
+      this._messageInputLongPressed = true
+      await this.startVoiceRecording()
+      if (this._messageInputTouchEnded) {
+        this.finishVoiceRecording()
+      }
+    }, 320)
+  },
+
+  onMessageInputTouchMove(e) {
+    if (!this._voiceTouchStartPoint) return
+    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0])
+    if (!touch) return
+
+    const deltaX = touch.clientX - this._voiceTouchStartPoint.x
+    const deltaY = touch.clientY - this._voiceTouchStartPoint.y
+    const shouldCancel =
+      deltaY <= -VOICE_CANCEL_VERTICAL_THRESHOLD ||
+      Math.abs(deltaX) >= VOICE_CANCEL_HORIZONTAL_THRESHOLD
+
+    if (this._voiceCancelActive === shouldCancel) return
+    this._voiceCancelActive = shouldCancel
+    if (this.data.isRecording) {
+      this.setData({ voiceRecordCancelActive: shouldCancel })
+      wx.vibrateShort({ type: shouldCancel ? 'medium' : 'light', fail: () => {} })
+    }
+  },
+
+  onMessageInputTouchEnd() {
+    this._messageInputTouchEnded = true
+    if (this._messageInputLongPressTimer) {
+      const shouldFocusInput = !this._voiceCancelActive
+      this.clearMessageInputLongPressTimer()
+      if (shouldFocusInput) this.focusMessageInput()
+      this._voiceTouchStartPoint = null
+      this._voiceCancelActive = false
+      return
+    }
+    if (this._messageInputLongPressed) {
+      if (this._voiceCancelActive || this.data.voiceRecordCancelActive) {
+        this.cancelVoiceRecording()
+      } else {
+        this.finishVoiceRecording()
+      }
+    }
+    this._voiceTouchStartPoint = null
+    this._voiceCancelActive = false
+  },
+
+  onMessageInputTouchCancel() {
+    this._messageInputTouchEnded = true
+    this.clearMessageInputLongPressTimer()
+    if (this._messageInputLongPressed) {
+      this.cancelVoiceRecording()
+    }
+    this._voiceTouchStartPoint = null
+    this._voiceCancelActive = false
+  },
+
+  focusMessageInput() {
+    if (this.data.task.status !== 'ongoing') return
+    this.setData({
+      inputFocus: true,
+      isInputFocused: true,
+      isToolbarExpanded: false
+    })
+  },
+
+  async startVoiceRecording() {
+    if (this.data.task.status !== 'ongoing' || this.data.isRecording || !this.recorderManager) return false
+    const hasPermission = await this.ensureRecordPermission()
+    if (!hasPermission) return false
+    this.stopVoicePlayback()
+    this._voiceTouchHeld = true
+    this._voiceRecordingCancelled = false
+    this.setData({
+      inputFocus: false,
+      isInputFocused: false,
+      isToolbarExpanded: false,
+      voiceRecordCancelActive: !!this._voiceCancelActive
+    })
+    this.recorderManager.start({
+      duration: 60000,
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      encodeBitRate: 48000,
+      format: 'mp3'
+    })
+    return true
+  },
+
+  finishVoiceRecording() {
+    this._voiceTouchHeld = false
+    this._voiceTouchStartPoint = null
+    this._voiceCancelActive = false
+    if (this.data.isRecording && this.recorderManager) this.recorderManager.stop()
+  },
+
+  cancelVoiceRecording() {
+    this._voiceTouchHeld = false
+    this._voiceRecordingCancelled = true
+    this._voiceTouchStartPoint = null
+    this._voiceCancelActive = false
+    if (this.data.voiceRecordCancelActive) {
+      this.setData({ voiceRecordCancelActive: false })
+    }
+    if (this.data.isRecording && this.recorderManager) this.recorderManager.stop()
+  },
+
+  async uploadVoice(filePath, duration) {
+    const currentNeedId = this.currentNeedId
+    const userInfo = this.data.userInfo
+    if (!currentNeedId || !userInfo) return
+
+    const now = new Date()
+    const currentMessages = this.data.messages
+    const lastMsg = currentMessages[currentMessages.length - 1]
+    const tempId = 'temp_voice_' + Date.now()
+    const clientMsgId = this.generateClientMsgId()
+    const tempMessage = {
+      _id: tempId,
+      clientMsgId,
+      need_id: currentNeedId,
+      sender_id: userInfo._id,
+      type: 'voice',
+      voiceUrl: filePath,
+      voiceDuration: duration,
+      voiceWidth: this.calculateVoiceWidth(duration),
+      status: 'pending',
+      sendStatus: 'sending',
+      reviewLoadingVisible: true,
+      create_time: now.toISOString(),
+      isSelf: true,
+      senderAvatar: userInfo.avatar,
+      timeText: DateUtil.formatTime(now),
+      showTime: !lastMsg || (now.getTime() - new Date(lastMsg.create_time).getTime()) / 60000 > 2
+    }
+    if (!this.processedMessageIds) this.processedMessageIds = new Set(currentMessages.map(item => item._id))
+    this.processedMessageIds.add(tempId)
+    this.setData({ messages: [...currentMessages, tempMessage], lastMessageId: '' }, () => {
+      wx.nextTick(() => this.setData({ lastMessageId: 'msg-' + clientMsgId }))
+    })
+    this.scheduleReviewLoadingHide(clientMsgId)
+
+    try {
+      const uploadResult = await wx.cloud.uploadFile({
+        cloudPath: `chat-voices/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`,
+        filePath
+      })
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-chat',
+        data: {
+          action: 'sendMessage',
+          needId: currentNeedId,
+          type: 'voice',
+          voiceUrl: uploadResult.fileID,
+          voiceDuration: duration,
+          clientMsgId
+        }
+      })
+      if (!result || result.code !== 0) throw new Error(result?.message || '发送失败')
+
+      const realMessageId = result.data.messageId
+      const messages = this.data.messages.map(message => message.clientMsgId === clientMsgId ? {
+        ...message,
+        _id: realMessageId,
+        voiceUrl: uploadResult.fileID,
+        status: result.data.status || 'pending',
+        sendStatus: 'reviewing',
+        reviewLoadingVisible: message.reviewLoadingVisible && (result.data.status || 'pending') === 'pending',
+        create_time: result.data.createTime || now.toISOString()
+      } : message)
+      this.processedMessageIds.delete(tempId)
+      this.processedMessageIds.add(realMessageId)
+      const updates = { messages }
+      if (this.data.playingVoiceId === tempId) {
+        updates.playingVoiceId = realMessageId
+      }
+      this.setData(updates)
+      if ((result.data.status || 'pending') === 'pending') {
+        this.startMediaStatusPolling()
+      }
+    } catch (err) {
+      console.error('发送语音失败:', err)
+      this.processedMessageIds.delete(tempId)
+      this.setData({ messages: this.data.messages.filter(message => message._id !== tempId) })
+      wx.showToast({ title: err.message || '语音发送失败', icon: 'none' })
+    }
+  },
+
+  async toggleVoicePlayback(e) {
+    const messageId = e.currentTarget.dataset.id
+    let message = this.data.messages.find(item => item._id === messageId)
+    if (!message || !this.innerAudioContext) return
+    const canPlayOwnPendingVoice = message.isSelf && message.type === 'voice' && message.status === 'pending'
+    if (message.status !== 'normal' && !canPlayOwnPendingVoice) {
+      await this.refreshPendingMediaStatuses()
+      message = this.data.messages.find(item => item._id === messageId)
+      const canPlayUpdatedOwnPendingVoice = message && message.isSelf && message.type === 'voice' && message.status === 'pending'
+      if (!message || (message.status !== 'normal' && !canPlayUpdatedOwnPendingVoice)) {
+        wx.showToast({
+          title: message && message.status === 'violated' ? '语音未通过审核' : '审核通过后可播放',
+          icon: 'none'
+        })
+        return
+      }
+    }
+    if (!message.voiceUrl) return
+    if (this.data.playingVoiceId === messageId) {
+      this.stopVoicePlayback()
+      return
+    }
+    this.innerAudioContext.stop()
+    try {
+      let playableUrl = message.voiceUrl
+      if (playableUrl.startsWith('cloud://')) {
+        const tempResult = await wx.cloud.getTempFileURL({ fileList: [playableUrl] })
+        playableUrl = tempResult.fileList?.[0]?.tempFileURL || ''
+      }
+      if (!playableUrl) throw new Error('语音地址无效')
+      this.innerAudioContext.src = playableUrl
+      this.setData({ playingVoiceId: messageId })
+      this.innerAudioContext.play()
+    } catch (err) {
+      console.error('获取语音播放地址失败:', err)
+      this.setData({ playingVoiceId: '' })
+      wx.showToast({ title: '语音播放失败', icon: 'none' })
+    }
+  },
+
+  stopVoicePlayback() {
+    if (this.innerAudioContext) this.innerAudioContext.stop()
+    if (this.data.playingVoiceId) this.setData({ playingVoiceId: '' })
+  },
+
+  async retryMediaMessage(e) {
+    const messageId = e.currentTarget.dataset.id
+    const message = this.data.messages.find(item => item._id === messageId)
+    if (!message || message.status !== 'violated') return
+    this.setData({
+      messages: this.data.messages.map(item => item._id === messageId
+        ? { ...item, status: 'pending', sendStatus: 'reviewing', reviewLoadingVisible: true }
+        : item)
+    })
+    this.scheduleReviewLoadingHide(messageId)
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-chat',
+        data: { action: 'retryMediaMessage', messageId }
+      })
+      if (!result || result.code !== 0) throw new Error(result?.message || '重发失败')
+      this.startMediaStatusPolling()
+    } catch (err) {
+      this.setData({
+        messages: this.data.messages.map(item => item._id === messageId
+          ? { ...item, status: 'violated', sendStatus: 'failed', reviewLoadingVisible: false }
+          : item)
+      })
+      wx.showToast({ title: err.message || '重发失败', icon: 'none' })
+    }
+  },
+
   // 轮询获取新消息
   // 只获取比当前最新消息更新的消息，避免重复加载历史消息
   async pollNewMessages() {
@@ -317,6 +910,8 @@ Page({
     this._isPolling = true
 
     try {
+      await this.refreshPendingMediaStatuses()
+
       // 计算 afterTime：取最后一条消息的时间，没有消息则传 null 获取全部
       const afterTime = messages.length > 0
         ? messages[messages.length - 1].create_time
@@ -348,8 +943,21 @@ Page({
         for (const msg of result.data.list) {
           // 1. 任务ID校验
           if (msg.need_id !== currentNeedId) continue
-          // 2. 去重校验
-          if (this.processedMessageIds.has(msg._id)) continue
+          // 2. 已存在的消息仍需合并审核状态变化。
+          if (this.processedMessageIds.has(msg._id)) {
+            const sourceMessages = messagesToUpdate || messages
+            const existingIndex = sourceMessages.findIndex(item => item._id === msg._id)
+            if (existingIndex !== -1) {
+              messagesToUpdate = messagesToUpdate || [...messages]
+              const previous = existingIndex > 0 ? messagesToUpdate[existingIndex - 1] : null
+              messagesToUpdate[existingIndex] = this.formatMessage({
+                ...messagesToUpdate[existingIndex],
+                ...msg,
+                sendStatus: 'sent'
+              }, previous)
+            }
+            continue
+          }
 
           // 3. 如果是自己发的消息，尝试替换临时消息
           if (msg.sender_id === userInfo._id) {
@@ -371,10 +979,11 @@ Page({
               messagesToUpdate = messagesToUpdate || [...messages]
               messagesToUpdate[tempIndex] = {
                 ...messagesToUpdate[tempIndex],
+                ...msg,
                 _id: msg._id,
                 isLocalImage: false,
                 create_time: msg.create_time,
-                sendStatus: 'sent'
+                sendStatus: msg.status === 'pending' ? 'reviewing' : 'sent'
               }
             } else {
               // 没找到临时消息，当作新消息处理
@@ -407,12 +1016,7 @@ Page({
 
           // 写回本地缓存（与 watch 流程一致,防抖写入）
           if (!this.data.isCustomerServiceMode) {
-            chatCache.scheduleWrite(currentNeedId, finalMessages, {
-              task: this.data.task,
-              isSeeker: this.data.isSeeker,
-              otherUser: this.data.otherUser,
-              showReportBtn: this.data.showReportBtn
-            })
+            chatCache.scheduleWrite(currentNeedId, finalMessages, this.buildCacheTaskMeta())
           }
 
           // 先更新消息，等渲染完成后再处理滚动和已读
@@ -449,6 +1053,52 @@ Page({
     } finally {
       this._isPolling = false
     }
+  },
+
+  async refreshPendingMediaStatuses() {
+    const pendingIds = this.data.messages
+      .filter(message =>
+        message && message.isSelf &&
+        ['image', 'voice'].includes(message.type) &&
+        message.status === 'pending' && message._id &&
+        !String(message._id).startsWith('temp_')
+      )
+      .map(message => message._id)
+      .slice(0, 20)
+    if (pendingIds.length === 0) {
+      this.stopMediaStatusPolling()
+      return 0
+    }
+
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-chat',
+        data: { action: 'getMediaStatuses', messageIds: pendingIds }
+      })
+      if (!result || result.code !== 0 || !Array.isArray(result.data?.list)) return
+      const statusMap = new Map(result.data.list.map(item => [item.messageId, item]))
+      let changed = false
+      const messages = this.data.messages.map(message => {
+        const latest = statusMap.get(message._id)
+        if (!latest || latest.status === message.status) return message
+        changed = true
+        return this.formatMessage({
+          ...message,
+          status: latest.status,
+          create_time: latest.createTime || message.create_time,
+          sendStatus: latest.status === 'violated' ? 'failed' : 'sent'
+        })
+      }).sort((a, b) => new Date(a.create_time) - new Date(b.create_time))
+      if (changed) {
+        this.setData({ messages })
+        if (!this.data.isCustomerServiceMode) {
+          chatCache.scheduleWrite(this.currentNeedId, messages, this.buildCacheTaskMeta())
+        }
+      }
+    } catch (err) {
+      console.error('刷新媒体审核状态失败:', err)
+    }
+    return pendingIds.length
   },
 
   // 标记当前会话消息为已读
@@ -543,7 +1193,8 @@ Page({
         const currentUser = this.data.userInfo || app.globalData.userInfo || {}
         const isSeeker = result.data.role === 'seeker' || taskData.user_id === currentUser._id
         const otherUser = this.buildOtherUser(taskData, isSeeker)
-        const task = {
+        const participants = this.withCachedParticipants(result.data.participants || {})
+        const task = this.normalizeTaskAmount({
           _id: taskData._id,
           taskNo: taskData.task_no,
           type: typeInfo.type,
@@ -552,7 +1203,8 @@ Page({
           typeColor: typeInfo.color,
           typeBgColor: typeInfo.bgColor,
           description: taskData.description,
-          rewardAmount: taskData.reward_amount || taskData.rewardAmount || 0,
+          rewardAmount: taskData.rewardAmount || taskData.reward_amount || 0,
+          takerIncome: taskData.takerIncome || taskData.taker_income || 0,
           status: taskData.status,
           statusText: statusInfo.text,
           expireTime: taskData.expire_time,
@@ -563,20 +1215,21 @@ Page({
           },
           locationName: taskData.location_name,
           images: taskData.images || []
-        }
+        }, isSeeker)
 
         this.setData({
           task,
           isSeeker,
           otherUser,
           canCompleteTask: this.canCompleteTask(isSeeker, task),
-          participants: result.data.participants || {},
+          participants,
           showReportBtn: (result.data.status === 'ongoing' || result.data.status === 'completed') &&
             !result.data.myReportStatus.hasReport &&
             (new Date() <= new Date(new Date(result.data.expire_time).getTime() + 72 * 60 * 60 * 1000))
         })
 
         this.updateNavigationTitle(otherUser, this.data.isCustomerServiceMode)
+        this.warmChatAvatarCache(otherUser, participants)
 
         return result
       }
@@ -767,25 +1420,31 @@ Page({
       ...msg,
       content: displayContent,
       clientMsgId: msg.clientMsgId || msg.client_msg_id || msg._id,
-      sendStatus: msg.sendStatus || 'sent',
+      sendStatus: msg.status === 'pending'
+        ? 'reviewing'
+        : (msg.status === 'violated' ? 'failed' : (msg.sendStatus || 'sent')),
+      reviewLoadingVisible: !!msg.reviewLoadingVisible && msg.status === 'pending',
       isSelf,
       isSystem: msg.type === 'system',
       senderAvatar: isSelf
         ? userInfo.avatar
-        : this.getOtherSenderInfo(msg.sender_id).avatar,
+        : this.getOtherSenderInfo(msg.sender_id).displayAvatar,
       senderName: isSelf
         ? (userInfo.nickname || '我')
         : this.getOtherSenderInfo(msg.sender_id).nickname,
       timeText,
       showTime,
       // 统一图片字段为 camelCase（优先使用已有的 imageUrl，否则从 image_url 转换）
-      imageUrl: msg.status === 'violated' ? '' : (msg.imageUrl || msg.image_url || ''),
+      imageUrl: (msg.status === 'violated' && !isSelf) ? '' : (msg.imageUrl || msg.image_url || ''),
       // 图片显示尺寸（后端预计算）
       imageWidth: msg.image_width || 0,
       imageHeight: msg.image_height || 0,
       imageSource: msg.image_source || msg.imageSource || 'album',
       isTrustedPhoto: !!(msg.is_trusted_photo || msg.isTrustedPhoto),
-      watermarkInfo: msg.watermark_info || msg.watermarkInfo || null
+      watermarkInfo: msg.watermark_info || msg.watermarkInfo || null,
+      voiceUrl: (msg.status === 'violated' && !isSelf) ? '' : (msg.voiceUrl || msg.voice_url || ''),
+      voiceDuration: Math.max(1, Number(msg.voiceDuration || msg.voice_duration) || 1),
+      voiceWidth: this.calculateVoiceWidth(msg.voiceDuration || msg.voice_duration)
     }
   },
 
@@ -793,12 +1452,20 @@ Page({
   getOtherSenderInfo(senderId) {
     const participant = this.data.participants && this.data.participants[senderId]
     if (participant) {
-      return { avatar: participant.avatar || '/images/default-avatar.png', nickname: participant.nickname || '' }
+      return {
+        avatar: participant.avatar || '/images/default-avatar.png',
+        displayAvatar: participant.displayAvatar || participant.avatar || '/images/default-avatar.png',
+        nickname: participant.nickname || ''
+      }
     }
     if (this.data.otherUser) {
-      return { avatar: this.data.otherUser.avatar || '/images/default-avatar.png', nickname: this.data.otherUser.nickname || '' }
+      return {
+        avatar: this.data.otherUser.avatar || '/images/default-avatar.png',
+        displayAvatar: this.data.otherUser.displayAvatar || this.data.otherUser.avatar || '/images/default-avatar.png',
+        nickname: this.data.otherUser.nickname || ''
+      }
     }
-    return { avatar: '/images/default-avatar.png', nickname: '' }
+    return { avatar: '/images/default-avatar.png', displayAvatar: '/images/default-avatar.png', nickname: '' }
   },
 
   // 开始监听新消息
@@ -817,15 +1484,20 @@ Page({
     }
 
     const db = wx.cloud.database()
+    const _ = db.command
 
     // 初始化已处理消息ID集合（防止监听回调重复添加自己发的消息）
     this.processedMessageIds = new Set(this.data.messages.map(m => m._id))
 
     try {
       const listener = db.collection('wdd-messages')
-        .where({
-          need_id: String(needId)
-        })
+        .where(_.and([
+          { need_id: String(needId) },
+          _.or([
+            { status: 'normal' },
+            { type: 'system' }
+          ])
+        ]))
         .watch({
           onChange: (snapshot) => {
             // 记录watch活动时间
@@ -848,22 +1520,39 @@ Page({
             const newDocs = []
 
             for (const change of snapshot.docChanges) {
-              if (change.dataType !== 'add') continue
+              if (change.dataType === 'remove') continue
 
               const doc = change.doc
+              if (!doc) continue
 
               // 关键校验：消息必须属于当前任务
               if (doc.need_id !== currentNeedId) continue
+              // 客户端监听只接收已送达消息和系统消息；待审核媒体由发送者状态轮询处理。
+              if (doc.status !== 'normal' && doc.type !== 'system') continue
 
-              // 跳过已处理的消息
-              if (this.processedMessageIds.has(doc._id)) continue
+              // 已处理的消息仍可能收到状态/字段更新，需要合并而不是直接跳过。
+              if (this.processedMessageIds.has(doc._id)) {
+                const sourceMessages = messagesToUpdate || currentMessages
+                const existingIndex = sourceMessages.findIndex(item => item._id === doc._id)
+                if (existingIndex !== -1) {
+                  messagesToUpdate = messagesToUpdate || [...currentMessages]
+                  const previous = existingIndex > 0 ? messagesToUpdate[existingIndex - 1] : null
+                  messagesToUpdate[existingIndex] = this.formatMessage({
+                    ...messagesToUpdate[existingIndex],
+                    ...doc,
+                    sendStatus: 'sent'
+                  }, previous)
+                }
+                continue
+              }
 
               // 自己发送的消息：确认临时消息
               if (doc.sender_id === userInfo._id) {
                 this.processedMessageIds.add(doc._id)
                 const incomingClientMsgId = doc.client_msg_id || doc.clientMsgId || ''
+                const sourceMessages = messagesToUpdate || currentMessages
                 // 查找对应的临时消息（按时间倒序找最新的匹配项）
-                const tempIndex = currentMessages.findIndex(m =>
+                const tempIndex = sourceMessages.findIndex(m =>
                   (
                     incomingClientMsgId &&
                     m.sendStatus === 'sending' &&
@@ -875,14 +1564,19 @@ Page({
                   )
                 )
                 if (tempIndex !== -1) {
-                  messagesToUpdate = [...currentMessages]
+                  messagesToUpdate = messagesToUpdate || [...currentMessages]
                   // 关键：更新 _id 为真实ID，并清除 isLocalImage 标记
+                  const tempId = messagesToUpdate[tempIndex]._id
                   messagesToUpdate[tempIndex] = {
                     ...messagesToUpdate[tempIndex],
+                    ...doc,
                     _id: doc._id,
                     isLocalImage: false,
                     create_time: doc.create_time,  // 同步服务器时间
-                    sendStatus: 'sent'
+                    sendStatus: doc.status === 'pending' ? 'reviewing' : 'sent'
+                  }
+                  if (this.data.playingVoiceId === tempId) {
+                    this.setData({ playingVoiceId: doc._id })
                   }
                 } else {
                   // 没找到临时消息，当作新消息处理（可能是其他设备发送的）
@@ -918,12 +1612,7 @@ Page({
 
               // 写回本地缓存（防抖,避免 watch 高频触发时频繁阻塞主线程）
               if (!this.data.isCustomerServiceMode) {
-                chatCache.scheduleWrite(currentNeedId, finalMessages, {
-                  task: this.data.task,
-                  isSeeker: this.data.isSeeker,
-                  otherUser: this.data.otherUser,
-                  showReportBtn: this.data.showReportBtn
-                })
+                chatCache.scheduleWrite(currentNeedId, finalMessages, this.buildCacheTaskMeta())
               }
 
               // 先更新消息，等渲染完成后再处理滚动和已读
@@ -944,12 +1633,7 @@ Page({
                           chatCache.invalidate(currentNeedId)
                         } else {
                           // 其他状态变化(如 breaking)也写一次,刷新缓存里的 taskMeta
-                          chatCache.scheduleWrite(currentNeedId, this.data.messages, {
-                            task: this.data.task,
-                            isSeeker: this.data.isSeeker,
-                            otherUser: this.data.otherUser,
-                            showReportBtn: this.data.showReportBtn
-                          })
+                          chatCache.scheduleWrite(currentNeedId, this.data.messages, this.buildCacheTaskMeta())
                         }
                       })
                       this.setData({
@@ -978,6 +1662,8 @@ Page({
             console.error('消息监听失败:', err)
             this._isStartingWatch = false
             this.setData({ watchListener: null })
+            this.stopMediaStatusPolling()
+            this.startMessagePolling()
           }
         })
 
@@ -986,6 +1672,7 @@ Page({
         lastWatchActivity: Date.now()
       })
       this._isStartingWatch = false
+      this.startMediaStatusPolling()
 
       // 设置自动降级检测：3秒后检查是否有watch活动
       setTimeout(() => {
@@ -995,6 +1682,7 @@ Page({
         if (lastActivity && (now - lastActivity > 2500) && !this.data.messagePollingInterval) {
           // 切换到轮询时保留已处理消息ID，避免重复加载
           this.stopMessageWatch(true)
+          this.stopMediaStatusPolling()
           this.startMessagePolling()
         }
       }, 3000)
@@ -1002,6 +1690,7 @@ Page({
     } catch (err) {
       console.error('启动监听异常:', err)
       this._isStartingWatch = false
+      this.stopMediaStatusPolling()
       // 启动失败时切换到轮询
       this.startMessagePolling()
     }
@@ -1018,6 +1707,7 @@ Page({
       this.setData({ watchListener: null })
     }
     this._isStartingWatch = false
+    this.stopMediaStatusPolling()
     if (!keepProcessedIds) {
       this.processedMessageIds = null
     }
@@ -1122,6 +1812,9 @@ Page({
         return m
       })
       this.setData({ messages })
+      if ((result.data.status || 'pending') === 'pending') {
+        this.startMediaStatusPolling()
+      }
 
       // 把真实消息 ID 添加到已处理集合，防止 watch 回调重复处理
       this.processedMessageIds.delete(tempId)
@@ -1414,6 +2107,7 @@ Page({
       showTime: showTime,
       isLocalImage: true,
       sendStatus: 'sending',
+      reviewLoadingVisible: true,
       // 预计算显示尺寸
       imageWidth: displaySize.width,
       imageHeight: displaySize.height,
@@ -1437,6 +2131,7 @@ Page({
         this.setData({ lastMessageId: 'msg-' + clientMsgId })
       })
     })
+    this.scheduleReviewLoadingHide(clientMsgId)
 
     try {
       // 上传到云存储
@@ -1476,8 +2171,10 @@ Page({
             _id: realMessageId,
             imageUrl: uploadResult.fileID,
             isLocalImage: false,
+            status: result.data.status || 'pending',
             create_time: result.data.createTime || new Date().toISOString(),
-            sendStatus: 'sent'
+            sendStatus: (result.data.status || 'pending') === 'pending' ? 'reviewing' : 'sent',
+            reviewLoadingVisible: m.reviewLoadingVisible && (result.data.status || 'pending') === 'pending'
           }
         }
         return m
@@ -1504,6 +2201,9 @@ Page({
 
   // 预览图片
   previewImage(e) {
+    const status = e.currentTarget.dataset.status
+    const isSelf = e.currentTarget.dataset.isSelf === true || e.currentTarget.dataset.isSelf === 'true'
+    if (status !== 'normal' && !isSelf) return
     const url = e.currentTarget.dataset.url
     const imageUrls = this.data.messages
       .filter(msg => msg.type === 'image' && msg.status !== 'violated' && msg.imageUrl)
@@ -1579,9 +2279,8 @@ Page({
     const newExpanded = !this.data.isToolbarExpanded
     this.setData({
       isToolbarExpanded: newExpanded,
-      inputFocus: false
-      // 注意：不要在这里设置 inputFocus: false，会导致 iOS 键盘闪烁
-      // 使用 hold-keyboard 属性来控制键盘保持
+      inputFocus: false,
+      isInputFocused: false
     })
   },
 
@@ -1589,11 +2288,9 @@ Page({
   onInputFocus() {
     // 如果工具栏展开，先收起工具栏
     // 不手动控制 inputFocus，让输入框自行管理焦点
-    if (this.data.isToolbarExpanded) {
-      this.setData({
-        isToolbarExpanded: false
-      })
-    }
+    const nextData = { isInputFocused: true }
+    if (this.data.isToolbarExpanded) nextData.isToolbarExpanded = false
+    this.setData(nextData)
 
     // 如果当前不在底部或未读消息不为0，则滚动到底部 + 标记已读
     if (!this.data.isAtBottom || this.data.newMessageCount > 0) {
@@ -1605,6 +2302,13 @@ Page({
         this.markMessagesRead()
       })
     }
+  },
+
+  onInputBlur() {
+    this.setData({
+      inputFocus: false,
+      isInputFocused: false
+    })
   },
 
   // 完成任务

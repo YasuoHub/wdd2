@@ -3,15 +3,10 @@ const CLOUD_FUNC = 'wdd-ops-analytics'
 const { callCloudFunction } = require('../../utils/cloud')
 const { getByType } = require('../../utils/needTypes')
 
-// 余额流水类型映射
+// 平台资金流水类型映射
 const FLOW_TYPE_MAP = {
-  task_income: '任务收入',
-  system_gift: '系统赠送',
-  task_pay: '任务支付',
-  refund: '退款',
-  withdraw: '提现',
-  withdraw_fee: '提现手续费',
-  arbitration_refund: '仲裁退款'
+  platform_revenue: '平台收入',
+  withdraw: '提现支出'
 }
 
 Page({

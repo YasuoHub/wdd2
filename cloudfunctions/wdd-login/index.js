@@ -7,7 +7,7 @@ cloud.init({
 
 const db = cloud.database()
 const _ = db.command
-const DEFAULT_REGISTER_GIFT_BALANCE = 0
+const DEFAULT_REGISTER_GIFT_DEDUCTION = 0
 
 function normalizeMoneyAmount(value, fallback = 0) {
   const amount = Number(value)
@@ -23,6 +23,9 @@ function formatLoginUserInfo(userInfo) {
     total_points: userInfo.total_points,
     balance: userInfo.balance || 0,
     frozen_balance: userInfo.frozen_balance || 0,
+    deduction_balance: userInfo.deduction_balance || 0,
+    frozen_deduction_balance: userInfo.frozen_deduction_balance || 0,
+    available_deduction_balance: (userInfo.deduction_balance || 0) - (userInfo.frozen_deduction_balance || 0),
     available_balance: (userInfo.balance || 0) - (userInfo.frozen_balance || 0),
     total_earned: userInfo.total_earned || 0,
     total_withdrawn: userInfo.total_withdrawn || 0,
@@ -67,14 +70,15 @@ async function getPointsConfig() {
   }
 }
 
-// 从 wdd-config 读取新用户注册现金余额奖励，未配置时默认不发放
-async function getRegisterGiftBalance() {
+// 从 wdd-config 读取新用户注册平台抵扣金，未配置时默认不发放
+async function getRegisterGiftDeduction() {
   try {
     const configRes = await db.collection('wdd-config').doc('platform').get()
     const cfg = configRes.data
-    return normalizeMoneyAmount(cfg ? cfg.register_gift_balance : DEFAULT_REGISTER_GIFT_BALANCE, DEFAULT_REGISTER_GIFT_BALANCE)
+    const value = cfg ? (cfg.register_gift_deduction ?? cfg.register_gift_balance) : DEFAULT_REGISTER_GIFT_DEDUCTION
+    return normalizeMoneyAmount(value, DEFAULT_REGISTER_GIFT_DEDUCTION)
   } catch (e) {}
-  return DEFAULT_REGISTER_GIFT_BALANCE
+  return DEFAULT_REGISTER_GIFT_DEDUCTION
 }
 
 exports.main = async (event, context) => {
@@ -118,7 +122,7 @@ exports.main = async (event, context) => {
       isNewUser = true
 
       const pointsCfg = await getPointsConfig()
-      const registerGiftBalance = await getRegisterGiftBalance()
+      const registerGiftDeduction = await getRegisterGiftDeduction()
 
       // 检查是否有邀请人（事务外查询，确保信息可用）
       let inviter = null
@@ -138,9 +142,11 @@ exports.main = async (event, context) => {
         nickname: event.nickname || '微信用户',
         avatar: event.avatar || '',
         total_points: registerPoints + inviteBonus,
-        balance: registerGiftBalance,
+        balance: 0,
         frozen_balance: 0,
-        total_earned: registerGiftBalance,
+        deduction_balance: registerGiftDeduction,
+        frozen_deduction_balance: 0,
+        total_earned: 0,
         total_withdrawn: 0,
         total_paid: 0,
         role: 'both',
@@ -177,16 +183,18 @@ exports.main = async (event, context) => {
           }
         })
 
-        // 3. 注册现金余额奖励
-        if (registerGiftBalance > 0) {
+        // 3. 注册平台抵扣金奖励
+        if (registerGiftDeduction > 0) {
           await transaction.collection('wdd-balance-records').add({
             data: {
               user_id: addRes._id,
-              type: 'system_gift',
-              amount: registerGiftBalance,
-              balance: registerGiftBalance,
+              type: 'deduction_gift',
+              amount: 0,
+              balance: 0,
               frozen_balance: 0,
-              description: '新用户注册奖励',
+              deduction_amount: registerGiftDeduction,
+              deduction_balance: registerGiftDeduction,
+              description: '新用户注册平台抵扣金',
               create_time: db.serverDate()
             }
           })
@@ -194,11 +202,11 @@ exports.main = async (event, context) => {
           await transaction.collection('wdd-notifications').add({
             data: {
               user_id: addRes._id,
-              type: 'system_gift',
-              system_type: 'register_gift_balance',
-              title: '注册奖励已到账',
-              content: `欢迎加入问当地，平台已赠送您 ¥${registerGiftBalance.toFixed(2)} 余额，可用于发布求助或提现。`,
-              amount: registerGiftBalance,
+              type: 'deduction_gift',
+              system_type: 'register_gift_deduction',
+              title: '新人平台抵扣金已到账',
+              content: `欢迎加入问当地，平台已赠送您 ¥${registerGiftDeduction.toFixed(2)} 平台抵扣金，可用于发布求助时抵扣悬赏，不可提现。`,
+              amount: registerGiftDeduction,
               is_read: false,
               create_time: db.serverDate()
             }

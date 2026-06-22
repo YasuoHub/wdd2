@@ -18,7 +18,7 @@ const DEFAULT_CONFIG = {
   withdraw_daily_times: 1,
   min_reward_amount: 1,
   max_reward_amount: 500,
-  register_gift_balance: 3,
+  register_gift_deduction: 3,
   points: {
     register: 100,
     invite: 50,
@@ -43,7 +43,7 @@ const EDITABLE_KEYS = [
   'withdraw_daily_times',
   'min_reward_amount',
   'max_reward_amount',
-  'register_gift_balance',
+  'register_gift_deduction',
   'points',
   'customer_service_openids',
   'max_transfer_retry',
@@ -64,6 +64,9 @@ function mergeConfig(config) {
         daily: Array.isArray(signIn.daily) ? signIn.daily : DEFAULT_CONFIG.points.signIn.daily
       }
     },
+    register_gift_deduction: config
+      ? (config.register_gift_deduction ?? config.register_gift_balance ?? DEFAULT_CONFIG.register_gift_deduction)
+      : DEFAULT_CONFIG.register_gift_deduction,
     customer_service_openids: Array.isArray(config && config.customer_service_openids)
       ? config.customer_service_openids
       : DEFAULT_CONFIG.customer_service_openids,
@@ -163,7 +166,7 @@ function validatePayload(payload) {
   next.withdraw_daily_times = toInteger(payload.withdraw_daily_times, '单日提现次数上限')
   next.min_reward_amount = toFiniteNumber(payload.min_reward_amount, '最小悬赏金额')
   next.max_reward_amount = toFiniteNumber(payload.max_reward_amount, '最大悬赏金额')
-  next.register_gift_balance = toFiniteNumber(payload.register_gift_balance, '新用户注册赠送余额')
+  next.register_gift_deduction = toFiniteNumber(payload.register_gift_deduction, '新用户注册平台抵扣金')
   next.max_transfer_retry = toInteger(payload.max_transfer_retry, '最大转账重试次数')
   next.transfer_query_timeout_minutes = toInteger(payload.transfer_query_timeout_minutes, '转账查询超时分钟')
 
@@ -175,7 +178,7 @@ function validatePayload(payload) {
     'withdraw_daily_limit',
     'min_reward_amount',
     'max_reward_amount',
-    'register_gift_balance'
+    'register_gift_deduction'
   ]
 
   if (next.platform_fee_rate < 0 || next.platform_fee_rate > 1) {

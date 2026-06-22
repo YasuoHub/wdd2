@@ -12,6 +12,9 @@ Page({
     balance: 0,
     frozenBalance: 0,
     availableBalance: 0,
+    deductionBalance: 0,
+    frozenDeductionBalance: 0,
+    availableDeductionBalance: 0,
     totalEarned: 0,
     totalWithdrawn: 0,
     totalPaid: 0,
@@ -132,14 +135,20 @@ Page({
 
       if (result.code === 0 && result.data.userInfo) {
         const userInfo = result.data.userInfo
-        const balance = userInfo.balance || 0
-        const frozenBalance = userInfo.frozen_balance || 0
-        const availableBalance = balance - frozenBalance
+        const balance = toAmount(userInfo.balance)
+        const frozenBalance = toAmount(userInfo.frozen_balance)
+        const availableBalance = toAmount(balance - frozenBalance)
+        const deductionBalance = toAmount(userInfo.deduction_balance)
+        const frozenDeductionBalance = toAmount(userInfo.frozen_deduction_balance)
+        const availableDeductionBalance = toAmount(deductionBalance - frozenDeductionBalance)
 
         this.setData({
           balance: balance,
           frozenBalance: frozenBalance,
           availableBalance: availableBalance,
+          deductionBalance,
+          frozenDeductionBalance,
+          availableDeductionBalance,
           totalEarned: userInfo.total_earned || 0,
           totalWithdrawn: userInfo.total_withdrawn || 0,
           totalPaid: userInfo.total_paid || 0,

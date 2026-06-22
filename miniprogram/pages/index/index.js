@@ -2,6 +2,7 @@
 const app = getApp()
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 const { formatDistanceText } = require('../../utils/distance')
+const { MoneyUtils } = require('../../utils/platformRules')
 const HOME_NEARBY_PAGE_SIZE = 5
 
 Page({
@@ -402,6 +403,11 @@ Page({
         const list = (result.data.list || []).slice(0, HOME_NEARBY_PAGE_SIZE).map(item => {
           const typeMeta = withTypeMeta(item)
           const distanceText = formatDistanceText(item.distance, { invalidText: item.distanceText || '--' })
+          const visibleRewardAmount = item.displayRewardAmount !== undefined
+            ? Number(item.displayRewardAmount) || 0
+            : (item.takerIncome !== undefined
+              ? Number(item.takerIncome) || 0
+              : MoneyUtils.calcTakerIncome(item.rewardAmount || item.reward_amount || 0))
           return {
             _id: item._id,
             need_id: item.need_id || item._id,
@@ -416,6 +422,8 @@ Page({
             location: item.location,
             locationName: item.locationName || '未知位置',
             rewardAmount: item.rewardAmount || 0,
+            takerIncome: item.takerIncome || 0,
+            displayRewardAmount: visibleRewardAmount,
             status: item.status,
             distance: item.distance,
             distanceText: distanceText,

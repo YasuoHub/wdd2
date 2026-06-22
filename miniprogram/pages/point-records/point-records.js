@@ -5,8 +5,14 @@ Page({
   data: {
     // 积分信息
     currentPoints: {
-      total: 0
+      total: 0,
+      deductionBalance: 0,
+      exchangeRate: 100
     },
+    exchangeInput: '',
+    exchangePreviewAmount: '0.00',
+    showExchangeModal: false,
+    exchangeErrorTip: '',
 
     // 记录列表
     records: [],
@@ -128,7 +134,8 @@ Page({
 
       if (result.code === 0) {
         this.setData({
-          currentPoints: result.data.currentPoints
+          currentPoints: result.data.currentPoints,
+          exchangePreviewAmount: this.calcExchangePreview(this.data.exchangeInput, result.data.currentPoints.exchangeRate || 100)
         })
       }
     } catch (err) {
@@ -166,5 +173,92 @@ Page({
 
   hideRulesModal() {
     this.setData({ showRulesModal: false })
+  },
+
+  showExchangeModal() {
+    if ((this.data.currentPoints.total || 0) < (this.data.currentPoints.exchangeRate || 100)) {
+      wx.showToast({ title: '满100积分可兑换1元', icon: 'none' })
+      return
+    }
+    this.setData({
+      showExchangeModal: true,
+      exchangeInput: '',
+      exchangePreviewAmount: '0.00',
+      exchangeErrorTip: ''
+    })
+  },
+
+  hideExchangeModal() {
+    this.setData({ showExchangeModal: false })
+  },
+
+  calcExchangePreview(points, rate) {
+    const value = Number(points)
+    const exchangeRate = rate || this.data.currentPoints.exchangeRate || 100
+    if (!Number.isInteger(value) || value <= 0 || value % exchangeRate !== 0) {
+      return '0.00'
+    }
+    return (value / exchangeRate).toFixed(2)
+  },
+
+  onExchangeInput(e) {
+    const value = String(e.detail.value || '').replace(/[^\d]/g, '')
+    const rate = this.data.currentPoints.exchangeRate || 100
+    let errorTip = ''
+    const points = Number(value)
+    if (value && (!Number.isInteger(points) || points <= 0)) {
+      errorTip = '请输入有效积分'
+    } else if (value && points % rate !== 0) {
+      errorTip = `兑换积分必须是${rate}的整数倍`
+    } else if (value && points > (this.data.currentPoints.total || 0)) {
+      errorTip = '积分不足'
+    }
+
+    this.setData({
+      exchangeInput: value,
+      exchangePreviewAmount: this.calcExchangePreview(value, rate),
+      exchangeErrorTip: errorTip
+    })
+  },
+
+  async doExchangeDeduction() {
+    if (this.data.isLoading) return
+    const points = Number(this.data.exchangeInput)
+    const rate = this.data.currentPoints.exchangeRate || 100
+    if (!Number.isInteger(points) || points <= 0) {
+      this.setData({ exchangeErrorTip: '请输入兑换积分' })
+      return
+    }
+    if (points % rate !== 0) {
+      this.setData({ exchangeErrorTip: `兑换积分必须是${rate}的整数倍` })
+      return
+    }
+    if (points > (this.data.currentPoints.total || 0)) {
+      this.setData({ exchangeErrorTip: '积分不足' })
+      return
+    }
+
+    wx.showLoading({ title: '兑换中...' })
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-get-point-records',
+        data: {
+          action: 'exchangePointsForDeduction',
+          points
+        }
+      })
+
+      wx.hideLoading()
+      if (result.code !== 0) {
+        throw new Error(result.message || '兑换失败')
+      }
+
+      wx.showToast({ title: '兑换成功，可在我的钱包查看', icon: 'none' })
+      this.hideExchangeModal()
+      await this.refreshData()
+    } catch (err) {
+      wx.hideLoading()
+      wx.showToast({ title: err.message || '兑换失败', icon: 'none' })
+    }
   }
 })

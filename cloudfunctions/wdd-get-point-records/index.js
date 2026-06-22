@@ -7,6 +7,11 @@ cloud.init({
 
 const db = cloud.database()
 const _ = db.command
+const POINTS_PER_DEDUCTION_YUAN = 100
+
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
@@ -39,6 +44,8 @@ exports.main = async (event, context) => {
     switch (action) {
       case 'getBalanceRecords':
         return await getBalanceRecords(userId, page, pageSize)
+      case 'exchangePointsForDeduction':
+        return await exchangePointsForDeduction(user, event.points)
       case 'getPointRecords':
       default:
         return await getPointRecords(userId, page, pageSize, user)
@@ -52,13 +59,95 @@ exports.main = async (event, context) => {
   }
 }
 
+async function exchangePointsForDeduction(user, rawPoints) {
+  const points = Number(rawPoints)
+  if (!Number.isInteger(points) || points <= 0) {
+    return { code: -1, message: '兑换积分必须是正整数' }
+  }
+  if (points % POINTS_PER_DEDUCTION_YUAN !== 0) {
+    return { code: -1, message: `兑换积分需为 ${POINTS_PER_DEDUCTION_YUAN} 的整数倍` }
+  }
+  const currentPoints = Number(user.total_points || 0)
+  if (currentPoints < points) {
+    return { code: -1, message: '积分不足' }
+  }
+
+  const deductionAmount = roundMoney(points / POINTS_PER_DEDUCTION_YUAN)
+  const transaction = await db.startTransaction()
+
+  try {
+    const userInTx = await transaction.collection('wdd-users').doc(user._id).get()
+    const latestUser = userInTx.data
+    const latestPoints = Number(latestUser.total_points || 0)
+    if (latestPoints < points) {
+      await transaction.rollback()
+      return { code: -1, message: '积分不足' }
+    }
+
+    const nextPoints = latestPoints - points
+    const nextDeductionBalance = roundMoney((latestUser.deduction_balance || 0) + deductionAmount)
+
+    await transaction.collection('wdd-users').doc(user._id).update({
+      data: {
+        total_points: _.inc(-points),
+        deduction_balance: _.inc(deductionAmount),
+        update_time: db.serverDate()
+      }
+    })
+
+    await transaction.collection('wdd-point-records').add({
+      data: {
+        user_id: user._id,
+        type: 'exchange',
+        points: -points,
+        description: `兑换 ¥${deductionAmount.toFixed(2)} 平台抵扣金`,
+        balance: nextPoints,
+        deduction_amount: deductionAmount,
+        create_time: db.serverDate()
+      }
+    })
+
+    await transaction.collection('wdd-balance-records').add({
+      data: {
+        user_id: user._id,
+        type: 'deduction_exchange',
+        amount: 0,
+        balance: latestUser.balance || 0,
+        frozen_balance: latestUser.frozen_balance || 0,
+        deduction_amount: deductionAmount,
+        deduction_balance: nextDeductionBalance,
+        description: `积分兑换平台抵扣金 ¥${deductionAmount.toFixed(2)}`,
+        create_time: db.serverDate()
+      }
+    })
+
+    await transaction.commit()
+
+    return {
+      code: 0,
+      message: '兑换成功',
+      data: {
+        usedPoints: points,
+        deductionAmount,
+        totalPoints: nextPoints,
+        deductionBalance: nextDeductionBalance
+      }
+    }
+  } catch (err) {
+    await transaction.rollback()
+    console.error('积分兑换平台抵扣金失败:', err)
+    return { code: -1, message: '兑换失败: ' + err.message }
+  }
+}
+
 // 获取余额记录
 async function getBalanceRecords(userId, page, pageSize) {
   // 余额记录使用 0-based 分页（客户端 wallet.js 从 0 开始传）
   const skip = page * pageSize
   const visibleRecordWhere = {
     user_id: userId,
-    type: _.nin(['freeze', 'unfreeze'])
+    // 钱包收支明细只展示真实获得/扣除；冻结、解冻、取消退款属于资金状态回退，不作为收支展示。
+    type: _.nin(['freeze', 'unfreeze', 'refund', 'arbitration_refund'])
   }
 
   // 查询总数
@@ -126,7 +215,10 @@ async function getPointRecords(userId, page, pageSize, user) {
       hasMore: page * pageSize < total,
       // 当前积分信息
       currentPoints: {
-        total: user.total_points
+        total: user.total_points,
+        deductionBalance: user.deduction_balance || 0,
+        frozenDeductionBalance: user.frozen_deduction_balance || 0,
+        exchangeRate: POINTS_PER_DEDUCTION_YUAN
       }
     }
   }
@@ -139,6 +231,20 @@ function formatBalanceRecord(item) {
     'task_income': {
       title: item.description || '任务收入',
       icon: 'hand-coins',
+      iconColor: '#1F8F7A',
+      iconBg: 'rgba(7, 193, 96, 0.1)',
+      amountType: 'income'
+    },
+    'deduction_gift': {
+      title: item.description || '平台抵扣金',
+      icon: 'ticket',
+      iconColor: '#1F8F7A',
+      iconBg: 'rgba(7, 193, 96, 0.1)',
+      amountType: 'income'
+    },
+    'deduction_exchange': {
+      title: item.description || '积分兑换平台抵扣金',
+      icon: 'ticket',
       iconColor: '#1F8F7A',
       iconBg: 'rgba(7, 193, 96, 0.1)',
       amountType: 'income'
@@ -225,7 +331,8 @@ function formatPointRecord(item) {
   // 类型映射
   const typeMap = {
     'gain': { label: '获得', color: '#07c160', icon: '+' },
-    'invite': { label: '邀请奖励', color: '#07c160', icon: '+' }
+    'invite': { label: '邀请奖励', color: '#07c160', icon: '+' },
+    'exchange': { label: '权益兑换', color: '#D96A22', icon: '-' }
   }
 
   const typeInfo = typeMap[item.type] || { label: '其他', color: '#999', icon: '' }
@@ -239,7 +346,7 @@ function formatPointRecord(item) {
     typeLabel: typeInfo.label,
     typeColor: typeInfo.color,
     icon: typeInfo.icon,
-    amount: Math.abs(pointValue),
+    amount: pointValue,
     description: item.description,
     balance: item.balance,
     needId: item.need_id || null,

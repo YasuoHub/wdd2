@@ -971,16 +971,18 @@ page {
 
 .payment-options {
   display: flex;
-  gap: 16rpx;
+  flex-direction: column;
+  gap: 10rpx;
   margin-top: 8rpx;
 }
 
 .payment-option {
-  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--bg-card);
   border: 2rpx solid var(--border-light);
-  border-radius: 16rpx;
-  padding: 20rpx;
+  border-radius: 14rpx;
+  padding: 16rpx 18rpx;
   transition: all 0.2s;
 }
 
@@ -995,10 +997,22 @@ page {
   pointer-events: none;
 }
 
-.payment-option-header {
+.payment-option-main {
   display: flex;
   align-items: center;
   gap: 8rpx;
+}
+
+.payment-check {
+  flex-shrink: 0;
+}
+
+.payment-option-tail {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
 }
 
 .payment-icon {
@@ -1013,28 +1027,18 @@ page {
   color: var(--text-primary);
 }
 
-.payment-balance,
-.payment-desc {
+.payment-balance {
   font-size: 22rpx;
   color: var(--text-tertiary);
-  margin-top: 6rpx;
-  display: block;
+  white-space: nowrap;
 }
 
-.balance-insufficient {
+.payment-balance-money {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  margin-top: 12rpx;
-  padding: 12rpx 16rpx;
-  background: rgba(230, 126, 34, 0.08);
-  border-radius: 10rpx;
+  gap: 2rpx;
 }
 
-.balance-insufficient text {
-  font-size: 24rpx;
-  color: #e67e22;
-}
 @import "../../styles/wdd-polish.wxss";
 
 /* 发布页局部覆盖：放在共享视觉层之后，保证弹层和底栏不被全局样式压回去 */

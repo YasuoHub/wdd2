@@ -14,6 +14,7 @@ const MESSAGE_LIST_VISIBLE_DAYS = 30
 // 系统通知可见周期：超过 N 天自动折叠，不再进入常规通知列表
 const SYSTEM_NOTIFICATION_VISIBLE_DAYS = 30
 const SYSTEM_NOTIFICATION_PAGE_SIZE = 20
+const DB_IN_QUERY_LIMIT = 20
 
 // 判断会话是否应该出现在消息列表里
 // 规则：
@@ -172,10 +173,10 @@ async function getChatSessions(userId) {
   })
 
   // 合并所有需要展示的 needId
-  const visibleNeedIds = [
+  const visibleNeedIds = [...new Set([
     ...myNeeds.map(n => n._id),
     ...visibleHelperNeedIds
-  ]
+  ])]
 
   if (visibleNeedIds.length === 0) {
     return {
@@ -185,7 +186,16 @@ async function getChatSessions(userId) {
     }
   }
 
-  // 获取每个会话的最新消息和未读数
+  const visibleNeeds = visibleNeedIds
+    .map(needId => myNeeds.find(n => n._id === needId) || takerNeedsMap.get(needId))
+    .filter(Boolean)
+  const otherUserIds = visibleNeeds.map(need => need.user_id === userId ? need.taker_id : need.user_id)
+  const [userMap, unreadMap] = await Promise.all([
+    batchGetUsers(otherUserIds),
+    batchGetUnreadCounts(visibleNeedIds, userId)
+  ])
+
+  // 获取每个会话的最新消息。后续可进一步沉淀会话摘要，彻底消除逐会话查询。
   const sessions = await Promise.all(visibleNeedIds.map(async (needId) => {
     // 获取任务信息：优先从已查过的两个 map 中取，避免再发 DB 请求
     const need = myNeeds.find(n => n._id === needId) || takerNeedsMap.get(needId)
@@ -197,34 +207,38 @@ async function getChatSessions(userId) {
 
     // 获取最新消息（排除系统消息）
     const lastMessageRes = await db.collection('wdd-messages')
-      .where({
-        need_id: needId,
-        type: _.neq('system')
-      })
+      .where({ need_id: needId, type: _.neq('system') })
       .orderBy('create_time', 'desc')
-      .limit(1)
+      .limit(10)
       .get()
 
-    const lastMessage = lastMessageRes.data[0]
-
-    // 获取未读数
-    const unreadRes = await db.collection('wdd-messages').where({
-      need_id: needId,
-      receiver_id: userId,
-      is_read: false
-    }).count()
+    const lastMessage = lastMessageRes.data.find(message => (
+      message.status === 'normal' ||
+      (['image', 'voice'].includes(message.type) && message.sender_id === userId)
+    ))
 
     // 格式化最后消息内容
     let lastMessageText = '暂无消息'
+    let lastMessageType = ''
+    let lastMessageStatus = ''
     let lastTime = need.create_time
     if (lastMessage) {
       lastTime = lastMessage.create_time
+      lastMessageType = lastMessage.type || ''
+      lastMessageStatus = lastMessage.status || ''
       if (lastMessage.type === 'text') {
         lastMessageText = lastMessage.content.length > 20
           ? lastMessage.content.substring(0, 20) + '...'
           : lastMessage.content
       } else if (lastMessage.type === 'image') {
-        lastMessageText = '[图片]'
+        lastMessageText = lastMessage.status === 'pending'
+          ? '[图片]'
+          : (lastMessage.status === 'violated' ? '[图片]未通过审核' : '[图片]')
+      } else if (lastMessage.type === 'voice') {
+        const duration = Math.max(1, Number(lastMessage.voice_duration) || 1)
+        lastMessageText = lastMessage.status === 'pending'
+          ? `[语音 ${duration}']`
+          : (lastMessage.status === 'violated' ? '[语音]未通过审核' : `[语音 ${duration}']`)
       }
     }
 
@@ -233,14 +247,12 @@ async function getChatSessions(userId) {
     if (isSeeker) {
       // 求助者视角，对方是帮助者
       if (need.taker_id) {
-        const takerRes = await db.collection('wdd-users').doc(need.taker_id).get()
-        otherUser = takerRes.data
+        otherUser = userMap.get(need.taker_id) || null
       }
     } else {
       // 帮助者视角，对方是求助者
       if (need.user_id) {
-        const seekerRes = await db.collection('wdd-users').doc(need.user_id).get()
-        otherUser = seekerRes.data
+        otherUser = userMap.get(need.user_id) || null
       }
     }
 
@@ -251,10 +263,12 @@ async function getChatSessions(userId) {
         : need.description,
       type: need.type,
       lastMessage: lastMessageText,
+      lastMessageType,
+      lastMessageStatus,
       lastTime: lastTime,
       needStatus: need.status,
       isSeeker: isSeeker,
-      unread: unreadRes.total,
+      unread: unreadMap.get(needId) || 0,
       // 聊天对象信息
       otherUserNickname: otherUser ? otherUser.nickname : (isSeeker ? '帮助者' : '求助者'),
       otherUserAvatar: otherUser ? otherUser.avatar : '',
@@ -290,6 +304,57 @@ async function getSystemNotifications(event, OPENID) {
     code: 0,
     data
   }
+}
+
+function chunkArray(list, size = DB_IN_QUERY_LIMIT) {
+  const chunks = []
+  for (let i = 0; i < list.length; i += size) {
+    chunks.push(list.slice(i, i + size))
+  }
+  return chunks
+}
+
+async function batchGetUsers(userIds) {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))]
+  const userMap = new Map()
+  if (uniqueIds.length === 0) return userMap
+
+  const chunks = chunkArray(uniqueIds)
+  const results = await Promise.all(chunks.map(ids =>
+    db.collection('wdd-users').where({ _id: _.in(ids) }).get()
+  ))
+  results.forEach(res => {
+    ;(res.data || []).forEach(user => userMap.set(user._id, user))
+  })
+  return userMap
+}
+
+async function batchGetUnreadCounts(needIds, userId) {
+  const unreadMap = new Map()
+  const uniqueIds = [...new Set(needIds.filter(Boolean))]
+  if (uniqueIds.length === 0) return unreadMap
+
+  const chunks = chunkArray(uniqueIds)
+  const results = await Promise.all(chunks.map(ids =>
+    db.collection('wdd-messages')
+      .aggregate()
+      .match({
+        need_id: _.in(ids),
+        receiver_id: userId,
+        is_read: false,
+        status: 'normal'
+      })
+      .group({
+        _id: '$need_id',
+        count: $.sum(1)
+      })
+      .end()
+  ))
+
+  results.forEach(res => {
+    ;(res.list || []).forEach(item => unreadMap.set(item._id, item.count || 0))
+  })
+  return unreadMap
 }
 
 // 查询 30 天内的系统通知，并返回分页和折叠状态
@@ -501,6 +566,9 @@ async function getUserInfo(OPENID) {
           total_points: user.total_points,
           balance: user.balance || 0,
           frozen_balance: user.frozen_balance || 0,
+          deduction_balance: user.deduction_balance || 0,
+          frozen_deduction_balance: user.frozen_deduction_balance || 0,
+          available_deduction_balance: (user.deduction_balance || 0) - (user.frozen_deduction_balance || 0),
           available_balance: (user.balance || 0) - (user.frozen_balance || 0),
           total_earned: user.total_earned || 0,
           total_withdrawn: user.total_withdrawn || 0,

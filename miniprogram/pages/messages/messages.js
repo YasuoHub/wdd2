@@ -5,6 +5,52 @@ const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needType
 
 const SYSTEM_NOTIFICATION_PAGE_SIZE = 20
 
+function formatPendingReviewMessage(lastMessageType, lastMessageText) {
+  const messageText = String(lastMessageText || '').replace(/\s*审核中\s*/g, '').trim()
+  const isVoice = lastMessageType === 'voice' || /^\[语音\]/.test(messageText) || /^【语音/.test(messageText)
+  const isImage = lastMessageType === 'image' || /^\[图片\]/.test(messageText) || /^【图片/.test(messageText)
+
+  if (isVoice) {
+    const durationMatch = messageText.match(/(\d+)\s*(秒|″|')?/)
+    const duration = durationMatch ? Math.max(1, Number(durationMatch[1]) || 1) : 1
+    return `[语音 ${duration}']`
+  }
+
+  if (isImage) {
+    return '[图片]'
+  }
+
+  return messageText || '待审核消息'
+}
+
+function formatChatListItem(item) {
+  const typeMeta = getByType(resolveTaskType(item))
+  const lastMessageStatus = item.lastMessageStatus || ''
+  const lastMessageType = item.lastMessageType || ''
+  const lastMessageText = typeof item.lastMessage === 'string' ? item.lastMessage : ''
+  const hasLegacyPendingText = !lastMessageStatus &&
+    (/^\[(图片|语音)\]/.test(lastMessageText) && lastMessageText.indexOf('审核中') !== -1)
+  const isPendingReviewMessage = lastMessageStatus === 'pending' || hasLegacyPendingText
+  let lastMessage = item.lastMessage || '暂无消息'
+
+  if (isPendingReviewMessage) {
+    lastMessage = formatPendingReviewMessage(lastMessageType, lastMessage)
+  }
+
+  return {
+    ...item,
+    type: typeMeta.type,
+    typeIcon: typeMeta.icon,
+    typeColor: typeMeta.color,
+    typeBgColor: typeMeta.bgColor,
+    lastMessageType,
+    lastMessage,
+    lastTime: DateUtil.formatRelativeTime(item.lastTime),
+    statusText: this.getStatusText(item.needStatus),
+    lastMessagePendingReview: isPendingReviewMessage
+  }
+}
+
 Page({
   data: {
     // 当前聊天tab
@@ -256,18 +302,7 @@ Page({
 
       if (result.code === 0) {
         // 分离求助聊天和帮助聊天
-        const chatList = result.data.chatList.map(item => {
-          const typeMeta = getByType(resolveTaskType(item))
-          return {
-            ...item,
-            type: typeMeta.type,
-            typeIcon: typeMeta.icon,
-            typeColor: typeMeta.color,
-            typeBgColor: typeMeta.bgColor,
-            lastTime: DateUtil.formatRelativeTime(item.lastTime),
-            statusText: this.getStatusText(item.needStatus)
-          }
-        })
+        const chatList = result.data.chatList.map(item => formatChatListItem.call(this, item))
 
         const seekerChatList = chatList.filter(item => item.isSeeker)
         const helperChatList = chatList.filter(item => !item.isSeeker)

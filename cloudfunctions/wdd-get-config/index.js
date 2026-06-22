@@ -19,7 +19,7 @@ const DEFAULT_CONFIG = {
   max_reward_amount: 500,
   withdraw_daily_limit: 100,
   withdraw_daily_times: 1,
-  register_gift_balance: 3,
+  register_gift_deduction: 3,
   points: {
     register: 100,
     invite: 50,
@@ -40,7 +40,7 @@ const PUBLIC_CONFIG_KEYS = [
   'max_reward_amount',
   'withdraw_daily_limit',
   'withdraw_daily_times',
-  'register_gift_balance',
+  'register_gift_deduction',
   'points'
 ]
 
@@ -50,6 +50,9 @@ function pickPublicConfig(config) {
   const merged = {
     ...DEFAULT_CONFIG,
     ...(config || {}),
+    register_gift_deduction: config
+      ? (config.register_gift_deduction ?? config.register_gift_balance ?? DEFAULT_CONFIG.register_gift_deduction)
+      : DEFAULT_CONFIG.register_gift_deduction,
     points: {
       register: points.register ?? DEFAULT_CONFIG.points.register,
       invite: points.invite ?? DEFAULT_CONFIG.points.invite,

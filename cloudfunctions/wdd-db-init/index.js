@@ -11,10 +11,30 @@ exports.main = async (event, context) => {
   try {
     const results = []
 
+    async function ensureCollection(name) {
+      if (typeof db.createCollection !== 'function') {
+        results.push({ step: `集合 ${name} 创建检查`, skipped: true, reason: '当前 SDK 不支持 createCollection' })
+        return
+      }
+      try {
+        await db.createCollection(name)
+        results.push({ step: `创建集合 ${name}`, created: true })
+      } catch (err) {
+        const message = err.errMsg || err.message || ''
+        if (message.includes('already exists') || message.includes('Collection already exists')) {
+          results.push({ step: `创建集合 ${name}`, created: false, exists: true })
+          return
+        }
+        throw err
+      }
+    }
+
     // 1. 确保新集合存在（云数据库会自动创建，这里只是记录）
     // wdd-payment-orders: 支付订单
     // wdd-settlement-records: 结算记录
     // wdd-withdraw-records: 提现记录
+    // wdd-media-check-callbacks: 媒体审核回调暂存
+    await ensureCollection('wdd-media-check-callbacks')
 
     // 2. 为用户表新增金额字段（如果字段不存在则设置默认值）
     const userUpdateRes = await db.collection('wdd-users').where({
@@ -23,6 +43,8 @@ exports.main = async (event, context) => {
       data: {
         balance: 0,           // 余额（元）
         frozen_balance: 0,    // 冻结金额（元）
+        deduction_balance: 0, // 平台抵扣金（元，不可提现）
+        frozen_deduction_balance: 0, // 冻结平台抵扣金（元）
         total_earned: 0,      // 累计收入（元）
         total_withdrawn: 0,   // 累计提现（元）
         total_paid: 0,        // 累计支付（元）
@@ -62,6 +84,11 @@ exports.main = async (event, context) => {
     }).update({
       data: {
         reward_amount: db.command.set(0),  // 悬赏金额（元）
+        total_amount: db.command.set(0),   // 支付总额（元）
+        deduction_amount: db.command.set(0), // 平台抵扣金支付金额（元）
+        balance_amount: db.command.set(0), // 余额支付金额（元）
+        wechat_amount: db.command.set(0),  // 微信支付金额（元）
+        payment_methods: db.command.set([]), // 实际参与支付的方式
         payment_status: 'none',             // 支付状态: none/pending/paid/refunded
         payment_order_id: null,             // 关联支付订单ID
         platform_fee: 0,                    // 平台服务费（元）

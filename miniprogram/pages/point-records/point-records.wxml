@@ -20,8 +20,12 @@
     <view class="points-hint">
       <view class="hint-text">
         <wdd-icon name="lightbulb" color="#FFD166" size="24"></wdd-icon>
-        <text>积分可兑换免单券、提现免手续费券等权益，不可提现、无现金价值</text>
+        <text>每满100积分可兑换1元平台抵扣金，不可提现、无现金价值</text>
       </view>
+    </view>
+
+    <view class="points-actions">
+      <button class="exchange-entry-btn" bindtap="showExchangeModal">兑换平台抵扣金</button>
     </view>
   </view>
 
@@ -60,7 +64,7 @@
           <view class="record-header">
             <text class="record-title">{{item.description}}</text>
             <text class="record-amount" style="color: {{item.typeColor}}">
-              {{item.amount >= 0 ? '+' : ''}}{{item.amount}}
+              {{item.amount > 0 ? '+' : ''}}{{item.amount}}
             </text>
           </view>
 
@@ -110,16 +114,66 @@
         <wdd-icon name="ticket" color="var(--fresh-mint)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">积分用途</text>
-          <text class="rule-desc">积分可兑换平台内免单券、提现免手续费券等权益，相关功能会逐步开放。</text>
+          <text class="rule-desc">每满100积分可兑换1元平台抵扣金。平台抵扣金仅用于发布求助时抵扣悬赏，不可提现、不可转让。</text>
         </view>
       </view>
       <view class="rule-item">
         <wdd-icon name="info" color="#7B8794" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">重要说明</text>
-          <text class="rule-desc">积分仅用于平台内权益兑换，不可提现、不可转让、无现金价值。平台保留调整积分发放规则、有效期、可兑换权益种类与比例的权利。</text>
+          <text class="rule-desc">积分和平台抵扣金均无现金价值。积分兑换平台抵扣金后不可撤回，平台保留调整积分发放规则与兑换比例的权利。</text>
         </view>
       </view>
+    </view>
+  </bottom-sheet>
+
+  <bottom-sheet show="{{showExchangeModal}}" title="兑换平台抵扣金" maxHeight="70vh" bind:close="hideExchangeModal">
+    <view class="exchange-sheet">
+      <view class="exchange-rate-card">
+        <view class="rate-main">
+          <text class="rate-number">100</text>
+          <text class="rate-unit">积分</text>
+        </view>
+        <wdd-icon name="arrow-right" color="var(--brand-primary)" size="34"></wdd-icon>
+        <view class="rate-main">
+          <text class="rate-number">1</text>
+          <text class="rate-unit">元抵扣金</text>
+        </view>
+      </view>
+
+      <view class="exchange-note">
+        <wdd-icon name="info" color="var(--vitality-orange)" size="28"></wdd-icon>
+        <text>请输入100的整数倍积分。兑换后不可撤销，平台抵扣金仅用于发布求助抵扣悬赏，不可提现。</text>
+      </view>
+
+      <view class="exchange-input-block">
+        <text class="exchange-label">兑换积分</text>
+        <view class="exchange-input-wrapper">
+          <input
+            class="exchange-input"
+            type="number"
+            value="{{exchangeInput}}"
+            bindinput="onExchangeInput"
+            placeholder="例如 100、200、300"
+            placeholder-class="exchange-placeholder"
+          />
+          <text class="exchange-unit">积分</text>
+        </view>
+      </view>
+
+      <view class="exchange-preview-card">
+        <text class="preview-label">预计到账</text>
+        <view class="preview-value">
+          <wdd-icon name="ticket" color="var(--fresh-mint)" size="28"></wdd-icon>
+          <text>{{exchangePreviewAmount}} 元平台抵扣金</text>
+        </view>
+      </view>
+
+      <view class="exchange-error {{exchangeErrorTip ? 'visible' : ''}}">
+        <text>{{exchangeErrorTip}}</text>
+      </view>
+
+      <button class="exchange-confirm-btn {{exchangeInput && !exchangeErrorTip ? '' : 'disabled'}}" bindtap="doExchangeDeduction" disabled="{{!exchangeInput || !!exchangeErrorTip}}">确认兑换</button>
     </view>
   </bottom-sheet>
 </view>

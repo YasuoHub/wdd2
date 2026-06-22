@@ -243,31 +243,46 @@
         <text class="section-label">支付方式</text>
         <view class="payment-options">
           <view
-            class="payment-option {{paymentMethod === 'balance' ? 'active' : ''}} {{canBalancePay ? '' : 'disabled'}}"
-            data-method="balance"
-            bindtap="onSwitchPaymentMethod"
+            class="payment-option {{useDeduction ? 'active' : ''}}"
+            data-method="deduction"
+            bindtap="onTogglePaymentMethod"
           >
-            <view class="payment-option-header">
-              <wdd-icon class="payment-icon" name="wallet" color="var(--brand-primary)" size="32"></wdd-icon>
-              <text class="payment-name">余额支付</text>
+            <view class="payment-option-main">
+              <wdd-icon class="payment-icon" name="ticket" color="var(--fresh-mint)" size="32"></wdd-icon>
+              <text class="payment-name">平台抵扣金</text>
+              <view class="payment-option-tail">
+                <view class="payment-balance payment-balance-money"><text>可用 </text><wdd-icon name="ticket" color="var(--fresh-mint)" size="24"></wdd-icon><text class="money-text">{{money.format(availableDeductionBalance)}}</text></view>
+                <wdd-icon class="payment-check" name="{{useDeduction ? 'circle-check' : 'circle'}}" color="{{useDeduction ? 'var(--sky-primary)' : '#B8C2CC'}}" size="28"></wdd-icon>
+              </view>
             </view>
-            <view class="payment-balance payment-balance-money"><text>可用   </text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
           </view>
           <view
-            class="payment-option {{paymentMethod === 'wechat' ? 'active' : ''}}"
-            data-method="wechat"
-            bindtap="onSwitchPaymentMethod"
+            class="payment-option {{useBalance ? 'active' : ''}}"
+            data-method="balance"
+            bindtap="onTogglePaymentMethod"
           >
-            <view class="payment-option-header">
+            <view class="payment-option-main">
+              <wdd-icon class="payment-icon" name="wallet" color="var(--brand-primary)" size="32"></wdd-icon>
+              <text class="payment-name">余额</text>
+              <view class="payment-option-tail">
+                <view class="payment-balance payment-balance-money"><text>可用 </text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text></view>
+                <wdd-icon class="payment-check" name="{{useBalance ? 'circle-check' : 'circle'}}" color="{{useBalance ? 'var(--sky-primary)' : '#B8C2CC'}}" size="28"></wdd-icon>
+              </view>
+            </view>
+          </view>
+          <view
+            class="payment-option {{useWechat ? 'active' : ''}}"
+            data-method="wechat"
+            bindtap="onTogglePaymentMethod"
+          >
+            <view class="payment-option-main">
               <wdd-icon class="payment-icon" name="credit-card" color="var(--brand-primary)" size="32"></wdd-icon>
               <text class="payment-name">微信支付</text>
+              <view class="payment-option-tail">
+                <wdd-icon class="payment-check" name="{{useWechat ? 'circle-check' : 'circle'}}" color="{{useWechat ? 'var(--sky-primary)' : '#B8C2CC'}}" size="28"></wdd-icon>
+              </view>
             </view>
-            <text class="payment-desc">即时到账</text>
           </view>
-        </view>
-        <view wx:if="{{paymentMethod === 'balance' && !canBalancePay}}" class="balance-insufficient">
-          <wdd-icon name="triangle-alert" color="var(--vitality-orange)" size="24"></wdd-icon>
-          <view class="balance-insufficient-text"><text>可用余额不足（当前可用</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(availableBalance)}}</text><text>），请选择微信支付</text></view>
         </view>
       </view>
 
@@ -284,7 +299,7 @@
   <view class="footer">
     <view class="footer-content">
       <view class="publish-info">
-        <text class="publish-label">需支付</text>
+        <text class="publish-label">悬赏总额</text>
         <view class="publish-amount"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(rewardAmount)}}</text></view>
       </view>
       <view class="amount-detail-trigger" bindtap="showAmountDetail">
@@ -308,6 +323,18 @@
         <text class="detail-label">悬赏金额</text>
         <view class="detail-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(rewardAmount)}}</text></view>
       </view>
+      <view wx:if="{{deductionAmount > 0}}" class="detail-row">
+        <text class="detail-label">平台抵扣金</text>
+        <view class="detail-value"><wdd-icon name="ticket" color="var(--fresh-mint)" size="26"></wdd-icon><text class="money-text">{{money.format(deductionAmount)}}</text></view>
+      </view>
+      <view wx:if="{{balanceAmount > 0}}" class="detail-row">
+        <text class="detail-label">余额支付</text>
+        <view class="detail-value"><wdd-icon name="wallet" color="var(--brand-primary)" size="26"></wdd-icon><text class="money-text">{{money.format(balanceAmount)}}</text></view>
+      </view>
+      <view wx:if="{{wechatAmount > 0}}" class="detail-row">
+        <text class="detail-label">微信支付</text>
+        <view class="detail-value"><wdd-icon name="credit-card" color="var(--brand-primary)" size="26"></wdd-icon><text class="money-text">{{money.format(wechatAmount)}}</text></view>
+      </view>
       <view class="detail-row">
         <text class="detail-label">平台服务费（{{platformFeeRate}}%）</text>
         <view class="detail-value fee"><text class="money-prefix">-</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(platformFee)}}</text></view>
@@ -326,7 +353,7 @@
         <wdd-icon name="circle-dollar-sign" color="var(--vitality-orange)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">悬赏支付</text>
-          <text class="rule-desc">发布任务时需先支付悬赏金额，支付成功后任务才会上线。</text>
+          <text class="rule-desc">余额、平台抵扣金和微信支付可自行选择；抵扣金与余额不足时，可使用微信支付补足剩余金额。</text>
         </view>
       </view>
       <view class="rule-item">

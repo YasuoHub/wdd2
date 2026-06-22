@@ -810,8 +810,13 @@ async function getNeedDetail(event, OPENID) {
       return { code: -1, message: '任务不存在' }
     }
 
+    const platformFeeRate = await getPlatformFeeRate()
+
     // 格式化任务数据
-    const formattedNeed = formatNeedItem(need)
+    const formattedNeed = formatNeedItem(need, null, null, null, null, {
+      includeTakerIncome: true,
+      platformFeeRate
+    })
 
     // 批量查询求助者和帮助者最新头像和昵称
     const detailUserIds = [need.user_id, need.taker_id].filter(Boolean)

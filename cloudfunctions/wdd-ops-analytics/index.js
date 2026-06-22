@@ -6,16 +6,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 运营资金流水只统计真实收支；freeze/unfreeze 只是可用余额状态变化，不进入运营流水。
-const REAL_FUND_FLOW_TYPES = [
-  'task_income',
-  'system_gift',
-  'task_pay',
-  'refund',
-  'withdraw',
-  'withdraw_fee',
-  'arbitration_refund'
-]
+// 运营资金流水使用平台口径：平台服务费收入 + 提现支出。
+const PLATFORM_EXPENSE_TYPES = ['withdraw']
 
 // 等待时间分桶定义
 const WAIT_BUCKETS = [
@@ -534,31 +526,52 @@ async function getFundFlow(startDate, endDate) {
 async function getFundFlowDetails(startDate, endDate, page, pageSize) {
   const { start, end } = parseDateRange(startDate, endDate)
   const skip = (Math.max(1, page) - 1) * pageSize
-  const realFlowWhere = {
-    type: _.in(REAL_FUND_FLOW_TYPES),
-    create_time: _.gte(start).and(_.lte(end))
-  }
 
-  const [listRes, countRes] = await Promise.all([
-    db.collection('wdd-balance-records')
-      .where(realFlowWhere)
-      .orderBy('create_time', 'desc')
-      .skip(skip)
-      .limit(pageSize)
-      .get(),
-    db.collection('wdd-balance-records')
-      .where(realFlowWhere)
-      .count()
+  const [completedNeeds, withdrawRecords] = await Promise.all([
+    fetchAll(db.collection('wdd-needs'), { status: 'completed' }),
+    fetchAll(db.collection('wdd-balance-records'), {
+      type: _.in(PLATFORM_EXPENSE_TYPES),
+      create_time: _.gte(start).and(_.lte(end))
+    })
   ])
+
+  const revenueRecords = completedNeeds
+    .filter(item => isDateInRange(getCompleteTime(item), start, end))
+    .filter(item => (item.platform_fee || 0) > 0)
+    .map(item => {
+      const createTime = getCompleteTime(item)
+      return {
+        _id: `platform_revenue_${item._id}`,
+        type: 'platform_revenue',
+        amount: Math.round((item.platform_fee || 0) * 100) / 100,
+        description: '平台服务费收入',
+        need_id: item._id,
+        create_time: createTime
+      }
+    })
+
+  const expenseRecords = withdrawRecords.map(item => ({
+    _id: item._id,
+    type: 'withdraw',
+    amount: -Math.abs(item.amount || 0),
+    description: item.description || '用户提现',
+    withdraw_id: item.withdraw_id || null,
+    create_time: item.create_time
+  }))
+
+  const allRecords = [...revenueRecords, ...expenseRecords]
+    .sort((a, b) => new Date(b.create_time).getTime() - new Date(a.create_time).getTime())
+
+  const records = allRecords.slice(skip, skip + pageSize)
 
   return {
     code: 0,
     data: {
-      records: listRes.data,
-      total: countRes.total,
+      records,
+      total: allRecords.length,
       page,
       pageSize,
-      hasMore: skip + pageSize < countRes.total
+      hasMore: skip + records.length < allRecords.length
     }
   }
 }

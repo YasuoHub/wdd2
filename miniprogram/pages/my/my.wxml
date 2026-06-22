@@ -265,30 +265,6 @@
         <text class="about-summary">问当地是一个基于地理位置的即时互助平台，连接需要了解异地现场情况的人和身处附近、熟悉当地的人。用户可通过现金或钱包余额设置悬赏，帮助者完成任务后收入结算到钱包余额，为出行、探店和临时决策提供更可靠的现场参考。</text>
       </view>
     </view>
-    <view class="about-scenarios">
-      <view class="about-scenario">
-        <view class="scenario-icon weather">
-          <wdd-icon name="cloud-sun" color="var(--brand-primary)" size="34"></wdd-icon>
-        </view>
-        <view class="scenario-copy">
-          <text class="scenario-title">现场信息</text>
-          <text class="scenario-desc">确认天气体感、道路通行、店铺营业、排队情况等实时问题。</text>
-        </view>
-      </view>
-      <view class="about-scenario">
-        <view class="scenario-icon traffic">
-          <wdd-icon name="wallet" color="var(--vitality-orange)" size="34"></wdd-icon>
-        </view>
-        <view class="scenario-copy">
-          <text class="scenario-title">钱包结算</text>
-          <text class="scenario-desc">悬赏通过微信支付或余额支付完成，任务收入进入帮助者钱包余额。</text>
-        </view>
-      </view>
-    </view>
-    <view class="about-trust-card">
-      <wdd-icon name="shield-check" color="var(--brand-primary)" size="30"></wdd-icon>
-      <text>积分仅用于平台权益，不参与任务悬赏、支付、退款或结算。</text>
-    </view>
   </view>
 </bottom-sheet>
 

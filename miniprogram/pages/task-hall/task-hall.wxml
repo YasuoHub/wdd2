@@ -89,7 +89,7 @@
               <text class="type-name">{{item.typeName}}</text>
             </view>
             <view class="amount-badge">
-              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.displayRewardAmount || item.takerIncome || item.rewardAmount || 0)}}</text></view>
+              <view class="amount-value"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(item.visibleRewardAmount || 0)}}</text></view>
             </view>
           </view>
 
@@ -117,7 +117,7 @@
         </view>
 
         <!-- 帮助按钮 -->
-        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.displayRewardAmount || item.takerIncome || item.rewardAmount || 0}}">
+        <view class="take-btn" catchtap="takeTask" data-id="{{item._id}}" data-amount="{{item.visibleRewardAmount || 0}}">
           <text class="take-text">去帮助</text>
         </view>
       </view>

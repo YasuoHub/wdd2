@@ -14,7 +14,7 @@
           <text>{{task.statusText}}</text>
         </view>
         <view class="reward">
-          <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon><text class="money-text">{{money.format(task.rewardAmount || 0)}}</text>
+          <wdd-icon name="coins" color="var(--money-gold)" size="38"></wdd-icon><text class="money-text">{{money.format(task._displayAmount || 0)}}</text>
         </view>
       </view>
 

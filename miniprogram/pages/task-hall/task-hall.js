@@ -4,6 +4,7 @@ const app = getApp()
 const { callCloudFunction } = require('../../utils/cloud')
 const { NEED_TYPES, withTypeMeta } = require('../../utils/needTypes')
 const { formatDistanceText } = require('../../utils/distance')
+const { MoneyUtils } = require('../../utils/platformRules')
 
 // 筛选标签
 const FILTERS = [
@@ -210,13 +211,19 @@ Page({
         const processedList = list.map(item => {
           const typeMeta = withTypeMeta(item)
           const distanceText = formatDistanceText(item.distance, { invalidText: item.distanceText || '' })
+          const visibleRewardAmount = item.displayRewardAmount !== undefined
+            ? Number(item.displayRewardAmount) || 0
+            : (item.takerIncome !== undefined
+              ? Number(item.takerIncome) || 0
+              : MoneyUtils.calcTakerIncome(item.rewardAmount || item.reward_amount || 0))
           return {
             ...item,
             type: typeMeta.type,
             typeName: typeMeta.typeName,
             distanceText,
             typeIcon: typeMeta.typeIcon,
-            iconColor: typeMeta.iconColor
+            iconColor: typeMeta.iconColor,
+            visibleRewardAmount
           }
         })
 

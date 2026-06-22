@@ -1,4 +1,4 @@
-// 支付云函数 - 处理微信支付相关逻辑
+// 支付云函数 - 处理平台抵扣金、余额与微信混合支付
 
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -44,6 +44,118 @@ function normalizeMoneyAmount(value) {
   }
 
   return { valid: true, amount: cents / 100 }
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
+function getAvailableDeduction(user) {
+  return Math.max(0, roundMoney((user.deduction_balance || 0) - (user.frozen_deduction_balance || 0)))
+}
+
+function getAvailableBalance(user) {
+  return Math.max(0, roundMoney((user.balance || 0) - (user.frozen_balance || 0)))
+}
+
+function normalizePaymentSelection(selection = {}) {
+  return {
+    useDeduction: selection.useDeduction === true,
+    useBalance: selection.useBalance === true,
+    useWechat: selection.useWechat === true
+  }
+}
+
+function calculatePaymentAllocation(user, totalAmount, rawSelection) {
+  const selection = normalizePaymentSelection(rawSelection)
+  const total = roundMoney(totalAmount)
+  const availableDeduction = selection.useDeduction ? getAvailableDeduction(user) : 0
+  const deductionAmount = Math.min(total, availableDeduction)
+  const afterDeduction = roundMoney(total - deductionAmount)
+  const availableBalance = selection.useBalance ? getAvailableBalance(user) : 0
+  const balanceAmount = Math.min(afterDeduction, availableBalance)
+  const afterBalance = roundMoney(afterDeduction - balanceAmount)
+  const wechatAmount = selection.useWechat ? afterBalance : 0
+  const uncoveredAmount = roundMoney(afterBalance - wechatAmount)
+  const paymentMethods = []
+  if (deductionAmount > 0) paymentMethods.push('deduction')
+  if (balanceAmount > 0) paymentMethods.push('balance')
+  if (wechatAmount > 0) paymentMethods.push('wechat')
+
+  return {
+    totalAmount: total,
+    deductionAmount,
+    balanceAmount,
+    wechatAmount,
+    uncoveredAmount,
+    paymentMethods,
+    selection
+  }
+}
+
+function splitRefundAmounts(order, requestedTotalRefundAmount) {
+  const totalAmount = roundMoney(order.total_amount || 0)
+  const deductionAmount = roundMoney(order.deduction_amount || 0)
+  const balanceAmount = roundMoney(order.balance_amount || 0)
+  const wechatAmount = roundMoney(order.wechat_amount || 0)
+  const refundAmount = Math.min(roundMoney(requestedTotalRefundAmount), totalAmount)
+
+  if (totalAmount <= 0) {
+    return {
+      refundAmount: 0,
+      deductionRefundAmount: 0,
+      balanceRefundAmount: 0,
+      wechatRefundAmount: 0,
+      isFullRefund: true
+    }
+  }
+
+  if (Math.round(refundAmount * 100) >= Math.round(totalAmount * 100)) {
+    return {
+      refundAmount: totalAmount,
+      deductionRefundAmount: deductionAmount,
+      balanceRefundAmount: balanceAmount,
+      wechatRefundAmount: wechatAmount,
+      isFullRefund: true
+    }
+  }
+
+  const totalCents = Math.round(totalAmount * 100)
+  const refundCents = Math.round(refundAmount * 100)
+  const parts = [
+    { key: 'deduction', cents: Math.round(deductionAmount * 100) },
+    { key: 'balance', cents: Math.round(balanceAmount * 100) },
+    { key: 'wechat', cents: Math.round(wechatAmount * 100) }
+  ].map(part => {
+    const exact = refundCents * part.cents / totalCents
+    return {
+      ...part,
+      refundCents: Math.min(part.cents, Math.floor(exact)),
+      remainder: exact - Math.floor(exact)
+    }
+  })
+
+  let remainingCents = refundCents - parts.reduce((sum, part) => sum + part.refundCents, 0)
+  parts
+    .sort((a, b) => b.remainder - a.remainder)
+    .forEach(part => {
+      if (remainingCents > 0 && part.refundCents < part.cents) {
+        part.refundCents++
+        remainingCents--
+      }
+    })
+
+  const refundByKey = Object.fromEntries(parts.map(part => [part.key, part.refundCents / 100]))
+  const deductionRefundAmount = refundByKey.deduction
+  const balanceRefundAmount = refundByKey.balance
+  const wechatRefundAmount = refundByKey.wechat
+  return {
+    refundAmount,
+    deductionRefundAmount,
+    balanceRefundAmount,
+    wechatRefundAmount,
+    isFullRefund: false
+  }
 }
 
 function normalizeOrderDescription(description, fallback = '发布求助') {
@@ -133,7 +245,7 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   // 前端直接调用时 wxContext.OPENID 必存在，优先使用（防伪造）；云函数间调用时为空，回退到 event.openid
   const OPENID = wxContext.OPENID || event.openid
-  const isInternalCall = !wxContext.OPENID && ['refundOrder', 'retryRefund'].includes(action)
+  const isInternalCall = !wxContext.OPENID && ['refundOrder', 'retryRefund', 'recoverPaidPendingOrder'].includes(action)
 
   if (!OPENID && !isInternalCall) {
     return { code: -1, message: '获取用户openid失败' }
@@ -145,14 +257,18 @@ exports.main = async (event, context) => {
         return await createOrder(event, OPENID)
       case 'confirmPayment':
         return await confirmPayment(event, OPENID)
+      case 'recoverPaidPendingOrder':
+        return await recoverPaidPendingOrder(event, OPENID, isInternalCall)
+      case 'cancelPendingOrder':
+        return await cancelPendingOrder(event, OPENID)
       case 'queryOrder':
         return await queryOrder(event, OPENID)
       case 'refundOrder':
         return await refundOrder(event, OPENID)
       case 'retryRefund':
         return await retryRefund(event, OPENID)
-      case 'payByBalance':
-        return await payByBalance(event, OPENID)
+      case 'payByWallet':
+        return await payByWallet(event, OPENID)
       default:
         return { code: -1, message: '未知操作' }
     }
@@ -197,7 +313,7 @@ async function handlePayCallback(event) {
 
 // 创建支付订单
 async function createOrder(event, OPENID) {
-  const { amount: rawAmount, description, metadata } = event
+  const { amount: rawAmount, description, metadata, paymentSelection } = event
 
   const rules = await loadFromDb()
 
@@ -205,8 +321,8 @@ async function createOrder(event, OPENID) {
   if (!amountCheck.valid) {
     return { code: -1, message: amountCheck.message }
   }
-  const amount = amountCheck.amount
-  if (amount < rules.MIN_REWARD_AMOUNT || amount > rules.MAX_REWARD_AMOUNT) {
+  const totalAmount = amountCheck.amount
+  if (totalAmount < rules.MIN_REWARD_AMOUNT || totalAmount > rules.MAX_REWARD_AMOUNT) {
     return { code: -1, message: `支付金额必须在${rules.MIN_REWARD_AMOUNT}-${rules.MAX_REWARD_AMOUNT}元之间` }
   }
   const metadataCheck = validatePublishMetadata(metadata, rules)
@@ -225,50 +341,111 @@ async function createOrder(event, OPENID) {
   if (!userLimit.allowed) {
     return { code: -1, message: userLimit.message }
   }
+  const initialAllocation = calculatePaymentAllocation(user, totalAmount, paymentSelection)
+  if (initialAllocation.uncoveredAmount > 0) {
+    return { code: -1, message: `所选支付方式还差¥${formatAmount(initialAllocation.uncoveredAmount)}` }
+  }
+  if (initialAllocation.wechatAmount <= 0) {
+    return { code: -1, message: '本次无需微信支付，请使用钱包支付发布' }
+  }
 
   // 生成订单号
   const orderId = generateOrderNo()
   const now = new Date()
   const expireTime = new Date(now.getTime() + 30 * 60 * 1000) // 30分钟过期
+  let finalAllocation = initialAllocation
 
   // 创建支付订单记录
-  await db.collection('wdd-payment-orders').add({
-    data: {
-      _id: orderId,
-      user_id: user._id,
-      openid: OPENID,
-      amount: amount,
-      description: orderDescription,
-      status: 'pending', // pending: 待支付, paid: 已支付, cancelled: 已取消, refunded: 已退款
-      metadata: metadataCheck.metadata,
-      create_time: now,
-      expire_time: expireTime,
-      update_time: now,
-      // 真实支付字段（预留）
-      out_trade_no: orderId,
-      transaction_id: null,
-      refund_id: null
+  const transaction = await db.startTransaction()
+  try {
+    const userInTx = await transaction.collection('wdd-users').doc(user._id).get()
+    const allocation = calculatePaymentAllocation(userInTx.data || {}, totalAmount, paymentSelection)
+    if (allocation.uncoveredAmount > 0) {
+      await transaction.rollback()
+      return { code: -1, message: `所选支付方式还差¥${formatAmount(allocation.uncoveredAmount)}` }
     }
-  })
+    if (allocation.wechatAmount <= 0) {
+      await transaction.rollback()
+      return { code: -1, message: '本次无需微信支付，请重新提交' }
+    }
+    finalAllocation = allocation
 
-  let paymentData
-
-  if (MOCK_PAYMENT) {
-    // 模拟支付：返回模拟的支付参数
-    paymentData = generateMockPayment(orderId)
-  } else {
-    // 真实支付：调用微信支付统一下单API
-    const realPayRes = await createRealPayment(orderId, amount, orderDescription, OPENID)
-    paymentData = realPayRes.payment
-    // 记录微信支付交易号（createOrder 不在事务中，直接更新即可）
-    if (realPayRes.transactionId) {
-      await db.collection('wdd-payment-orders').doc(orderId).update({
+    const freezeUpdateData = { update_time: now }
+    if (allocation.deductionAmount > 0) {
+      freezeUpdateData.frozen_deduction_balance = _.inc(allocation.deductionAmount)
+    }
+    if (allocation.balanceAmount > 0) {
+      freezeUpdateData.frozen_balance = _.inc(allocation.balanceAmount)
+    }
+    if (allocation.deductionAmount > 0 || allocation.balanceAmount > 0) {
+      await transaction.collection('wdd-users').doc(user._id).update({
+        data: freezeUpdateData
+      })
+      await transaction.collection('wdd-balance-records').add({
         data: {
-          transaction_id: realPayRes.transactionId,
-          update_time: new Date()
+          user_id: user._id,
+          type: 'freeze',
+          amount: 0,
+          balance: userInTx.data.balance || 0,
+          frozen_balance: roundMoney((userInTx.data.frozen_balance || 0) + allocation.balanceAmount),
+          description: `发布求助冻结余额¥${formatAmount(allocation.balanceAmount)}，平台抵扣金¥${formatAmount(allocation.deductionAmount)}：${orderDescription}`,
+          create_time: now
         }
       })
     }
+
+    await transaction.collection('wdd-payment-orders').add({
+      data: {
+        _id: orderId,
+        user_id: user._id,
+        openid: OPENID,
+        total_amount: allocation.totalAmount,
+        deduction_amount: allocation.deductionAmount,
+        balance_amount: allocation.balanceAmount,
+        wechat_amount: allocation.wechatAmount,
+        payment_methods: allocation.paymentMethods,
+        payment_selection: allocation.selection,
+        description: orderDescription,
+        status: 'pending',
+        metadata: metadataCheck.metadata,
+        create_time: now,
+        expire_time: expireTime,
+        update_time: now,
+        out_trade_no: orderId,
+        transaction_id: null,
+        refund_id: null
+      }
+    })
+
+    await transaction.commit()
+  } catch (err) {
+    await transaction.rollback()
+    throw err
+  }
+
+  let paymentData
+
+  try {
+    if (MOCK_PAYMENT) {
+      // 模拟支付：返回模拟的支付参数
+      paymentData = generateMockPayment(orderId)
+    } else {
+      // 真实支付：调用微信支付统一下单API
+      const realPayRes = await createRealPayment(orderId, finalAllocation.wechatAmount, orderDescription, OPENID)
+      paymentData = realPayRes.payment
+      // 记录微信支付交易号（createOrder 不在事务中，直接更新即可）
+      if (realPayRes.transactionId) {
+        await db.collection('wdd-payment-orders').doc(orderId).update({
+          data: {
+            transaction_id: realPayRes.transactionId,
+            update_time: new Date()
+          }
+        })
+      }
+    }
+  } catch (err) {
+    await releasePendingOrderFunds(orderId, '微信支付下单失败')
+    throw err
   }
 
   return {
@@ -278,8 +455,168 @@ async function createOrder(event, OPENID) {
       orderId: orderId,
       payment: paymentData,
       expireTime: expireTime,
-      amount: amount
+      totalAmount: finalAllocation.totalAmount,
+      deductionAmount: finalAllocation.deductionAmount,
+      balanceAmount: finalAllocation.balanceAmount,
+      wechatAmount: finalAllocation.wechatAmount,
+      paymentMethods: finalAllocation.paymentMethods
     }
+  }
+}
+
+async function releasePendingOrderFunds(orderId, reason) {
+  const transaction = await db.startTransaction()
+
+  try {
+    const orderResTx = await transaction.collection('wdd-payment-orders').doc(orderId).get()
+    const orderInTx = orderResTx.data
+    if (!orderInTx || orderInTx.status !== 'pending') {
+      await transaction.rollback()
+      return false
+    }
+
+    const deductionAmount = roundMoney(orderInTx.deduction_amount || 0)
+    const balanceAmount = roundMoney(orderInTx.balance_amount || 0)
+    if ((deductionAmount > 0 || balanceAmount > 0) && orderInTx.user_id) {
+      await transaction.collection('wdd-users').doc(orderInTx.user_id).get()
+      const userUpdateData = { update_time: new Date() }
+      if (deductionAmount > 0) {
+        userUpdateData.frozen_deduction_balance = _.inc(-deductionAmount)
+      }
+      if (balanceAmount > 0) {
+        userUpdateData.frozen_balance = _.inc(-balanceAmount)
+      }
+      await transaction.collection('wdd-users').doc(orderInTx.user_id).update({
+        data: userUpdateData
+      })
+    }
+
+    await transaction.collection('wdd-payment-orders').doc(orderId).update({
+      data: {
+        status: 'cancelled',
+        cancel_reason: reason || 'pending_order_cancelled',
+        deduction_released_amount: deductionAmount,
+        balance_released_amount: balanceAmount,
+        update_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+    return true
+  } catch (err) {
+    await transaction.rollback()
+    console.error('释放待支付订单冻结资金失败:', err)
+    return false
+  }
+}
+
+async function cancelPendingOrder(event, OPENID) {
+  const { orderId } = event
+  if (!orderId) {
+    return { code: -1, message: '订单ID不能为空' }
+  }
+
+  const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get().catch(() => null)
+  const order = orderRes && orderRes.data
+  if (!order || order.openid !== OPENID) {
+    return { code: -1, message: '订单不存在或无权操作' }
+  }
+  if (order.status !== 'pending') {
+    return { code: 0, message: '订单无需取消' }
+  }
+
+  if (roundMoney(order.wechat_amount || 0) > 0) {
+    const recoverResult = await recoverPaidPendingOrder({ orderId }, OPENID, false)
+    if (recoverResult && recoverResult.code === 0 && recoverResult.paid) {
+      return {
+        code: 0,
+        message: '微信支付已成功，订单已恢复发布',
+        data: recoverResult.data
+      }
+    }
+    if (!recoverResult || recoverResult.code !== 0) {
+      return { code: -1, message: recoverResult?.message || '微信订单状态确认失败，请稍后重试' }
+    }
+  }
+
+  const released = await releasePendingOrderFunds(orderId, '用户取消微信支付')
+  return released
+    ? { code: 0, message: '订单已取消，冻结资金已释放' }
+    : { code: -1, message: '订单取消失败，请稍后重试' }
+}
+
+// 前端确认发布失败或定时任务扫描过期订单时，用它补偿“微信已扣款但订单仍 pending”的中间态。
+async function recoverPaidPendingOrder(event, OPENID, isInternalCall = false) {
+  const { orderId } = event
+  if (!orderId) {
+    return { code: -1, message: '订单ID不能为空' }
+  }
+
+  const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get().catch(() => null)
+  const order = orderRes && orderRes.data
+  if (!order) {
+    return { code: -1, message: '订单不存在' }
+  }
+
+  const callerOpenid = isInternalCall ? (event.openid || order.openid) : OPENID
+  if (order.openid !== callerOpenid) {
+    return { code: -1, message: '订单归属错误' }
+  }
+
+  if (order.status === 'paid' && order.metadata && order.metadata.need_id) {
+    return {
+      code: 0,
+      message: '订单已恢复',
+      recovered: true,
+      paid: true,
+      data: { needId: order.metadata.need_id, orderId }
+    }
+  }
+
+  if (order.status !== 'pending') {
+    return { code: 0, message: '订单无需恢复', recovered: false, paid: false, status: order.status }
+  }
+
+  if (roundMoney(order.wechat_amount || 0) <= 0) {
+    return { code: 0, message: '订单不含微信支付，无需恢复', recovered: false, paid: false }
+  }
+
+  const verifyRes = MOCK_PAYMENT
+    ? { success: true, transactionId: order.transaction_id || null }
+    : await verifyRealPayment(order)
+
+  if (!verifyRes.success) {
+    const message = verifyRes.message || '微信侧尚未确认付款'
+    if (message.includes('微信支付确认失败') || message.includes('真实支付尚未配置') || message.includes('微信订单查询失败')) {
+      return {
+        code: -1,
+        message,
+        recovered: false,
+        paid: false
+      }
+    }
+    return {
+      code: 0,
+      message,
+      recovered: false,
+      paid: false
+    }
+  }
+
+  if (verifyRes.transactionId && !order.transaction_id) {
+    await db.collection('wdd-payment-orders').doc(orderId).update({
+      data: {
+        transaction_id: verifyRes.transactionId,
+        update_time: new Date()
+      }
+    })
+  }
+
+  const confirmResult = await confirmPayment({ orderId }, order.openid)
+  return {
+    ...confirmResult,
+    recovered: confirmResult.code === 0,
+    paid: true
   }
 }
 
@@ -340,9 +677,29 @@ async function confirmPayment(event, OPENID) {
       await transaction.rollback()
       return { code: -1, message: '订单状态异常，无法确认支付' }
     }
-    if (new Date() > orderInTx.expire_time) {
+    if (new Date() > orderInTx.expire_time && roundMoney(orderInTx.wechat_amount || 0) <= 0) {
+      const deductionAmount = roundMoney(orderInTx.deduction_amount || 0)
+      const balanceAmount = roundMoney(orderInTx.balance_amount || 0)
+      if (deductionAmount > 0 || balanceAmount > 0) {
+        await transaction.collection('wdd-users').doc(orderInTx.user_id).get()
+        const userUpdateData = { update_time: new Date() }
+        if (deductionAmount > 0) {
+          userUpdateData.frozen_deduction_balance = _.inc(-deductionAmount)
+        }
+        if (balanceAmount > 0) {
+          userUpdateData.frozen_balance = _.inc(-balanceAmount)
+        }
+        await transaction.collection('wdd-users').doc(orderInTx.user_id).update({
+          data: userUpdateData
+        })
+      }
       await transaction.collection('wdd-payment-orders').doc(orderId).update({
-        data: { status: 'cancelled', update_time: new Date() }
+        data: {
+          status: 'cancelled',
+          deduction_released_amount: deductionAmount,
+          balance_released_amount: balanceAmount,
+          update_time: new Date()
+        }
       })
       await transaction.commit()
       return { code: -1, message: '订单已过期，请重新创建' }
@@ -382,11 +739,15 @@ async function confirmPayment(event, OPENID) {
         description: metadata.description || '',
         images: metadata.images || [],
         points: 0, // 积分字段保留但设为0
-        reward_amount: orderInTx.amount, // 悬赏金额（元）
+        reward_amount: orderInTx.total_amount,
+        total_amount: orderInTx.total_amount,
+        deduction_amount: orderInTx.deduction_amount || 0,
+        balance_amount: orderInTx.balance_amount || 0,
+        wechat_amount: orderInTx.wechat_amount || 0,
+        payment_methods: orderInTx.payment_methods || [],
         platform_fee: 0, // 完成后计算
         taker_income: 0, // 完成后计算
         status: 'pending',
-        payment_method: 'wechat',
         payment_status: 'paid',
         payment_order_id: orderId,
         expire_time: expireTime,
@@ -409,7 +770,7 @@ async function confirmPayment(event, OPENID) {
     // 5. 更新用户累计支付金额
     await transaction.collection('wdd-users').doc(user._id).update({
       data: {
-        total_paid: _.inc(orderInTx.amount),
+        total_paid: _.inc(orderInTx.wechat_amount || 0),
         update_time: new Date()
       }
     })
@@ -420,7 +781,7 @@ async function confirmPayment(event, OPENID) {
         user_id: user._id,
         type: 'system',
         title: '求助发布成功',
-        content: `您发布的求助任务已上线，悬赏金额¥${orderInTx.amount}，正在为您匹配附近帮助者...`,
+        content: `您发布的求助任务已上线，悬赏金额¥${orderInTx.total_amount}，正在为您匹配附近帮助者...`,
         need_id: needRes._id,
         is_read: false,
         create_time: new Date()
@@ -436,7 +797,11 @@ async function confirmPayment(event, OPENID) {
         needId: needRes._id,
         taskNo: taskNo,
         orderId: orderId,
-        amount: orderInTx.amount
+        totalAmount: orderInTx.total_amount,
+        deductionAmount: orderInTx.deduction_amount || 0,
+        balanceAmount: orderInTx.balance_amount || 0,
+        wechatAmount: orderInTx.wechat_amount || 0,
+        paymentMethods: orderInTx.payment_methods || []
       }
     }
 
@@ -447,24 +812,24 @@ async function confirmPayment(event, OPENID) {
   }
 }
 
-// 余额支付：一步完成冻结余额 + 创建订单 + 创建任务
-async function payByBalance(event, OPENID) {
-  const { amount: rawAmount, description, metadata } = event
+// 无微信补差时，冻结所选钱包资金并直接创建任务
+async function payByWallet(event, OPENID) {
+  const { amount: rawAmount, description, metadata, paymentSelection } = event
 
   const amountCheck = normalizeMoneyAmount(rawAmount)
   if (!amountCheck.valid) {
     return { code: -1, message: amountCheck.message }
   }
-  const amount = amountCheck.amount
+  const totalAmount = amountCheck.amount
 
   const rules = await loadFromDb()
   const minAmount = rules.MIN_REWARD_AMOUNT ?? 1
   const maxAmount = rules.MAX_REWARD_AMOUNT || 500
 
-  if (amount < minAmount) {
+  if (totalAmount < minAmount) {
     return { code: -1, message: `悬赏金额最低¥${minAmount}` }
   }
-  if (amount > maxAmount) {
+  if (totalAmount > maxAmount) {
     return { code: -1, message: `悬赏金额最高¥${maxAmount}` }
   }
   const metadataCheck = validatePublishMetadata(metadata, rules)
@@ -484,10 +849,15 @@ async function payByBalance(event, OPENID) {
   if (!userLimit.allowed) {
     return { code: -1, message: userLimit.message }
   }
-  const availableBalance = (user.balance || 0) - (user.frozen_balance || 0)
-
-  if (availableBalance < amount) {
-    return { code: -1, message: `可用余额不足（当前可用 ¥${formatAmount(availableBalance)}）` }
+  const initialAllocation = calculatePaymentAllocation(user, totalAmount, paymentSelection)
+  if (initialAllocation.wechatAmount > 0) {
+    return { code: -1, message: '本次包含微信支付，请创建微信支付订单' }
+  }
+  if (initialAllocation.uncoveredAmount > 0) {
+    return { code: -1, message: `所选支付方式还差¥${formatAmount(initialAllocation.uncoveredAmount)}` }
+  }
+  if (initialAllocation.paymentMethods.length === 0) {
+    return { code: -1, message: '请至少选择一种支付方式' }
   }
 
   const loc = safeMetadata.location
@@ -503,20 +873,20 @@ async function payByBalance(event, OPENID) {
     const userInTx = await transaction.collection('wdd-users').doc(user._id).get()
     const currentBalance = userInTx.data.balance || 0
     const currentFrozen = userInTx.data.frozen_balance || 0
-    const currentAvailable = currentBalance - currentFrozen
-
-    if (currentAvailable < amount) {
+    const allocation = calculatePaymentAllocation(userInTx.data || {}, totalAmount, paymentSelection)
+    if (allocation.wechatAmount > 0 || allocation.uncoveredAmount > 0) {
       await transaction.rollback()
-      return { code: -1, message: '可用余额不足' }
+      return { code: -1, message: `钱包资金发生变化，请重新确认支付方式` }
     }
 
-    // 冻结余额：只增加 frozen_balance，balance 不动
-    await transaction.collection('wdd-users').doc(user._id).update({
-      data: {
-        frozen_balance: _.inc(amount),
-        update_time: new Date()
-      }
-    })
+    const freezeUpdateData = { update_time: new Date() }
+    if (allocation.balanceAmount > 0) {
+      freezeUpdateData.frozen_balance = _.inc(allocation.balanceAmount)
+    }
+    if (allocation.deductionAmount > 0) {
+      freezeUpdateData.frozen_deduction_balance = _.inc(allocation.deductionAmount)
+    }
+    await transaction.collection('wdd-users').doc(user._id).update({ data: freezeUpdateData })
 
     // 写入冻结流水
     await transaction.collection('wdd-balance-records').add({
@@ -525,8 +895,8 @@ async function payByBalance(event, OPENID) {
         type: 'freeze',
         amount: 0,
         balance: currentBalance,
-        frozen_balance: currentFrozen + amount,
-        description: `余额支付冻结 ¥${formatAmount(amount)}：${orderDescription}`,
+        frozen_balance: currentFrozen + allocation.balanceAmount,
+        description: `发布求助冻结余额¥${formatAmount(allocation.balanceAmount)}，平台抵扣金¥${formatAmount(allocation.deductionAmount)}：${orderDescription}`,
         create_time: new Date()
       }
     })
@@ -537,10 +907,14 @@ async function payByBalance(event, OPENID) {
         _id: orderId,
         user_id: user._id,
         openid: OPENID,
-        amount: amount,
+        total_amount: allocation.totalAmount,
+        deduction_amount: allocation.deductionAmount,
+        balance_amount: allocation.balanceAmount,
+        wechat_amount: 0,
+        payment_methods: allocation.paymentMethods,
+        payment_selection: allocation.selection,
         description: orderDescription,
         status: 'paid',
-        payment_method: 'balance',
         metadata: {
           ...safeMetadata,
           need_id: null
@@ -548,7 +922,10 @@ async function payByBalance(event, OPENID) {
         out_trade_no: orderId,
         transaction_id: null,
         refund_id: null,
-        refund_amount: null,
+        total_refund_amount: null,
+        deduction_refund_amount: null,
+        balance_refund_amount: null,
+        wechat_refund_amount: null,
         refund_attempts: 0,
         next_retry_time: null,
         last_refund_error: null,
@@ -576,12 +953,16 @@ async function payByBalance(event, OPENID) {
         description: safeMetadata.description,
         images: safeMetadata.images,
         points: 0,
-        reward_amount: amount,
+        reward_amount: allocation.totalAmount,
+        total_amount: allocation.totalAmount,
+        deduction_amount: allocation.deductionAmount,
+        balance_amount: allocation.balanceAmount,
+        wechat_amount: 0,
+        payment_methods: allocation.paymentMethods,
         platform_fee: 0,
         taker_income: 0,
         status: 'pending',
         payment_status: 'paid',
-        payment_method: 'balance',
         payment_order_id: orderId,
         expire_time: expireTime,
         create_time: new Date(),
@@ -604,7 +985,7 @@ async function payByBalance(event, OPENID) {
         user_id: user._id,
         type: 'system',
         title: '求助发布成功',
-        content: `您发布的求助任务已上线，悬赏金额¥${amount}（余额支付），正在为您匹配附近帮助者...`,
+        content: `您发布的求助任务已上线，悬赏金额¥${allocation.totalAmount}，正在为您匹配附近帮助者...`,
         need_id: needRes._id,
         is_read: false,
         create_time: new Date()
@@ -620,12 +1001,16 @@ async function payByBalance(event, OPENID) {
         needId: needRes._id,
         taskNo: taskNo,
         orderId: orderId,
-        amount: amount
+        totalAmount: allocation.totalAmount,
+        deductionAmount: allocation.deductionAmount,
+        balanceAmount: allocation.balanceAmount,
+        wechatAmount: 0,
+        paymentMethods: allocation.paymentMethods
       }
     }
   } catch (err) {
     await transaction.rollback()
-    console.error('余额支付事务失败:', err)
+    console.error('钱包支付事务失败:', err)
     return { code: -1, message: '支付处理失败: ' + err.message }
   }
 }
@@ -650,7 +1035,11 @@ async function queryOrder(event, OPENID) {
     data: {
       orderId: order._id,
       status: order.status,
-      amount: order.amount,
+      totalAmount: order.total_amount,
+      deductionAmount: order.deduction_amount || 0,
+      balanceAmount: order.balance_amount || 0,
+      wechatAmount: order.wechat_amount || 0,
+      paymentMethods: order.payment_methods || [],
       createTime: order.create_time,
       payTime: order.pay_time,
       needId: order.metadata?.need_id
@@ -731,10 +1120,8 @@ async function retryRefund(event, OPENID) {
   return await executeRefund(order)
 }
 
-// 余额支付退款：直接解冻退回余额（无需调用微信 API）
-async function refundByBalance(order, options = {}) {
+async function prepareRefundAttempt(order, refundPlan) {
   const transaction = await db.startTransaction()
-
   try {
     const orderResTx = await transaction.collection('wdd-payment-orders').doc(order._id).get()
     const orderInTx = orderResTx.data
@@ -743,146 +1130,106 @@ async function refundByBalance(order, options = {}) {
       return { code: -1, message: '订单不存在', status: 'failed' }
     }
 
-    // 幂等：已退款则直接返回成功
     if (orderInTx.status === 'refunded') {
       await transaction.rollback()
       return {
         code: 0,
+        done: true,
         message: '订单已退款',
         status: 'refunded',
-        data: { orderId: order._id, refundAmount: orderInTx.refund_amount || orderInTx.amount }
+        data: { orderId: order._id, refundAmount: orderInTx.total_refund_amount || orderInTx.total_amount }
       }
     }
 
-    // 只允许从 paid 状态发起退款（余额支付不存在 refund_pending）
-    if (orderInTx.status !== 'paid') {
+    if (!['paid', 'refund_pending', 'refund_processing'].includes(orderInTx.status)) {
       await transaction.rollback()
       return { code: -1, message: '订单状态不允许退款', status: 'failed' }
     }
 
-    const requestedRefundAmount = Number(options.refundAmount || orderInTx.refund_amount || orderInTx.amount)
-    if (!Number.isFinite(requestedRefundAmount) || requestedRefundAmount <= 0) {
-      await transaction.rollback()
-      return { code: -1, message: '退款金额必须大于0', status: 'failed' }
-    }
-    if (requestedRefundAmount > orderInTx.amount) {
-      await transaction.rollback()
-      return { code: -1, message: '退款金额不能超过订单金额', status: 'failed' }
-    }
-    const refundAmount = Math.round(requestedRefundAmount * 100) / 100
-    const isFullRefund = Math.round(refundAmount * 100) >= Math.round(orderInTx.amount * 100)
-    const refundReason = options.refundReason || orderInTx.refund_reason || '任务取消'
-
-    // 获取用户信息
-    const userRes = await transaction.collection('wdd-users').where({
-      openid: orderInTx.openid
-    }).get()
-    if (userRes.data.length === 0) {
-      await transaction.rollback()
-      return { code: -1, message: '用户不存在', status: 'failed' }
-    }
-    const user = userRes.data[0]
-    const currentFrozen = user.frozen_balance || 0
-    if (currentFrozen < refundAmount) {
-      await transaction.rollback()
-      return { code: -1, message: '冻结金额不足，无法退款', status: 'failed' }
-    }
-
-    // 解冻退回（balance 在支付时未扣，无需恢复）
-    await transaction.collection('wdd-users').doc(user._id).update({
-      data: {
-        frozen_balance: _.inc(-refundAmount),
-        update_time: new Date()
-      }
-    })
-
-    // 写入退款流水
-    const latestUser = await transaction.collection('wdd-users').doc(user._id).get()
-    await transaction.collection('wdd-balance-records').add({
-      data: {
-        user_id: user._id,
-        type: 'refund',
-        amount: refundAmount,
-        balance: latestUser.data.balance || 0,
-        frozen_balance: latestUser.data.frozen_balance || 0,
-        description: isFullRefund ? '任务取消，余额退回' : '任务部分退款，余额解冻',
-        create_time: new Date()
-      }
-    })
-
-    // 更新订单状态
     await transaction.collection('wdd-payment-orders').doc(order._id).update({
       data: {
-        status: isFullRefund ? 'refunded' : 'partially_refunded',
-        refund_time: new Date(),
-        refund_amount: refundAmount,
-        refund_reason: refundReason,
+        status: 'refund_pending',
+        total_refund_amount: refundPlan.refundAmount,
+        deduction_refund_amount: refundPlan.deductionRefundAmount,
+        balance_refund_amount: refundPlan.balanceRefundAmount,
+        wechat_refund_amount: refundPlan.wechatRefundAmount,
+        refund_reason: refundPlan.refundReason,
+        next_retry_time: null,
         update_time: new Date()
       }
     })
 
     await transaction.commit()
-
     return {
       code: 0,
-      message: '退款成功',
-      status: isFullRefund ? 'refunded' : 'partially_refunded',
-      data: {
-        orderId: order._id,
-        refundAmount: refundAmount
+      order: {
+        ...orderInTx,
+        status: 'refund_pending',
+        total_refund_amount: refundPlan.refundAmount,
+        deduction_refund_amount: refundPlan.deductionRefundAmount,
+        balance_refund_amount: refundPlan.balanceRefundAmount,
+        wechat_refund_amount: refundPlan.wechatRefundAmount,
+        refund_reason: refundPlan.refundReason
       }
     }
   } catch (err) {
     await transaction.rollback()
-    console.error('余额退款事务失败:', err)
-    return { code: -1, message: '退款失败: ' + err.message, status: 'failed' }
+    console.error('准备退款状态失败:', err)
+    return { code: -1, message: '准备退款失败: ' + err.message, status: 'failed' }
   }
 }
 
-// 退款核心逻辑（refundOrder 和 retryRefund 共用）
-// 行为：
-//   - 余额支付订单 → 直接解冻退回余额
-//   - 微信支付订单 → 调用微信退款 API
-//   - 微信退款 API 成功 → 订单转 refunded / partially_refunded，扣减 total_paid
-//   - 微信退款 API 失败 → 订单转 refund_pending，记录失败次数和下次重试时间（不报错给上游）
-//   - refund_attempts 达到 MAX_REFUND_ATTEMPTS → 转 refund_failed，需人工介入
+// 退款核心逻辑：按订单三项支付明细拆分，钱包资金结算与微信退款在同一结果中落账。
 async function executeRefund(order, options = {}) {
-  const requestedRefundAmount = Number(options.refundAmount || order.refund_amount || order.amount)
+  const maxRefundAmount = roundMoney(order.total_amount || 0)
+  const requestedRefundAmount = Number(options.refundAmount || order.total_refund_amount || maxRefundAmount)
   if (!Number.isFinite(requestedRefundAmount) || requestedRefundAmount <= 0) {
     return { code: -1, message: '退款金额必须大于0', status: 'failed' }
   }
-  if (requestedRefundAmount > order.amount) {
+  if (requestedRefundAmount > maxRefundAmount) {
     return { code: -1, message: '退款金额不能超过订单金额', status: 'failed' }
   }
-  const refundAmount = Math.round(requestedRefundAmount * 100) / 100
+  const {
+    refundAmount,
+    deductionRefundAmount,
+    balanceRefundAmount,
+    wechatRefundAmount,
+    isFullRefund
+  } = splitRefundAmounts(order, requestedRefundAmount)
   const refundReason = options.refundReason || order.refund_reason || '任务取消'
 
-  // 余额支付：直接解冻退回，不走微信退款 API
-  if (order.payment_method === 'balance') {
-    return await refundByBalance(order, { refundAmount, refundReason })
-  }
-
   const MAX_REFUND_ATTEMPTS = 5
-  // 指数退避：第1/2/3/4/5次失败后，分别 5/10/20/40/80 分钟后重试
   const BACKOFF_MINUTES = [5, 10, 20, 40, 80]
+
+  const refundPlan = {
+    refundAmount,
+    deductionRefundAmount,
+    balanceRefundAmount,
+    wechatRefundAmount,
+    refundReason
+  }
+  const prepared = await prepareRefundAttempt(order, refundPlan)
+  if (prepared.done || prepared.code !== 0) {
+    return prepared
+  }
+  const refundOrderData = prepared.order
 
   let refundResult = null
   let refundError = null
 
-  // 1. 调用微信退款 API（在事务外，只调 API 不操作数据库）
-  if (!MOCK_PAYMENT) {
-    if (!order.out_trade_no) {
+  // 微信部分先原路退款；失败时保持钱包冻结，等待整体重试。
+  if (!MOCK_PAYMENT && wechatRefundAmount > 0) {
+    if (!refundOrderData.out_trade_no) {
       return { code: -1, message: '订单缺少支付单号，无法退款', status: 'failed' }
     }
     try {
-      refundResult = await createRealRefund(order, refundAmount)
+      refundResult = await createRealRefund(refundOrderData, wechatRefundAmount)
     } catch (err) {
       refundError = err
       console.error('微信退款失败:', err)
     }
   }
 
-  // 2. 开启事务更新订单状态
   const transaction = await db.startTransaction()
 
   try {
@@ -900,12 +1247,12 @@ async function executeRefund(order, options = {}) {
         code: 0,
         message: '订单已退款',
         status: 'refunded',
-        data: { orderId: order._id, refundAmount: orderInTx.refund_amount || orderInTx.amount }
+        data: { orderId: order._id, refundAmount: orderInTx.total_refund_amount || orderInTx.total_amount }
       }
     }
 
     // 只允许从 paid / refund_pending 状态发起退款
-    if (orderInTx.status !== 'paid' && orderInTx.status !== 'refund_pending') {
+    if (orderInTx.status !== 'paid' && orderInTx.status !== 'refund_pending' && orderInTx.status !== 'refund_processing') {
       await transaction.rollback()
       return { code: -1, message: '订单状态不允许退款', status: 'failed' }
     }
@@ -920,7 +1267,10 @@ async function executeRefund(order, options = {}) {
         await transaction.collection('wdd-payment-orders').doc(order._id).update({
           data: {
             status: 'refund_failed',
-            refund_amount: refundAmount,
+            total_refund_amount: refundAmount,
+            deduction_refund_amount: deductionRefundAmount,
+            balance_refund_amount: balanceRefundAmount,
+            wechat_refund_amount: wechatRefundAmount,
             refund_reason: refundReason,
             refund_attempts: attempts,
             last_refund_error: errMsg,
@@ -943,7 +1293,10 @@ async function executeRefund(order, options = {}) {
       await transaction.collection('wdd-payment-orders').doc(order._id).update({
         data: {
           status: 'refund_pending',
-          refund_amount: refundAmount,
+          total_refund_amount: refundAmount,
+          deduction_refund_amount: deductionRefundAmount,
+          balance_refund_amount: balanceRefundAmount,
+          wechat_refund_amount: wechatRefundAmount,
           refund_reason: refundReason,
           refund_attempts: attempts,
           last_refund_error: errMsg,
@@ -960,33 +1313,70 @@ async function executeRefund(order, options = {}) {
       }
     }
 
-    // 退款成功（或 mock 模式）：全额退款转 refunded，部分退款转 partially_refunded
-    const isFullRefund = Math.round(refundAmount * 100) >= Math.round(orderInTx.amount * 100)
+    const spentBalanceAmount = roundMoney((orderInTx.balance_amount || 0) - balanceRefundAmount)
+    const spentDeductionAmount = roundMoney((orderInTx.deduction_amount || 0) - deductionRefundAmount)
     const orderUpdateData = {
       status: isFullRefund ? 'refunded' : 'partially_refunded',
       refund_time: new Date(),
-      refund_amount: refundAmount,
+      total_refund_amount: refundAmount,
+      deduction_refund_amount: deductionRefundAmount,
+      balance_refund_amount: balanceRefundAmount,
+      wechat_refund_amount: wechatRefundAmount,
       refund_reason: refundReason,
       update_time: new Date()
     }
     if (refundResult && refundResult.refundId) {
       orderUpdateData.refund_id = refundResult.refundId
     }
+    if (refundResult && refundResult.outRefundNo) {
+      orderUpdateData.out_refund_no = refundResult.outRefundNo
+    }
 
     await transaction.collection('wdd-payment-orders').doc(order._id).update({
       data: orderUpdateData
     })
 
-    // 扣减用户累计支付金额（只在最终成功时扣，避免 pending 状态重复扣）
     const userRes = await transaction.collection('wdd-users').where({
       openid: orderInTx.openid
     }).get()
+    const hasWalletFunds = (orderInTx.balance_amount || 0) > 0 || (orderInTx.deduction_amount || 0) > 0
+    if (hasWalletFunds && userRes.data.length === 0) {
+      await transaction.rollback()
+      return { code: -1, message: '用户钱包不存在，无法完成退款', status: 'failed' }
+    }
     if (userRes.data.length > 0) {
       const user = userRes.data[0]
-      await transaction.collection('wdd-users').doc(user._id).update({
+      if ((user.frozen_balance || 0) < (orderInTx.balance_amount || 0)) {
+        await transaction.rollback()
+        return { code: -1, message: '冻结余额不足，无法完成退款', status: 'failed' }
+      }
+      if ((user.frozen_deduction_balance || 0) < (orderInTx.deduction_amount || 0)) {
+        await transaction.rollback()
+        return { code: -1, message: '冻结平台抵扣金不足，无法完成退款', status: 'failed' }
+      }
+      const userUpdateData = {
+        total_paid: _.inc(spentBalanceAmount - wechatRefundAmount),
+        update_time: new Date()
+      }
+      if ((orderInTx.balance_amount || 0) > 0) {
+        userUpdateData.balance = _.inc(-spentBalanceAmount)
+        userUpdateData.frozen_balance = _.inc(-orderInTx.balance_amount)
+      }
+      if ((orderInTx.deduction_amount || 0) > 0) {
+        userUpdateData.deduction_balance = _.inc(-spentDeductionAmount)
+        userUpdateData.frozen_deduction_balance = _.inc(-orderInTx.deduction_amount)
+      }
+      await transaction.collection('wdd-users').doc(user._id).update({ data: userUpdateData })
+
+      await transaction.collection('wdd-balance-records').add({
         data: {
-          total_paid: _.inc(-refundAmount),
-          update_time: new Date()
+          user_id: user._id,
+          type: 'refund',
+          amount: balanceRefundAmount,
+          balance: roundMoney((user.balance || 0) - spentBalanceAmount),
+          frozen_balance: roundMoney((user.frozen_balance || 0) - (orderInTx.balance_amount || 0)),
+          description: isFullRefund ? '任务取消，所选支付资金已退回' : '任务部分完成，未消费资金已退回',
+          create_time: new Date()
         }
       })
     }
@@ -999,7 +1389,10 @@ async function executeRefund(order, options = {}) {
       status: orderUpdateData.status,
       data: {
         orderId: order._id,
-        refundAmount: refundAmount
+        refundAmount: refundAmount,
+        deductionRefundAmount,
+        balanceRefundAmount,
+        wechatRefundAmount
       }
     }
 
@@ -1135,7 +1528,7 @@ async function verifyRealPayment(order) {
       return { success: false, message: `微信支付状态为 ${tradeState}` }
     }
 
-    if (totalFee != null && Number(totalFee) !== Math.round(order.amount * 100)) {
+    if (totalFee != null && Number(totalFee) !== Math.round((order.wechat_amount || 0) * 100)) {
       return { success: false, message: '微信支付金额与订单金额不一致' }
     }
 
@@ -1171,7 +1564,7 @@ async function createRealRefund(order, refundAmount) {
   }
 
   const refundFee = Math.round(refundAmount * 100)
-  const totalFee = Math.round(order.amount * 100)
+  const totalFee = Math.round((order.wechat_amount || 0) * 100)
   const refundNo = refundFee === totalFee
     ? 'RF' + order.out_trade_no
     : 'RF' + order.out_trade_no + 'P' + refundFee
@@ -1192,7 +1585,8 @@ async function createRealRefund(order, refundAmount) {
 
     // 只返回退款结果，数据库统一在事务中更新
     return {
-      refundId: res.refundId || null
+      refundId: res.refundId || null,
+      outRefundNo: refundNo
     }
   } catch (err) {
     console.error('真实退款失败:', err)

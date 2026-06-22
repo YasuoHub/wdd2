@@ -17,7 +17,7 @@
       <text class="amount-number">{{money.format(balance)}}</text>
     </view>
     <!-- 冻结金额提示 -->
-    <view wx:if="{{frozenBalance > 0}}" class="frozen-info">
+    <view class="frozen-info">
       <view class="frozen-row">
         <text class="frozen-label">冻结金额</text>
         <view class="frozen-value"><text class="money-text">{{money.format(frozenBalance)}}</text></view>
@@ -34,6 +34,26 @@
       </button>
     </view>
     <text wx:if="{{!canWithdraw && withdrawTip}}" class="withdraw-tip">{{withdrawTip}}</text>
+  </view>
+
+  <!-- 抵扣金卡片：与可提现余额分开展示，避免误解为可提现资产 -->
+  <view class="deduction-card">
+    <view class="deduction-main">
+      <view class="deduction-icon">
+        <wdd-icon name="ticket" color="#119B72" size="34"></wdd-icon>
+      </view>
+      <view class="deduction-copy">
+        <text class="deduction-title">平台抵扣金</text>
+        <text class="deduction-desc">仅用于发布求助抵扣悬赏，不能提现</text>
+      </view>
+      <view class="deduction-amount">
+        <text class="money-text">{{money.format(availableDeductionBalance)}}</text>
+      </view>
+    </view>
+    <view wx:if="{{frozenDeductionBalance > 0}}" class="deduction-frozen-row">
+      <text>冻结抵扣金</text>
+      <text class="money-text">{{money.format(frozenDeductionBalance)}}</text>
+    </view>
   </view>
 
   <!-- 统计卡片 -->
@@ -151,7 +171,7 @@
         <view class="record-content">
           <view class="record-main-row">
             <text class="record-title">{{item.title}}</text>
-            <view class="record-amount {{item.type}}"><text class="money-prefix">{{item.amountPrefix}}</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{item.displayAmountAbs}}</text></view>
+            <view class="record-amount {{item.type}}"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{item.amountPrefix}}{{item.displayAmountAbs}}</text></view>
           </view>
           <view class="record-sub-row">
             <text class="record-time">{{item.time}}</text>
@@ -244,7 +264,7 @@
         <wdd-icon name="wallet-cards" color="var(--brand-primary)" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">单次限额</text>
-          <view class="rule-desc rule-desc-money"><text>受微信转账通道限制，单笔最低</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text><text>，最高</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text><text>。</text></view>
+          <view class="rule-desc rule-desc-money"><text>受微信转账通道限制，单笔最低</text><view class="money-segment"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMinPerRequest)}}</text></view><text>，最高</text><view class="money-segment"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawMaxPerRequest)}}</text></view><text>。</text></view>
         </view>
       </view>
       <!--
@@ -270,7 +290,7 @@
         <wdd-icon name="calendar-days" color="#7B8794" size="40"></wdd-icon>
         <view class="rule-content">
           <text class="rule-title">每日限制</text>
-          <view class="rule-desc rule-desc-money"><text>单日提现上限</text><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，每日最多 {{withdrawDailyTimes}} 次；达到上限后请明天再试。</text></view>
+          <view class="rule-desc rule-desc-money"><text>单日提现上限</text><view class="money-segment"><wdd-icon name="coins" color="var(--money-gold)" size="26"></wdd-icon><text class="money-text">{{money.format(withdrawDailyLimit)}}</text><text>，</text></view><text>每日最多 {{withdrawDailyTimes}} 次。</text></view>
         </view>
       </view>
     </view>

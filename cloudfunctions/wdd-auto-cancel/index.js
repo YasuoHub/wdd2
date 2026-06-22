@@ -18,6 +18,10 @@ function formatAmount(n) {
   return num.toFixed(2)
 }
 
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
 exports.main = async (event, context) => {
   console.log('开始执行自动取消任务检查:', new Date().toISOString())
 
@@ -25,12 +29,14 @@ exports.main = async (event, context) => {
   const results = {
     cancelledNeeds: 0,
     refundedAmount: 0,
+    recoveredPaidOrders: 0,
     retriedRefunds: 0,
     retriedPending: 0,
     refundFallbackQueued: 0,
     retriedTransfers: 0,
     queriedTransfers: 0,
     expiredApps: 0,
+    expiredOrders: 0,
     errors: []
   }
 
@@ -70,7 +76,28 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 2. 扫描待重试退款订单
+    // 2. 释放过期未支付订单占用的余额和平台抵扣金
+    const expiredOrderRes = await db.collection('wdd-payment-orders')
+      .where({
+        status: 'pending',
+        expire_time: _.lt(now)
+      })
+      .get()
+
+    console.log(`找到 ${expiredOrderRes.data.length} 个过期未支付订单`)
+
+    for (const order of expiredOrderRes.data) {
+      try {
+        const handled = await handleExpiredPaymentOrder(order)
+        if (handled.recovered) results.recoveredPaidOrders++
+        if (handled.released) results.expiredOrders++
+      } catch (err) {
+        console.error(`释放过期订单失败 ${order._id}:`, err)
+        results.errors.push({ orderId: order._id, error: err.message })
+      }
+    }
+
+    // 3. 扫描待重试退款订单
     const pendingRefundRes = await db.collection('wdd-payment-orders')
       .where({
         status: 'refund_pending',
@@ -105,7 +132,7 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 3. 处理 ongoing 任务超时（自动完成兜底）
+    // 4. 处理 ongoing 任务超时（自动完成兜底）
     const ongoingResults = await handleOngoingTimeouts(now)
     results.ongoingUrged = ongoingResults.urged
     results.ongoingAutoCompleted = ongoingResults.autoCompleted
@@ -117,7 +144,7 @@ exports.main = async (event, context) => {
       })))
     }
 
-    // 4. 扫描待重试的提现（新版商家转账失败重试中）
+    // 5. 扫描待重试的提现（新版商家转账失败重试中）
     const pendingTransferRes = await db.collection('wdd-withdraws')
       .where({
         status: 'transfer_pending',
@@ -149,7 +176,7 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 4. 扫描 processing 长时间未回调的提现（兜底查询）
+    // 6. 扫描 processing 长时间未回调的提现（兜底查询）
     // 注：与 wdd-withdraw/platformRules.js 中 TRANSFER_QUERY_TIMEOUT_MINUTES 保持一致
     const queryTimeoutMin = 1
     const queryThreshold = new Date(now.getTime() - queryTimeoutMin * 60 * 1000)
@@ -191,7 +218,7 @@ exports.main = async (event, context) => {
 
     console.log('自动取消任务检查完成:', results)
 
-    // 5. 扫描已过期未提现的审批申请
+    // 7. 扫描已过期未提现的审批申请
     const expiredAppsRes = await db.collection('wdd-withdraw-applications')
       .where({
         status: 'approved',
@@ -243,6 +270,79 @@ exports.main = async (event, context) => {
   }
 }
 
+async function handleExpiredPaymentOrder(order) {
+  if (roundMoney(order.wechat_amount || 0) > 0 && order.openid) {
+    const { result } = await cloud.callFunction({
+      name: 'wdd-payment',
+      data: {
+        action: 'recoverPaidPendingOrder',
+        orderId: order._id,
+        openid: order.openid
+      }
+    })
+
+    if (result && result.code === 0 && result.paid) {
+      return { recovered: !!result.recovered, released: false }
+    }
+
+    if (!result || result.code !== 0) {
+      throw new Error(result && result.message ? result.message : '微信订单状态确认失败')
+    }
+
+    console.log('过期微信订单未发现成功支付，准备释放冻结资金:', {
+      orderId: order._id,
+      message: result && result.message
+    })
+  }
+
+  const released = await cancelExpiredPaymentOrder(order)
+  return { recovered: false, released }
+}
+
+async function cancelExpiredPaymentOrder(order) {
+  const transaction = await db.startTransaction()
+
+  try {
+    const orderResTx = await transaction.collection('wdd-payment-orders').doc(order._id).get()
+    const orderInTx = orderResTx.data
+    if (!orderInTx || orderInTx.status !== 'pending') {
+      await transaction.rollback()
+      return false
+    }
+
+    const deductionAmount = roundMoney(orderInTx.deduction_amount || 0)
+    const balanceAmount = roundMoney(orderInTx.balance_amount || 0)
+    if ((deductionAmount > 0 || balanceAmount > 0) && orderInTx.user_id) {
+      await transaction.collection('wdd-users').doc(orderInTx.user_id).get()
+      const userUpdateData = { update_time: new Date() }
+      if (deductionAmount > 0) {
+        userUpdateData.frozen_deduction_balance = _.inc(-deductionAmount)
+      }
+      if (balanceAmount > 0) {
+        userUpdateData.frozen_balance = _.inc(-balanceAmount)
+      }
+      await transaction.collection('wdd-users').doc(orderInTx.user_id).update({
+        data: userUpdateData
+      })
+    }
+
+    await transaction.collection('wdd-payment-orders').doc(order._id).update({
+      data: {
+        status: 'cancelled',
+        deduction_released_amount: deductionAmount,
+        balance_released_amount: balanceAmount,
+        update_time: new Date()
+      }
+    })
+
+    await transaction.commit()
+    return true
+  } catch (err) {
+    await transaction.rollback()
+    throw err
+  }
+}
+
 // 取消待匹配任务
 async function cancelPendingNeed(need) {
   const transaction = await db.startTransaction()
@@ -276,7 +376,7 @@ async function cancelPendingNeed(need) {
         user_id: need.user_id,
         type: 'task_cancelled',
         title: '任务已超时取消',
-        content: '您发布的求助任务已超时，如有支付将原路退回',
+        content: '您发布的求助任务已超时，已支付悬赏将原路退回',
         need_id: need._id,
         is_read: false,
         create_time: new Date()
@@ -344,7 +444,10 @@ async function queueRefundRetryAfterCallFailure(need, err) {
     await db.collection('wdd-payment-orders').doc(orderId).update({
       data: {
         status: 'refund_pending',
-        refund_amount: order.refund_amount || order.amount || 0,
+        total_refund_amount: order.total_refund_amount || order.total_amount || 0,
+        deduction_refund_amount: order.deduction_refund_amount || order.deduction_amount || 0,
+        balance_refund_amount: order.balance_refund_amount || order.balance_amount || 0,
+        wechat_refund_amount: order.wechat_refund_amount || order.wechat_amount || 0,
         refund_reason: order.refund_reason || '任务超时取消',
         refund_attempts: order.refund_attempts || 0,
         last_refund_error: (err.message || '自动退款调用失败').slice(0, 200),
@@ -539,25 +642,34 @@ async function autoCompleteOngoingNeed(need) {
       }
     })
 
-    // 余额支付：解冻 + 实际扣款
-    if (needInTx.payment_method === 'balance') {
-      await transaction.collection('wdd-users').doc(need.user_id).update({
-        data: {
-          balance: _.inc(-rewardAmount),
-          frozen_balance: _.inc(-rewardAmount),
-          total_paid: _.inc(rewardAmount),
-          update_time: new Date()
-        }
-      })
+    // 完成后消费冻结的余额和平台抵扣金
+    const balanceAmount = roundMoney(needInTx.balance_amount || 0)
+    const deductionAmount = roundMoney(needInTx.deduction_amount || 0)
+    if (balanceAmount > 0 || deductionAmount > 0) {
+      const userUpdateData = {
+        total_paid: _.inc(balanceAmount),
+        update_time: new Date()
+      }
+      if (balanceAmount > 0) {
+        userUpdateData.balance = _.inc(-balanceAmount)
+        userUpdateData.frozen_balance = _.inc(-balanceAmount)
+      }
+      if (deductionAmount > 0) {
+        userUpdateData.deduction_balance = _.inc(-deductionAmount)
+        userUpdateData.frozen_deduction_balance = _.inc(-deductionAmount)
+      }
+      await transaction.collection('wdd-users').doc(need.user_id).update({ data: userUpdateData })
       const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
       await transaction.collection('wdd-balance-records').add({
         data: {
           user_id: need.user_id,
           type: 'task_pay',
-          amount: -rewardAmount,
+          amount: -balanceAmount,
           balance: latestSeekerRes.data.balance || 0,
           frozen_balance: latestSeekerRes.data.frozen_balance || 0,
-          description: '求助任务自动完成，余额支出',
+          description: deductionAmount > 0
+            ? `求助任务自动完成，余额支出 ¥${formatAmount(balanceAmount)}，平台抵扣金抵扣 ¥${formatAmount(deductionAmount)}`
+            : '求助任务自动完成，余额支出',
           need_id: need._id,
           create_time: new Date()
         }

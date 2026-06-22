@@ -149,11 +149,11 @@
       </view>
       <view class="form-row">
         <view class="label-block">
-          <text class="form-label">注册赠送余额</text>
-          <text class="form-tip">新用户注册后可获得的初始余额</text>
+          <text class="form-label">注册赠送平台抵扣金</text>
+          <text class="form-tip">仅用于发布求助抵扣悬赏，不可提现</text>
         </view>
         <view class="input-box">
-          <input type="digit" value="{{form.register_gift_balance}}" data-key="register_gift_balance" bindinput="onInput" />
+          <input type="digit" value="{{form.register_gift_deduction}}" data-key="register_gift_deduction" bindinput="onInput" />
           <text class="unit">元</text>
         </view>
       </view>

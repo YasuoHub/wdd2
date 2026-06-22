@@ -14,6 +14,10 @@ function calcRecoveredCreditScore(score) {
   return Math.min(Math.max(currentScore, 0) + 5, 100)
 }
 
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
 function taskAlreadyAcceptedResponse(needId) {
   return {
     code: -1,
@@ -175,26 +179,35 @@ async function completeTask(event, OPENID) {
       }
     })
 
-    // 8. 余额支付：解冻 + 实际扣款（平台抽成部分自然消耗）
-    if (needInTx.payment_method === 'balance') {
-      await transaction.collection('wdd-users').doc(need.user_id).update({
-        data: {
-          balance: _.inc(-rewardAmount),
-          frozen_balance: _.inc(-rewardAmount),
-          total_paid: _.inc(rewardAmount),
-          update_time: new Date()
-        }
-      })
+    // 8. 完成后消费冻结的余额和平台抵扣金，微信部分已在发布时支付
+    const balanceAmount = roundMoney(needInTx.balance_amount || 0)
+    const deductionAmount = roundMoney(needInTx.deduction_amount || 0)
+    if (balanceAmount > 0 || deductionAmount > 0) {
+      const userUpdateData = {
+        total_paid: _.inc(balanceAmount),
+        update_time: new Date()
+      }
+      if (balanceAmount > 0) {
+        userUpdateData.balance = _.inc(-balanceAmount)
+        userUpdateData.frozen_balance = _.inc(-balanceAmount)
+      }
+      if (deductionAmount > 0) {
+        userUpdateData.deduction_balance = _.inc(-deductionAmount)
+        userUpdateData.frozen_deduction_balance = _.inc(-deductionAmount)
+      }
+      await transaction.collection('wdd-users').doc(need.user_id).update({ data: userUpdateData })
       // 写入求助者支出完成流水
       const latestSeekerRes = await transaction.collection('wdd-users').doc(need.user_id).get()
       await transaction.collection('wdd-balance-records').add({
         data: {
           user_id: need.user_id,
           type: 'task_pay',
-          amount: -rewardAmount,
+          amount: -balanceAmount,
           balance: latestSeekerRes.data.balance || 0,
           frozen_balance: latestSeekerRes.data.frozen_balance || 0,
-          description: '求助任务完成，余额支出',
+          description: deductionAmount > 0
+            ? `求助任务完成，余额支出 ¥${balanceAmount}，平台抵扣金抵扣 ¥${deductionAmount}`
+            : '求助任务完成，余额支出',
           need_id: needId,
           create_time: new Date()
         }
@@ -293,7 +306,7 @@ async function cancelTask(event, OPENID) {
         user_id: currentUserId,
         type: 'task_cancelled',
         title: '任务已取消',
-        content: '您发布的求助任务已取消，如有支付将原路退回',
+        content: '您发布的求助任务已取消，已支付悬赏将原路退回',
         need_id: needId,
         is_read: false,
         create_time: new Date()
@@ -339,7 +352,7 @@ async function cancelTask(event, OPENID) {
     ? '任务已取消，悬赏金额已原路退回'
     : refundStatus === 'pending'
       ? '任务已取消，退款已加入队列自动处理，请稍后查看微信账单'
-      : '任务已取消，如有支付将原路退回（退款处理中）'
+      : '任务已取消，已支付悬赏将原路退回（退款处理中）'
 
   return {
     code: 0,

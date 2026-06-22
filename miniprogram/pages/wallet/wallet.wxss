@@ -107,6 +107,83 @@
   text-align: center;
 }
 
+/* 抵扣金卡片 */
+.deduction-card {
+  margin-bottom: 32rpx;
+  padding: 28rpx 30rpx;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1rpx solid var(--fresh-mint-14);
+  border-radius: 24rpx;
+  box-shadow: var(--shadow-card);
+}
+
+.deduction-main {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.deduction-icon {
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22rpx;
+  background: var(--fresh-mint-10);
+}
+
+.deduction-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.deduction-title {
+  display: block;
+  margin-bottom: 6rpx;
+  font-size: 30rpx;
+  line-height: 38rpx;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.deduction-desc {
+  display: block;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: var(--text-tertiary);
+}
+
+.deduction-amount {
+  flex-shrink: 0;
+  max-width: 220rpx;
+  font-size: 34rpx;
+  line-height: 42rpx;
+  font-weight: 500;
+  color: #119B72;
+  text-align: right;
+  word-break: break-all;
+}
+
+.deduction-amount .money-text,
+.deduction-frozen-row .money-text {
+  color: #119B72;
+  -webkit-text-fill-color: #119B72;
+}
+
+.deduction-frozen-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid var(--fresh-mint-14);
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: var(--text-tertiary);
+}
+
 /* 统计区域 */
 .stats-section {
   display: flex;
@@ -515,6 +592,19 @@
   color: var(--text-secondary);
   line-height: 1.5;
   flex: 1;
+}
+
+.rule-desc-money {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rule-desc-money .money-segment {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* 审批提示 */
