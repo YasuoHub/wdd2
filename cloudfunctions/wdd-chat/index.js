@@ -370,7 +370,7 @@ async function getTaskInfo(event, OPENID) {
     getPlatformFeeRate()
   ])
 
-  if (userRes.data.length === 0) {
+  if (userRes.data.length === 0 || userRes.data[0].is_deleted === true) {
     return { code: -1, message: '用户不存在' }
   }
   const currentUserId = userRes.data[0]._id
@@ -436,11 +436,11 @@ async function getTaskInfo(event, OPENID) {
       : Promise.resolve(null),
     db.collection('wdd-reports').where({
       need_id: needId,
-      reporter_openid: OPENID
+      reporter_id: currentUserId
     }).orderBy('create_time', 'desc').limit(1).get().catch(() => ({ data: [] })),
     db.collection('wdd-appeals').where({
       need_id: needId,
-      initiator_openid: OPENID
+      initiator_id: currentUserId
     }).orderBy('create_time', 'desc').limit(1).get().catch(() => ({ data: [] }))
   ])
 

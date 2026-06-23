@@ -1,6 +1,53 @@
 // 积分明细页面
 const app = getApp()
 
+const DEFAULT_POINTS_CONFIG = {
+  register: 100,
+  invite: 50,
+  signInDaily: [5, 10, 15, 20, 25, 30, 30]
+}
+
+function toRuleNumber(value, fallback) {
+  const num = Number(value)
+  return Number.isFinite(num) && num >= 0 ? num : fallback
+}
+
+function normalizeSignInDaily(points) {
+  if (!Array.isArray(points)) return DEFAULT_POINTS_CONFIG.signInDaily
+  const values = points
+    .map(item => Number(item))
+    .filter(item => Number.isFinite(item) && item >= 0)
+  return values.length > 0 ? values : DEFAULT_POINTS_CONFIG.signInDaily
+}
+
+function formatPointValue(value) {
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100)
+}
+
+function buildSignInRuleText(signInDaily) {
+  const values = normalizeSignInDaily(signInDaily)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  if (min === max) {
+    return `每日签到可获得 ${formatPointValue(min)} 积分。`
+  }
+  return `每日签到可获得 ${formatPointValue(min)}~${formatPointValue(max)} 积分，连续签到会递增。`
+}
+
+function buildPointsRules(config, exchangeRate = 100) {
+  const points = config && config.points ? config.points : {}
+  const signIn = points.signIn || {}
+  const signInDaily = normalizeSignInDaily(signIn.daily)
+  const rate = Number(exchangeRate) || 100
+
+  return {
+    register: formatPointValue(toRuleNumber(points.register, DEFAULT_POINTS_CONFIG.register)),
+    invite: formatPointValue(toRuleNumber(points.invite, DEFAULT_POINTS_CONFIG.invite)),
+    signInText: buildSignInRuleText(signInDaily),
+    exchangeRate: formatPointValue(rate)
+  }
+}
+
 Page({
   data: {
     // 积分信息
@@ -29,7 +76,8 @@ Page({
     isEmpty: false,
 
     // 积分规则弹窗
-    showRulesModal: false
+    showRulesModal: false,
+    pointsRules: buildPointsRules(null)
   },
 
   onLoad() {
@@ -46,6 +94,7 @@ Page({
       return
     }
     this.loadPointRecords()
+    this.loadPointsRulesConfig()
   },
 
   onShow() {
@@ -89,7 +138,8 @@ Page({
           records: nextRecords,
           hasMore,
           isEmpty: nextRecords.length === 0,
-          page: newPage
+          page: newPage,
+          pointsRules: buildPointsRules(app.globalData.platformConfig, currentPoints.exchangeRate || 100)
         })
       } else {
         throw new Error(result.message)
@@ -135,7 +185,8 @@ Page({
       if (result.code === 0) {
         this.setData({
           currentPoints: result.data.currentPoints,
-          exchangePreviewAmount: this.calcExchangePreview(this.data.exchangeInput, result.data.currentPoints.exchangeRate || 100)
+          exchangePreviewAmount: this.calcExchangePreview(this.data.exchangeInput, result.data.currentPoints.exchangeRate || 100),
+          pointsRules: buildPointsRules(app.globalData.platformConfig, result.data.currentPoints.exchangeRate || 100)
         })
       }
     } catch (err) {
@@ -169,15 +220,37 @@ Page({
   // 跳转到积分规则
   showRules() {
     this.setData({ showRulesModal: true })
+    this.loadPointsRulesConfig()
   },
 
   hideRulesModal() {
     this.setData({ showRulesModal: false })
   },
 
+  async loadPointsRulesConfig() {
+    const exchangeRate = this.data.currentPoints.exchangeRate || 100
+    if (app.globalData.platformConfig) {
+      this.setData({
+        pointsRules: buildPointsRules(app.globalData.platformConfig, exchangeRate)
+      })
+      return
+    }
+
+    if (typeof app.loadPlatformConfig !== 'function') return
+
+    try {
+      await app.loadPlatformConfig()
+      this.setData({
+        pointsRules: buildPointsRules(app.globalData.platformConfig, exchangeRate)
+      })
+    } catch (err) {
+      console.error('加载积分规则配置失败:', err)
+    }
+  },
+
   showExchangeModal() {
     if ((this.data.currentPoints.total || 0) < (this.data.currentPoints.exchangeRate || 100)) {
-      wx.showToast({ title: '满100积分可兑换1元', icon: 'none' })
+      wx.showToast({ title: `满${this.data.currentPoints.exchangeRate || 100}积分可兑换1元`, icon: 'none' })
       return
     }
     this.setData({

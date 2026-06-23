@@ -600,7 +600,7 @@ async function getMyNeeds(event, OPENID) {
 
   // 获取当前用户
   const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
-  if (userRes.data.length === 0) {
+  if (userRes.data.length === 0 || userRes.data[0].is_deleted === true) {
     return { code: -1, message: '用户不存在' }
   }
 
@@ -630,10 +630,10 @@ async function getMyNeeds(event, OPENID) {
 
   // 预查询当前用户的举报和申诉记录（含已撤销，一次机会用完即不再显示按钮）
   const myReportRes = await db.collection('wdd-reports').where({
-    reporter_openid: OPENID
+    reporter_id: userId
   }).get()
   const myAppealRes = await db.collection('wdd-appeals').where({
-    initiator_openid: OPENID
+    initiator_id: userId
   }).get()
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
@@ -680,7 +680,7 @@ async function getMyTasks(event, OPENID) {
 
   // 获取当前用户
   const userRes = await db.collection('wdd-users').where({ openid: OPENID }).get()
-  if (userRes.data.length === 0) {
+  if (userRes.data.length === 0 || userRes.data[0].is_deleted === true) {
     return { code: -1, message: '用户不存在' }
   }
 
@@ -706,10 +706,10 @@ async function getMyTasks(event, OPENID) {
 
   // 预查询当前用户的举报和申诉记录（含已撤销，一次机会用完即不再显示按钮）
   const myReportRes = await db.collection('wdd-reports').where({
-    reporter_openid: OPENID
+    reporter_id: userId
   }).get()
   const myAppealRes = await db.collection('wdd-appeals').where({
-    initiator_openid: OPENID
+    initiator_id: userId
   }).get()
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))

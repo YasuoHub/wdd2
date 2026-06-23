@@ -95,6 +95,12 @@ function getWithdrawQuotaDocId(openid, dateKey = getBeijingDateKey()) {
   return `${openid}_${dateKey}`
 }
 
+async function getCurrentUser(OPENID) {
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).limit(1).get()
+  const user = userRes.data[0] || null
+  return user && user.is_deleted !== true ? user : null
+}
+
 function moneyToCents(amount) {
   return Math.round(Number(amount || 0) * 100)
 }
@@ -429,8 +435,13 @@ async function queryWithdraws(event, OPENID) {
   const { page = 0, pageSize = 20 } = event
 
   try {
+    const user = await getCurrentUser(OPENID)
+    if (!user) {
+      return { code: -1, message: '用户不存在' }
+    }
+
     const withdrawRes = await db.collection('wdd-withdraws')
-      .where({ openid: OPENID })
+      .where({ user_id: user._id })
       .orderBy('apply_time', 'desc')
       .skip(page * pageSize)
       .limit(pageSize)
@@ -473,8 +484,13 @@ async function getWithdrawStatus(event, OPENID) {
 
   let record = recordRes.data
 
+  const user = await getCurrentUser(OPENID)
+  if (!user) {
+    return { code: -1, message: '用户不存在' }
+  }
+
   // 越权校验
-  if (record.openid !== OPENID) {
+  if (record.user_id !== user._id) {
     return { code: -1, message: '无权查询' }
   }
 

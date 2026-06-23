@@ -218,7 +218,7 @@ async function completeTask(event, OPENID) {
     await transaction.commit()
 
     // 向消息表写入系统消息（用于实时推送给帮助者）
-    await sendSystemMessage(need, taker.taker_id, need.user_id, takerIncome)
+    await sendSystemMessage(need, taker.taker_id, need.user_id)
 
     // 发送完成通知
     await sendCompletionNotification(taker.taker_id, need, takerIncome)
@@ -544,7 +544,7 @@ async function sendCompletionNotificationToSeeker(seekerId, need, rewardAmount) 
 }
 
 // 发送系统消息到聊天（用于实时推送任务状态变更）
-async function sendSystemMessage(need, takerId, seekerId, takerIncome) {
+async function sendSystemMessage(need, takerId, seekerId) {
   try {
     await db.collection('wdd-messages').add({
       data: {
@@ -553,11 +553,10 @@ async function sendSystemMessage(need, takerId, seekerId, takerIncome) {
         sender_id: seekerId,
         receiver_id: takerId,
         type: 'system',
-        // system_type/amount 用于前端按当前用户身份渲染不同文案
+        // system_type 用于前端按当前用户身份渲染不同文案
         // content 作为兜底文案（旧版本客户端无法识别 system_type 时使用帮助者视角文案）
         system_type: 'task_completed',
-        amount: takerIncome,
-        content: `任务已完成，¥${takerIncome}已计入帮助者的余额`,
+        content: '任务已完成，收入已计入帮助者的余额',
         image_url: '',
         create_time: new Date()
       }

@@ -1,4 +1,4 @@
-<page-meta page-style="{{showAboutModal || showCreditRulesModal ? 'overflow: hidden;' : ''}}" />
+<page-meta page-style="{{showAboutModal || showCreditRulesModal || showAssetForfeitModal ? 'overflow: hidden;' : ''}}" />
 <!-- 个人中心页面 -->
 <wxs src="../../utils/money.wxs" module="money" />
 <view class="container wdd-page">
@@ -222,15 +222,46 @@
     </view>
   </view>
 
-  <!-- 退出登录 / 一键登录 -->
-  <view class="logout-section {{isLoggedIn ? '' : 'login-btn'}}" bindtap="{{isLoggedIn ? 'handleLogout' : 'handleLogin'}}">
-    <text class="logout-text">{{isLoggedIn ? '退出登录' : '一键登录'}}</text>
+  <!-- 退出登录 / 注销账号 / 一键登录 -->
+  <block wx:if="{{isLoggedIn}}">
+    <view class="logout-section" bindtap="handleLogout">
+      <text class="logout-text">退出登录</text>
+    </view>
+    <view class="delete-account-section" bindtap="handleDeleteAccount">
+      <text class="delete-account-text">{{isDeletingAccount ? '注销中...' : '注销账号'}}</text>
+    </view>
+  </block>
+  <view wx:else class="logout-section login-btn" bindtap="handleLogin">
+    <text class="logout-text">一键登录</text>
   </view>
 
   <!-- 底部信息 -->
   <view class="footer">
     <text>问当地 v1.0.0</text>
     <text style="margin-top: 8rpx; font-size: 22rpx;">成都起步，互帮互助</text>
+  </view>
+</view>
+
+<!-- 放弃资产确认弹窗 -->
+<view class="modal asset-forfeit-modal {{showAssetForfeitModal ? 'show' : ''}}" wx:if="{{showAssetForfeitModal}}">
+  <view class="modal-mask"></view>
+  <view class="modal-content asset-forfeit-content">
+    <view class="modal-title asset-forfeit-title">确认放弃资产</view>
+    <view class="asset-forfeit-desc">
+      <text>当前账号仍有余额或平台抵扣金。注销后余额和平台抵扣金将归零且无法找回。</text>
+    </view>
+    <input
+      class="asset-forfeit-input"
+      value="{{assetForfeitInput}}"
+      bindinput="onAssetForfeitInput"
+      placeholder="请输入“我同意”"
+      placeholder-class="asset-forfeit-placeholder"
+      confirm-type="done"
+    />
+    <view class="asset-forfeit-actions">
+      <view class="asset-forfeit-btn secondary" bindtap="hideAssetForfeitModal">取消</view>
+      <view class="asset-forfeit-btn danger" bindtap="confirmAssetForfeitInput">{{isDeletingAccount ? '注销中...' : '注销'}}</view>
+    </view>
   </view>
 </view>
 

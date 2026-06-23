@@ -8,6 +8,10 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 const DEFAULT_REGISTER_GIFT_DEDUCTION = 0
+const ASSET_FORFEIT_CONSENT_TEXT = '我同意'
+const ACTIVE_NEED_STATUSES = ['pending', 'ongoing', 'breaking']
+const BLOCKING_PAYMENT_STATUSES = ['pending', 'refund_pending', 'refund_processing', 'refund_failed']
+const BLOCKING_WITHDRAW_STATUSES = ['processing', 'transfer_pending', 'transfer_failed']
 
 function normalizeMoneyAmount(value, fallback = 0) {
   const amount = Number(value)
@@ -48,6 +52,40 @@ function formatLoginUserInfo(userInfo) {
     } : null,
     hasHelperProfile: !!userInfo.help_willingness
   }
+}
+
+function isDeletedUser(user) {
+  return !!(user && user.is_deleted === true)
+}
+
+async function getActiveUserByOpenid(OPENID) {
+  const userRes = await db.collection('wdd-users')
+    .where({ openid: OPENID })
+    .limit(1)
+    .get()
+
+  const user = userRes.data[0] || null
+  return isDeletedUser(user) ? null : user
+}
+
+function hasPositiveAmount(value) {
+  return Number(value || 0) > 0.000001
+}
+
+function buildDeletedOpenidMarker(userId) {
+  return `deleted:${userId}:${Date.now()}`
+}
+
+function getForfeitableAssets(user) {
+  return {
+    balance: Number(user.balance || 0),
+    deductionBalance: Number(user.deduction_balance || 0)
+  }
+}
+
+function hasForfeitableAssets(user) {
+  const assets = getForfeitableAssets(user)
+  return hasPositiveAmount(assets.balance) || hasPositiveAmount(assets.deductionBalance)
 }
 
 // 从 wdd-config 读取积分配置，未配置时使用默认值
@@ -102,22 +140,21 @@ exports.main = async (event, context) => {
   if (action === 'loginExisting') {
     return await loginExisting(OPENID)
   }
+  if (action === 'deleteAccount') {
+    return await deleteAccount(event, OPENID)
+  }
   if (action === 'updateHelperProfile') {
     return await updateHelperProfile(event, OPENID)
   }
 
   try {
     // 查询用户是否已存在
-    const userRes = await db.collection('wdd-users')
-      .where({
-        openid: OPENID
-      })
-      .get()
+    const existingUser = await getActiveUserByOpenid(OPENID)
 
     let userInfo
     let isNewUser = false
 
-    if (userRes.data.length === 0) {
+    if (!existingUser) {
       // 新用户，创建记录
       isNewUser = true
 
@@ -286,7 +323,7 @@ exports.main = async (event, context) => {
       }
     } else {
       // 老用户，返回已有信息
-      userInfo = userRes.data[0]
+      userInfo = existingUser
 
       // 更新登录时间和用户信息（如果提供了）
       const updateData = {
@@ -330,12 +367,9 @@ exports.main = async (event, context) => {
 // 查询当前微信身份是否已有用户记录，仅用于登录态校验，不创建用户。
 async function getLoginProfile(OPENID) {
   try {
-    const userRes = await db.collection('wdd-users')
-      .where({ openid: OPENID })
-      .limit(1)
-      .get()
+    const userInfo = await getActiveUserByOpenid(OPENID)
 
-    if (userRes.data.length === 0) {
+    if (!userInfo) {
       return {
         code: 0,
         message: '用户不存在',
@@ -350,7 +384,7 @@ async function getLoginProfile(OPENID) {
       message: '获取成功',
       data: {
         exists: true,
-        userInfo: formatLoginUserInfo(userRes.data[0])
+        userInfo: formatLoginUserInfo(userInfo)
       }
     }
   } catch (err) {
@@ -365,12 +399,9 @@ async function getLoginProfile(OPENID) {
 // 老用户快速登录：存在则登录，不存在则让前端进入资料填写页。
 async function loginExisting(OPENID) {
   try {
-    const userRes = await db.collection('wdd-users')
-      .where({ openid: OPENID })
-      .limit(1)
-      .get()
+    const userInfo = await getActiveUserByOpenid(OPENID)
 
-    if (userRes.data.length === 0) {
+    if (!userInfo) {
       return {
         code: 0,
         message: '用户不存在',
@@ -380,7 +411,6 @@ async function loginExisting(OPENID) {
       }
     }
 
-    const userInfo = userRes.data[0]
     await db.collection('wdd-users').doc(userInfo._id).update({
       data: {
         update_time: db.serverDate()
@@ -405,21 +435,213 @@ async function loginExisting(OPENID) {
   }
 }
 
+async function countWhere(collectionName, condition) {
+  const res = await db.collection(collectionName).where(condition).count()
+  return res.total || 0
+}
+
+async function getAccountDeletionBlockers(user) {
+  const userId = user._id
+  const blockers = []
+
+  if (
+    hasPositiveAmount(user.frozen_balance) ||
+    hasPositiveAmount(user.frozen_deduction_balance)
+  ) {
+    blockers.push('账号仍有冻结资金，请等待任务、提现、退款或纠纷完结后再注销')
+  }
+
+  const [
+    activeNeedsCount,
+    activeTakesCount,
+    activeTakenNeedsCount,
+    pendingReportsCount,
+    pendingAppealsCount,
+    pendingPaymentsCount,
+    pendingWithdrawsCount,
+    pendingWithdrawApplicationsCount,
+    approvedWithdrawApplicationsCount
+  ] = await Promise.all([
+    countWhere('wdd-needs', {
+      user_id: userId,
+      status: _.in(ACTIVE_NEED_STATUSES)
+    }),
+    countWhere('wdd-need-takers', {
+      taker_id: userId,
+      status: 'ongoing'
+    }),
+    countWhere('wdd-needs', {
+      taker_id: userId,
+      status: _.in(ACTIVE_NEED_STATUSES)
+    }),
+    countWhere('wdd-reports', {
+      reporter_id: userId,
+      status: 'pending'
+    }),
+    countWhere('wdd-appeals', {
+      initiator_id: userId,
+      status: 'pending'
+    }),
+    countWhere('wdd-payment-orders', {
+      user_id: userId,
+      status: _.in(BLOCKING_PAYMENT_STATUSES)
+    }),
+    countWhere('wdd-withdraws', {
+      user_id: userId,
+      status: _.in(BLOCKING_WITHDRAW_STATUSES)
+    }),
+    countWhere('wdd-withdraw-applications', {
+      user_id: userId,
+      status: 'pending'
+    }),
+    countWhere('wdd-withdraw-applications', {
+      user_id: userId,
+      status: 'approved',
+      withdraw_status: _.neq('withdrawn')
+    })
+  ])
+
+  if (activeNeedsCount > 0) blockers.push('还有未结束的求助任务')
+  if (activeTakesCount > 0 || activeTakenNeedsCount > 0) blockers.push('还有进行中的帮助任务')
+  if (pendingReportsCount > 0) blockers.push('还有待处理的举报')
+  if (pendingAppealsCount > 0) blockers.push('还有待处理的申诉')
+  if (pendingPaymentsCount > 0) blockers.push('还有待处理的支付或退款订单')
+  if (pendingWithdrawsCount > 0) blockers.push('还有待处理的提现')
+  if (pendingWithdrawApplicationsCount > 0 || approvedWithdrawApplicationsCount > 0) {
+    blockers.push('还有未完结的提现申请')
+  }
+
+  return blockers
+}
+
+async function anonymizeAccountOpenidReferences(userId, OPENID, deletedOpenidMarker) {
+  const updateData = {
+    update_time: db.serverDate()
+  }
+
+  await Promise.all([
+    db.collection('wdd-reports').where({
+      reporter_id: userId,
+      reporter_openid: OPENID
+    }).update({
+      data: {
+        reporter_openid: deletedOpenidMarker,
+        original_reporter_openid: OPENID,
+        ...updateData
+      }
+    }).catch(err => {
+      console.error('脱敏举报openid失败:', err)
+    }),
+    db.collection('wdd-appeals').where({
+      initiator_id: userId,
+      initiator_openid: OPENID
+    }).update({
+      data: {
+        initiator_openid: deletedOpenidMarker,
+        original_initiator_openid: OPENID,
+        ...updateData
+      }
+    }).catch(err => {
+      console.error('脱敏申诉openid失败:', err)
+    })
+  ])
+}
+
+async function deleteAccount(event, OPENID) {
+  try {
+    const user = await getActiveUserByOpenid(OPENID)
+    if (!user) {
+      return {
+        code: -1,
+        message: '用户不存在或已注销'
+      }
+    }
+
+    const blockers = await getAccountDeletionBlockers(user)
+    if (blockers.length > 0) {
+      return {
+        code: -1,
+        message: blockers[0],
+        data: {
+          blockers
+        }
+      }
+    }
+
+    const forfeitableAssets = getForfeitableAssets(user)
+    if (hasForfeitableAssets(user) && String(event.assetForfeitConsentText || '').trim() !== ASSET_FORFEIT_CONSENT_TEXT) {
+      return {
+        code: -1,
+        message: '注销前需确认放弃账号余额和平台抵扣金',
+        data: {
+          requireAssetForfeitConsent: true,
+          consentText: ASSET_FORFEIT_CONSENT_TEXT,
+          forfeitableAssets
+        }
+      }
+    }
+
+    const deletedOpenidMarker = buildDeletedOpenidMarker(user._id)
+    const now = db.serverDate()
+
+    await db.collection('wdd-users').doc(user._id).update({
+      data: {
+        openid: deletedOpenidMarker,
+        original_openid: OPENID,
+        deleted_openid_marker: deletedOpenidMarker,
+        is_deleted: true,
+        deleted_at: now,
+        delete_reason: 'user_self_delete',
+        nickname: '已注销用户',
+        avatar: '',
+        role: 'deleted',
+        help_willingness: '',
+        frequent_locations: [],
+        help_types: [],
+        helperProfile: null,
+        ban_status: null,
+        balance: 0,
+        deduction_balance: 0,
+        frozen_balance: 0,
+        frozen_deduction_balance: 0,
+        forfeited_balance: forfeitableAssets.balance,
+        forfeited_deduction_balance: forfeitableAssets.deductionBalance,
+        asset_forfeit_confirmed_at: hasForfeitableAssets(user) ? now : null,
+        update_time: now
+      }
+    })
+
+    await anonymizeAccountOpenidReferences(user._id, OPENID, deletedOpenidMarker)
+
+    return {
+      code: 0,
+      message: '账号已注销',
+      data: {
+        userId: user._id,
+        deletedAt: new Date(),
+        deletedOpenidMarker
+      }
+    }
+  } catch (err) {
+    console.error('注销账号失败:', err)
+    return {
+      code: -1,
+      message: '注销失败: ' + err.message
+    }
+  }
+}
+
 // 获取帮助者资料
 async function getHelperProfile(OPENID) {
   try {
-    const userRes = await db.collection('wdd-users')
-      .where({ openid: OPENID })
-      .get()
+    const user = await getActiveUserByOpenid(OPENID)
 
-    if (userRes.data.length === 0) {
+    if (!user) {
       return {
         code: -1,
         message: '用户不存在'
       }
     }
-
-    const user = userRes.data[0]
 
     return {
       code: 0,
@@ -447,18 +669,16 @@ async function updateHelperProfile(event, OPENID) {
   const { helpWillingness, frequentLocations, helpTypes } = event
 
   try {
-    const userRes = await db.collection('wdd-users')
-      .where({ openid: OPENID })
-      .get()
+    const user = await getActiveUserByOpenid(OPENID)
 
-    if (userRes.data.length === 0) {
+    if (!user) {
       return {
         code: -1,
         message: '用户不存在'
       }
     }
 
-    const userId = userRes.data[0]._id
+    const userId = user._id
 
     // 构建更新数据
     const updateData = {

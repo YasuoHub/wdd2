@@ -32,6 +32,12 @@ function isCounterparty(userId, initiatorId, parties) {
   return isTaskParticipant(userId, parties) && userId !== initiatorId
 }
 
+async function getCurrentUser(OPENID) {
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).limit(1).get()
+  const user = userRes.data[0] || null
+  return user && user.is_deleted !== true ? user : null
+}
+
 exports.main = async (event, context) => {
   const { action } = event
   const wxContext = cloud.getWXContext()
@@ -587,14 +593,19 @@ async function getMyAppealList(event, OPENID) {
     return { code: -1, message: 'status 参数无效，可选值：pending / processed' }
   }
 
+  const user = await getCurrentUser(OPENID)
+  if (!user) {
+    return { code: -1, message: '用户不存在' }
+  }
+
   // 查询申诉列表
   const query = db.collection('wdd-appeals').where({
-    initiator_openid: OPENID,
+    initiator_id: user._id,
     status: statusFilter
   }).orderBy('create_time', 'desc').skip(skip).limit(limit)
 
   const countQuery = db.collection('wdd-appeals').where({
-    initiator_openid: OPENID,
+    initiator_id: user._id,
     status: statusFilter
   }).count()
 
@@ -754,8 +765,13 @@ async function getAppealDetailById(event, OPENID) {
   }
   const appeal = appealRes.data
 
+  const user = await getCurrentUser(OPENID)
+  if (!user) {
+    return { code: -1, message: '用户不存在' }
+  }
+
   // 只允许申诉发起人查看
-  if (appeal.initiator_openid !== OPENID) {
+  if (appeal.initiator_id !== user._id) {
     return { code: -1, message: '无权查看此申诉' }
   }
 

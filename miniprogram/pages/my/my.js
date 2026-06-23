@@ -3,11 +3,16 @@ const app = getApp()
 const { callCloudFunction } = require('../../utils/cloud')
 
 const DEFAULT_INVITE_POINTS = 50
+const ASSET_FORFEIT_CONSENT_TEXT = '我同意'
 
 function getInvitePointsFromConfig(config) {
   const points = config && config.points ? config.points : {}
   const invitePoints = Number(points.invite)
   return Number.isFinite(invitePoints) ? invitePoints : DEFAULT_INVITE_POINTS
+}
+
+function hasPositiveAmount(value) {
+  return Number(value || 0) > 0.000001
 }
 
 Page({
@@ -23,7 +28,10 @@ Page({
     isCustomerService: false,
     isSuperAdmin: false,
     showAboutModal: false,
-    showCreditRulesModal: false
+    showCreditRulesModal: false,
+    isDeletingAccount: false,
+    showAssetForfeitModal: false,
+    assetForfeitInput: ''
   },
 
   onLoad() {
@@ -516,6 +524,151 @@ Page({
         title: '退出失败，请重试',
         icon: 'none'
       })
+    }
+  },
+
+  handleDeleteAccount() {
+    if (!this.checkLoginAndShowTip()) return
+    if (this.data.isDeletingAccount) return
+
+    wx.showModal({
+      title: '注销账号',
+      content: '注销后当前账号资料会失效，进行中任务、提现、退款或纠纷未完结时无法注销。注销成功后再次登录会重新注册新账号。',
+      confirmText: '继续',
+      confirmColor: '#d64545',
+      success: (res) => {
+        if (!res.confirm) return
+        this.confirmDeleteAccount()
+      }
+    })
+  },
+
+  confirmDeleteAccount() {
+    const userInfo = this.data.userInfo || {}
+    if (hasPositiveAmount(userInfo.balance) || hasPositiveAmount(userInfo.deduction_balance)) {
+      this.confirmAssetForfeit()
+      return
+    }
+
+    wx.showModal({
+      title: '再次确认',
+      content: '请确认你要注销当前账号。注销成功后，旧账号不会再作为当前登录账号使用。',
+      confirmText: '注销',
+      confirmColor: '#d64545',
+      success: (res) => {
+        if (!res.confirm) return
+        this.performDeleteAccount()
+      }
+    })
+  },
+
+  confirmAssetForfeit() {
+    this.setData({
+      showAssetForfeitModal: true,
+      assetForfeitInput: ''
+    })
+  },
+
+  hideAssetForfeitModal() {
+    if (this.data.isDeletingAccount) return
+    this.setData({
+      showAssetForfeitModal: false,
+      assetForfeitInput: ''
+    })
+  },
+
+  onAssetForfeitInput(e) {
+    this.setData({
+      assetForfeitInput: e.detail.value
+    })
+  },
+
+  confirmAssetForfeitInput() {
+    if (String(this.data.assetForfeitInput || '').trim() !== ASSET_FORFEIT_CONSENT_TEXT) {
+      wx.showToast({
+        title: '请输入“我同意”后再继续',
+        icon: 'none'
+      })
+      return
+    }
+
+    this.setData({ showAssetForfeitModal: false })
+    this.performDeleteAccount(ASSET_FORFEIT_CONSENT_TEXT)
+  },
+
+  async performDeleteAccount(assetForfeitConsentText = '') {
+    if (this.data.isDeletingAccount) return
+
+    this.setData({ isDeletingAccount: true })
+    wx.showLoading({ title: '注销中...' })
+
+    try {
+      const { result } = await callCloudFunction({
+        name: 'wdd-login',
+        data: {
+          action: 'deleteAccount',
+          assetForfeitConsentText
+        }
+      })
+
+      wx.hideLoading()
+
+      if (!result || result.code !== 0) {
+        if (result && result.data && result.data.requireAssetForfeitConsent) {
+          this.confirmAssetForfeit()
+          return
+        }
+
+        const blockers = result && result.data && result.data.blockers
+        const message = blockers && blockers.length > 0
+          ? blockers[0]
+          : ((result && result.message) || '注销失败，请稍后重试')
+        wx.showToast({
+          title: message,
+          icon: 'none',
+          duration: 2600
+        })
+        return
+      }
+
+      app.logout()
+      this.setData({
+        userInfo: {},
+        isLoggedIn: false,
+        hasSignedToday: false,
+        myNeedsCount: 0,
+        myTasksCount: 0,
+        isCustomerService: false,
+        isSuperAdmin: false,
+        showAssetForfeitModal: false,
+        assetForfeitInput: ''
+      })
+
+      wx.showToast({
+        title: '账号已注销',
+        icon: 'success',
+        duration: 1500
+      })
+
+      setTimeout(() => {
+        wx.switchTab({
+          url: '/pages/index/index',
+          fail: () => {
+            wx.reLaunch({
+              url: '/pages/index/index'
+            })
+          }
+        })
+      }, 1500)
+    } catch (err) {
+      wx.hideLoading()
+      console.error('注销账号失败:', err)
+      wx.showToast({
+        title: err.message || '注销失败，请重试',
+        icon: 'none'
+      })
+    } finally {
+      this.setData({ isDeletingAccount: false })
     }
   }
 })

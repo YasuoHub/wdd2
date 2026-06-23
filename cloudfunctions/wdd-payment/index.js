@@ -58,6 +58,20 @@ function getAvailableBalance(user) {
   return Math.max(0, roundMoney((user.balance || 0) - (user.frozen_balance || 0)))
 }
 
+async function getCurrentUser(OPENID) {
+  const userRes = await db.collection('wdd-users').where({ openid: OPENID }).limit(1).get()
+  const user = userRes.data[0] || null
+  return user && user.is_deleted !== true ? user : null
+}
+
+async function verifyCurrentOrderOwner(order, OPENID) {
+  const user = await getCurrentUser(OPENID)
+  if (!user || order.user_id !== user._id) {
+    return { ok: false, user: null }
+  }
+  return { ok: true, user }
+}
+
 function normalizePaymentSelection(selection = {}) {
   return {
     useDeduction: selection.useDeduction === true,
@@ -518,7 +532,11 @@ async function cancelPendingOrder(event, OPENID) {
 
   const orderRes = await db.collection('wdd-payment-orders').doc(orderId).get().catch(() => null)
   const order = orderRes && orderRes.data
-  if (!order || order.openid !== OPENID) {
+  if (!order) {
+    return { code: -1, message: '订单不存在或无权操作' }
+  }
+  const owner = await verifyCurrentOrderOwner(order, OPENID)
+  if (!owner.ok) {
     return { code: -1, message: '订单不存在或无权操作' }
   }
   if (order.status !== 'pending') {
@@ -559,7 +577,8 @@ async function recoverPaidPendingOrder(event, OPENID, isInternalCall = false) {
   }
 
   const callerOpenid = isInternalCall ? (event.openid || order.openid) : OPENID
-  if (order.openid !== callerOpenid) {
+  const owner = await verifyCurrentOrderOwner(order, callerOpenid)
+  if (!owner.ok) {
     return { code: -1, message: '订单归属错误' }
   }
 
@@ -628,13 +647,18 @@ async function confirmPayment(event, OPENID) {
     return { code: -1, message: '订单ID不能为空' }
   }
 
+  const currentUser = await getCurrentUser(OPENID)
+  if (!currentUser) {
+    return { code: -1, message: '用户不存在' }
+  }
+
   if (!MOCK_PAYMENT) {
     const preOrderRes = await db.collection('wdd-payment-orders').doc(orderId).get().catch(() => null)
     const preOrder = preOrderRes && preOrderRes.data
     if (!preOrder) {
       return { code: -1, message: '订单不存在' }
     }
-    if (preOrder.openid !== OPENID) {
+    if (preOrder.user_id !== currentUser._id) {
       return { code: -1, message: '订单归属错误' }
     }
     if (preOrder.status === 'pending') {
@@ -665,7 +689,7 @@ async function confirmPayment(event, OPENID) {
       return { code: -1, message: '订单不存在' }
     }
     const rawMetadata = orderInTx.metadata || {}
-    if (orderInTx.openid !== OPENID) {
+    if (orderInTx.user_id !== currentUser._id) {
       await transaction.rollback()
       return { code: -1, message: '订单归属错误' }
     }
@@ -1025,7 +1049,8 @@ async function queryOrder(event, OPENID) {
   }
 
   const order = orderRes.data
-  if (order.openid !== OPENID) {
+  const owner = await verifyCurrentOrderOwner(order, OPENID)
+  if (!owner.ok) {
     return { code: -1, message: '无权查看此订单' }
   }
 

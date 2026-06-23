@@ -134,7 +134,7 @@
 }
 
 .star.active .star-symbol {
-  color: var(--brand-primary);
+  color: var(--money-gold);
 }
 
 .rating-text {
