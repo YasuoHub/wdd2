@@ -5,15 +5,23 @@ const { STATUS_MAP, getByType, resolveTaskType } = require('../../utils/needType
 
 const SYSTEM_NOTIFICATION_PAGE_SIZE = 20
 
+function isVoiceMessage(lastMessageType, lastMessageText) {
+  return lastMessageType === 'voice' || /^\[语音(?:\]|\s)/.test(lastMessageText) || /^【语音/.test(lastMessageText)
+}
+
+function formatVoiceMessage(lastMessageText) {
+  const durationMatch = String(lastMessageText || '').match(/(\d+)\s*(秒|″|'|‘’)?/)
+  const duration = durationMatch ? Math.max(1, Number(durationMatch[1]) || 1) : 1
+  return `[语音] ${duration}‘’`
+}
+
 function formatPendingReviewMessage(lastMessageType, lastMessageText) {
   const messageText = String(lastMessageText || '').replace(/\s*审核中\s*/g, '').trim()
-  const isVoice = lastMessageType === 'voice' || /^\[语音\]/.test(messageText) || /^【语音/.test(messageText)
+  const isVoice = isVoiceMessage(lastMessageType, messageText)
   const isImage = lastMessageType === 'image' || /^\[图片\]/.test(messageText) || /^【图片/.test(messageText)
 
   if (isVoice) {
-    const durationMatch = messageText.match(/(\d+)\s*(秒|″|')?/)
-    const duration = durationMatch ? Math.max(1, Number(durationMatch[1]) || 1) : 1
-    return `[语音 ${duration}']`
+    return formatVoiceMessage(messageText)
   }
 
   if (isImage) {
@@ -35,6 +43,8 @@ function formatChatListItem(item) {
 
   if (isPendingReviewMessage) {
     lastMessage = formatPendingReviewMessage(lastMessageType, lastMessage)
+  } else if (lastMessageStatus !== 'violated' && isVoiceMessage(lastMessageType, lastMessageText)) {
+    lastMessage = formatVoiceMessage(lastMessageText)
   }
 
   return {

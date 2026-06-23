@@ -9,8 +9,8 @@ const { MoneyUtils } = require('../../utils/platformRules')
 
 const VOICE_MIN_WIDTH = 220
 const VOICE_MAX_WIDTH = 430
-const VOICE_CANCEL_VERTICAL_THRESHOLD = 56
-const VOICE_CANCEL_HORIZONTAL_THRESHOLD = 120
+const VOICE_CANCEL_VERTICAL_THRESHOLD = 48
+const VOICE_CANCEL_HORIZONTAL_THRESHOLD = 150
 const MEDIA_STATUS_POLL_INTERVAL_MS = 2500
 const MEDIA_STATUS_MAX_POLL_MS = 2 * 60 * 1000
 
@@ -654,7 +654,7 @@ Page({
     const deltaY = touch.clientY - this._voiceTouchStartPoint.y
     const shouldCancel =
       deltaY <= -VOICE_CANCEL_VERTICAL_THRESHOLD ||
-      Math.abs(deltaX) >= VOICE_CANCEL_HORIZONTAL_THRESHOLD
+      (deltaY <= -18 && Math.abs(deltaX) >= VOICE_CANCEL_HORIZONTAL_THRESHOLD)
 
     if (this._voiceCancelActive === shouldCancel) return
     this._voiceCancelActive = shouldCancel

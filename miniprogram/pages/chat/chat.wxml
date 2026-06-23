@@ -252,7 +252,7 @@
             catchtouchend="onMessageInputTouchEnd"
             catchtouchcancel="onMessageInputTouchCancel"
           >
-            <text>{{isRecording ? (voiceRecordCancelActive ? '松开取消' : '松开发送 ' + recordingSeconds + 's') : (inputValue || '发消息或按住说话...')}}</text>
+            <text>{{isRecording ? (voiceRecordCancelActive ? '松开取消' : '松开发送') : (inputValue || '按住说话')}}</text>
           </view>
         </view>
 
@@ -268,13 +268,25 @@
       </view>
 
       <view wx:if="{{isRecording}}" class="recording-panel {{voiceRecordCancelActive ? 'cancel' : ''}}">
-        <view class="recording-icon">
-          <wdd-icon name="{{voiceRecordCancelActive ? 'x' : 'radio'}}" color="#FFFFFF" size="44"></wdd-icon>
+        <view class="recording-cancel-hint">
+          <wdd-icon name="{{voiceRecordCancelActive ? 'x' : 'chevron-up'}}" color="#FFFFFF" size="30"></wdd-icon>
+          <text>{{voiceRecordCancelActive ? '松开手指，取消发送' : '上滑取消'}}</text>
         </view>
-        <text class="recording-title">{{voiceRecordCancelActive ? '松开取消录音' : '正在录音 ' + recordingSeconds + '″'}}</text>
-        <text wx:if="{{voiceRecordCancelActive}}" class="recording-tip">手指移回输入框可继续发送</text>
-        <text wx:elif="{{recordingCountdown > 0}}" class="recording-countdown">还剩 {{recordingCountdown}} 秒</text>
-        <text wx:else class="recording-tip">上滑或滑出输入框取消，松开发送</text>
+        <view class="recording-card">
+          <view class="recording-icon">
+            <wdd-icon name="{{voiceRecordCancelActive ? 'x' : 'radio'}}" color="#FFFFFF" size="42"></wdd-icon>
+          </view>
+          <view class="recording-meter {{voiceRecordCancelActive ? 'muted' : ''}}">
+            <view class="recording-bar bar-1"></view>
+            <view class="recording-bar bar-2"></view>
+            <view class="recording-bar bar-3"></view>
+            <view class="recording-bar bar-4"></view>
+            <view class="recording-bar bar-5"></view>
+          </view>
+          <text class="recording-title">{{voiceRecordCancelActive ? '取消这条语音' : '正在录音 ' + recordingSeconds + '″'}}</text>
+          <text wx:if="{{recordingCountdown > 0}}" class="recording-countdown">还剩 {{recordingCountdown}} 秒</text>
+          <text wx:else class="recording-tip">{{voiceRecordCancelActive ? '移回输入框，继续发送' : '松开发送'}}</text>
+        </view>
       </view>
 
       <!-- 工具栏 -->
