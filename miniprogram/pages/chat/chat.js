@@ -496,6 +496,7 @@ Page({
     this.recorderManager = wx.getRecorderManager()
     this.innerAudioContext = wx.createInnerAudioContext()
     this.innerAudioContext.obeyMuteSwitch = false
+    this._isDestroyingVoiceManagers = false
 
     this.recorderManager.onStart(() => {
       this._recordingStartedAt = Date.now()
@@ -528,10 +529,13 @@ Page({
       wx.showToast({ title: '录音失败，请检查麦克风权限', icon: 'none' })
     })
 
-    const clearPlayingState = () => this.setData({ playingVoiceId: '' })
+    const clearPlayingState = () => {
+      if (this.data.playingVoiceId) this.setData({ playingVoiceId: '' })
+    }
     this.innerAudioContext.onEnded(clearPlayingState)
     this.innerAudioContext.onStop(clearPlayingState)
     this.innerAudioContext.onError(err => {
+      if (this._isDestroyingVoiceManagers) return
       console.error('语音播放失败:', err)
       clearPlayingState()
       wx.showToast({ title: '语音播放失败', icon: 'none' })
@@ -540,8 +544,9 @@ Page({
 
   destroyVoiceManagers() {
     this.clearVoiceRecordingTimer()
+    this._isDestroyingVoiceManagers = true
     if (this.innerAudioContext) {
-      this.innerAudioContext.stop()
+      if (this.data.playingVoiceId) this.innerAudioContext.stop()
       this.innerAudioContext.destroy()
       this.innerAudioContext = null
     }
@@ -843,7 +848,9 @@ Page({
       this.stopVoicePlayback()
       return
     }
-    this.innerAudioContext.stop()
+    if (this.data.playingVoiceId) {
+      this.innerAudioContext.stop()
+    }
     try {
       let playableUrl = message.voiceUrl
       if (playableUrl.startsWith('cloud://')) {
@@ -862,8 +869,9 @@ Page({
   },
 
   stopVoicePlayback() {
+    if (!this.data.playingVoiceId) return
     if (this.innerAudioContext) this.innerAudioContext.stop()
-    if (this.data.playingVoiceId) this.setData({ playingVoiceId: '' })
+    this.setData({ playingVoiceId: '' })
   },
 
   async retryMediaMessage(e) {
