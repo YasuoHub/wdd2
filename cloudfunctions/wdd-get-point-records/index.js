@@ -146,8 +146,11 @@ async function getBalanceRecords(userId, page, pageSize) {
   const skip = page * pageSize
   const visibleRecordWhere = {
     user_id: userId,
-    // 钱包收支明细只展示真实获得/扣除；冻结、解冻、取消退款属于资金状态回退，不作为收支展示。
-    type: _.nin(['freeze', 'unfreeze', 'refund', 'arbitration_refund'])
+    // 钱包收支明细只展示实际余额发生变化的记录。
+    // 纯平台抵扣金赠送、兑换或支付的 amount 均为 0，因此不会混入余额流水。
+    // 冻结、解冻、取消退款属于资金状态回退，也不作为收支展示。
+    type: _.nin(['freeze', 'unfreeze', 'refund', 'arbitration_refund']),
+    amount: _.neq(0)
   }
 
   // 查询总数
