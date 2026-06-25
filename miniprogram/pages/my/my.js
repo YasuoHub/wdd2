@@ -432,12 +432,6 @@ Page({
     })
   },
 
-  goToExperiences() {
-    wx.navigateTo({
-      url: '/pages/experiences/experiences'
-    })
-  },
-
   goToFeedback() {
     if (!this.checkLoginAndShowTip()) return
     wx.navigateTo({
