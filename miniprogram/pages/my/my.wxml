@@ -165,6 +165,15 @@
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>
+      <view class="menu-item no-desc" bindtap="goToFeedbackAdmin">
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="message-square-text" color="#7B61D1" size="38"></wdd-icon>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">意见反馈处理</text>
+        </view>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
+      </view>
     </view>
   </view>
 
@@ -210,6 +219,15 @@
   <view class="menu-section">
     <view class="menu-title">其他</view>
     <view class="menu-list">
+      <view class="menu-item no-desc" bindtap="goToFeedback">
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="message-square-text" color="#7B61D1" size="38"></wdd-icon>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">意见反馈</text>
+        </view>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
+      </view>
       <view class="menu-item no-desc" bindtap="showAbout">
         <view class="menu-icon-wrapper">
           <wdd-icon name="info" color="#FF6B9D" size="38"></wdd-icon>

@@ -1,0 +1,57 @@
+<view class="container wdd-page {{canResolve ? 'has-action' : ''}}">
+  <view class="wdd-page-bg"></view>
+  <view wx:if="{{loading}}" class="state-text">加载中...</view>
+  <block wx:elif="{{feedback}}">
+    <view class="section status-section">
+      <text class="section-title">处理状态</text>
+      <text class="status {{feedback.status}}">{{feedback.status === 'resolved' ? '已处理' : '待处理'}}</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">反馈内容</text>
+      <view class="info-row">
+        <text class="label">标题</text>
+        <text class="value">{{feedback.title}}</text>
+      </view>
+      <view class="info-row long">
+        <text class="label">内容</text>
+        <text class="value pre-wrap">{{feedback.content}}</text>
+      </view>
+      <view wx:if="{{feedback.images.length > 0}}" class="images">
+        <image wx:for="{{feedback.images}}" wx:key="*this" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" />
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">提交信息</text>
+      <view wx:if="{{feedback.submitter}}" class="info-row">
+        <text class="label">提交用户</text>
+        <text class="value">{{feedback.submitter.nickname}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">提交时间</text>
+        <text class="value">{{createTimeText}}</text>
+      </view>
+      <view wx:if="{{feedback.deviceInfo.version}}" class="info-row">
+        <text class="label">小程序版本</text>
+        <text class="value">{{feedback.deviceInfo.version}}</text>
+      </view>
+      <view wx:if="{{feedback.deviceInfo.system || feedback.deviceInfo.model}}" class="info-row long">
+        <text class="label">设备环境</text>
+        <text class="value">{{feedback.deviceInfo.model}} {{feedback.deviceInfo.system}}</text>
+      </view>
+      <view wx:if="{{feedback.status === 'resolved'}}" class="info-row">
+        <text class="label">处理时间</text>
+        <text class="value">{{resolveTimeText}}</text>
+      </view>
+      <view wx:if="{{feedback.handler}}" class="info-row">
+        <text class="label">处理客服</text>
+        <text class="value">{{feedback.handler.nickname}}</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{canResolve}}" class="action-bar">
+    <button disabled="{{resolving}}" bindtap="confirmResolve">{{resolving ? '处理中...' : '已知晓'}}</button>
+  </view>
+</view>

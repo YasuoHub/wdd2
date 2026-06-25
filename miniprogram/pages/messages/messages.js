@@ -495,7 +495,8 @@ Page({
       'appeal_reminder': { name: 'clock-3', color: 'var(--vitality-yellow)' },
       'report_reminder': { name: 'clock-3', color: 'var(--vitality-yellow)' },
       'arbitration_result': { name: 'file-check-2', color: 'var(--fresh-mint)' },
-      'task_auto_completed': { name: 'circle-check-big', color: 'var(--fresh-mint)' }
+      'task_auto_completed': { name: 'circle-check-big', color: 'var(--fresh-mint)' },
+      'feedback_received': { name: 'message-square-text', color: '#7B61D1' }
     }
     return iconMap[type] || { name: 'megaphone', color: 'var(--brand-primary)' }
   },
@@ -505,7 +506,7 @@ Page({
     const item = e.currentTarget.dataset.item
     if (!item) return
 
-    const { type, need_id, appeal_id, report_id } = item
+    const { type, need_id, appeal_id, report_id, feedback_id } = item
 
     // 标记已读
     this.markNotificationAsRead(item._id)
@@ -553,6 +554,13 @@ Page({
         break
       case 'arbitration_result':
         wx.switchTab({ url: '/pages/my-needs/my-needs' })
+        break
+      case 'feedback_received':
+        if (feedback_id) {
+          wx.navigateTo({
+            url: `/pages/feedback-detail/feedback-detail?feedbackId=${feedback_id}`
+          })
+        }
         break
       default:
         // 不跳转

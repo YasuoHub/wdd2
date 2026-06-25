@@ -13,6 +13,7 @@ const DEFAULT_FORM = {
   min_reward_amount: '',
   max_reward_amount: '',
   register_gift_deduction: '',
+  feedback_daily_limit: '',
   points_register: '',
   points_invite: '',
   points_signIn_daily: '',
@@ -98,6 +99,7 @@ Page({
             min_reward_amount: String(cfg.min_reward_amount ?? ''),
             max_reward_amount: String(cfg.max_reward_amount ?? ''),
             register_gift_deduction: String(cfg.register_gift_deduction ?? cfg.register_gift_balance ?? ''),
+            feedback_daily_limit: String(cfg.feedback_daily_limit ?? 3),
             points_register: String(points.register ?? ''),
             points_invite: String(points.invite ?? ''),
             points_signIn_daily: formatArrayValue(signIn.daily),
@@ -151,6 +153,7 @@ Page({
       min_reward_amount: numberValue(form, 'min_reward_amount', '最小悬赏金额'),
       max_reward_amount: numberValue(form, 'max_reward_amount', '最大悬赏金额'),
       register_gift_deduction: numberValue(form, 'register_gift_deduction', '注册赠送平台抵扣金'),
+      feedback_daily_limit: integerValue(form, 'feedback_daily_limit', '意见反馈每日提交上限'),
       points: {
         register: integerValue(form, 'points_register', '注册奖励积分'),
         invite: integerValue(form, 'points_invite', '邀请奖励积分'),
@@ -175,6 +178,9 @@ Page({
     }
     if (payload.withdraw_min_per_request > payload.withdraw_max_per_request) {
       throw new Error('单次提现最低金额不能大于单次提现最高金额')
+    }
+    if (payload.feedback_daily_limit <= 0 || payload.feedback_daily_limit > 20) {
+      throw new Error('意见反馈每日提交上限必须在1到20之间')
     }
 
     return payload

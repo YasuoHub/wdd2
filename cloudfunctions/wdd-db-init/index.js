@@ -35,6 +35,8 @@ exports.main = async (event, context) => {
     // wdd-withdraw-records: 提现记录
     // wdd-media-check-callbacks: 媒体审核回调暂存
     await ensureCollection('wdd-media-check-callbacks')
+    await ensureCollection('wdd-feedbacks')
+    await ensureCollection('wdd-feedback-daily-quotas')
 
     // 2. 为用户表新增金额字段（如果字段不存在则设置默认值）
     const userUpdateRes = await db.collection('wdd-users').where({

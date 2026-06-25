@@ -414,6 +414,19 @@ Page({
     })
   },
 
+  goToFeedbackAdmin() {
+    wx.navigateTo({
+      url: '/pages/feedback-admin/feedback-admin'
+    })
+  },
+
+  goToFeedback() {
+    if (!this.checkLoginAndShowTip()) return
+    wx.navigateTo({
+      url: '/pages/feedback/feedback'
+    })
+  },
+
   // 跳转到我的举报
   goToMyReports() {
     if (!this.checkLoginAndShowTip()) return

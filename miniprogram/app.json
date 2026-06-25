@@ -32,7 +32,11 @@
     "pages/appeal-detail/appeal-detail",
     "pages/fund-approval/fund-approval",
     "pages/ops-analytics/ops-analytics",
-    "pages/system-config/system-config"
+    "pages/system-config/system-config",
+    "pages/feedback/feedback",
+    "pages/my-feedback/my-feedback",
+    "pages/feedback-admin/feedback-admin",
+    "pages/feedback-detail/feedback-detail"
   ],
   "window": {
     "backgroundTextStyle": "dark",

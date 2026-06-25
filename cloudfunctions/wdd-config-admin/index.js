@@ -19,6 +19,7 @@ const DEFAULT_CONFIG = {
   min_reward_amount: 1,
   max_reward_amount: 500,
   register_gift_deduction: 3,
+  feedback_daily_limit: 3,
   points: {
     register: 100,
     invite: 50,
@@ -44,6 +45,7 @@ const EDITABLE_KEYS = [
   'min_reward_amount',
   'max_reward_amount',
   'register_gift_deduction',
+  'feedback_daily_limit',
   'points',
   'customer_service_openids',
   'max_transfer_retry',
@@ -167,6 +169,7 @@ function validatePayload(payload) {
   next.min_reward_amount = toFiniteNumber(payload.min_reward_amount, '最小悬赏金额')
   next.max_reward_amount = toFiniteNumber(payload.max_reward_amount, '最大悬赏金额')
   next.register_gift_deduction = toFiniteNumber(payload.register_gift_deduction, '新用户注册平台抵扣金')
+  next.feedback_daily_limit = toInteger(payload.feedback_daily_limit, '意见反馈每日提交上限')
   next.max_transfer_retry = toInteger(payload.max_transfer_retry, '最大转账重试次数')
   next.transfer_query_timeout_minutes = toInteger(payload.transfer_query_timeout_minutes, '转账查询超时分钟')
 
@@ -198,6 +201,9 @@ function validatePayload(payload) {
   }
   if (next.withdraw_daily_times <= 0) {
     throw new Error('单日提现次数上限必须大于 0')
+  }
+  if (next.feedback_daily_limit <= 0 || next.feedback_daily_limit > 20) {
+    throw new Error('意见反馈每日提交上限必须在 1 到 20 之间')
   }
   if (next.max_transfer_retry < 0) {
     throw new Error('最大转账重试次数不能小于 0')

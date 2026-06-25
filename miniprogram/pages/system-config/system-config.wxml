@@ -193,6 +193,16 @@
         <wdd-icon name="headphones" color="#FF6B6B" size="32"></wdd-icon>
         <text>客服配置</text>
       </view>
+      <view class="form-row">
+        <view class="label-block">
+          <text class="form-label">意见反馈每日提交上限</text>
+          <text class="form-tip">每位用户按北京时间每日最多可提交的反馈数量</text>
+        </view>
+        <view class="input-box">
+          <input type="number" value="{{form.feedback_daily_limit}}" data-key="feedback_daily_limit" bindinput="onInput" />
+          <text class="unit">条</text>
+        </view>
+      </view>
       <view class="textarea-row">
         <view class="label-block">
           <text class="form-label">客服 OpenID 白名单</text>

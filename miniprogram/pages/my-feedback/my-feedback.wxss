@@ -1,0 +1,15 @@
+.container { height: 100vh; background: #F5F7FA; }
+.list-scroll { position: relative; z-index: 1; height: 100%; box-sizing: border-box; padding: 28rpx 32rpx calc(40rpx + env(safe-area-inset-bottom)); }
+.card-list { display: flex; flex-direction: column; gap: 22rpx; }
+.feedback-card { padding: 28rpx; background: #FFFFFF; border: 1rpx solid var(--brand-primary-12); border-radius: 26rpx; box-shadow: var(--shadow-card); }
+.card-head { display: flex; align-items: flex-start; gap: 20rpx; }
+.card-title { flex: 1; color: var(--text-primary); font-size: 31rpx; font-weight: 600; line-height: 1.45; }
+.status { flex-shrink: 0; padding: 7rpx 15rpx; font-size: 22rpx; border-radius: 10rpx; }
+.status.pending { color: #946B00; background: #FFF3D6; }
+.status.resolved { color: #167A5D; background: #E5F7F0; }
+.card-content { display: -webkit-box; margin-top: 18rpx; overflow: hidden; color: var(--text-secondary); font-size: 26rpx; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.card-foot { display: flex; justify-content: space-between; margin-top: 22rpx; padding-top: 18rpx; color: var(--text-light); font-size: 22rpx; border-top: 1rpx solid #EEF1F5; }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding-top: 220rpx; }
+.empty-title { margin-top: 24rpx; color: var(--text-primary); font-size: 30rpx; }
+.empty-desc { margin-top: 10rpx; color: var(--text-light); font-size: 24rpx; }
+.state-text { padding: 50rpx 0; color: var(--text-light); font-size: 24rpx; text-align: center; }

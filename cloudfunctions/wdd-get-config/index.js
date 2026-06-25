@@ -20,6 +20,7 @@ const DEFAULT_CONFIG = {
   withdraw_daily_limit: 100,
   withdraw_daily_times: 1,
   register_gift_deduction: 3,
+  feedback_daily_limit: 3,
   points: {
     register: 100,
     invite: 50,
@@ -41,6 +42,7 @@ const PUBLIC_CONFIG_KEYS = [
   'withdraw_daily_limit',
   'withdraw_daily_times',
   'register_gift_deduction',
+  'feedback_daily_limit',
   'points'
 ]
 

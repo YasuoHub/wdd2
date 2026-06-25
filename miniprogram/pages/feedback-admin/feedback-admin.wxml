@@ -1,0 +1,32 @@
+<view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" data-tab="pending" bindtap="switchTab">待处理</view>
+    <view class="tab-item {{activeTab === 'resolved' ? 'active' : ''}}" data-tab="resolved" bindtap="switchTab">已处理</view>
+    <view class="tab-indicator {{activeTab === 'pending' ? 'left' : 'right'}}"></view>
+  </view>
+
+  <scroll-view class="list-scroll" scroll-y bindscrolltolower="loadMore" lower-threshold="100">
+    <view wx:if="{{loading && currentList.length === 0}}" class="state-text">加载中...</view>
+    <view wx:elif="{{currentList.length === 0}}" class="empty-state">
+      <wdd-icon name="clipboard-list" color="#9AA5B1" size="76"></wdd-icon>
+      <text class="empty-title">暂无{{activeTab === 'pending' ? '待处理' : '已处理'}}反馈</text>
+    </view>
+    <view wx:else class="card-list">
+      <view wx:for="{{currentList}}" wx:key="_id" class="feedback-card {{item.status}}" bindtap="goDetail" data-id="{{item._id}}">
+        <view class="card-head">
+          <text class="card-title">{{item.title}}</text>
+          <text class="status {{item.status}}">{{item.status === 'resolved' ? '已处理' : '待处理'}}</text>
+        </view>
+        <text class="card-content">{{item.content}}</text>
+        <view class="meta-row">
+          <text>{{item.submitter.nickname || '用户'}}</text>
+          <text>{{item.createTimeText}}</text>
+          <text wx:if="{{item.imageCount > 0}}">{{item.imageCount}}张图片</text>
+        </view>
+      </view>
+      <view wx:if="{{loading}}" class="state-text">加载中...</view>
+      <view wx:elif="{{!currentHasMore}}" class="state-text">— 没有更多了 —</view>
+    </view>
+  </scroll-view>
+</view>

@@ -1,0 +1,21 @@
+.container { height: 100vh; box-sizing: border-box; padding-top: 112rpx; background: #F5F7FA; }
+.tab-bar { position: fixed; z-index: 10; top: 0; left: 32rpx; right: 32rpx; display: flex; height: 76rpx; margin-top: 20rpx; padding: 6rpx; box-sizing: border-box; background: #ECF1FC; border-radius: 18rpx; }
+.tab-item { z-index: 2; display: flex; flex: 1; align-items: center; justify-content: center; color: #7B8794; font-size: 27rpx; }
+.tab-item.active { color: var(--brand-primary); font-weight: 600; }
+.tab-indicator { position: absolute; z-index: 1; top: 6rpx; bottom: 6rpx; width: calc(50% - 6rpx); background: #FFFFFF; border-radius: 14rpx; box-shadow: 0 4rpx 12rpx rgba(70, 94, 145, .12); transition: transform .2s; }
+.tab-indicator.left { transform: translateX(0); }
+.tab-indicator.right { transform: translateX(100%); }
+.list-scroll { position: relative; z-index: 1; height: 100%; box-sizing: border-box; padding: 0 32rpx calc(40rpx + env(safe-area-inset-bottom)); }
+.card-list { display: flex; flex-direction: column; gap: 22rpx; }
+.feedback-card { padding: 28rpx; background: #FFFFFF; border: 1rpx solid var(--brand-primary-12); border-radius: 26rpx; box-shadow: var(--shadow-card); }
+.feedback-card.resolved { opacity: .88; }
+.card-head { display: flex; align-items: flex-start; gap: 20rpx; }
+.card-title { flex: 1; color: var(--text-primary); font-size: 31rpx; font-weight: 600; line-height: 1.45; }
+.status { flex-shrink: 0; padding: 7rpx 15rpx; font-size: 22rpx; border-radius: 10rpx; }
+.status.pending { color: #946B00; background: #FFF3D6; }
+.status.resolved { color: #167A5D; background: #E5F7F0; }
+.card-content { display: -webkit-box; margin-top: 18rpx; overflow: hidden; color: var(--text-secondary); font-size: 26rpx; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.meta-row { display: flex; gap: 20rpx; margin-top: 22rpx; padding-top: 18rpx; color: var(--text-light); font-size: 22rpx; border-top: 1rpx solid #EEF1F5; }
+.empty-state { display: flex; flex-direction: column; align-items: center; padding-top: 220rpx; }
+.empty-title { margin-top: 24rpx; color: var(--text-primary); font-size: 30rpx; }
+.state-text { padding: 50rpx 0; color: var(--text-light); font-size: 24rpx; text-align: center; }

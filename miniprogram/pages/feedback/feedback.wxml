@@ -1,0 +1,78 @@
+<view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
+
+  <view class="page-head">
+    <view>
+      <text class="page-title">告诉我们你的想法</text>
+      <text class="page-desc">你的建议会直接送达平台客服</text>
+    </view>
+    <view class="history-btn" bindtap="goToMyFeedback">
+      <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="26"></wdd-icon>
+      <text>我的反馈</text>
+    </view>
+  </view>
+
+  <view class="quota-card">
+    <wdd-icon name="circle-alert" color="var(--vitality-orange)" size="28"></wdd-icon>
+    <text wx:if="{{metaLoading}}">正在查询今日提交额度...</text>
+    <text wx:else>今日还可提交 {{remaining}} 条，每日上限 {{dailyLimit}} 条</text>
+  </view>
+
+  <view class="form-card">
+    <view class="field">
+      <view class="field-head">
+        <text class="field-label">标题</text>
+        <text class="required">*</text>
+        <text class="count">{{title.length}}/40</text>
+      </view>
+      <input
+        class="title-input"
+        value="{{title}}"
+        maxlength="40"
+        placeholder="请简要概括你的意见"
+        bindinput="onTitleInput"
+      />
+    </view>
+
+    <view class="field">
+      <view class="field-head">
+        <text class="field-label">反馈内容</text>
+        <text class="required">*</text>
+        <text class="count">{{content.length}}/500</text>
+      </view>
+      <textarea
+        class="content-input"
+        value="{{content}}"
+        maxlength="500"
+        placeholder="请详细描述遇到的问题或改进建议，至少5个字"
+        bindinput="onContentInput"
+      />
+    </view>
+
+    <view class="field">
+      <view class="field-head">
+        <text class="field-label">相关图片</text>
+        <text class="optional">选填，最多3张</text>
+      </view>
+      <view class="image-list">
+        <view wx:for="{{images}}" wx:key="*this" class="image-item">
+          <image src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" />
+          <view class="remove-btn" catchtap="removeImage" data-index="{{index}}">
+            <wdd-icon name="x" color="#FFFFFF" size="22"></wdd-icon>
+          </view>
+        </view>
+        <view wx:if="{{images.length < 3}}" class="upload-btn {{uploading ? 'disabled' : ''}}" bindtap="chooseImage">
+          <wdd-icon name="image-plus" color="#7B8794" size="34"></wdd-icon>
+          <text>{{uploading ? '上传中' : '添加图片'}}</text>
+        </view>
+      </view>
+      <text class="upload-tip">支持从相册选择或拍照，上传失败可重新选择</text>
+    </view>
+  </view>
+
+  <button
+    class="submit-btn"
+    disabled="{{submitting || uploading || remaining <= 0}}"
+    bindtap="confirmSubmit"
+  >{{submitting ? '提交中...' : (remaining <= 0 ? '今日提交次数已用完' : '提交反馈')}}</button>
+</view>

@@ -35,6 +35,8 @@ const DEFAULT_TARGET_COLLECTIONS = [
   'wdd-reports',
   'wdd-appeals',
   'wdd-tickets',
+  'wdd-feedbacks',
+  'wdd-feedback-daily-quotas',
   'wdd-withdraw-records',
   'wdd-settlement-records'
 ]

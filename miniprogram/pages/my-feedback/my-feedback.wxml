@@ -1,0 +1,26 @@
+<view class="container wdd-page">
+  <view class="wdd-page-bg"></view>
+  <scroll-view class="list-scroll" scroll-y bindscrolltolower="loadMore" lower-threshold="100">
+    <view wx:if="{{loading && list.length === 0}}" class="state-text">加载中...</view>
+    <view wx:elif="{{list.length === 0}}" class="empty-state">
+      <wdd-icon name="message-square-text" color="#9AA5B1" size="76"></wdd-icon>
+      <text class="empty-title">暂无意见反馈</text>
+      <text class="empty-desc">你提交的反馈会保存在这里</text>
+    </view>
+    <view wx:else class="card-list">
+      <view wx:for="{{list}}" wx:key="_id" class="feedback-card" bindtap="goDetail" data-id="{{item._id}}">
+        <view class="card-head">
+          <text class="card-title">{{item.title}}</text>
+          <text class="status {{item.status}}">{{item.status === 'resolved' ? '已处理' : '待处理'}}</text>
+        </view>
+        <text class="card-content">{{item.content}}</text>
+        <view class="card-foot">
+          <text>{{item.createTimeText}}</text>
+          <text wx:if="{{item.images.length > 0}}">{{item.images.length}}张图片</text>
+        </view>
+      </view>
+      <view wx:if="{{loading}}" class="state-text">加载中...</view>
+      <view wx:elif="{{!hasMore}}" class="state-text">— 没有更多了 —</view>
+    </view>
+  </scroll-view>
+</view>
