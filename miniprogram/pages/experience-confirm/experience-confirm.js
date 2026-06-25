@@ -1,9 +1,13 @@
+const DateUtil = require('../../utils/dateUtil')
+
 Page({
   data: {
     experienceId: '',
     experience: null,
     canHandle: false,
     statusNote: '',
+    deadlineText: '',
+    autoRuleText: '',
     loading: true,
     handling: false
   },
@@ -28,6 +32,8 @@ Page({
         experience: result.data.experience,
         canHandle: !!result.data.canHandle,
         statusNote: this.buildStatusNote(result.data.experience, !!result.data.canHandle),
+        deadlineText: this.buildDeadlineText(result.data.experience),
+        autoRuleText: this.buildAutoRuleText(result.data.experience, !!result.data.canHandle),
         loading: false
       })
     } catch (err) {
@@ -47,6 +53,24 @@ Page({
     if (status === 'withdrawn') return '求助者已取消本次分享申请。'
     if (status === 'down') return '该经验已下架，当前无需处理。'
     return '该分享已经处理，无需再次操作。'
+  },
+
+  buildDeadlineText(experience) {
+    if (!experience || experience.status !== 'pending_confirmation') return ''
+    const deadlineText = DateUtil.formatDateTime(experience.confirm_deadline)
+    return deadlineText ? `请在 ${deadlineText} 前处理` : ''
+  },
+
+  buildAutoRuleText(experience, canHandle) {
+    if (!experience || experience.status !== 'pending_confirmation') return ''
+    if (experience.helper_share_authorized) {
+      return canHandle
+        ? '你接单时已同意逾期自动按预览内容发布；如不想公开，请在截止前选择暂不分享。'
+        : '你接单时已同意逾期自动发布，当前等待系统处理。'
+    }
+    return canHandle
+      ? '你接单时未授权逾期自动发布；若截止前不处理，本次分享申请会失效。'
+      : '你接单时未授权逾期自动发布，截止后本次分享申请会失效。'
   },
 
   handle(e) {

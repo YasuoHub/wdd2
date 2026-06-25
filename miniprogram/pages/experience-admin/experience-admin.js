@@ -39,7 +39,7 @@ Page({
   },
 
   goDetail(e) {
-    wx.navigateTo({ url: `/pages/experience-detail/experience-detail?experienceId=${e.currentTarget.dataset.id}` })
+    wx.navigateTo({ url: `/pages/experience-detail/experience-detail?experienceId=${e.currentTarget.dataset.id}&admin=1` })
   },
 
   changeStatus(e) {

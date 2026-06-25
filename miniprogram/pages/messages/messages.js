@@ -514,7 +514,7 @@ Page({
     const item = e.currentTarget.dataset.item
     if (!item) return
 
-    const { type, need_id, appeal_id, report_id, feedback_id, experience_id } = item
+    const { type, need_id, appeal_id, report_id, feedback_id, experience_id, report_result } = item
 
     // 标记已读
     this.markNotificationAsRead(item._id)
@@ -578,8 +578,16 @@ Page({
         }
         break
       case 'experience_published':
-      case 'experience_report_result':
         if (experience_id) {
+          wx.navigateTo({
+            url: `/pages/experience-detail/experience-detail?experienceId=${experience_id}`
+          })
+        }
+        break
+      case 'experience_report_result':
+        if (report_result === 'down') {
+          wx.showToast({ title: '该经验已下架', icon: 'none' })
+        } else if (experience_id) {
           wx.navigateTo({
             url: `/pages/experience-detail/experience-detail?experienceId=${experience_id}`
           })

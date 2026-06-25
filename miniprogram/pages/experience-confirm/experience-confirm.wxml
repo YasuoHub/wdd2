@@ -4,6 +4,10 @@
     <view class="status-note">
       {{statusNote}}
     </view>
+    <view wx:if="{{deadlineText || autoRuleText}}" class="confirm-rule-panel">
+      <text wx:if="{{deadlineText}}" class="confirm-rule-line">{{deadlineText}}</text>
+      <text wx:if="{{autoRuleText}}" class="confirm-rule-line">{{autoRuleText}}</text>
+    </view>
     <view class="detail-section">
       <text class="section-title">公开标题</text>
       <text class="detail-value strong-value">{{experience.title}}</text>

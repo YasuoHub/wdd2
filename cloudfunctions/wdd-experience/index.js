@@ -26,6 +26,10 @@ function text(value, max = 500) {
   return String(value || '').trim().slice(0, max)
 }
 
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 function normalizeImages(value) {
   if (!Array.isArray(value)) return []
   return value.map(item => text(item, 500)).filter(item => item.startsWith('cloud://')).slice(0, 9)
@@ -365,10 +369,11 @@ function toPublicExperience(item, currentUserId, liked) {
   }
 }
 
-async function addNotification(userId, type, title, content, experience) {
+async function addNotification(userId, type, title, content, experience, extraData = {}) {
   if (!userId) return
   await db.collection('wdd-notifications').add({
     data: {
+      ...extraData,
       user_id: userId,
       type,
       title,
@@ -565,6 +570,14 @@ async function saveDraft(event, openid) {
     await transaction.collection('wdd-experiences').doc(experienceId).update({ data: update })
     await transaction.commit()
 
+    const ratingRes = isFirstSubmit
+      ? await db.collection('wdd-ratings').where({
+        need_id: experience.need_id,
+        rater_id: user._id,
+        rating_type: 'seeker'
+      }).count().catch(() => ({ total: 0 }))
+      : { total: 0 }
+
     if (isFirstSubmit) {
       const latest = { ...experience, ...update, _id: experienceId }
       const deadlineText = formatBeijingTime(update.confirm_deadline)
@@ -576,7 +589,15 @@ async function saveDraft(event, openid) {
         latest
       ).catch(err => console.error('发送经验确认通知失败:', err))
     }
-    return { code: 0, message: isFirstSubmit ? '已提交帮助者确认' : '修改已保存', data: { version: nextVersion } }
+    return {
+      code: 0,
+      message: isFirstSubmit ? '已提交帮助者确认' : '修改已保存',
+      data: {
+        version: nextVersion,
+        isFirstSubmit,
+        hasRated: ratingRes.total > 0
+      }
+    }
   } catch (err) {
     await transaction.rollback().catch(() => {})
     throw err
@@ -727,8 +748,8 @@ async function getPublicList(event, openid) {
     ? _.and([
       { status: 'published' },
       _.or([
-        { title: db.RegExp({ regexp: keyword, options: 'i' }) },
-        { public_location: db.RegExp({ regexp: keyword, options: 'i' }) }
+        { title: db.RegExp({ regexp: escapeRegExp(keyword), options: 'i' }) },
+        { public_location: db.RegExp({ regexp: escapeRegExp(keyword), options: 'i' }) }
       ])
     ])
     : { status: 'published' }
@@ -791,6 +812,16 @@ async function getPublicDetail(event, openid) {
     liked = !!(likeRes && likeRes.data)
   }
   return { code: 0, data: { experience: toPublicExperience(item, user && user._id, liked) } }
+}
+
+async function getAdminExperienceDetail(event, openid) {
+  if (!await isCustomerService(openid)) return { code: 403, message: '无权访问' }
+  const experienceId = text(event.experienceId, 100)
+  const res = await db.collection('wdd-experiences').doc(experienceId).get().catch(() => null)
+  const item = res && res.data
+  if (!item) return { code: 404, message: '经验不存在' }
+  if (!['published', 'down'].includes(item.status)) return { code: 409, message: '当前经验尚未公开，暂不能在管理详情查看' }
+  return { code: 0, data: { experience: toPublicExperience(item, null, false), adminMode: true } }
 }
 
 async function toggleLike(event, openid) {
@@ -1069,7 +1100,8 @@ async function resolveReportTicket(event, openid) {
       'experience_report_result',
       '经验举报处理结果',
       `你举报的经验“${experience.title}”已处理，结果为${result === 'down' ? '已下架' : '不予处理'}。`,
-      experience
+      experience,
+      { report_result: result }
     )))
     if (result === 'down') {
       const content = `你参与发布的经验“${experience.title}”已由平台下架。`
@@ -1106,6 +1138,7 @@ exports.main = async (event = {}) => {
       case 'processExpired': return await processExpired()
       case 'getPublicList': return await getPublicList(event, OPENID)
       case 'getPublicDetail': return await getPublicDetail(event, OPENID)
+      case 'getAdminExperienceDetail': return await getAdminExperienceDetail(event, OPENID)
       case 'toggleLike': return await toggleLike(event, OPENID)
       case 'submitReport': return await submitReport(event, OPENID)
       case 'getAdminExperiences': return await getAdminExperiences(event, OPENID)

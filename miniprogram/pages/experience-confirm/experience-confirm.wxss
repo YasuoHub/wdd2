@@ -5,3 +5,21 @@
   font-size: 32rpx;
   font-weight: 600;
 }
+
+.confirm-rule-panel {
+  margin: -8rpx 0 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  background: #eef6ff;
+}
+
+.confirm-rule-line {
+  display: block;
+  color: #35516a;
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.confirm-rule-line + .confirm-rule-line {
+  margin-top: 8rpx;
+}

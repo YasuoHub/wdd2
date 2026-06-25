@@ -41,7 +41,7 @@
           wx:key="*this"
           class="star {{rating.rating >= item ? 'active' : ''}}"
         >
-          <wdd-icon name="star" color="{{rating.rating >= item ? '#FFD166' : '#C4D8E5'}}" size="48"></wdd-icon>
+          <text class="star-symbol">{{rating.rating >= item ? '★' : '☆'}}</text>
         </view>
       </view>
       <text class="rating-score">{{rating.rating}}分</text>
@@ -56,7 +56,7 @@
           wx:key="*this"
           class="tag"
         >
-          {{item}}
+          <text>{{item}}</text>
         </view>
       </view>
     </view>

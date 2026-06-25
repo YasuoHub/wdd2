@@ -118,7 +118,6 @@
       </view>
     </view>
   </view>
-  <view class="status-note">提交后会更新帮助者看到的预览；若已进入确认期，48小时截止时间不会重新计算。</view>
   <view class="report-actions">
     <button class="secondary-button" bindtap="closePreview">再改改</button>
     <button class="primary-button" loading="{{saving}}" bindtap="confirmSubmit">确认提交</button>

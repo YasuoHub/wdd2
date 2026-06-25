@@ -269,6 +269,7 @@ Page({
 
   async confirmSubmit() {
     if (!this.data.editable || this.data.saving) return
+    const wasSubmitted = this.data.submittedOnce
     this.setData({ saving: true })
     wx.showLoading({ title: '提交中...' })
     try {
@@ -284,6 +285,11 @@ Page({
       this.setData({ submittedOnce: true, status: 'pending_confirmation', showPreview: false })
       wx.showToast({ title: result.message, icon: 'success' })
       getApp().globalData.refreshMyNeeds = true
+      if (!wasSubmitted && !(result.data && result.data.hasRated)) {
+        setTimeout(() => {
+          wx.redirectTo({ url: `/pages/rating/rating?needId=${this.data.needId}&type=seeker` })
+        }, 900)
+      }
     } catch (err) {
       wx.showToast({ title: err.message || '提交失败', icon: 'none' })
       await this.loadExisting()

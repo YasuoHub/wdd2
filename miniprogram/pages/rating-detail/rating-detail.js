@@ -13,10 +13,10 @@ Page({
   },
 
   onLoad(options) {
-    const { needId } = options
+    const { needId, type } = options
     this.setData({
       needId: needId || '',
-      ratingType: 'seeker'
+      ratingType: type || 'seeker'
     })
 
     if (!needId) {

@@ -1,18 +1,9 @@
 <view class="experience-page experience-list-page wdd-page">
   <view class="wdd-page-bg"></view>
-  <view class="experience-header">
-    <view>
-      <text class="experience-page-title">查经验</text>
-      <text class="experience-page-subtitle">按最新分享排序，快速查看真实现场反馈</text>
-    </view>
-    <view class="experience-header-icon">
-      <wdd-icon name="file-text" color="var(--brand-primary)" size="38"></wdd-icon>
-    </view>
-  </view>
 
   <view class="experience-search-panel">
     <view class="search-row">
-      <input class="search-input" value="{{keyword}}" placeholder="搜索地点或经验标题" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
+      <input class="search-input" value="{{keyword}}" placeholder="搜索地点或感兴趣的内容" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
       <button class="search-button" bindtap="search">
         <wdd-icon name="search" color="#ffffff" size="26"></wdd-icon>
         <text>搜索</text>
@@ -30,7 +21,7 @@
   </view>
   <view wx:elif="{{list.length === 0 && !loading}}" class="experience-empty">
     <wdd-icon name="file-text" color="#9AA5B1" size="64"></wdd-icon>
-    <text>暂时还没有可查看的查经验内容</text>
+    <text>暂无分享经验</text>
   </view>
   <view class="experience-list">
     <view wx:for="{{list}}" wx:key="_id" class="experience-card" bindtap="goDetail" data-id="{{item._id}}">

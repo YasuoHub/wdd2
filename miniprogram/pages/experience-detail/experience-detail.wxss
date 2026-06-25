@@ -23,16 +23,6 @@
   overflow: hidden;
 }
 
-.detail-hero::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 24rpx;
-  width: 6rpx;
-  height: 76rpx;
-  border-radius: 0 6rpx 6rpx 0;
-  background: linear-gradient(180deg, var(--sky-primary) 0%, var(--sky-light) 100%);
-}
 
 .experience-detail-page .experience-title {
   color: #1f2d3d;
@@ -170,10 +160,8 @@
   margin-top: 8rpx;
   margin-bottom: 28rpx;
   padding: 18rpx 20rpx;
-  border: 1rpx solid #e1e8f0;
   border-radius: 10rpx;
   color: #667085;
-  background: #ffffff;
   font-size: 26rpx;
   line-height: 1.5;
   text-align: center;

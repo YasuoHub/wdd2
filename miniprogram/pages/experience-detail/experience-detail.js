@@ -3,6 +3,7 @@ const app = getApp()
 Page({
   data: {
     experienceId: '',
+    adminMode: false,
     experience: null,
     loading: true,
     showReport: false,
@@ -11,7 +12,10 @@ Page({
   },
 
   onLoad(options) {
-    this.setData({ experienceId: options.experienceId || '' })
+    this.setData({
+      experienceId: options.experienceId || '',
+      adminMode: options.admin === '1'
+    })
     this.loadDetail()
   },
 
@@ -23,7 +27,10 @@ Page({
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-experience',
-        data: { action: 'getPublicDetail', experienceId: this.data.experienceId }
+        data: {
+          action: this.data.adminMode ? 'getAdminExperienceDetail' : 'getPublicDetail',
+          experienceId: this.data.experienceId
+        }
       })
       if (result.code !== 0) throw new Error(result.message)
       this.setData({ experience: result.data.experience, loading: false })
