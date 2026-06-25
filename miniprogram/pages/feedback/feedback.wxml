@@ -12,12 +12,6 @@
     </view>
   </view>
 
-  <view class="quota-card">
-    <wdd-icon name="circle-alert" color="var(--vitality-orange)" size="28"></wdd-icon>
-    <text wx:if="{{metaLoading}}">正在查询今日提交额度...</text>
-    <text wx:else>今日还可提交 {{remaining}} 条，每日上限 {{dailyLimit}} 条</text>
-  </view>
-
   <view class="form-card">
     <view class="field">
       <view class="field-head">
@@ -70,9 +64,10 @@
     </view>
   </view>
 
+  <text wx:if="{{!metaLoading && remaining <= 0}}" class="quota-limit-tip">今日已提交{{dailyLimit}}条反馈，辛苦您了，休息一下明日再来吧。</text>
   <button
     class="submit-btn"
-    disabled="{{submitting || uploading || remaining <= 0}}"
+    disabled="{{metaLoading || submitting || uploading || remaining <= 0}}"
     bindtap="confirmSubmit"
-  >{{submitting ? '提交中...' : (remaining <= 0 ? '今日提交次数已用完' : '提交反馈')}}</button>
+  >{{metaLoading ? '额度查询中...' : (submitting ? '提交中...' : (remaining <= 0 ? '今日提交次数已用完' : '提交反馈'))}}</button>
 </view>
