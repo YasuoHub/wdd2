@@ -6,7 +6,7 @@
 
 .task-context-panel,
 .edit-form-section {
-  margin-bottom: 22rpx;
+  margin-bottom: 42rpx;
   border: 1rpx solid #e1e8f0;
   border-radius: 14rpx;
   background: #ffffff;

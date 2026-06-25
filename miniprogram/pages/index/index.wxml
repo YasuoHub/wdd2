@@ -62,7 +62,7 @@
         <view class="action-icon secondary">
           <wdd-icon name="file-text" color="var(--brand-primary)" size="42"></wdd-icon>
         </view>
-        <text class="secondary-title">当地经验</text>
+        <text class="secondary-title">查经验</text>
         <wdd-icon name="chevron-right" color="var(--brand-primary)" size="26"></wdd-icon>
       </view>
     </view>
