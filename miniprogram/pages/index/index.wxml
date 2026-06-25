@@ -58,11 +58,11 @@
           </view>
         </view>
       </view>
-      <view class="secondary-action" bindtap="goToTaskHall">
+      <view class="secondary-action" bindtap="goToExperiences">
         <view class="action-icon secondary">
-          <wdd-icon name="users-round" color="var(--brand-primary)" size="42"></wdd-icon>
+          <wdd-icon name="file-text" color="var(--brand-primary)" size="42"></wdd-icon>
         </view>
-        <text class="secondary-title">去大厅</text>
+        <text class="secondary-title">当地经验</text>
         <wdd-icon name="chevron-right" color="var(--brand-primary)" size="26"></wdd-icon>
       </view>
     </view>
