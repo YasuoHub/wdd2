@@ -10,13 +10,6 @@ const FILTER_MAP = {
   'cancelled': { text: '已取消', status: ['cancelled'] },
   'breaking': { text: '审核中', status: ['breaking'] }
 }
-const EXPERIENCE_TERMINAL_STATUSES = ['published', 'rejected', 'withdrawn', 'expired', 'down']
-
-function canShowExperienceShare(item = {}) {
-  if (item.status !== 'completed') return false
-  const experienceStatus = item.experienceStatus || ''
-  return !EXPERIENCE_TERMINAL_STATUSES.includes(experienceStatus)
-}
 
 function getBaseAmount(item = {}) {
   return Number(item.rewardAmount || item.reward_amount || 0)
@@ -299,9 +292,9 @@ Page({
       remainTime,
       createTime,
       showAppealBtn,
+      showExperienceShare: !!item.showExperienceShare,
       experienceId: item.experienceId || '',
-      experienceStatus: item.experienceStatus || '',
-      showExperienceShare: canShowExperienceShare(item)
+      experienceStatus: item.experienceStatus || ''
     }
   },
 
