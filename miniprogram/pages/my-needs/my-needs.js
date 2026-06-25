@@ -534,6 +534,9 @@ Page({
           platform_fee: settlementData.platformFee,
           taker_income: settlementData.takerIncome,
           takerIncome: settlementData.takerIncome,
+          showExperienceShare: true,
+          experienceId: '',
+          experienceStatus: '',
           isCompleting: false
         })
       })
