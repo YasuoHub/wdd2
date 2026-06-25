@@ -917,8 +917,10 @@ page {
 
 /* 平台规则弹窗 */
 .rules-modal-body {
+  height: calc(80vh - 190rpx - env(safe-area-inset-bottom));
   max-height: 60vh;
-  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
 }
 
 .rule-item {
@@ -1069,7 +1071,10 @@ page {
 }
 
 .rules-modal-body {
+  height: calc(80vh - 190rpx - env(safe-area-inset-bottom));
   max-height: 60vh;
+  box-sizing: border-box;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
 }
 
 .time-options {

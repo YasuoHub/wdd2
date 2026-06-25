@@ -348,7 +348,7 @@
   </bottom-sheet>
 
   <bottom-sheet show="{{showRulesModal}}" title="平台规则说明" maxHeight="80vh" bind:close="hidePlatformRules">
-    <view class="rules-modal-body">
+    <scroll-view class="rules-modal-body" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="rule-item">
         <wdd-icon name="circle-dollar-sign" color="var(--vitality-orange)" size="40"></wdd-icon>
         <view class="rule-content">
@@ -384,6 +384,6 @@
           <text class="rule-desc">帮助者可提现余额大于 0 元即可发起申请，手续费按平台配置执行；实际转账金额需符合微信单笔转账限制，并受每日额度和次数限制。</text>
         </view>
       </view>
-    </view>
+    </scroll-view>
   </bottom-sheet>
 </view>
