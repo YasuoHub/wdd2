@@ -30,9 +30,19 @@
       </view>
     </view>
 
-    <view class="card-actions">
-      <view wx:if="{{experience.canReport}}" class="inline-action danger" bindtap="openReport">举报</view>
-      <view wx:if="{{!experience.isParticipant}}" class="inline-action" bindtap="toggleLike">{{experience.isLiked ? '取消有用' : '有用'}} {{experience.usefulCount}}</view>
+    <view wx:if="{{!experience.isParticipant}}" class="detail-actions">
+      <button class="detail-action like-action {{experience.isLiked ? 'active' : ''}}" bindtap="toggleLike">
+        <wdd-icon name="circle-check-big" color="{{experience.isLiked ? '#ffffff' : 'var(--brand-primary)'}}" size="28"></wdd-icon>
+        <text>{{experience.isLiked ? '已觉得有用' : '觉得有用'}}</text>
+        <text class="action-count">{{experience.usefulCount}}</text>
+      </button>
+      <button class="detail-action report-action" bindtap="openReport">
+        <wdd-icon name="flag" color="#d64545" size="28"></wdd-icon>
+        <text>举报</text>
+      </button>
+    </view>
+    <view wx:else class="participant-note">
+      你参与了这条经验，不能点赞或举报。
     </view>
   </block>
 </view>

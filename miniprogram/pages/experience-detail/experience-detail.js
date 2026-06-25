@@ -27,7 +27,7 @@ Page({
       })
       if (result.code !== 0) throw new Error(result.message)
       this.setData({ experience: result.data.experience, loading: false })
-      wx.setNavigationBarTitle({ title: result.data.experience.title || '经验详情' })
+      wx.setNavigationBarTitle({ title: '经验详情' })
     } catch (err) {
       this.setData({ loading: false })
       wx.showModal({

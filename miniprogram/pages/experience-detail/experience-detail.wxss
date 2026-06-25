@@ -1,5 +1,65 @@
 @import "../../styles/experience.wxss";
 
+.detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 180rpx;
+  gap: 16rpx;
+  margin-top: 8rpx;
+  margin-bottom: 28rpx;
+}
+
+.detail-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 76rpx;
+  margin: 0;
+  padding: 0 22rpx;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  line-height: 76rpx;
+  box-sizing: border-box;
+}
+
+.detail-action::after {
+  border: 0;
+}
+
+.like-action {
+  color: var(--brand-primary);
+  border: 1rpx solid var(--brand-primary);
+  background: #ffffff;
+}
+
+.like-action.active {
+  color: #ffffff;
+  background: var(--brand-primary);
+}
+
+.report-action {
+  color: #d64545;
+  border: 1rpx solid #efb4b4;
+  background: #ffffff;
+}
+
+.action-count {
+  font-weight: 600;
+}
+
+.participant-note {
+  margin-top: 8rpx;
+  margin-bottom: 28rpx;
+  padding: 18rpx 20rpx;
+  border: 1rpx solid #e1e8f0;
+  border-radius: 10rpx;
+  color: #667085;
+  background: #ffffff;
+  font-size: 26rpx;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .report-mask {
   position: fixed;
   z-index: 50;
