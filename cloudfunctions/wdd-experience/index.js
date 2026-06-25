@@ -112,7 +112,7 @@ function getTaskMeta(need = {}) {
 function buildTaskTitle(need = {}) {
   const typeName = getTaskTypeName(need.type)
   const description = text(need.description, 28)
-  return description ? `${typeName}：${description}`.slice(0, 50) : `${typeName}当地经验`
+  return description ? `${typeName}：${description}`.slice(0, 50) : `${typeName}经验分享`
 }
 
 async function getExperienceByNeedId(needId) {
@@ -653,7 +653,10 @@ async function processExpired() {
 }
 
 async function getPublicList(event, openid) {
-  const user = await getCurrentUser(openid)
+  const user = await getCurrentUser(openid).catch(err => {
+    console.warn('查经验列表读取当前用户失败，按游客处理:', err.message || err)
+    return null
+  })
   const keyword = text(event.keyword, 50)
   const page = Math.max(1, Number(event.page) || 1)
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(event.pageSize) || 10))
@@ -666,26 +669,47 @@ async function getPublicList(event, openid) {
       ])
     ])
     : { status: 'published' }
-  const [countRes, listRes] = await Promise.all([
-    db.collection('wdd-experiences').where(where).count(),
-    db.collection('wdd-experiences').where(where).orderBy('published_time', 'desc')
-      .skip((page - 1) * pageSize).limit(pageSize).get()
-  ])
+  let listRes
+  try {
+    listRes = await db.collection('wdd-experiences').where(where)
+      .orderBy('published_time', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize + 1)
+      .get()
+  } catch (err) {
+    console.warn('查经验列表按发布时间排序失败，降级为无排序查询:', err.message || err)
+    try {
+      listRes = await db.collection('wdd-experiences').where(where)
+        .skip((page - 1) * pageSize)
+        .limit(pageSize + 1)
+        .get()
+    } catch (fallbackErr) {
+      const message = fallbackErr.message || fallbackErr.errMsg || ''
+      if (/collection|not exist|does not exist|不存在/i.test(message)) {
+        return { code: 0, data: { list: [], hasMore: false, total: 0 } }
+      }
+      throw fallbackErr
+    }
+  }
+  const pageItems = listRes.data.slice(0, pageSize)
   const likedIds = new Set()
-  if (user && listRes.data.length) {
-    const ids = listRes.data.map(item => item._id)
+  if (user && pageItems.length) {
+    const ids = pageItems.map(item => item._id)
     const likeRes = await db.collection('wdd-experience-likes').where({
       experience_id: _.in(ids),
       user_id: user._id
-    }).get()
+    }).get().catch(err => {
+      console.warn('查经验列表读取点赞状态失败，已忽略:', err.message || err)
+      return { data: [] }
+    })
     likeRes.data.forEach(item => likedIds.add(item.experience_id))
   }
   return {
     code: 0,
     data: {
-      list: listRes.data.map(item => toPublicExperience(item, user && user._id, likedIds.has(item._id))),
-      hasMore: page * pageSize < countRes.total,
-      total: countRes.total
+      list: pageItems.map(item => toPublicExperience(item, user && user._id, likedIds.has(item._id))),
+      hasMore: listRes.data.length > pageSize,
+      total: page === 1 ? pageItems.length : undefined
     }
   }
 }

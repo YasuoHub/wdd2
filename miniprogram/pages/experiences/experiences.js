@@ -1,9 +1,9 @@
 function getExperienceErrorMessage(err) {
   const rawMessage = String((err && (err.errMsg || err.message)) || '')
   if (rawMessage.includes('FUNCTION_NOT_FOUND') || rawMessage.includes('-501000') || rawMessage.includes('could not be found')) {
-    return '当地经验服务还没有部署，请先在云开发中部署 wdd-experience 云函数。'
+    return '查经验服务还没有部署，请先在云开发中部署 wdd-experience 云函数。'
   }
-  return '当地经验加载失败，请稍后重试'
+  return '查经验加载失败，请稍后重试'
 }
 
 Page({
@@ -66,7 +66,7 @@ Page({
         errorMessage: ''
       })
     } catch (err) {
-      console.error('加载当地经验失败:', err)
+      console.error('加载查经验失败:', err)
       this.setData({
         list: reset ? [] : this.data.list,
         hasMore: false,

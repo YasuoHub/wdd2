@@ -136,7 +136,7 @@
           <wdd-icon name="file-text" color="var(--brand-primary)" size="38"></wdd-icon>
         </view>
         <view class="menu-content">
-          <text class="menu-text">当地经验</text>
+          <text class="menu-text">查经验</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>

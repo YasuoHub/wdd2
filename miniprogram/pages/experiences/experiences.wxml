@@ -8,11 +8,11 @@
     <view class="experience-error-icon">
       <wdd-icon name="triangle-alert" color="var(--brand-primary)" size="44"></wdd-icon>
     </view>
-    <view class="experience-error-title">当地经验暂不可用</view>
+    <view class="experience-error-title">查经验暂不可用</view>
     <view class="experience-error-desc">{{errorMessage}}</view>
     <button class="small-button experience-retry" bindtap="retryLoad">重新加载</button>
   </view>
-  <view wx:elif="{{list.length === 0 && !loading}}" class="empty-state">暂时还没有可查看的当地经验</view>
+  <view wx:elif="{{list.length === 0 && !loading}}" class="empty-state">暂时还没有可查看的查经验内容</view>
   <view wx:for="{{list}}" wx:key="_id" class="experience-card" bindtap="goDetail" data-id="{{item._id}}">
     <text class="experience-title">{{item.title}}</text>
     <view class="experience-location">地点：{{item.publicLocation}}</view>

@@ -280,7 +280,7 @@ Page({
 
   promptExperienceShare() {
     wx.showModal({
-      title: '分享当地经验',
+      title: '分享经验',
       content: '是否将本次任务整理成公开经验，帮助有相同问题的人？',
       confirmText: '申请分享',
       cancelText: '暂不分享',

@@ -1,1 +1,7 @@
 @import "../../styles/experience.wxss";
+
+.strong-value {
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 600;
+}

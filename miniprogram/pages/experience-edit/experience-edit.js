@@ -18,9 +18,9 @@ function trimText(value) {
 }
 
 function buildTitleFromTask(task = {}) {
-  const typeName = task.typeName || '当地经验'
+  const typeName = task.typeName || '查经验'
   const description = trimText(task.description).slice(0, 28)
-  return description ? `${typeName}：${description}`.slice(0, 50) : `${typeName}当地经验`
+  return description ? `${typeName}：${description}`.slice(0, 50) : `${typeName}经验分享`
 }
 
 function getFreshnessIndex(value) {
@@ -34,7 +34,7 @@ function getExperienceErrorMessage(err) {
     return '经验草稿生成超时，请稍后重试；也可以先手动填写经验内容'
   }
   if (/FunctionName|function.*not.*found|云函数.*不存在|not exist/i.test(raw)) {
-    return '当地经验服务还没有部署，请先部署 wdd-experience 云函数'
+    return '查经验服务还没有部署，请先部署 wdd-experience 云函数'
   }
   return raw || '整理失败，请稍后重试'
 }
