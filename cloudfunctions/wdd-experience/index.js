@@ -103,11 +103,6 @@ function formatBeijingDateTime(value) {
   return `${bj.getUTCFullYear()}年${bj.getUTCMonth() + 1}月${bj.getUTCDate()}日 ${String(bj.getUTCHours()).padStart(2, '0')}:${String(bj.getUTCMinutes()).padStart(2, '0')}`
 }
 
-function isCollectionNotFound(err) {
-  const message = String((err && (err.errMsg || err.message)) || '')
-  return /DATABASE_COLLECTION_NOT_EXIST|collection not exist|collection.*not exists|database collection not exists|Table not exist|表不存在|集合不存在/i.test(message)
-}
-
 async function getCurrentUser(openid) {
   if (!openid) return null
   const res = await db.collection('wdd-users').where({ openid }).limit(1).get()
@@ -993,25 +988,9 @@ async function getReportTickets(event, openid) {
   const status = event.status === 'resolved' ? 'resolved' : 'pending'
   const page = Math.max(1, Number(event.page) || 1)
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(event.pageSize) || 20))
-  let res
-  try {
-    res = await db.collection('wdd-experience-report-tickets').where({ status })
-      .orderBy(status === 'pending' ? 'latest_report_time' : 'resolve_time', 'desc')
-      .skip((page - 1) * pageSize).limit(pageSize + 1).get()
-  } catch (err) {
-    if (isCollectionNotFound(err)) {
-      console.warn('经验举报工单集合不存在，返回空列表:', err.message || err.errMsg || err)
-      return {
-        code: 0,
-        data: {
-          list: [],
-          hasMore: false,
-          missingCollection: 'wdd-experience-report-tickets'
-        }
-      }
-    }
-    throw err
-  }
+  const res = await db.collection('wdd-experience-report-tickets').where({ status })
+    .orderBy(status === 'pending' ? 'latest_report_time' : 'resolve_time', 'desc')
+    .skip((page - 1) * pageSize).limit(pageSize + 1).get()
   return { code: 0, data: { list: res.data.slice(0, pageSize), hasMore: res.data.length > pageSize } }
 }
 
@@ -1019,15 +998,9 @@ async function getReportTicketDetail(event, openid) {
   if (!await isCustomerService(openid)) return { code: 403, message: '无权访问' }
   const experienceId = text(event.experienceId, 100)
   const [ticketRes, expRes, reportRes] = await Promise.all([
-    db.collection('wdd-experience-report-tickets').doc(experienceId).get().catch(err => {
-      if (isCollectionNotFound(err)) return null
-      throw err
-    }),
+    db.collection('wdd-experience-report-tickets').doc(experienceId).get().catch(() => null),
     db.collection('wdd-experiences').doc(experienceId).get().catch(() => null),
-    db.collection('wdd-experience-reports').where({ experience_id: experienceId }).orderBy('create_time', 'desc').get().catch(err => {
-      if (isCollectionNotFound(err)) return { data: [] }
-      throw err
-    })
+    db.collection('wdd-experience-reports').where({ experience_id: experienceId }).orderBy('create_time', 'desc').get()
   ])
   if (!ticketRes || !ticketRes.data) return { code: 404, message: '举报工单不存在' }
   return {

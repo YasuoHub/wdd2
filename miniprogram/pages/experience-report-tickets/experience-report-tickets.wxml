@@ -3,11 +3,7 @@
     <button class="{{status === 'pending' ? 'primary-button' : 'secondary-button'}}" data-status="pending" bindtap="switchStatus">待处理</button>
     <button class="{{status === 'resolved' ? 'primary-button' : 'secondary-button'}}" data-status="resolved" bindtap="switchStatus">已处理</button>
   </view>
-  <view wx:if="{{list.length === 0 && !loading && !missingCollection && !errorMessage}}" class="empty-state">暂无举报工单</view>
-  <view wx:if="{{missingCollection && !loading}}" class="status-note">
-    经验举报工单集合尚未创建。请先运行数据库初始化，或在云数据库手动创建 {{missingCollection}}。
-  </view>
-  <view wx:if="{{errorMessage && !loading}}" class="status-note">{{errorMessage}}</view>
+  <view wx:if="{{list.length === 0 && !loading}}" class="empty-state">暂无举报工单</view>
   <view wx:for="{{list}}" wx:key="_id" class="experience-card" data-id="{{item.experience_id}}" bindtap="goDetail">
     <text class="experience-title">{{item.title_snapshot}}</text>
     <view class="experience-meta">累计举报 {{item.total_count}} · 本轮待处理 {{item.pending_count}}</view>

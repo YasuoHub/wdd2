@@ -4,9 +4,7 @@ Page({
     list: [],
     page: 1,
     hasMore: true,
-    loading: false,
-    errorMessage: '',
-    missingCollection: ''
+    loading: false
   },
 
   onShow() {
@@ -20,11 +18,7 @@ Page({
   async loadList(reset) {
     if (this.data.loading || (!reset && !this.data.hasMore)) return
     const page = reset ? 1 : this.data.page
-    this.setData({
-      loading: true,
-      errorMessage: reset ? '' : this.data.errorMessage,
-      missingCollection: reset ? '' : this.data.missingCollection
-    })
+    this.setData({ loading: true })
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-experience',
@@ -35,27 +29,13 @@ Page({
       this.setData({
         list: reset ? list : this.data.list.concat(list),
         page: page + 1,
-        hasMore: !!result.data.hasMore,
-        errorMessage: '',
-        missingCollection: result.data.missingCollection || ''
+        hasMore: !!result.data.hasMore
       })
     } catch (err) {
-      this.setData({
-        list: reset ? [] : this.data.list,
-        hasMore: false,
-        errorMessage: this.getLoadErrorMessage(err)
-      })
+      wx.showToast({ title: err.message || '加载失败', icon: 'none' })
     } finally {
       this.setData({ loading: false })
     }
-  },
-
-  getLoadErrorMessage(err) {
-    const message = String((err && (err.errMsg || err.message)) || '')
-    if (/DATABASE_COLLECTION_NOT_EXIST|collection not exist|collection.*not exists|Table not exist|集合不存在/i.test(message)) {
-      return '经验举报工单集合还没有创建，请先初始化数据库。'
-    }
-    return '举报工单加载失败，请稍后重试'
   },
 
   goDetail(e) {
