@@ -1,5 +1,2 @@
 @import "../../styles/experience.wxss";
-
-.search-row button {
-  flex: 1;
-}
+@import "../../styles/experience-ticket-list.wxss";
