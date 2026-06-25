@@ -8,8 +8,9 @@ const _ = db.command
 const CONFIRM_WINDOW_MS = 48 * 60 * 60 * 1000
 const MAX_PAGE_SIZE = 30
 const MAX_DRAFT_MESSAGES = 80
-const DEFAULT_DEEPSEEK_TIMEOUT_MS = 1800
+const DEFAULT_DEEPSEEK_TIMEOUT_MS = 10000
 const MAX_DEEPSEEK_TIMEOUT_MS = 30000
+const MAX_AI_GENERATION_ATTEMPTS = 2
 const EDITABLE_STATUSES = ['draft', 'pending_confirmation']
 const NEED_TYPE_NAMES = {
   weather: '实时天气',
@@ -155,16 +156,36 @@ function getFallbackDraft(need) {
   }
 }
 
+function getAiGenerationStatus(generated = {}) {
+  if (!generated.warning) return 'generated'
+  return /API Key/i.test(generated.warning) ? 'skipped' : 'fallback'
+}
+
+function getAiGenerationAttemptCount(experience = {}) {
+  const value = Number(experience.ai_generation_attempt_count ?? experience.ai_generation_retry_count)
+  return Number.isFinite(value) && value > 0 ? value : 0
+}
+
 function shouldRegenerateDraft(experience = {}) {
   if (!experience || experience.status !== 'draft') return false
-  if (experience.ai_generation_status) return false
-  return !text(experience.result, 20)
+  if (text(experience.result, 20)) return false
+  if (!experience.ai_generation_status) return true
+  if (experience.ai_generation_status !== 'fallback') return false
+  return getAiGenerationAttemptCount(experience) < MAX_AI_GENERATION_ATTEMPTS
 }
 
 function parseModelJson(content) {
-  const source = String(content || '').replace(/^```json\s*/i, '').replace(/```$/i, '').trim()
-  const parsed = JSON.parse(source)
-  return normalizeContent(parsed)
+  const raw = String(content || '').trim()
+  const source = raw.replace(/^```(?:json)?\s*/i, '').replace(/```$/i, '').trim()
+  try {
+    return normalizeContent(JSON.parse(source))
+  } catch (err) {
+    const start = raw.indexOf('{')
+    const end = raw.lastIndexOf('}')
+    if (start < 0 || end <= start) throw err
+    const parsed = JSON.parse(raw.slice(start, end + 1))
+    return normalizeContent(parsed)
+  }
 }
 
 function getDeepSeekTimeoutMs() {
@@ -301,10 +322,12 @@ async function createDraft(event, openid) {
         }
       }
       const now = new Date()
+      const aiGenerationStatus = getAiGenerationStatus(generated)
       const update = {
         ...generated.draft,
-        ai_generation_status: generated.warning ? 'fallback' : 'generated',
+        ai_generation_status: aiGenerationStatus,
         ai_generation_warning: generated.warning || '',
+        ai_generation_attempt_count: getAiGenerationAttemptCount(existing) + 1,
         ai_generation_time: now,
         update_time: now
       }
@@ -347,6 +370,7 @@ async function createDraft(event, openid) {
   }
 
   const now = new Date()
+  const aiGenerationStatus = getAiGenerationStatus(generated)
   const addRes = await db.collection('wdd-experiences').add({
     data: {
       need_id: needId,
@@ -359,8 +383,9 @@ async function createDraft(event, openid) {
       version: 0,
       useful_count: 0,
       report_count: 0,
-      ai_generation_status: generated.warning ? 'fallback' : 'generated',
+      ai_generation_status: aiGenerationStatus,
       ai_generation_warning: generated.warning || '',
+      ai_generation_attempt_count: aiGenerationStatus === 'skipped' ? 0 : 1,
       ai_generation_time: now,
       ...generated.draft,
       create_time: now,
@@ -372,8 +397,9 @@ async function createDraft(event, openid) {
     ...generated.draft,
     status: 'draft',
     version: 0,
-    ai_generation_status: generated.warning ? 'fallback' : 'generated',
+    ai_generation_status: aiGenerationStatus,
     ai_generation_warning: generated.warning || '',
+    ai_generation_attempt_count: aiGenerationStatus === 'skipped' ? 0 : 1,
     ai_generation_time: now
   }
   return {

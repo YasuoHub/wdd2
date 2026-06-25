@@ -11,6 +11,7 @@ const FRESHNESS_OPTIONS = [
 ]
 
 const EXPERIENCE_CALL_TIMEOUT = 60000
+const MAX_AI_GENERATION_ATTEMPTS = 2
 
 function trimText(value) {
   return String(value || '').trim()
@@ -40,8 +41,11 @@ function getExperienceErrorMessage(err) {
 
 function shouldRetryDraftGeneration(experience = {}) {
   if (!experience || experience.status !== 'draft') return false
-  if (experience.ai_generation_status) return false
-  return !trimText(experience.result)
+  if (trimText(experience.result)) return false
+  if (!experience.ai_generation_status) return true
+  if (experience.ai_generation_status !== 'fallback') return false
+  const attempts = Number(experience.ai_generation_attempt_count || experience.ai_generation_retry_count) || 0
+  return attempts < MAX_AI_GENERATION_ATTEMPTS
 }
 
 Page({
