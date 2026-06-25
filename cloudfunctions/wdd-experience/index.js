@@ -11,6 +11,7 @@ const MAX_DRAFT_MESSAGES = 80
 const DEFAULT_DEEPSEEK_TIMEOUT_MS = 10000
 const MAX_DEEPSEEK_TIMEOUT_MS = 30000
 const MAX_AI_GENERATION_ATTEMPTS = 2
+const MIN_MEANINGFUL_TEXT_LENGTH = 12
 const EDITABLE_STATUSES = ['draft', 'pending_confirmation']
 const NEED_TYPE_NAMES = {
   weather: '实时天气',
@@ -156,9 +157,32 @@ function getFallbackDraft(need) {
   }
 }
 
+function compactText(value, max = 1000) {
+  return text(value, max).replace(/\s+/g, '')
+}
+
+function isLowInformationText(value) {
+  const source = compactText(value, 200)
+  if (!source) return true
+  if (source.length < MIN_MEANINGFUL_TEXT_LENGTH) return true
+  if (/^(测试|test|ceshi|随便|无|没有|不知道|看看|试试|111+|123+|啊+|哈+|嗯+|。。。+|---+)$/i.test(source)) return true
+  if (/^(.)\1{4,}$/.test(source)) return true
+  if (/^(测试|test|ceshi)[\d一二三四五六七八九十号个下啊哈嗯。.，,！!？?\s-]*$/i.test(source)) return true
+  return false
+}
+
+function hasMeaningfulTaskMaterial(need = {}, messages = []) {
+  if (!isLowInformationText(need.description)) return true
+  const meaningfulMessages = messages.filter(item => (
+    item.type === 'text' &&
+    !isLowInformationText(item.content)
+  ))
+  return meaningfulMessages.length > 0
+}
+
 function getAiGenerationStatus(generated = {}) {
   if (!generated.warning) return 'generated'
-  return /API Key/i.test(generated.warning) ? 'skipped' : 'fallback'
+  return /API Key|信息较少|信息不足|测试数据/i.test(generated.warning) ? 'skipped' : 'fallback'
 }
 
 function getAiGenerationAttemptCount(experience = {}) {
@@ -195,6 +219,14 @@ function getDeepSeekTimeoutMs() {
 }
 
 async function generateDraftWithDeepSeek(need, messages) {
+  if (!hasMeaningfulTaskMaterial(need, messages)) {
+    console.warn('DeepSeek 草稿生成跳过：任务信息不足或疑似测试数据')
+    return {
+      draft: getFallbackDraft(need),
+      warning: '任务信息较少，已生成基础草稿，请手动补充任务结果'
+    }
+  }
+
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
     console.warn('DeepSeek 草稿生成跳过：未读取到 DEEPSEEK_API_KEY')
@@ -215,6 +247,7 @@ async function generateDraftWithDeepSeek(need, messages) {
     '不要输出姓名、昵称、账号、联系方式、精确门牌、精确经纬度或能够识别个人身份的信息。',
     '地点保留到商圈、道路、公共场所或“附近”的粒度。',
     '语音和图片若没有文字内容，不要猜测其中信息。',
+    '如果任务描述和聊天记录明显是测试、无意义、占位内容，或不足以总结真实经验，不要编造结果；result 和 tips 返回空字符串即可。',
     '只返回 JSON，不要添加解释。字段：title、publicLocation、question、result、tips。title 必须基于任务类型和任务描述总结，question 直接整理为适合公开展示的任务描述。',
     '',
     `任务描述：${text(need.description, 1000)}`,
@@ -236,7 +269,7 @@ async function generateDraftWithDeepSeek(need, messages) {
       ],
       response_format: { type: 'json_object' },
       temperature: 0.1,
-      max_tokens: 1600
+      max_tokens: 900
     },
     {
       timeout,
