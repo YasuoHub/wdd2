@@ -206,7 +206,7 @@ async function submitFeedback(event, openid) {
       data: {
         user_id: user._id,
         type: 'feedback_received',
-        title: '意见反馈已收到',
+        title: '意见反馈',
         content: `我们已收到您的反馈“${title}”，感谢您帮助我们改进问当地。`,
         feedback_id: feedbackRes._id,
         is_read: false,

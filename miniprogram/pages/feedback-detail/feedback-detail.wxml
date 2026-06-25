@@ -52,6 +52,6 @@
   </block>
 
   <view wx:if="{{canResolve}}" class="action-bar">
-    <button disabled="{{resolving}}" bindtap="confirmResolve">{{resolving ? '处理中...' : '已知晓'}}</button>
+    <button disabled="{{resolving}}" bindtap="confirmResolve">{{resolving ? '处理中...' : '已处理'}}</button>
   </view>
 </view>

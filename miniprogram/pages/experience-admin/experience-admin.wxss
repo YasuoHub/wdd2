@@ -1,0 +1,5 @@
+@import "../../styles/experience.wxss";
+
+.search-row button {
+  flex: 1;
+}

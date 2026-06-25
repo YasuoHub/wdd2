@@ -172,7 +172,7 @@ Page({
 
     wx.showModal({
       title: '确认提交反馈',
-      content: '提交后内容不可修改或删除，客服处理后状态会更新为“已处理”。',
+      content: '提交后内容不可修改或删除，是否提交？',
       confirmText: '确认提交',
       success: res => {
         if (res.confirm) this.submitFeedback(title, content)

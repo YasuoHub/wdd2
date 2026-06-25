@@ -1,0 +1,90 @@
+<page-meta page-style="{{showPreview ? 'overflow: hidden;' : ''}}" />
+<view class="experience-page">
+  <view wx:if="{{loading}}" class="empty-state">正在根据任务内容整理经验草稿...</view>
+  <block wx:else>
+    <view wx:if="{{status === 'pending_confirmation'}}" class="status-note">
+      已提交帮助者确认。在帮助者处理前，你仍可修改并提交最新内容；48小时截止时间不会改变。
+    </view>
+    <view wx:elif="{{!editable}}" class="status-note">该经验已处理，当前内容不能再修改。</view>
+
+    <view class="form-section">
+      <view class="field-group">
+        <text class="field-label">公开标题</text>
+        <input class="field-input" disabled="{{!editable}}" maxlength="50" value="{{form.title}}" data-field="title" bindinput="onFieldInput" />
+      </view>
+      <view class="field-group">
+        <text class="field-label">公开地点</text>
+        <input class="field-input" disabled="{{!editable}}" maxlength="80" value="{{form.publicLocation}}" data-field="publicLocation" bindinput="onFieldInput" />
+      </view>
+      <view class="field-group">
+        <text class="field-label">当时的问题</text>
+        <textarea class="field-textarea" disabled="{{!editable}}" maxlength="300" value="{{form.question}}" data-field="question" bindinput="onFieldInput" />
+      </view>
+      <view class="field-group">
+        <text class="field-label">实际结果</text>
+        <textarea class="field-textarea" disabled="{{!editable}}" maxlength="1000" value="{{form.result}}" data-field="result" bindinput="onFieldInput" />
+      </view>
+      <view class="field-group">
+        <text class="field-label">适用时间</text>
+        <input class="field-input" disabled="{{!editable}}" maxlength="100" value="{{form.applicableTime}}" data-field="applicableTime" bindinput="onFieldInput" placeholder="例如：工作日下午" />
+      </view>
+      <view class="field-group">
+        <text class="field-label">信息有效期</text>
+        <input class="field-input" disabled="{{!editable}}" maxlength="50" value="{{form.freshness}}" data-field="freshness" bindinput="onFieldInput" placeholder="例如：短期参考" />
+      </view>
+      <view class="field-group">
+        <text class="field-label">注意事项</text>
+        <textarea class="field-textarea" disabled="{{!editable}}" maxlength="500" value="{{form.tips}}" data-field="tips" bindinput="onFieldInput" />
+      </view>
+    </view>
+
+    <view wx:if="{{availableImages.length > 0}}" class="form-section">
+      <text class="section-title">选择允许公开的图片</text>
+      <view class="image-grid">
+        <view wx:for="{{availableImages}}" wx:key="url" class="selectable-image {{item.selected ? 'selected' : ''}}" data-url="{{item.url}}" bindtap="toggleImage">
+          <image src="{{item.url}}" mode="aspectFill" />
+          <view wx:if="{{item.selected}}" class="select-mark">✓</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="fixed-actions" wx:if="{{editable}}">
+      <button wx:if="{{submittedOnce}}" class="danger-button" bindtap="cancelShare">取消分享</button>
+      <button class="primary-button" loading="{{saving}}" bindtap="submit">提交</button>
+    </view>
+  </block>
+</view>
+<view wx:if="{{showPreview}}" class="report-mask" bindtap="closePreview"></view>
+<view wx:if="{{showPreview}}" class="report-dialog">
+  <text class="section-title">发布前预览</text>
+  <view class="preview-block">
+    <text class="experience-title">{{form.title}}</text>
+    <view class="experience-location">地点：{{form.publicLocation}}</view>
+  </view>
+  <view class="preview-block">
+    <text class="field-label">当时的问题</text>
+    <text class="detail-value">{{form.question}}</text>
+  </view>
+  <view class="preview-block">
+    <text class="field-label">实际结果</text>
+    <text class="detail-value">{{form.result}}</text>
+  </view>
+  <view wx:if="{{form.applicableTime || form.freshness || form.tips}}" class="preview-block">
+    <text wx:if="{{form.applicableTime}}" class="experience-meta">适用时间：{{form.applicableTime}}</text>
+    <text wx:if="{{form.freshness}}" class="experience-meta">信息有效期：{{form.freshness}}</text>
+    <text wx:if="{{form.tips}}" class="experience-meta">注意事项：{{form.tips}}</text>
+  </view>
+  <view wx:if="{{selectedImages.length > 0}}" class="preview-block">
+    <text class="field-label">公开图片</text>
+    <view class="detail-image-grid">
+      <view wx:for="{{selectedImages}}" wx:key="*this" class="detail-image-wrap">
+        <image class="detail-image" src="{{item}}" mode="aspectFill" />
+      </view>
+    </view>
+  </view>
+  <view class="status-note">提交后会更新帮助者看到的预览；若已进入确认期，48小时截止时间不会重新计算。</view>
+  <view class="report-actions">
+    <button class="secondary-button" bindtap="closePreview">再改改</button>
+    <button class="primary-button" loading="{{saving}}" bindtap="confirmSubmit">确认提交</button>
+  </view>
+</view>

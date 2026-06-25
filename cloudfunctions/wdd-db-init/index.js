@@ -37,6 +37,10 @@ exports.main = async (event, context) => {
     await ensureCollection('wdd-media-check-callbacks')
     await ensureCollection('wdd-feedbacks')
     await ensureCollection('wdd-feedback-daily-quotas')
+    await ensureCollection('wdd-experiences')
+    await ensureCollection('wdd-experience-likes')
+    await ensureCollection('wdd-experience-reports')
+    await ensureCollection('wdd-experience-report-tickets')
 
     // 2. 为用户表新增金额字段（如果字段不存在则设置默认值）
     const userUpdateRes = await db.collection('wdd-users').where({

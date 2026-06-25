@@ -36,7 +36,14 @@
     "pages/feedback/feedback",
     "pages/my-feedback/my-feedback",
     "pages/feedback-admin/feedback-admin",
-    "pages/feedback-detail/feedback-detail"
+    "pages/feedback-detail/feedback-detail",
+    "pages/experiences/experiences",
+    "pages/experience-detail/experience-detail",
+    "pages/experience-edit/experience-edit",
+    "pages/experience-confirm/experience-confirm",
+    "pages/experience-admin/experience-admin",
+    "pages/experience-report-tickets/experience-report-tickets",
+    "pages/experience-report-detail/experience-report-detail"
   ],
   "window": {
     "backgroundTextStyle": "dark",

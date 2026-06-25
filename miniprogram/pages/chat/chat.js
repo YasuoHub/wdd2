@@ -2361,12 +2361,7 @@ Page({
         app.globalData.refreshMyNeeds = true
         app.globalData.refreshMyTasks = true
 
-        // 跳转到评价页面
-        setTimeout(() => {
-          wx.navigateTo({
-            url: `/pages/rating/rating?needId=${currentNeedId}`
-          })
-        }, 1500)
+        setTimeout(() => this.promptExperienceShare(currentNeedId), 700)
       } else {
         throw new Error(result.message)
       }
@@ -2377,6 +2372,22 @@ Page({
         icon: 'none'
       })
     }
+  },
+
+  promptExperienceShare(needId) {
+    wx.showModal({
+      title: '分享当地经验',
+      content: '是否将本次任务整理成公开经验，帮助有相同问题的人？',
+      confirmText: '申请分享',
+      cancelText: '暂不分享',
+      success: res => {
+        if (res.confirm) {
+          wx.navigateTo({ url: `/pages/experience-edit/experience-edit?needId=${needId}` })
+        } else {
+          wx.navigateTo({ url: `/pages/rating/rating?needId=${needId}&type=seeker` })
+        }
+      }
+    })
   },
 
   // 跳转举报页面

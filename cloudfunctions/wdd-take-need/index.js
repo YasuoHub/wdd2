@@ -10,7 +10,7 @@ const _ = db.command
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { needId } = event
+  const { needId, experienceShareAuthorized = false, authorizationVersion = '' } = event
 
   if (!needId) {
     return {
@@ -127,6 +127,9 @@ exports.main = async (event, context) => {
           taker_id: takerId,
           need_user_id: need.user_id,
           points: need.points,
+          experience_share_authorized: !!experienceShareAuthorized,
+          experience_authorization_version: experienceShareAuthorized ? String(authorizationVersion || 'v1') : '',
+          experience_authorized_time: experienceShareAuthorized ? db.serverDate() : null,
           status: 'ongoing',
           create_time: db.serverDate(),
           update_time: db.serverDate()

@@ -60,7 +60,7 @@ Page({
 
   confirmResolve() {
     wx.showModal({
-      title: '确认已知晓',
+      title: '确认已处理',
       content: '确认后该条意见反馈将进入“已处理”列表，且不可恢复为待处理。',
       confirmText: '确认处理',
       success: res => {

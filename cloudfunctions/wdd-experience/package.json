@@ -1,0 +1,10 @@
+{
+  "name": "wdd-experience",
+  "version": "1.0.0",
+  "description": "问当地经验分享云函数",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "wx-server-sdk": "latest"
+  }
+}

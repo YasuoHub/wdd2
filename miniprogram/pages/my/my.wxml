@@ -131,6 +131,15 @@
   <view class="menu-section">
     <view class="menu-title">服务记录</view>
     <view class="menu-list">
+      <view class="menu-item no-desc" bindtap="goToExperiences">
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="file-text" color="var(--brand-primary)" size="38"></wdd-icon>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">当地经验</text>
+        </view>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
+      </view>
       <view class="menu-item no-desc" bindtap="goToMyReports">
         <view class="menu-icon-wrapper">
           <wdd-icon name="shield-alert" color="#FF6B6B" size="38"></wdd-icon>
@@ -171,6 +180,24 @@
         </view>
         <view class="menu-content">
           <text class="menu-text">意见反馈处理</text>
+        </view>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
+      </view>
+      <view class="menu-item no-desc" bindtap="goToExperienceAdmin">
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="file-text" color="var(--brand-primary)" size="38"></wdd-icon>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">经验分享管理</text>
+        </view>
+        <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
+      </view>
+      <view class="menu-item no-desc" bindtap="goToExperienceReportTickets">
+        <view class="menu-icon-wrapper">
+          <wdd-icon name="flag" color="#FF6B6B" size="38"></wdd-icon>
+        </view>
+        <view class="menu-content">
+          <text class="menu-text">经验举报工单</text>
         </view>
         <wdd-icon class="menu-arrow" name="chevron-right" color="#9AA5B1" size="28"></wdd-icon>
       </view>

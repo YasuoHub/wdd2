@@ -214,6 +214,59 @@
         "keys": [
           { "name": "openid", "direction": "asc" }
         ]
+      },
+      {
+        "collectionName": "wdd-experiences",
+        "name": "need_id_unique",
+        "unique": true,
+        "keys": [
+          { "name": "need_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-experiences",
+        "name": "status_published_time",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "published_time", "direction": "desc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-experiences",
+        "name": "status_confirm_deadline",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "confirm_deadline", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-experience-likes",
+        "name": "experience_id_user_id",
+        "unique": true,
+        "keys": [
+          { "name": "experience_id", "direction": "asc" },
+          { "name": "user_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-experience-reports",
+        "name": "experience_id_reporter_id",
+        "unique": true,
+        "keys": [
+          { "name": "experience_id", "direction": "asc" },
+          { "name": "reporter_id", "direction": "asc" }
+        ]
+      },
+      {
+        "collectionName": "wdd-experience-report-tickets",
+        "name": "status_latest_report_time",
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": "asc" },
+          { "name": "latest_report_time", "direction": "desc" }
+        ]
       }
     ]
   }

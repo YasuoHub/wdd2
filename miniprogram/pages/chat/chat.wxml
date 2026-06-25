@@ -252,7 +252,7 @@
             catchtouchend="onMessageInputTouchEnd"
             catchtouchcancel="onMessageInputTouchCancel"
           >
-            <text>{{isRecording ? (voiceRecordCancelActive ? '松开取消' : '松开发送') : (inputValue || '按住说话')}}</text>
+            <text>{{isRecording ? (voiceRecordCancelActive ? '松开取消' : '松开发送') : (inputValue || '点击发消息或按住说话...')}}</text>
           </view>
         </view>
 

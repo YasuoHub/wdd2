@@ -638,6 +638,11 @@ async function getMyNeeds(event, OPENID) {
   const myReportNeedIds = new Set(myReportRes.data.map(r => r.need_id))
   const myAppealNeedIds = new Set(myAppealRes.data.map(a => a.need_id))
 
+  const experienceRes = await db.collection('wdd-experiences').where({
+    requester_id: userId
+  }).get().catch(() => ({ data: [] }))
+  const experienceMap = new Map(experienceRes.data.map(item => [item.need_id, item]))
+
   // 批量查询求助者最新头像和昵称
   const myNeedsUserIds = [...new Set(listRes.data.map(item => item.user_id).filter(Boolean))]
   const myNeedsUserMap = await batchGetUserMap(myNeedsUserIds)
@@ -657,6 +662,12 @@ async function getMyNeeds(event, OPENID) {
       }).count()
       formatted.hasRated = ratingRes.total > 0
     }
+
+    const experience = experienceMap.get(item._id)
+    formatted.experienceId = experience ? experience._id : ''
+    formatted.experienceStatus = experience ? experience.status : ''
+    formatted.showExperienceShare = item.status === 'completed' &&
+      (!experience || ['draft', 'pending_confirmation'].includes(experience.status))
 
     return formatted
   }))

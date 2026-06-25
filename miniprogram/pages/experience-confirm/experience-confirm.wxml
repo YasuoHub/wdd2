@@ -1,0 +1,33 @@
+<view class="experience-page">
+  <view wx:if="{{loading}}" class="empty-state">加载中...</view>
+  <block wx:elif="{{experience}}">
+    <view class="status-note">
+      请确认下方内容是否适合匿名公开。确认后将立即发布，求助者不能再修改。
+    </view>
+    <view class="detail-section">
+      <text class="experience-title">{{experience.title}}</text>
+      <view class="experience-location">地点：{{experience.public_location}}</view>
+    </view>
+    <view class="detail-section">
+      <text class="section-title">当时的问题</text>
+      <text class="detail-value">{{experience.question}}</text>
+    </view>
+    <view class="detail-section">
+      <text class="section-title">实际结果</text>
+      <text class="detail-value">{{experience.result}}</text>
+    </view>
+    <view wx:if="{{experience.images.length > 0}}" class="detail-section">
+      <text class="section-title">公开图片</text>
+      <view class="detail-image-grid">
+        <view wx:for="{{experience.images}}" wx:key="*this" class="detail-image-wrap">
+          <image class="detail-image" src="{{item}}" mode="aspectFill" />
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{!canHandle}}" class="status-note">该分享已经处理，无需再次操作。</view>
+    <view wx:if="{{canHandle}}" class="fixed-actions">
+      <button class="danger-button" data-accepted="{{false}}" bindtap="handle">暂不分享</button>
+      <button class="primary-button" data-accepted="{{true}}" bindtap="handle">确认分享</button>
+    </view>
+  </block>
+</view>

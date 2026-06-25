@@ -1,0 +1,15 @@
+<view class="experience-page">
+  <view class="search-row">
+    <button class="{{status === 'published' ? 'primary-button' : 'secondary-button'}}" data-status="published" bindtap="switchStatus">已上架</button>
+    <button class="{{status === 'down' ? 'primary-button' : 'secondary-button'}}" data-status="down" bindtap="switchStatus">已下架</button>
+  </view>
+  <view wx:if="{{list.length === 0 && !loading}}" class="empty-state">暂无记录</view>
+  <view wx:for="{{list}}" wx:key="_id" class="experience-card">
+    <text class="experience-title" bindtap="goDetail" data-id="{{item._id}}">{{item.title}}</text>
+    <view class="experience-location">{{item.publicLocation}}</view>
+    <view class="experience-meta">有用 {{item.usefulCount}}</view>
+    <view class="card-actions">
+      <view class="inline-action {{status === 'published' ? 'danger' : ''}}" data-id="{{item._id}}" data-status="{{status === 'published' ? 'down' : 'published'}}" bindtap="changeStatus">{{status === 'published' ? '下架' : '上架'}}</view>
+    </view>
+  </view>
+</view>

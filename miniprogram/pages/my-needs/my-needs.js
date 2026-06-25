@@ -290,7 +290,10 @@ Page({
       timeValue: timeMeta.value,
       remainTime,
       createTime,
-      showAppealBtn
+      showAppealBtn,
+      showExperienceShare: !!item.showExperienceShare,
+      experienceId: item.experienceId || '',
+      experienceStatus: item.experienceStatus || ''
     }
   },
 
@@ -469,12 +472,7 @@ Page({
           title: '任务已完成',
           icon: 'success'
         })
-        // 跳转到评价页面
-        setTimeout(() => {
-          wx.navigateTo({
-            url: `/pages/rating/rating?needId=${id}&type=seeker`
-          })
-        }, 1000)
+        setTimeout(() => this.promptExperienceShare(id), 700)
       } else {
         throw new Error(result.message)
       }
@@ -485,6 +483,27 @@ Page({
         icon: 'none'
       })
     }
+  },
+
+  promptExperienceShare(id) {
+    wx.showModal({
+      title: '分享当地经验',
+      content: '是否将本次任务整理成公开经验，帮助有相同问题的人？',
+      confirmText: '申请分享',
+      cancelText: '暂不分享',
+      success: res => {
+        if (res.confirm) {
+          wx.navigateTo({ url: `/pages/experience-edit/experience-edit?needId=${id}` })
+        } else {
+          wx.navigateTo({ url: `/pages/rating/rating?needId=${id}&type=seeker` })
+        }
+      }
+    })
+  },
+
+  shareExperience(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({ url: `/pages/experience-edit/experience-edit?needId=${id}` })
   },
 
   // 去发布

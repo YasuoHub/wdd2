@@ -457,6 +457,55 @@
   padding-bottom: 48rpx;
 }
 
+.experience-entry {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin: 32rpx 34rpx 0;
+  padding: 24rpx 26rpx;
+  border: 1rpx solid #dce5ef;
+  border-radius: 14rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.experience-entry:active {
+  opacity: 0.86;
+}
+
+.experience-entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 68rpx;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 10rpx;
+  background: var(--brand-primary-08);
+}
+
+.experience-entry-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7rpx;
+}
+
+.experience-entry-title {
+  color: #202832;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.experience-entry-desc {
+  overflow: hidden;
+  color: #667085;
+  font-size: 24rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .section-head {
   justify-content: space-between;
   padding: 0 38rpx 22rpx;

@@ -74,6 +74,7 @@
 
         <view wx:elif="{{item.status === 'completed'}}" class="card-actions right">
           <view wx:if="{{item.showAppealBtn}}" class="action-btn outline" catchtap="goToAppeal" data-id="{{item._id}}">申诉</view>
+          <view wx:if="{{item.showExperienceShare}}" class="action-btn outline" catchtap="shareExperience" data-id="{{item._id}}">分享</view>
           <view wx:if="{{!item.hasRated}}" class="action-btn outline" catchtap="goToRate" data-id="{{item._id}}">去评价</view>
           <view wx:else class="action-btn outline" catchtap="viewRating" data-id="{{item._id}}">查看评价</view>
         </view>

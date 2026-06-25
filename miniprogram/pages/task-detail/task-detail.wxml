@@ -168,3 +168,19 @@
     </button>
   </view>
 </view>
+
+<view wx:if="{{showTakeConfirm}}" class="take-confirm-mask" bindtap="closeTakeConfirm"></view>
+<view wx:if="{{showTakeConfirm}}" class="take-confirm-dialog">
+  <text class="take-confirm-title">确认去帮助</text>
+  <text class="take-confirm-income">完成此任务预计可获得 {{task._takerIncome}} 元</text>
+  <view class="take-auth-row" bindtap="toggleTakeShareAuthorization">
+    <view class="take-checkbox {{takeShareAuthorized ? 'checked' : ''}}">
+      <text wx:if="{{takeShareAuthorized}}">✓</text>
+    </view>
+    <text class="take-auth-text">允许本次回答中使用的文字、图片及语音消息，在脱敏后整理为公开经验。求助者发起申请后，你可在48小时内确认分享或暂不分享；逾期将按预览内容发布。</text>
+  </view>
+  <view class="take-confirm-actions">
+    <button class="take-cancel-btn" bindtap="closeTakeConfirm">取消</button>
+    <button class="take-submit-btn" bindtap="confirmTakeTask">确认接单</button>
+  </view>
+</view>

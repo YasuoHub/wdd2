@@ -504,6 +504,12 @@ Page({
     })
   },
 
+  goToExperiences() {
+    wx.navigateTo({
+      url: '/pages/experiences/experiences'
+    })
+  },
+
   // 跳转到任务详情
   goToNeedDetail(e) {
     const id = e.currentTarget.dataset.id

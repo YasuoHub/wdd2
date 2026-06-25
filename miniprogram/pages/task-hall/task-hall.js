@@ -64,7 +64,11 @@ Page({
     // 刷新控制
     lastRefreshTime: 0,      // 上次刷新时间戳
     refreshInterval: 30000,  // 最小刷新间隔 30秒
-    currentRequestId: null   // 当前请求ID，用于取消旧请求
+    currentRequestId: null,  // 当前请求ID，用于取消旧请求
+    showTakeConfirm: false,
+    takeShareAuthorized: false,
+    pendingTakeNeedId: '',
+    pendingTakeIncome: 0
   },
 
   onLoad() {
@@ -418,27 +422,47 @@ Page({
       return
     }
 
-    wx.showModal({
-      title: '确认去帮助',
-      content: `完成此任务可获得 ${incomeAmount} 元，确定要去帮助吗？`,
-      confirmColor: '#A8E6CF',
-      success: (res) => {
-        if (res.confirm) {
-          this.doTakeTask(id)
-        }
-      }
+    this.setData({
+      showTakeConfirm: true,
+      takeShareAuthorized: false,
+      pendingTakeNeedId: id,
+      pendingTakeIncome: incomeAmount
     })
   },
 
+  closeTakeConfirm() {
+    this.setData({
+      showTakeConfirm: false,
+      takeShareAuthorized: false,
+      pendingTakeNeedId: '',
+      pendingTakeIncome: 0
+    })
+  },
+
+  toggleTakeShareAuthorization() {
+    this.setData({ takeShareAuthorized: !this.data.takeShareAuthorized })
+  },
+
+  confirmTakeTask() {
+    const needId = this.data.pendingTakeNeedId
+    const authorized = this.data.takeShareAuthorized
+    this.closeTakeConfirm()
+    if (needId) this.doTakeTask(needId, authorized)
+  },
+
   // 执行接单
-  async doTakeTask(needId) {
+  async doTakeTask(needId, experienceShareAuthorized = false) {
     try {
       wx.showLoading({ title: '处理中...' })
 
       // 调用云函数
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-take-need',
-        data: { needId }
+        data: {
+          needId,
+          experienceShareAuthorized,
+          authorizationVersion: 'experience-share-v1'
+        }
       })
 
       wx.hideLoading()

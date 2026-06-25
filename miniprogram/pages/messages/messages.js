@@ -497,6 +497,14 @@ Page({
       'arbitration_result': { name: 'file-check-2', color: 'var(--fresh-mint)' },
       'task_auto_completed': { name: 'circle-check-big', color: 'var(--fresh-mint)' },
       'feedback_received': { name: 'message-square-text', color: '#7B61D1' }
+      ,
+      'experience_confirmation': { name: 'file-text', color: 'var(--brand-primary)' },
+      'experience_published': { name: 'circle-check-big', color: 'var(--fresh-mint)' },
+      'experience_rejected': { name: 'circle-x', color: '#FF6B6B' },
+      'experience_withdrawn': { name: 'circle-x', color: '#7B8794' },
+      'experience_expired': { name: 'clock-3', color: '#7B8794' },
+      'experience_down': { name: 'circle-x', color: '#FF6B6B' },
+      'experience_report_result': { name: 'flag', color: '#7B61D1' }
     }
     return iconMap[type] || { name: 'megaphone', color: 'var(--brand-primary)' }
   },
@@ -506,7 +514,7 @@ Page({
     const item = e.currentTarget.dataset.item
     if (!item) return
 
-    const { type, need_id, appeal_id, report_id, feedback_id } = item
+    const { type, need_id, appeal_id, report_id, feedback_id, experience_id } = item
 
     // 标记已读
     this.markNotificationAsRead(item._id)
@@ -561,6 +569,26 @@ Page({
             url: `/pages/feedback-detail/feedback-detail?feedbackId=${feedback_id}`
           })
         }
+        break
+      case 'experience_confirmation':
+        if (experience_id) {
+          wx.navigateTo({
+            url: `/pages/experience-confirm/experience-confirm?experienceId=${experience_id}`
+          })
+        }
+        break
+      case 'experience_published':
+      case 'experience_report_result':
+        if (experience_id) {
+          wx.navigateTo({
+            url: `/pages/experience-detail/experience-detail?experienceId=${experience_id}`
+          })
+        }
+        break
+      case 'experience_withdrawn':
+      case 'experience_rejected':
+      case 'experience_expired':
+        wx.navigateTo({ url: '/pages/my-needs/my-needs' })
         break
       default:
         // 不跳转

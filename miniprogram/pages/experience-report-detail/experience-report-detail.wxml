@@ -1,0 +1,25 @@
+<view class="experience-page">
+  <view wx:if="{{loading}}" class="empty-state">加载中...</view>
+  <block wx:elif="{{ticket}}">
+    <view class="detail-section">
+      <text class="experience-title">{{ticket.title_snapshot}}</text>
+      <view class="experience-meta">累计举报 {{ticket.total_count}} · 本轮待处理 {{ticket.pending_count}}</view>
+    </view>
+    <view wx:if="{{experience}}" class="detail-section">
+      <text class="section-title">当前公开内容</text>
+      <text class="detail-value">{{experience.result}}</text>
+    </view>
+    <view class="detail-section">
+      <text class="section-title">举报说明</text>
+      <view wx:for="{{reports}}" wx:key="_id" style="margin-bottom: 22rpx;">
+        <text class="detail-value">{{item.description || '举报人未填写补充说明'}}</text>
+        <view class="experience-meta">{{item.timeText}}</view>
+      </view>
+    </view>
+    <view wx:if="{{ticket.status === 'pending'}}" class="fixed-actions">
+      <button class="secondary-button" data-result="no_action" bindtap="resolve">不予处理</button>
+      <button class="danger-button" data-result="down" bindtap="resolve">下架</button>
+    </view>
+    <view wx:else class="status-note">该工单已处理：{{ticket.result === 'down' ? '下架' : '不予处理'}}</view>
+  </block>
+</view>

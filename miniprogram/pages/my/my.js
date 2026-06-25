@@ -420,6 +420,24 @@ Page({
     })
   },
 
+  goToExperienceAdmin() {
+    wx.navigateTo({
+      url: '/pages/experience-admin/experience-admin'
+    })
+  },
+
+  goToExperienceReportTickets() {
+    wx.navigateTo({
+      url: '/pages/experience-report-tickets/experience-report-tickets'
+    })
+  },
+
+  goToExperiences() {
+    wx.navigateTo({
+      url: '/pages/experiences/experiences'
+    })
+  },
+
   goToFeedback() {
     if (!this.checkLoginAndShowTip()) return
     wx.navigateTo({

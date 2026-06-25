@@ -1,0 +1,31 @@
+@import "../../styles/experience.wxss";
+
+.report-mask {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.report-dialog {
+  position: fixed;
+  z-index: 51;
+  left: 42rpx;
+  right: 42rpx;
+  top: 50%;
+  padding: 30rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  transform: translateY(-50%);
+  box-sizing: border-box;
+}
+
+.report-actions {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 24rpx;
+}
+
+.report-actions button {
+  flex: 1;
+}

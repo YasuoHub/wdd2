@@ -16,7 +16,9 @@ Page({
     canComplete: false,
     canCancel: false,
     showActionBar: false,
-    loading: true
+    loading: true,
+    showTakeConfirm: false,
+    takeShareAuthorized: false
   },
 
   onLoad(options) {
@@ -147,48 +149,43 @@ Page({
 
     const takerIncome = this.data.task._takerIncome || 0
 
-    wx.showModal({
-      title: '确认去帮助',
-      content: `完成此任务可获得 ${takerIncome} 元，确定要去帮助吗？`,
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '处理中...' })
-
-          try {
-            const { result } = await wx.cloud.callFunction({
-              name: 'wdd-take-need',
-              data: {
-                needId: this.data.needId
-              }
-            })
-
-            wx.hideLoading()
-
-            if (result.code === 0) {
-              wx.showToast({
-                title: '已开始帮助',
-                icon: 'success'
-              })
-
-              // 进入聊天页
-              setTimeout(() => {
-                wx.navigateTo({
-                  url: `/pages/chat/chat?needId=${this.data.needId}`
-                })
-              }, 1500)
-            } else {
-              throw new Error(result.message)
-            }
-          } catch (err) {
-            wx.hideLoading()
-            wx.showToast({
-              title: err.message || '操作失败',
-              icon: 'none'
-            })
-          }
-        }
-      }
+    this.setData({
+      showTakeConfirm: true,
+      takeShareAuthorized: false
     })
+  },
+
+  closeTakeConfirm() {
+    this.setData({ showTakeConfirm: false, takeShareAuthorized: false })
+  },
+
+  toggleTakeShareAuthorization() {
+    this.setData({ takeShareAuthorized: !this.data.takeShareAuthorized })
+  },
+
+  async confirmTakeTask() {
+    const authorized = this.data.takeShareAuthorized
+    this.closeTakeConfirm()
+    wx.showLoading({ title: '处理中...' })
+    try {
+      const { result } = await wx.cloud.callFunction({
+        name: 'wdd-take-need',
+        data: {
+          needId: this.data.needId,
+          experienceShareAuthorized: authorized,
+          authorizationVersion: 'experience-share-v1'
+        }
+      })
+      if (result.code !== 0) throw new Error(result.message)
+      wx.showToast({ title: '已开始帮助', icon: 'success' })
+      setTimeout(() => {
+        wx.navigateTo({ url: `/pages/chat/chat?needId=${this.data.needId}` })
+      }, 1000)
+    } catch (err) {
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
   },
 
   // 进入聊天
@@ -268,12 +265,7 @@ Page({
         app.globalData.refreshMyNeeds = true
         app.globalData.refreshMyTasks = true
 
-        // 跳转到评价页
-        setTimeout(() => {
-          wx.navigateTo({
-            url: `/pages/rating/rating?needId=${this.data.needId}`
-          })
-        }, 1500)
+        setTimeout(() => this.promptExperienceShare(), 700)
       } else {
         throw new Error(result.message)
       }
@@ -284,6 +276,22 @@ Page({
         icon: 'none'
       })
     }
+  },
+
+  promptExperienceShare() {
+    wx.showModal({
+      title: '分享当地经验',
+      content: '是否将本次任务整理成公开经验，帮助有相同问题的人？',
+      confirmText: '申请分享',
+      cancelText: '暂不分享',
+      success: res => {
+        if (res.confirm) {
+          wx.navigateTo({ url: `/pages/experience-edit/experience-edit?needId=${this.data.needId}` })
+        } else {
+          wx.navigateTo({ url: `/pages/rating/rating?needId=${this.data.needId}&type=seeker` })
+        }
+      }
+    })
   },
 
   // 取消任务

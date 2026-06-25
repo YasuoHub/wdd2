@@ -3,8 +3,8 @@
 
   <view class="page-head">
     <view>
-      <text class="page-title">告诉我们你的想法</text>
-      <text class="page-desc">你的建议会直接送达平台客服</text>
+      <text class="page-title">期待您的想法</text>
+      <text class="page-desc">您的宝贵意见与建议对我们非常重要</text>
     </view>
     <view class="history-btn" bindtap="goToMyFeedback">
       <wdd-icon name="clipboard-list" color="var(--brand-primary)" size="26"></wdd-icon>
@@ -23,7 +23,7 @@
         class="title-input"
         value="{{title}}"
         maxlength="40"
-        placeholder="请简要概括你的意见"
+        placeholder="请简要概括你的意见或建议"
         bindinput="onTitleInput"
       />
     </view>
