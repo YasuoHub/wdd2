@@ -1,11 +1,27 @@
 <page-meta page-style="{{showReport ? 'overflow: hidden;' : ''}}" />
-<view class="experience-page">
+<view class="experience-page experience-detail-page wdd-page">
+  <view class="wdd-page-bg"></view>
   <view wx:if="{{loading}}" class="empty-state">加载中...</view>
   <block wx:elif="{{experience}}">
-    <view class="detail-section">
+    <view class="detail-section detail-hero">
       <text class="experience-title">{{experience.title}}</text>
-      <view class="experience-location">地点：{{experience.publicLocation}}</view>
-      <view class="experience-meta">有用 {{experience.usefulCount}} · {{experience.freshness || '时效请自行判断'}}</view>
+      <view class="detail-meta-line">
+        <view class="experience-location">
+          <wdd-icon name="map-pin" color="#7B8794" size="24"></wdd-icon>
+          <text>{{experience.publicLocation}}</text>
+        </view>
+        <view class="experience-meta">有用 {{experience.usefulCount}}</view>
+      </view>
+      <view class="detail-time-grid">
+        <view class="detail-time-item">
+          <text class="time-label">分享时间</text>
+          <text class="time-value">{{experience.publishedTimeText || '暂无'}}</text>
+        </view>
+        <view class="detail-time-item">
+          <text class="time-label">有效至</text>
+          <text class="time-value">{{experience.expiresAtText || '请自行判断'}}</text>
+        </view>
+      </view>
     </view>
     <view class="detail-section">
       <text class="section-title">公开描述</text>

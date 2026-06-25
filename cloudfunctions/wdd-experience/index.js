@@ -52,6 +52,57 @@ function validateContent(content) {
   return ''
 }
 
+function toDate(value) {
+  if (!value) return null
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
+  if (typeof value.toDate === 'function') return value.toDate()
+  if (typeof value.getTime === 'function') {
+    const date = new Date(value.getTime())
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function endOfBeijingDay(date, dayOffset = 0) {
+  const base = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  const utc = Date.UTC(
+    base.getUTCFullYear(),
+    base.getUTCMonth(),
+    base.getUTCDate() + dayOffset,
+    23,
+    59,
+    0,
+    0
+  )
+  return new Date(utc - 8 * 60 * 60 * 1000)
+}
+
+function getFreshnessExpiresAt(freshness, reference = new Date()) {
+  const source = text(freshness, 50)
+  if (!source) return null
+  if (source.includes('1小时')) return new Date(reference.getTime() + 60 * 60 * 1000)
+  if (source.includes('今天')) return endOfBeijingDay(reference, 0)
+  if (source.includes('明天')) return endOfBeijingDay(reference, 1)
+  const dayMatch = source.match(/(\d+)\s*天/)
+  if (dayMatch) return new Date(reference.getTime() + Number(dayMatch[1]) * 24 * 60 * 60 * 1000)
+  return null
+}
+
+function getExperienceExpiresAt(item = {}) {
+  const explicit = toDate(item.expires_at || item.expiresAt)
+  if (explicit) return explicit
+  const reference = toDate(item.published_time || item.confirmed_time || item.submit_time || item.update_time || item.create_time)
+  return reference ? getFreshnessExpiresAt(item.freshness, reference) : null
+}
+
+function formatBeijingDateTime(value) {
+  const date = toDate(value)
+  if (!date) return ''
+  const bj = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  return `${bj.getUTCFullYear()}年${bj.getUTCMonth() + 1}月${bj.getUTCDate()}日 ${String(bj.getUTCHours()).padStart(2, '0')}:${String(bj.getUTCMinutes()).padStart(2, '0')}`
+}
+
 async function getCurrentUser(openid) {
   if (!openid) return null
   const res = await db.collection('wdd-users').where({ openid }).limit(1).get()
@@ -289,6 +340,8 @@ async function generateDraftWithDeepSeek(need, messages) {
 }
 
 function toPublicExperience(item, currentUserId, liked) {
+  const publishedTime = toDate(item.published_time)
+  const expiresAt = getExperienceExpiresAt(item)
   return {
     _id: item._id,
     needId: item.need_id,
@@ -302,7 +355,10 @@ function toPublicExperience(item, currentUserId, liked) {
     images: item.images || [],
     usefulCount: Number(item.useful_count) || 0,
     status: item.status,
-    publishedTime: item.published_time || null,
+    publishedTime: publishedTime || null,
+    publishedTimeText: formatBeijingDateTime(publishedTime),
+    expiresAt: expiresAt || null,
+    expiresAtText: formatBeijingDateTime(expiresAt),
     isLiked: !!liked,
     canReport: !!currentUserId && ![item.requester_id, item.helper_id].includes(currentUserId),
     isParticipant: !!currentUserId && [item.requester_id, item.helper_id].includes(currentUserId)
@@ -496,6 +552,7 @@ async function saveDraft(event, openid) {
     const update = {
       ...content,
       applicable_time: '',
+      expires_at: getFreshnessExpiresAt(content.freshness, now),
       status: 'pending_confirmation',
       submitted_once: true,
       version: nextVersion,
@@ -591,7 +648,13 @@ async function handleConfirmation(event, openid, accepted) {
     }
     const now = new Date()
     const update = accepted
-      ? { status: 'published', confirmed_time: now, published_time: now, update_time: now }
+      ? {
+        status: 'published',
+        confirmed_time: now,
+        published_time: now,
+        expires_at: experience.expires_at || getFreshnessExpiresAt(experience.freshness, experience.submit_time ? toDate(experience.submit_time) || now : now),
+        update_time: now
+      }
       : { status: 'rejected', rejected_time: now, update_time: now }
     await transaction.collection('wdd-experiences').doc(experienceId).update({ data: update })
     await transaction.commit()

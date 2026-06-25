@@ -1,6 +1,123 @@
 @import "../../styles/experience.wxss";
 
+.experience-detail-page {
+  position: relative;
+  min-height: 100vh;
+  padding: 28rpx 32rpx 120rpx;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(240, 248, 255, 0.92) 0%, rgba(247, 251, 255, 0.98) 48%, #f5f7fa 100%);
+  box-sizing: border-box;
+}
+
+.experience-detail-page .detail-section {
+  position: relative;
+  z-index: 1;
+  border: 1rpx solid var(--brand-primary-10);
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-card);
+}
+
+.detail-hero {
+  overflow: hidden;
+}
+
+.detail-hero::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24rpx;
+  width: 6rpx;
+  height: 76rpx;
+  border-radius: 0 6rpx 6rpx 0;
+  background: linear-gradient(180deg, var(--sky-primary) 0%, var(--sky-light) 100%);
+}
+
+.experience-detail-page .experience-title {
+  color: #1f2d3d;
+  font-size: 36rpx;
+  font-weight: 500;
+  line-height: 1.42;
+}
+
+.detail-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 16rpx;
+}
+
+.experience-detail-page .experience-location {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  min-width: 0;
+  margin-top: 0;
+  color: #7B8794;
+  font-size: 25rpx;
+}
+
+.experience-detail-page .experience-location text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.experience-detail-page .experience-meta {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 8rpx 14rpx;
+  border-radius: var(--radius-full);
+  color: #119B72;
+  background: rgba(17, 155, 114, 0.1);
+  font-size: 23rpx;
+}
+
+.detail-time-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.detail-time-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #f7fbff;
+}
+
+.time-label {
+  flex-shrink: 0;
+  color: #7B8794;
+  font-size: 24rpx;
+}
+
+.time-value {
+  min-width: 0;
+  color: #1f2d3d;
+  font-size: 25rpx;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.experience-detail-page .section-title {
+  color: #1f2d3d;
+}
+
+.experience-detail-page .detail-value {
+  color: #344054;
+}
+
 .detail-actions {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr 180rpx;
   gap: 16rpx;
@@ -48,6 +165,8 @@
 }
 
 .participant-note {
+  position: relative;
+  z-index: 1;
   margin-top: 8rpx;
   margin-bottom: 28rpx;
   padding: 18rpx 20rpx;
