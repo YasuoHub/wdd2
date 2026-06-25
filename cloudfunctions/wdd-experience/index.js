@@ -155,6 +155,12 @@ function getFallbackDraft(need) {
   }
 }
 
+function shouldRegenerateDraft(experience = {}) {
+  if (!experience || experience.status !== 'draft') return false
+  if (experience.ai_generation_status) return false
+  return !text(experience.result, 20)
+}
+
 function parseModelJson(content) {
   const source = String(content || '').replace(/^```json\s*/i, '').replace(/```$/i, '').trim()
   const parsed = JSON.parse(source)
@@ -170,11 +176,18 @@ function getDeepSeekTimeoutMs() {
 async function generateDraftWithDeepSeek(need, messages) {
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
+    console.warn('DeepSeek 草稿生成跳过：未读取到 DEEPSEEK_API_KEY')
     return { draft: getFallbackDraft(need), warning: '尚未配置 DeepSeek API Key，请先手动填写经验内容' }
   }
 
   const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash'
   const timeout = getDeepSeekTimeoutMs()
+  console.log('DeepSeek 草稿生成准备请求:', {
+    model,
+    timeout,
+    messageCount: messages.length,
+    hasApiKey: true
+  })
   const prompt = [
     '你是“问当地”平台的经验整理助手。',
     '请根据任务信息和聊天记录生成适合公开展示的匿名经验，只能使用原始材料中的事实，不得推测或补充。',
@@ -273,6 +286,41 @@ async function createDraft(event, openid) {
   if (context.need.status !== 'completed') return { code: 409, message: '任务完成后才能分享经验' }
   if (!context.taker) return { code: 409, message: '未找到帮助者信息' }
   if (existing) {
+    if (shouldRegenerateDraft(existing)) {
+      const messages = await loadTaskMessages(needId)
+      let generated
+      try {
+        generated = await generateDraftWithDeepSeek(context.need, messages)
+        generated.draft = { ...getFallbackDraft(context.need), ...generated.draft }
+      } catch (err) {
+        console.error('DeepSeek 重新生成经验草稿失败:', err.response && err.response.data ? err.response.data : err)
+        const isTimeout = err.code === 'ECONNABORTED' || /timeout|timed out|超时/i.test(err.message || '')
+        generated = {
+          draft: getFallbackDraft(context.need),
+          warning: isTimeout ? 'AI整理超时，请先手动填写经验内容' : 'AI整理失败，请手动填写经验内容'
+        }
+      }
+      const now = new Date()
+      const update = {
+        ...generated.draft,
+        ai_generation_status: generated.warning ? 'fallback' : 'generated',
+        ai_generation_warning: generated.warning || '',
+        ai_generation_time: now,
+        update_time: now
+      }
+      await db.collection('wdd-experiences').doc(existing._id).update({ data: update })
+      return {
+        code: 0,
+        data: {
+          experience: { ...existing, ...update },
+          task: getTaskMeta(context.need),
+          availableImages: Array.isArray(context.need.images) ? context.need.images : [],
+          created: false,
+          regenerated: true,
+          warning: generated.warning
+        }
+      }
+    }
     return {
       code: 0,
       data: {
@@ -311,12 +359,23 @@ async function createDraft(event, openid) {
       version: 0,
       useful_count: 0,
       report_count: 0,
+      ai_generation_status: generated.warning ? 'fallback' : 'generated',
+      ai_generation_warning: generated.warning || '',
+      ai_generation_time: now,
       ...generated.draft,
       create_time: now,
       update_time: now
     }
   })
-  const experience = { _id: addRes._id, ...generated.draft, status: 'draft', version: 0 }
+  const experience = {
+    _id: addRes._id,
+    ...generated.draft,
+    status: 'draft',
+    version: 0,
+    ai_generation_status: generated.warning ? 'fallback' : 'generated',
+    ai_generation_warning: generated.warning || '',
+    ai_generation_time: now
+  }
   return {
     code: 0,
     data: {

@@ -38,6 +38,12 @@ function getExperienceErrorMessage(err) {
   return raw || '整理失败，请稍后重试'
 }
 
+function shouldRetryDraftGeneration(experience = {}) {
+  if (!experience || experience.status !== 'draft') return false
+  if (experience.ai_generation_status) return false
+  return !trimText(experience.result)
+}
+
 Page({
   data: {
     needId: '',
@@ -91,6 +97,18 @@ Page({
       if (result.code !== 0) throw new Error(result.message)
       if (result.data.experience) {
         this.applyExperience(result.data)
+        if (shouldRetryDraftGeneration(result.data.experience)) {
+          const regenerated = await wx.cloud.callFunction({
+            name: 'wdd-experience',
+            data: { action: 'createDraft', needId: this.data.needId },
+            timeout: EXPERIENCE_CALL_TIMEOUT
+          })
+          if (regenerated.result.code !== 0) throw new Error(regenerated.result.message)
+          this.applyExperience(regenerated.result.data)
+          if (regenerated.result.data.warning) {
+            wx.showToast({ title: regenerated.result.data.warning, icon: 'none', duration: 3000 })
+          }
+        }
       } else {
         const created = await wx.cloud.callFunction({
           name: 'wdd-experience',
