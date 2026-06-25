@@ -1,5 +1,5 @@
 <page-meta page-style="{{showPreview ? 'overflow: hidden;' : ''}}" />
-<view class="experience-page">
+<view class="experience-page experience-edit-page">
   <view wx:if="{{loading}}" class="empty-state">正在根据任务内容整理经验草稿...</view>
   <block wx:else>
     <view wx:if="{{status === 'pending_confirmation'}}" class="status-note">
@@ -7,38 +7,80 @@
     </view>
     <view wx:elif="{{!editable}}" class="status-note">该经验已处理，当前内容不能再修改。</view>
 
-    <view class="form-section">
-      <view class="field-group">
-        <text class="field-label">公开标题</text>
-        <input class="field-input" disabled="{{!editable}}" maxlength="50" value="{{form.title}}" data-field="title" bindinput="onFieldInput" />
+    <view class="task-context-panel">
+      <view class="task-type-pill">
+        <wdd-icon name="tag" color="var(--brand-primary)" size="26"></wdd-icon>
+        <text>{{task.typeName}}</text>
       </view>
-      <view class="field-group">
-        <text class="field-label">公开地点</text>
-        <input class="field-input" disabled="{{!editable}}" maxlength="80" value="{{form.publicLocation}}" data-field="publicLocation" bindinput="onFieldInput" />
-      </view>
-      <view class="field-group">
-        <text class="field-label">当时的问题</text>
-        <textarea class="field-textarea" disabled="{{!editable}}" maxlength="300" value="{{form.question}}" data-field="question" bindinput="onFieldInput" />
-      </view>
-      <view class="field-group">
-        <text class="field-label">实际结果</text>
-        <textarea class="field-textarea" disabled="{{!editable}}" maxlength="1000" value="{{form.result}}" data-field="result" bindinput="onFieldInput" />
-      </view>
-      <view class="field-group">
-        <text class="field-label">适用时间</text>
-        <input class="field-input" disabled="{{!editable}}" maxlength="100" value="{{form.applicableTime}}" data-field="applicableTime" bindinput="onFieldInput" placeholder="例如：工作日下午" />
-      </view>
-      <view class="field-group">
-        <text class="field-label">信息有效期</text>
-        <input class="field-input" disabled="{{!editable}}" maxlength="50" value="{{form.freshness}}" data-field="freshness" bindinput="onFieldInput" placeholder="例如：短期参考" />
-      </view>
-      <view class="field-group">
-        <text class="field-label">注意事项</text>
-        <textarea class="field-textarea" disabled="{{!editable}}" maxlength="500" value="{{form.tips}}" data-field="tips" bindinput="onFieldInput" />
+      <view class="task-context-desc">{{task.description || '暂无任务描述'}}</view>
+      <view class="task-context-location">
+        <wdd-icon name="map-pin" color="#667085" size="24"></wdd-icon>
+        <text>{{task.locationName || '任务地点'}}</text>
       </view>
     </view>
 
-    <view wx:if="{{availableImages.length > 0}}" class="form-section">
+    <view class="form-section edit-form-section">
+      <view class="field-group compact-group">
+        <view class="label-row">
+          <text class="field-label">公开标题</text>
+          <text class="required-mark">必填</text>
+        </view>
+        <input class="field-input edit-input" disabled="{{!editable}}" maxlength="50" value="{{form.title}}" data-field="title" bindinput="onFieldInput" />
+      </view>
+
+      <view class="field-group compact-group">
+        <view class="label-row">
+          <text class="field-label">公开地点</text>
+          <text class="required-mark">必填</text>
+        </view>
+        <view class="location-editor">
+          <input class="field-input edit-input location-input" disabled="{{!editable}}" maxlength="80" value="{{form.publicLocation}}" data-field="publicLocation" bindinput="onFieldInput" />
+          <button class="location-pick-btn" disabled="{{!editable}}" bindtap="choosePublicLocation">
+            <wdd-icon name="map-pinned" color="var(--brand-primary)" size="26"></wdd-icon>
+            <text>选择</text>
+          </button>
+        </view>
+      </view>
+
+      <view class="field-group compact-group">
+        <view class="label-row">
+          <text class="field-label">公开描述</text>
+          <text class="required-mark">必填</text>
+        </view>
+        <textarea class="field-textarea edit-textarea compact-textarea" disabled="{{!editable}}" maxlength="300" value="{{form.question}}" data-field="question" bindinput="onFieldInput" />
+      </view>
+
+      <view class="field-group compact-group">
+        <view class="label-row">
+          <text class="field-label">任务结果</text>
+          <text class="required-mark">必填</text>
+        </view>
+        <textarea class="field-textarea edit-textarea compact-textarea" disabled="{{!editable}}" maxlength="1000" value="{{form.result}}" data-field="result" bindinput="onFieldInput" />
+      </view>
+
+      <view class="field-group compact-group">
+        <view class="label-row">
+          <text class="field-label">信息有效期</text>
+          <text class="required-mark">必填</text>
+        </view>
+        <picker disabled="{{!editable}}" mode="selector" range="{{freshnessOptions}}" value="{{freshnessIndex}}" bindchange="onFreshnessChange">
+          <view class="picker-field {{form.freshness ? '' : 'placeholder'}}">
+            <text>{{form.freshness || '请选择有效期'}}</text>
+            <wdd-icon name="chevron-down" color="#667085" size="24"></wdd-icon>
+          </view>
+        </picker>
+      </view>
+
+      <view class="field-group compact-group last-group">
+        <view class="label-row">
+          <text class="field-label">注意事项</text>
+          <text class="optional-mark">选填</text>
+        </view>
+        <textarea class="field-textarea edit-textarea compact-textarea" disabled="{{!editable}}" maxlength="500" value="{{form.tips}}" data-field="tips" bindinput="onFieldInput" />
+      </view>
+    </view>
+
+    <view wx:if="{{availableImages.length > 0}}" class="form-section edit-form-section">
       <text class="section-title">选择允许公开的图片</text>
       <view class="image-grid">
         <view wx:for="{{availableImages}}" wx:key="url" class="selectable-image {{item.selected ? 'selected' : ''}}" data-url="{{item.url}}" bindtap="toggleImage">
@@ -60,19 +102,19 @@
   <view class="preview-block">
     <text class="experience-title">{{form.title}}</text>
     <view class="experience-location">地点：{{form.publicLocation}}</view>
+    <view class="experience-meta">类型：{{task.typeName}} · {{form.freshness}}</view>
   </view>
   <view class="preview-block">
-    <text class="field-label">当时的问题</text>
+    <text class="field-label">公开描述</text>
     <text class="detail-value">{{form.question}}</text>
   </view>
   <view class="preview-block">
-    <text class="field-label">实际结果</text>
+    <text class="field-label">任务结果</text>
     <text class="detail-value">{{form.result}}</text>
   </view>
-  <view wx:if="{{form.applicableTime || form.freshness || form.tips}}" class="preview-block">
-    <text wx:if="{{form.applicableTime}}" class="experience-meta">适用时间：{{form.applicableTime}}</text>
-    <text wx:if="{{form.freshness}}" class="experience-meta">信息有效期：{{form.freshness}}</text>
-    <text wx:if="{{form.tips}}" class="experience-meta">注意事项：{{form.tips}}</text>
+  <view wx:if="{{form.tips}}" class="preview-block">
+    <text class="field-label">注意事项</text>
+    <text class="detail-value">{{form.tips}}</text>
   </view>
   <view wx:if="{{selectedImages.length > 0}}" class="preview-block">
     <text class="field-label">公开图片</text>

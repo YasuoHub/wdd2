@@ -9,11 +9,11 @@
       <view class="experience-location">地点：{{experience.public_location}}</view>
     </view>
     <view class="detail-section">
-      <text class="section-title">当时的问题</text>
+      <text class="section-title">公开描述</text>
       <text class="detail-value">{{experience.question}}</text>
     </view>
     <view class="detail-section">
-      <text class="section-title">实际结果</text>
+      <text class="section-title">任务结果</text>
       <text class="detail-value">{{experience.result}}</text>
     </view>
     <view wx:if="{{experience.images.length > 0}}" class="detail-section">

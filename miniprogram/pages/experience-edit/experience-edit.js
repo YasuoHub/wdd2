@@ -1,3 +1,29 @@
+const { requirePrivacyAuthorize } = require('../../utils/privacy')
+
+const FRESHNESS_OPTIONS = [
+  '1小时内有效',
+  '今天内有效',
+  '明天前有效',
+  '3天内有效',
+  '7天内有效',
+  '30天内有效'
+]
+
+function trimText(value) {
+  return String(value || '').trim()
+}
+
+function buildTitleFromTask(task = {}) {
+  const typeName = task.typeName || '当地经验'
+  const description = trimText(task.description).slice(0, 28)
+  return description ? `${typeName}：${description}`.slice(0, 50) : `${typeName}当地经验`
+}
+
+function getFreshnessIndex(value) {
+  const index = FRESHNESS_OPTIONS.indexOf(value)
+  return index >= 0 ? index : -1
+}
+
 Page({
   data: {
     needId: '',
@@ -10,12 +36,21 @@ Page({
     showPreview: false,
     availableImages: [],
     selectedImages: [],
+    task: {
+      type: '',
+      typeName: '任务类型',
+      description: '',
+      locationName: '',
+      longitude: null,
+      latitude: null
+    },
+    freshnessOptions: FRESHNESS_OPTIONS,
+    freshnessIndex: -1,
     form: {
       title: '',
       publicLocation: '',
       question: '',
       result: '',
-      applicableTime: '',
       freshness: '',
       tips: ''
     }
@@ -69,25 +104,36 @@ Page({
 
   applyExperience(data) {
     const item = data.experience || {}
+    const task = data.task || this.data.task || {}
     const selectedImages = item.images || []
     const availableImages = (data.availableImages || []).map(url => ({
       url,
       selected: selectedImages.includes(url)
     }))
+    const publicLocation = item.public_location || item.publicLocation || task.locationName || ''
+    const freshness = item.freshness || ''
     this.setData({
+      task: {
+        type: task.type || '',
+        typeName: task.typeName || '任务类型',
+        description: task.description || '',
+        locationName: task.locationName || '',
+        longitude: Number(task.longitude) || null,
+        latitude: Number(task.latitude) || null
+      },
       experienceId: item._id || this.data.experienceId,
       status: item.status || 'draft',
       submittedOnce: !!item.submitted_once,
       editable: data.editable !== false && ['draft', 'pending_confirmation'].includes(item.status || 'draft'),
       availableImages,
       selectedImages,
+      freshnessIndex: getFreshnessIndex(freshness),
       form: {
-        title: item.title || '',
-        publicLocation: item.public_location || item.publicLocation || '',
-        question: item.question || '',
+        title: item.title || buildTitleFromTask(task),
+        publicLocation,
+        question: item.question || task.description || '',
         result: item.result || '',
-        applicableTime: item.applicable_time || item.applicableTime || '',
-        freshness: item.freshness || '',
+        freshness,
         tips: item.tips || ''
       }
     })
@@ -95,6 +141,44 @@ Page({
 
   onFieldInput(e) {
     this.setData({ [`form.${e.currentTarget.dataset.field}`]: e.detail.value })
+  },
+
+  onFreshnessChange(e) {
+    const index = Number(e.detail.value)
+    const freshness = this.data.freshnessOptions[index] || ''
+    this.setData({
+      freshnessIndex: index,
+      'form.freshness': freshness
+    })
+  },
+
+  async choosePublicLocation() {
+    if (!this.data.editable) return
+    try {
+      await requirePrivacyAuthorize()
+    } catch (err) {
+      const msg = err.errno === 112 ? '定位服务暂不可用' : '需要同意隐私协议'
+      wx.showToast({ title: msg, icon: 'none' })
+      return
+    }
+
+    const task = this.data.task || {}
+    const options = {
+      success: res => {
+        this.setData({
+          'form.publicLocation': res.name || res.address || '选定位置'
+        })
+      },
+      fail: err => {
+        if (err.errMsg && err.errMsg.includes('cancel')) return
+        wx.showToast({ title: '选择地点失败', icon: 'none' })
+      }
+    }
+    if (task.latitude && task.longitude) {
+      options.latitude = task.latitude
+      options.longitude = task.longitude
+    }
+    wx.chooseLocation(options)
   },
 
   toggleImage(e) {
@@ -122,18 +206,20 @@ Page({
     this.setData({ showPreview: false })
   },
 
-  submit() {
+  validateForm() {
     const form = this.data.form
-    if (String(form.title || '').trim().length < 2) {
-      wx.showToast({ title: '标题至少填写2个字', icon: 'none' })
-      return
-    }
-    if (!String(form.publicLocation || '').trim()) {
-      wx.showToast({ title: '请填写公开地点', icon: 'none' })
-      return
-    }
-    if (String(form.question || '').trim().length < 2 || String(form.result || '').trim().length < 2) {
-      wx.showToast({ title: '请完善问题和实际结果', icon: 'none' })
+    if (trimText(form.title).length < 2) return '标题至少填写2个字'
+    if (!trimText(form.publicLocation)) return '请填写公开地点'
+    if (trimText(form.question).length < 2) return '请填写公开描述'
+    if (trimText(form.result).length < 2) return '请填写任务结果'
+    if (!trimText(form.freshness)) return '请选择信息有效期'
+    return ''
+  },
+
+  submit() {
+    const message = this.validateForm()
+    if (message) {
+      wx.showToast({ title: message, icon: 'none' })
       return
     }
     this.preview()

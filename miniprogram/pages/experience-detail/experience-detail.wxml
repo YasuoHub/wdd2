@@ -8,20 +8,16 @@
       <view class="experience-meta">有用 {{experience.usefulCount}} · {{experience.freshness || '时效请自行判断'}}</view>
     </view>
     <view class="detail-section">
-      <text class="section-title">当时的问题</text>
+      <text class="section-title">公开描述</text>
       <text class="detail-value">{{experience.question}}</text>
     </view>
     <view class="detail-section">
-      <text class="section-title">实际结果</text>
+      <text class="section-title">任务结果</text>
       <text class="detail-value">{{experience.result}}</text>
     </view>
-    <view wx:if="{{experience.applicableTime || experience.tips}}" class="detail-section">
-      <block wx:if="{{experience.applicableTime}}">
-        <text class="section-title">适用时间</text>
-        <text class="detail-value">{{experience.applicableTime}}</text>
-      </block>
+    <view wx:if="{{experience.tips}}" class="detail-section">
       <block wx:if="{{experience.tips}}">
-        <text class="section-title" style="margin-top: 24rpx;">注意事项</text>
+        <text class="section-title">注意事项</text>
         <text class="detail-value">{{experience.tips}}</text>
       </block>
     </view>

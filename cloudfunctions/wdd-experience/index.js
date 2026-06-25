@@ -8,6 +8,14 @@ const _ = db.command
 const CONFIRM_WINDOW_MS = 48 * 60 * 60 * 1000
 const MAX_PAGE_SIZE = 30
 const EDITABLE_STATUSES = ['draft', 'pending_confirmation']
+const NEED_TYPE_NAMES = {
+  weather: '实时天气',
+  traffic: '道路拥堵',
+  shop: '店铺营业',
+  parking: '停车场空位',
+  queue: '排队情况',
+  other: '其他'
+}
 
 function text(value, max = 500) {
   return String(value || '').trim().slice(0, max)
@@ -24,7 +32,6 @@ function normalizeContent(value = {}) {
     public_location: text(value.publicLocation || value.public_location, 80),
     question: text(value.question, 300),
     result: text(value.result, 1000),
-    applicable_time: text(value.applicableTime || value.applicable_time, 100),
     freshness: text(value.freshness, 50),
     tips: text(value.tips, 500),
     images: normalizeImages(value.images)
@@ -34,8 +41,9 @@ function normalizeContent(value = {}) {
 function validateContent(content) {
   if (content.title.length < 2) return '标题至少填写2个字'
   if (!content.public_location) return '请填写公开地点'
-  if (content.question.length < 2) return '请填写问题摘要'
-  if (content.result.length < 2) return '请填写经验结果'
+  if (content.question.length < 2) return '请填写公开描述'
+  if (content.result.length < 2) return '请填写任务结果'
+  if (!content.freshness) return '请选择信息有效期'
   return ''
 }
 
@@ -67,6 +75,39 @@ async function getTaskContext(needId) {
     need: needRes && needRes.data ? needRes.data : null,
     taker: takerRes.data[0] || null
   }
+}
+
+function getTaskTypeName(type) {
+  return NEED_TYPE_NAMES[type] || NEED_TYPE_NAMES.other
+}
+
+function getNeedLocationPoint(need = {}) {
+  const rawLocation = need.location && typeof need.location.toJSON === 'function'
+    ? need.location.toJSON()
+    : need.location
+  const coordinates = rawLocation && Array.isArray(rawLocation.coordinates) ? rawLocation.coordinates : []
+  const longitude = Number(coordinates[0])
+  const latitude = Number(coordinates[1])
+  if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return {}
+  return { longitude, latitude }
+}
+
+function getTaskMeta(need = {}) {
+  const type = text(need.type, 30) || 'other'
+  const locationPoint = getNeedLocationPoint(need)
+  return {
+    type,
+    typeName: getTaskTypeName(type),
+    description: text(need.description, 300),
+    locationName: text(need.location_name, 120),
+    ...locationPoint
+  }
+}
+
+function buildTaskTitle(need = {}) {
+  const typeName = getTaskTypeName(need.type)
+  const description = text(need.description, 28)
+  return description ? `${typeName}：${description}`.slice(0, 50) : `${typeName}当地经验`
 }
 
 async function getExperienceByNeedId(needId) {
@@ -101,12 +142,11 @@ function buildConversation(messages, requesterId) {
 
 function getFallbackDraft(need) {
   return {
-    title: text(need.description, 30) || '当地经验',
+    title: buildTaskTitle(need),
     public_location: text(need.location_name, 80) || '任务地点附近',
     question: text(need.description, 300),
     result: '',
-    applicable_time: '',
-    freshness: '请根据实际情况填写',
+    freshness: '',
     tips: '',
     images: []
   }
@@ -131,10 +171,10 @@ async function generateDraftWithDeepSeek(need, messages) {
     '不要输出姓名、昵称、账号、联系方式、精确门牌、精确经纬度或能够识别个人身份的信息。',
     '地点保留到商圈、道路、公共场所或“附近”的粒度。',
     '语音和图片若没有文字内容，不要猜测其中信息。',
-    '只返回 JSON，不要添加解释。字段：title、publicLocation、question、result、applicableTime、freshness、tips。',
+    '只返回 JSON，不要添加解释。字段：title、publicLocation、question、result、tips。title 必须基于任务类型和任务描述总结，question 直接整理为适合公开展示的任务描述。',
     '',
     `任务描述：${text(need.description, 1000)}`,
-    `任务类型：${text(need.type, 50)}`,
+    `任务类型：${getTaskTypeName(need.type)}`,
     `任务地点：${text(need.location_name, 200)}`,
     `任务完成时间：${need.complete_time ? new Date(need.complete_time).toISOString() : ''}`,
     '',
@@ -227,6 +267,7 @@ async function createDraft(event, openid) {
       code: 0,
       data: {
         experience: existing,
+        task: getTaskMeta(context.need),
         availableImages: Array.isArray(context.need.images) ? context.need.images : [],
         created: false
       }
@@ -237,6 +278,7 @@ async function createDraft(event, openid) {
   let generated
   try {
     generated = await generateDraftWithDeepSeek(context.need, messages)
+    generated.draft = { ...getFallbackDraft(context.need), ...generated.draft }
   } catch (err) {
     console.error('DeepSeek 生成经验草稿失败:', err.response && err.response.data ? err.response.data : err)
     generated = { draft: getFallbackDraft(context.need), warning: 'AI整理失败，请手动填写经验内容' }
@@ -265,6 +307,7 @@ async function createDraft(event, openid) {
     code: 0,
     data: {
       experience,
+      task: getTaskMeta(context.need),
       availableImages: Array.isArray(context.need.images) ? context.need.images : [],
       created: true,
       warning: generated.warning
@@ -281,11 +324,12 @@ async function getEditor(event, openid) {
   ])
   if (!user) return { code: 401, message: '请先登录' }
   if (!context.need || context.need.user_id !== user._id) return { code: 403, message: '无权编辑' }
-  if (!experience) return { code: 0, data: { experience: null, availableImages: context.need.images || [] } }
+  if (!experience) return { code: 0, data: { experience: null, task: getTaskMeta(context.need), availableImages: context.need.images || [] } }
   return {
     code: 0,
     data: {
       experience,
+      task: getTaskMeta(context.need),
       availableImages: Array.isArray(context.need.images) ? context.need.images : [],
       editable: EDITABLE_STATUSES.includes(experience.status),
       canCancel: experience.status === 'pending_confirmation'
@@ -319,6 +363,7 @@ async function saveDraft(event, openid) {
     const nextVersion = (Number(experience.version) || 0) + 1
     const update = {
       ...content,
+      applicable_time: '',
       status: 'pending_confirmation',
       submitted_once: true,
       version: nextVersion,
