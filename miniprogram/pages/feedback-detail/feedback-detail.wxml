@@ -2,7 +2,7 @@
   <view class="wdd-page-bg"></view>
   <view wx:if="{{loading}}" class="state-text">加载中...</view>
   <block wx:elif="{{feedback}}">
-    <view class="section status-section">
+    <view wx:if="{{fromAdmin}}" class="section status-section">
       <text class="section-title">处理状态</text>
       <text class="status {{feedback.status}}">{{feedback.status === 'resolved' ? '已处理' : '待处理'}}</text>
     </view>
@@ -40,11 +40,11 @@
         <text class="label">设备环境</text>
         <text class="value">{{feedback.deviceInfo.model}} {{feedback.deviceInfo.system}}</text>
       </view>
-      <view wx:if="{{feedback.status === 'resolved'}}" class="info-row">
+      <view wx:if="{{fromAdmin && feedback.status === 'resolved'}}" class="info-row">
         <text class="label">处理时间</text>
         <text class="value">{{resolveTimeText}}</text>
       </view>
-      <view wx:if="{{feedback.handler}}" class="info-row">
+      <view wx:if="{{fromAdmin && feedback.handler}}" class="info-row">
         <text class="label">处理客服</text>
         <text class="value">{{feedback.handler.nickname}}</text>
       </view>
