@@ -10,6 +10,8 @@ const FRESHNESS_OPTIONS = [
   '30天内有效'
 ]
 
+const EXPERIENCE_CALL_TIMEOUT = 60000
+
 function trimText(value) {
   return String(value || '').trim()
 }
@@ -23,6 +25,17 @@ function buildTitleFromTask(task = {}) {
 function getFreshnessIndex(value) {
   const index = FRESHNESS_OPTIONS.indexOf(value)
   return index >= 0 ? index : -1
+}
+
+function getExperienceErrorMessage(err) {
+  const raw = String((err && (err.errMsg || err.message)) || err || '')
+  if (/timeout|timed out|超时/i.test(raw)) {
+    return '经验草稿生成超时，请稍后重试；也可以先手动填写经验内容'
+  }
+  if (/FunctionName|function.*not.*found|云函数.*不存在|not exist/i.test(raw)) {
+    return '当地经验服务还没有部署，请先部署 wdd-experience 云函数'
+  }
+  return raw || '整理失败，请稍后重试'
 }
 
 Page({
@@ -72,7 +85,8 @@ Page({
     try {
       const { result } = await wx.cloud.callFunction({
         name: 'wdd-experience',
-        data: { action: 'getEditor', needId: this.data.needId }
+        data: { action: 'getEditor', needId: this.data.needId },
+        timeout: EXPERIENCE_CALL_TIMEOUT
       })
       if (result.code !== 0) throw new Error(result.message)
       if (result.data.experience) {
@@ -80,7 +94,8 @@ Page({
       } else {
         const created = await wx.cloud.callFunction({
           name: 'wdd-experience',
-          data: { action: 'createDraft', needId: this.data.needId }
+          data: { action: 'createDraft', needId: this.data.needId },
+          timeout: EXPERIENCE_CALL_TIMEOUT
         })
         if (created.result.code !== 0) throw new Error(created.result.message)
         this.applyExperience(created.result.data)
@@ -89,7 +104,7 @@ Page({
         }
       }
     } catch (err) {
-      wx.showToast({ title: err.message || '整理失败', icon: 'none' })
+      wx.showToast({ title: getExperienceErrorMessage(err), icon: 'none', duration: 3000 })
     } finally {
       wx.hideLoading()
       this.setData({ loading: false })
@@ -99,7 +114,8 @@ Page({
   async loadExisting() {
     const { result } = await wx.cloud.callFunction({
       name: 'wdd-experience',
-      data: { action: 'getEditor', needId: this.data.needId }
+      data: { action: 'getEditor', needId: this.data.needId },
+      timeout: EXPERIENCE_CALL_TIMEOUT
     })
     if (result.code === 0 && result.data.experience) this.applyExperience(result.data)
   },
