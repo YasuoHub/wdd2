@@ -1,4 +1,5 @@
 const { requirePrivacyAuthorize } = require('../../utils/privacy')
+const { getByType } = require('../../utils/needTypes')
 
 const FRESHNESS_OPTIONS = [
   '1小时内有效',
@@ -39,6 +40,7 @@ Page({
     task: {
       type: '',
       typeName: '任务类型',
+      typeIcon: 'tag',
       description: '',
       locationName: '',
       longitude: null,
@@ -112,10 +114,12 @@ Page({
     }))
     const publicLocation = item.public_location || item.publicLocation || task.locationName || ''
     const freshness = item.freshness || ''
+    const typeInfo = getByType(task.type || 'other')
     this.setData({
       task: {
         type: task.type || '',
         typeName: task.typeName || '任务类型',
+        typeIcon: typeInfo.icon || 'tag',
         description: task.description || '',
         locationName: task.locationName || '',
         longitude: Number(task.longitude) || null,

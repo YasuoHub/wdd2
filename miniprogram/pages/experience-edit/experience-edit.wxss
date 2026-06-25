@@ -81,16 +81,16 @@
   margin-bottom: 0;
 }
 
-.required-mark,
-.optional-mark {
-  flex-shrink: 0;
-  color: var(--brand-primary);
-  font-size: 22rpx;
-  line-height: 1;
+.required-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4rpx;
 }
 
-.optional-mark {
-  color: #98a2b3;
+.required-star {
+  color: #e5484d;
+  font-size: 28rpx;
+  line-height: 1;
 }
 
 .edit-input,
@@ -98,6 +98,13 @@
   height: 72rpx;
   border-radius: 10rpx;
   background: #f9fbfd;
+}
+
+.edit-input {
+  min-height: 72rpx;
+  padding: 0 20rpx;
+  line-height: 72rpx;
+  box-sizing: border-box;
 }
 
 .location-editor {
@@ -142,10 +149,11 @@
 
 .edit-textarea {
   min-height: 118rpx;
-  padding-top: 16rpx;
-  padding-bottom: 16rpx;
+  padding: 14rpx 20rpx;
   border-radius: 10rpx;
   background: #f9fbfd;
+  line-height: 1.45;
+  box-sizing: border-box;
 }
 
 .compact-textarea {

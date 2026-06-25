@@ -9,7 +9,7 @@
 
     <view class="task-context-panel">
       <view class="task-type-pill">
-        <wdd-icon name="tag" color="var(--brand-primary)" size="26"></wdd-icon>
+        <wdd-icon name="{{task.typeIcon}}" color="var(--brand-primary)" size="26"></wdd-icon>
         <text>{{task.typeName}}</text>
       </view>
       <view class="task-context-desc">{{task.description || '暂无任务描述'}}</view>
@@ -22,16 +22,14 @@
     <view class="form-section edit-form-section">
       <view class="field-group compact-group">
         <view class="label-row">
-          <text class="field-label">公开标题</text>
-          <text class="required-mark">必填</text>
+          <view class="field-label required-label"><text>公开标题</text><text class="required-star">*</text></view>
         </view>
         <input class="field-input edit-input" disabled="{{!editable}}" maxlength="50" value="{{form.title}}" data-field="title" bindinput="onFieldInput" />
       </view>
 
       <view class="field-group compact-group">
         <view class="label-row">
-          <text class="field-label">公开地点</text>
-          <text class="required-mark">必填</text>
+          <view class="field-label required-label"><text>公开地点</text><text class="required-star">*</text></view>
         </view>
         <view class="location-editor">
           <input class="field-input edit-input location-input" disabled="{{!editable}}" maxlength="80" value="{{form.publicLocation}}" data-field="publicLocation" bindinput="onFieldInput" />
@@ -44,24 +42,21 @@
 
       <view class="field-group compact-group">
         <view class="label-row">
-          <text class="field-label">公开描述</text>
-          <text class="required-mark">必填</text>
+          <view class="field-label required-label"><text>公开描述</text><text class="required-star">*</text></view>
         </view>
         <textarea class="field-textarea edit-textarea compact-textarea" disabled="{{!editable}}" maxlength="300" value="{{form.question}}" data-field="question" bindinput="onFieldInput" />
       </view>
 
       <view class="field-group compact-group">
         <view class="label-row">
-          <text class="field-label">任务结果</text>
-          <text class="required-mark">必填</text>
+          <view class="field-label required-label"><text>任务结果</text><text class="required-star">*</text></view>
         </view>
         <textarea class="field-textarea edit-textarea compact-textarea" disabled="{{!editable}}" maxlength="1000" value="{{form.result}}" data-field="result" bindinput="onFieldInput" />
       </view>
 
       <view class="field-group compact-group">
         <view class="label-row">
-          <text class="field-label">信息有效期</text>
-          <text class="required-mark">必填</text>
+          <view class="field-label required-label"><text>信息有效期</text><text class="required-star">*</text></view>
         </view>
         <picker disabled="{{!editable}}" mode="selector" range="{{freshnessOptions}}" value="{{freshnessIndex}}" bindchange="onFreshnessChange">
           <view class="picker-field {{form.freshness ? '' : 'placeholder'}}">
@@ -74,7 +69,6 @@
       <view class="field-group compact-group last-group">
         <view class="label-row">
           <text class="field-label">注意事项</text>
-          <text class="optional-mark">选填</text>
         </view>
         <textarea class="field-textarea edit-textarea compact-textarea" disabled="{{!editable}}" maxlength="500" value="{{form.tips}}" data-field="tips" bindinput="onFieldInput" />
       </view>
