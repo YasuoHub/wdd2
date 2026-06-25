@@ -1,4 +1,5 @@
 const DateUtil = require('../../utils/dateUtil')
+const app = getApp()
 
 Page({
   data: {
@@ -15,7 +16,17 @@ Page({
   },
 
   onShow() {
+    if (app.globalData.feedbacksNeedRefresh) {
+      app.globalData.feedbacksNeedRefresh = false
+      this.refreshAllLists()
+      return
+    }
     this.loadList(this.data.activeTab, true)
+  },
+
+  async refreshAllLists() {
+    await this.loadList('pending', true)
+    await this.loadList('resolved', true)
   },
 
   switchTab(e) {

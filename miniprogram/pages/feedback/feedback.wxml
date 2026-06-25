@@ -69,5 +69,5 @@
     class="submit-btn"
     disabled="{{metaLoading || submitting || uploading || remaining <= 0}}"
     bindtap="confirmSubmit"
-  >{{metaLoading ? '额度查询中...' : (submitting ? '提交中...' : (remaining <= 0 ? '今日提交次数已用完' : '提交反馈'))}}</button>
+  >{{submitting ? '提交中...' : (remaining <= 0 ? '今日提交次数已用完' : '提交反馈')}}</button>
 </view>

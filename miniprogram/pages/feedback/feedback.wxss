@@ -23,5 +23,5 @@
 .upload-tip { display: block; margin-top: 14rpx; color: var(--text-light); font-size: 22rpx; }
 .quota-limit-tip { position: relative; z-index: 1; display: block; margin: 26rpx 16rpx 0; color: var(--text-tertiary); font-size: 23rpx; line-height: 1.6; text-align: center; }
 .submit-btn { position: relative; z-index: 1; height: 92rpx; margin-top: 30rpx; color: #FFFFFF; font-size: 30rpx; font-weight: 600; line-height: 92rpx; background: var(--brand-primary); border-radius: 22rpx; box-shadow: 0 10rpx 28rpx var(--brand-primary-25); }
-.submit-btn[disabled] { color: #FFFFFF; background: #B8C2CC; box-shadow: none; }
+.submit-btn[disabled] { color: #7B8794; background: #E4EAF0; border: 1rpx solid #C8D2DC; box-shadow: 0 4rpx 12rpx rgba(15, 23, 42, 0.05); }
 .submit-btn::after { border: 0; }

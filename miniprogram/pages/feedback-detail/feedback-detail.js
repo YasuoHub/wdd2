@@ -88,6 +88,8 @@ Page({
         return
       }
       if (result.code !== 0) throw new Error(result.message || '处理失败')
+      const app = getApp()
+      app.globalData.feedbacksNeedRefresh = true
       wx.showToast({ title: '已处理', icon: 'success' })
       setTimeout(() => wx.navigateBack(), 800)
     } catch (err) {
