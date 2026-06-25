@@ -7,6 +7,9 @@ const db = cloud.database()
 const _ = db.command
 const CONFIRM_WINDOW_MS = 48 * 60 * 60 * 1000
 const MAX_PAGE_SIZE = 30
+const MAX_DRAFT_MESSAGES = 80
+const DEFAULT_DEEPSEEK_TIMEOUT_MS = 1800
+const MAX_DEEPSEEK_TIMEOUT_MS = 30000
 const EDITABLE_STATUSES = ['draft', 'pending_confirmation']
 const NEED_TYPE_NAMES = {
   weather: '实时天气',
@@ -117,12 +120,12 @@ async function getExperienceByNeedId(needId) {
 
 async function loadTaskMessages(needId) {
   const list = []
-  for (let skip = 0; skip < 500; skip += 100) {
+  for (let skip = 0; skip < MAX_DRAFT_MESSAGES; skip += 100) {
     const res = await db.collection('wdd-messages')
       .where({ need_id: needId })
       .orderBy('create_time', 'asc')
       .skip(skip)
-      .limit(100)
+      .limit(Math.min(100, MAX_DRAFT_MESSAGES - skip))
       .get()
     list.push(...res.data)
     if (res.data.length < 100) break
@@ -158,6 +161,12 @@ function parseModelJson(content) {
   return normalizeContent(parsed)
 }
 
+function getDeepSeekTimeoutMs() {
+  const value = Number(process.env.DEEPSEEK_TIMEOUT_MS)
+  if (!Number.isFinite(value) || value <= 0) return DEFAULT_DEEPSEEK_TIMEOUT_MS
+  return Math.min(MAX_DEEPSEEK_TIMEOUT_MS, Math.max(1000, Math.floor(value)))
+}
+
 async function generateDraftWithDeepSeek(need, messages) {
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
@@ -165,6 +174,7 @@ async function generateDraftWithDeepSeek(need, messages) {
   }
 
   const model = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash'
+  const timeout = getDeepSeekTimeoutMs()
   const prompt = [
     '你是“问当地”平台的经验整理助手。',
     '请根据任务信息和聊天记录生成适合公开展示的匿名经验，只能使用原始材料中的事实，不得推测或补充。',
@@ -195,7 +205,7 @@ async function generateDraftWithDeepSeek(need, messages) {
       max_tokens: 1600
     },
     {
-      timeout: 30000,
+      timeout,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
@@ -281,7 +291,11 @@ async function createDraft(event, openid) {
     generated.draft = { ...getFallbackDraft(context.need), ...generated.draft }
   } catch (err) {
     console.error('DeepSeek 生成经验草稿失败:', err.response && err.response.data ? err.response.data : err)
-    generated = { draft: getFallbackDraft(context.need), warning: 'AI整理失败，请手动填写经验内容' }
+    const isTimeout = err.code === 'ECONNABORTED' || /timeout|timed out|超时/i.test(err.message || '')
+    generated = {
+      draft: getFallbackDraft(context.need),
+      warning: isTimeout ? 'AI整理超时，请先手动填写经验内容' : 'AI整理失败，请手动填写经验内容'
+    }
   }
 
   const now = new Date()
