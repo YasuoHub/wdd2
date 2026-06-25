@@ -249,6 +249,10 @@ page {
   background: #ffffff;
 }
 
+.action-btn.disabled {
+  opacity: 0.64;
+}
+
 .action-btn:active {
   opacity: 0.86;
 }

@@ -106,7 +106,8 @@ Page({
     pageSize: 10,
     hasMore: false,
     loading: false,
-    loaded: false
+    loaded: false,
+    completingNeedId: ''
   },
 
   onLoad() {
@@ -439,6 +440,18 @@ Page({
   // 完成任务
   completeNeed(e) {
     const { id } = e.currentTarget.dataset
+    if (!id || this.data.completingNeedId) return
+
+    const currentNeed = this.data.needs.find(item => item._id === id)
+    if (!currentNeed || currentNeed.status !== 'ongoing') {
+      app.globalData.refreshMyNeeds = true
+      this.refreshData()
+      wx.showToast({
+        title: '任务状态已变化，正在刷新',
+        icon: 'none'
+      })
+      return
+    }
 
     wx.showModal({
       title: '确认完成',
@@ -454,6 +467,9 @@ Page({
 
   // 执行完成任务
   async doCompleteNeed(id) {
+    if (this.data.completingNeedId) return
+
+    this.setNeedCompleting(id, true)
     try {
       wx.showLoading({ title: '处理中...' })
 
@@ -472,6 +488,9 @@ Page({
           title: '任务已完成',
           icon: 'success'
         })
+        app.globalData.refreshMyNeeds = true
+        app.globalData.refreshMyTasks = true
+        this.markNeedCompleted(id, result.data || {})
         setTimeout(() => this.promptExperienceShare(id), 700)
       } else {
         throw new Error(result.message)
@@ -482,7 +501,48 @@ Page({
         title: err.message || '操作失败',
         icon: 'none'
       })
+    } finally {
+      this.setNeedCompleting(id, false)
     }
+  },
+
+  setNeedCompleting(id, isCompleting) {
+    const needs = this.data.needs.map(item => item._id === id ? {
+      ...item,
+      isCompleting
+    } : item)
+
+    this.setData({
+      needs,
+      completingNeedId: isCompleting ? id : ''
+    })
+  },
+
+  markNeedCompleted(id, settlementData = {}) {
+    const completeTime = new Date()
+    const statusInfo = STATUS_MAP.completed
+    const nextNeeds = this.data.needs
+      .map(item => {
+        if (item._id !== id) return item
+        return this.formatNeed({
+          ...item,
+          status: 'completed',
+          statusText: statusInfo.text,
+          statusClass: statusInfo.class,
+          complete_time: completeTime,
+          completeTime: completeTime,
+          platform_fee: settlementData.platformFee,
+          taker_income: settlementData.takerIncome,
+          takerIncome: settlementData.takerIncome,
+          isCompleting: false
+        })
+      })
+      .filter(item => this.data.currentFilter !== 'ongoing' || item.status === 'ongoing')
+
+    this.setData({
+      needs: nextNeeds,
+      loaded: true
+    })
   },
 
   promptExperienceShare(id) {

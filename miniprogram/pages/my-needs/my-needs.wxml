@@ -65,7 +65,7 @@
 
         <view wx:if="{{item.status === 'ongoing'}}" class="card-actions">
           <view class="action-btn outline" catchtap="goToChat" data-id="{{item._id}}">进入聊天</view>
-          <view class="action-btn primary" catchtap="completeNeed" data-id="{{item._id}}">确认完成</view>
+          <view class="action-btn primary {{item.isCompleting ? 'disabled' : ''}}" catchtap="completeNeed" data-id="{{item._id}}">{{item.isCompleting ? '处理中' : '确认完成'}}</view>
         </view>
 
         <view wx:elif="{{item.status === 'pending'}}" class="card-actions right">
